@@ -6,8 +6,8 @@ use strict;
     my $scratch = glob("~/scratch");
     my $linesPerPiece = 50*1000*1000;
     die "Usage: RunTnSeq.pl organism library model fastq.gz\n"
-    . "   i.e., RunTnSeq.pl Phaeo Phaeo_ML1 pKMW7 fastafile\n"
-    unless @ARGV==4;
+	. "   i.e., RunTnSeq.pl Phaeo Phaeo_ML1 pKMW7 fastafile\n"
+	unless @ARGV==4;
     my ($organism, $libname, $model, $fastq) = @ARGV;
     die "No such file: $fastq" unless -e $fastq;
     die "No such directory: $prefix/g/$organism" unless -d "$prefix/g/$organism";
@@ -23,13 +23,13 @@ use strict;
     print STDERR "See " . scalar(@parts) . " parts files and " . scalar(@mapped) . " mapped files\n";
 
     if (scalar(@parts ) != scalar(@mapped) && @mapped > 0) {
-    die "Warning: mapped files do not match part files for\n$scratch/${libname}_TnSeq.part*[0-9]*\nDelete codes files (or both) and rerun\n";
+	die "Warning: mapped files do not match part files for\n$scratch/${libname}_TnSeq.part*[0-9]*\nDelete codes files (or both) and rerun\n";
     }
     if (@parts > 0 && @parts == @mapped && -e $mapped[0]) {
-    print STDERR "Reading mapping files $mapGlob\n";
-    my $cmd = "(~mnprice/scripts/DesignRandomPool.pl -minN 10 $mapGlob > $prefix/g/$organism/pool.n10) >& $prefix/g/$organism/pool.n10.log";
-    system($cmd) == 0 || die "Failed: $cmd";
-    exit(0);
+	print STDERR "Reading mapping files $mapGlob\n";
+	my $cmd = "(~mnprice/scripts/DesignRandomPool.pl -minN 10 $mapGlob > $prefix/g/$organism/pool.n10) >& $prefix/g/$organism/pool.n10.log";
+	system($cmd) == 0 || die "Failed: $cmd";
+	exit(0);
     }
 
     # else, need to make the codes files (slow)
@@ -41,7 +41,7 @@ use strict;
     my $cmdsfile = "$prefix/cmds/${libname}_TnSeq.codecmds";
     open(CMDS, ">", $cmdsfile) || die "Cannot write to $cmdsfile";
     foreach my $i (glob "$scratch/${libname}_TnSeq.part*[0-9]") {
-    print CMDS "~mnprice/scripts/MapTnSeq.pl -genome $fnafile -blat ~mnprice/scripts/blat -first $i -model $modelfile > $i.mapped"."\n";
+	print CMDS "~mnprice/scripts/MapTnSeq.pl -genome $fnafile -blat ~mnprice/scripts/blat -first $i -model $modelfile > $i.mapped"."\n";
     }
     close(CMDS) || die "Error writing to $cmdsfile";
 

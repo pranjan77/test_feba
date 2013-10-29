@@ -78,10 +78,10 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
     my $minGenomeId = 90;
 
     (GetOptions('debug' => \$debug, 'limit=i' => \$limit, 'minQuality=i' => \$minQuality,
-        'flanking=i' => \$flanking, 'minIdentity=i' => \$minIdentity, 'minScore=i' => \$minScore,
-        'tmpdir=s' => \$tmpdir,
-        'blat=s' => \$blatcmd,
-        'genome=s' => \$genomeFile, 'model=s' => \$modelFile, 'first=s' => \$fastqFile)
+		'flanking=i' => \$flanking, 'minIdentity=i' => \$minIdentity, 'minScore=i' => \$minScore,
+		'tmpdir=s' => \$tmpdir,
+		'blat=s' => \$blatcmd,
+		'genome=s' => \$genomeFile, 'model=s' => \$modelFile, 'first=s' => \$fastqFile)
      && @ARGV==0) || die $usage;
     die $usage unless defined $modelFile && defined $fastqFile;
 
@@ -107,13 +107,13 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
 
     my $pipe = 0;
     if ($fastqFile =~ m/[.]gz$/) {
-    $pipe = 1;
-    open(FASTQ, '-|', 'zcat', $fastqFile) || die "Cannot run zcat on $fastqFile";
+	$pipe = 1;
+	open(FASTQ, '-|', 'zcat', $fastqFile) || die "Cannot run zcat on $fastqFile";
     } elsif ($fastqFile =~ m/[.zip]$/) {
-    $pipe = 1;
-    open(FASTQ, "7za -so e $fastqFile | zcat |") || die "Cannot run 7za and zcat on $fastqFile";
+	$pipe = 1;
+	open(FASTQ, "7za -so e $fastqFile | zcat |") || die "Cannot run 7za and zcat on $fastqFile";
     } else {
-    open(FASTQ, "<", $fastqFile) || die "Cannot read $fastqFile";
+	open(FASTQ, "<", $fastqFile) || die "Cannot read $fastqFile";
     }
 
     my %nameToHits = (); # list of scaffold, position, strand, match score
@@ -128,37 +128,37 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
 
     # Find barcodes and end of transposon and write remaining sequence to TMPFNA
     while(!defined $limit || $nReads < $limit) {
-    my $name = <FASTQ>;
-    (last, next) unless $name;
-    chomp $name;
-    
-    my $seq = <FASTQ>;
-    chomp $seq;
-    <FASTQ>;
-    my $quality = <FASTQ>;
-    chomp $quality;
+	my $name = <FASTQ>;
+	(last, next) unless $name;
+	chomp $name;
+	
+	my $seq = <FASTQ>;
+	chomp $seq;
+	<FASTQ>;
+	my $quality = <FASTQ>;
+	chomp $quality;
 
-    next if $name =~ m/^\S+ 2:/; # ignore second side of paired-end reads
-    $nReads++;
+	next if $name =~ m/^\S+ 2:/; # ignore second side of paired-end reads
+	$nReads++;
 
-    # short sequences are unmappable
-    next unless length($seq) >= length($model) + $minScore;
-    $nLong++;
+	# short sequences are unmappable
+	next unless length($seq) >= length($model) + $minScore;
+	$nLong++;
 
-    my ($barcode,$obsStart) = FindBarcode($seq,$quality,$model,$barcodeStart,$barcodeEnd);
-    next unless defined $barcode;
+	my ($barcode,$obsStart) = FindBarcode($seq,$quality,$model,$barcodeStart,$barcodeEnd);
+	next unless defined $barcode;
 
-    $name =~ s/ .*$//;
-    die "Duplicate read name: $name" if exists $nameToBarcode{$name};
-    $nameToBarcode{$name} = $barcode;
+	$name =~ s/ .*$//;
+	die "Duplicate read name: $name" if exists $nameToBarcode{$name};
+	$nameToBarcode{$name} = $barcode;
 
-    my $transposonEnd = FindModelEnd($seq,$model,$obsStart - $barcodeStart);
-    if (defined $transposonEnd && length($seq) >= $transposonEnd + $minScore) {
-        print STDERR "Try to map $name\n" if $debug;
-        my $inGenome = substr($seq, $transposonEnd+1);
-        print TMPFNA ">$name\n$inGenome\n";
-        $nTryToMap++;
-    }
+	my $transposonEnd = FindModelEnd($seq,$model,$obsStart - $barcodeStart);
+	if (defined $transposonEnd && length($seq) >= $transposonEnd + $minScore) {
+	    print STDERR "Try to map $name\n" if $debug;
+	    my $inGenome = substr($seq, $transposonEnd+1);
+	    print TMPFNA ">$name\n$inGenome\n";
+	    $nTryToMap++;
+	}
     }
 
     # Prematurely closing the pipe gives an error
@@ -177,10 +177,10 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
     print STDERR "Parsing past-end hits to $blat8\n" if defined $debug;
     open(BLAT, "<", $blat8) || die "Cannot read $blat8";
     while(<BLAT>) {
-    chomp;
-    my @F = split /\t/, $_;
-    my ($query, $subject, $identity, $len, $mm, $gaps, $qBeg, $qEnd, $sBeg, $sEnd, $eval, $score) = @F;
-    $hitsPastEnd{$query} = $score unless exists $hitsPastEnd{$query} && $hitsPastEnd{$query} > $score;
+	chomp;
+	my @F = split /\t/, $_;
+	my ($query, $subject, $identity, $len, $mm, $gaps, $qBeg, $qEnd, $sBeg, $sEnd, $eval, $score) = @F;
+	$hitsPastEnd{$query} = $score unless exists $hitsPastEnd{$query} && $hitsPastEnd{$query} > $score;
     }
     close(BLAT) || die "Error reading $blat8";
     unlink($blat8) unless defined $debug;
@@ -191,15 +191,15 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
     open(BLAT, "<", $blat8) || die "Cannot read $blat8";
     my @lines = ();
     while(<BLAT>) {
-    chomp;
-    my @F = split /\t/, $_;
-    my ($query, $subject, $identity, $len, $mm, $gaps, $qBeg, $qEnd, $sBeg, $sEnd, $eval, $score) = @F;
-    if (@lines == 0 || $query eq $lines[0][0]) {
-        push @lines, \@F;
-    } else {
-        HandleGenomeBLAT(\@lines, \%hitsPastEnd);
-        @lines = \@F;
-    }
+	chomp;
+	my @F = split /\t/, $_;
+	my ($query, $subject, $identity, $len, $mm, $gaps, $qBeg, $qEnd, $sBeg, $sEnd, $eval, $score) = @F;
+	if (@lines == 0 || $query eq $lines[0][0]) {
+	    push @lines, \@F;
+	} else {
+	    HandleGenomeBLAT(\@lines, \%hitsPastEnd);
+	    @lines = \@F;
+	}
     }
     HandleGenomeBLAT(\@lines, \%hitsPastEnd);
 
@@ -210,21 +210,21 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
 
     # print out hits-past-end
     while (my ($read,$score) = each %hitsPastEnd) {
-    next unless $score > 0; # score=0 means it was ignored above
-    print join("\t", $read, $nameToBarcode{$read}, "pastEnd", "", "", "", "", "", "", "")."\n";
+	next unless $score > 0; # score=0 means it was ignored above
+	print join("\t", $read, $nameToBarcode{$read}, "pastEnd", "", "", "", "", "", "", "")."\n";
     }
 
     print STDERR "Reads processed $nReads Long-enough $nLong Barcodes found " . scalar(keys %nameToBarcode) . "\n";
     print STDERR "Mapping attempted for $nTryToMap Mapped $nMapped Uniquely $nMapUnique\n";
     print STDERR "Hits past end of transposon: " . (scalar(keys %hitsPastEnd) - $nPastEndIgnored) .
-    " plus $nPastEndIgnored weak/ambiguous; trumped hit to genome $nPastEndTrumps times\n";
+	" plus $nPastEndIgnored weak/ambiguous; trumped hit to genome $nPastEndTrumps times\n";
 }
 
 sub FindSubstr($$$$) {
     my ($subseq, $seq, $expAt, $wobble) = @_;
     my $len = length($seq);
     for (my $i = $expAt - $wobble; $i <= $expAt+$wobble; $i++) {
-    return($i) if $i >= 0 && $i < $len && substr($seq, $i, length($subseq)) eq $subseq;
+	return($i) if $i >= 0 && $i < $len && substr($seq, $i, length($subseq)) eq $subseq;
     }
     return undef;
 }
@@ -243,23 +243,23 @@ sub FindBarcode($$$$$) {
     my $end = $postLoc-1;
 
     unless ($end-$start eq $expEnd-$expStart) {
-    print STDERR "Wrong barcode length: $start $end not $expStart $expEnd in $seq\n" if defined $debug;
-    return undef;
+	print STDERR "Wrong barcode length: $start $end not $expStart $expEnd in $seq\n" if defined $debug;
+	return undef;
     }
     my $barcode = substr($seq, $start, $end-$start+1);
 
     if ($minQuality > 0) {
-    # the sanger code for !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJ
-    my $barqual = substr($quality, $start, $end-$start+1);
-    # quality score is encoded as 33+
-    my @scores = map { $_ - 33 } unpack("%C"x20, $barqual);
-    foreach my $score (@scores) {
-        die "Invalid score $score from barcode $barcode quality $barqual" if $score < 0 || $score > 100;
-        if ($score < $minQuality) {
-        print STDERR "Low quality $score for barcode $barcode in $seq\n" if defined $debug;
-        return undef;
-        }
-    }
+	# the sanger code for !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJ
+	my $barqual = substr($quality, $start, $end-$start+1);
+	# quality score is encoded as 33+
+	my @scores = map { $_ - 33 } unpack("%C"x20, $barqual);
+	foreach my $score (@scores) {
+	    die "Invalid score $score from barcode $barcode quality $barqual" if $score < 0 || $score > 100;
+	    if ($score < $minQuality) {
+		print STDERR "Low quality $score for barcode $barcode in $seq\n" if defined $debug;
+		return undef;
+	    }
+	}
     }
     return($barcode,$start);
 }
@@ -269,8 +269,8 @@ sub FindModelEnd($$$) {
     my $expEnd = length($model) + $expOff;
     my $at = FindSubstr(substr($model,length($model)-$flanking,$flanking), $seq, $expEnd-$flanking, $wobbleAllowed);
     if (!defined $at) {
-    print STDERR "No end sequence " . substr($model,length($model)-$flanking,$flanking) . " near position " . ($expEnd-$flanking) . " of\n$seq\n" if defined $debug;
-    return undef;
+	print STDERR "No end sequence " . substr($model,length($model)-$flanking,$flanking) . " near position " . ($expEnd-$flanking) . " of\n$seq\n" if defined $debug;
+	return undef;
     }
     return($at + $flanking - 1); # last position of transposon
 }
@@ -285,7 +285,7 @@ sub BLAT8($$$$$$) {
     print OLD_STDOUT ""; # prevent warning
     open(STDOUT, ">", "/dev/null");
     system($blatcmd, "-out=blast8", "-t=dna", "-q=dna", "-minScore=$minScore", "-minIdentity=$minIdentity", "-maxIntron=0", "-noTrimA", $dbFile, $queriesFile, $blat8File) == 0
-    || die "Cannot run $blatcmd";
+	|| die "Cannot run $blatcmd";
     close(STDOUT);
     open(STDOUT, ">&OLD_STDOUT") || die "Cannot restore stdout: $!";
     return($blat8File);
@@ -304,15 +304,15 @@ sub HandleGenomeBLAT($$) {
     my @besthits = ();
 
     foreach my $row (@$rows) {
-    my ($read2, $subject, $identity, $len, $mm, $gaps, $qBeg, $qEnd, $sBeg, $sEnd, $eval, $score) = @$row;
-    die unless $read2 eq $read;
-    if (scalar(@besthits) == 0 || $score >= $besthits[0][$SCORE] - 5) {
-        # convert from 0-based to 1-based position, and note that sBeg always < sEnd so flip if stranded
-        push @besthits,  [ $subject, $sBeg, ($sBeg < $sEnd ? "+" : "-"), $score,
-                   $identity, $qBeg, $qEnd ];
-        print STDERR "Hit for $read:$qBeg:$qEnd to $subject:$sBeg:$sEnd score $score identity $identity\n"
-        if $debug;
-    }
+	my ($read2, $subject, $identity, $len, $mm, $gaps, $qBeg, $qEnd, $sBeg, $sEnd, $eval, $score) = @$row;
+	die unless $read2 eq $read;
+	if (scalar(@besthits) == 0 || $score >= $besthits[0][$SCORE] - 5) {
+	    # convert from 0-based to 1-based position, and note that sBeg always < sEnd so flip if stranded
+	    push @besthits,  [ $subject, $sBeg, ($sBeg < $sEnd ? "+" : "-"), $score,
+			       $identity, $qBeg, $qEnd ];
+	    print STDERR "Hit for $read:$qBeg:$qEnd to $subject:$sBeg:$sEnd score $score identity $identity\n"
+		if $debug;
+	}
     }
 
     die if @besthits == 0;
@@ -320,19 +320,19 @@ sub HandleGenomeBLAT($$) {
 
     # and output a mapping row (or none)
     if (exists $hitsPastEnd->{$read}) {
-    if ($hitsPastEnd->{$read} >= $score - 5) {
-        $nPastEndTrumps++;
-        print STDERR "Past end trumps for $read\n" if $debug;
-        return;
-    } else {
-        $nPastEndIgnored++; # ignore weak hit to past-end sequence
-        print STDERR "Ignoring hit past end of transposon for $read\n" if $debug;
-        $hitsPastEnd->{$read} = 0; # so we do not print out a line for it later on
-    }
+	if ($hitsPastEnd->{$read} >= $score - 5) {
+	    $nPastEndTrumps++;
+	    print STDERR "Past end trumps for $read\n" if $debug;
+	    return;
+	} else {
+	    $nPastEndIgnored++; # ignore weak hit to past-end sequence
+	    print STDERR "Ignoring hit past end of transposon for $read\n" if $debug;
+	    $hitsPastEnd->{$read} = 0; # so we do not print out a line for it later on
+	}
     }
     # else if no trumping
     print join("\t", $read, $nameToBarcode{$read}, $scaffold, $position, $strand, @besthits == 1 ? 1 : 0,
-           $qBeg, $qEnd, $score, $identity)."\n";
+	       $qBeg, $qEnd, $score, $identity)."\n";
     $nMapUnique++ if @besthits == 1;
     $nMapped++;
     return;
