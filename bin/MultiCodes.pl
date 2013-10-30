@@ -41,22 +41,22 @@ my $dntag = 0;
 {
     my ($indexfile,$out,$nLimit);
     (GetOptions('primers=s' => \$indexfile, 'out=s' => \$out,
-		'minQuality=i' => \$minQuality,
-		'limit=i' => \$nLimit,
-		'nPreExpected=i' => \$nPreExpected,
-		'dntag' => \$dntag,
-		'debug' => \$debug)
+                'minQuality=i' => \$minQuality,
+                'limit=i' => \$nLimit,
+                'nPreExpected=i' => \$nPreExpected,
+                'dntag' => \$dntag,
+                'debug' => \$debug)
      && defined $indexfile && defined $out)
-	|| die $usage;
+        || die $usage;
 
     if ($dntag) {
-	$preseq = "GTCTCGTAG";
-	$nPreExpected = 8;
-	$postseq = "CGATGAATT";
+        $preseq = "GTCTCGTAG";
+        $nPreExpected = 8;
+        $postseq = "CGATGAATT";
     } else {
-	$preseq = "CAGCGTACG";
-	$nPreExpected = 9;
-	$postseq = "AGAGACCTC";
+        $preseq = "CAGCGTACG";
+        $nPreExpected = 9;
+        $postseq = "AGAGACCTC";
     }
     my $nReads = 0;
     my $nMulti = 0; # number with prefix identified
@@ -66,70 +66,70 @@ my $dntag = 0;
 
     open(INDEX, "<", $indexfile) || die "Error reading $indexfile";
     while (my $line = <INDEX>) {
-	chomp $line;
-	my ($name,$index) = split /\t/, $line;
-	next if $name =~ m/name/i;
-	my $nLeading;
-	my $indexseq;
-	if ($name eq "none" && $index eq "") {
-	    $nLeading = 0;
-	    $indexseq = "";
-	} else {
-	    die "Invalid index sequence $index" unless $index =~ m/^([nN]*)([ACGT]+)$/;
-	    $nLeading = length($1);
-	    $indexseq = $2;
-	}
-	die $line if !defined $nLeading || !defined $indexseq || !defined $name;
-	push @prefix, [ $nLeading, $indexseq, $name ];
+        chomp $line;
+        my ($name,$index) = split /\t/, $line;
+        next if $name =~ m/name/i;
+        my $nLeading;
+        my $indexseq;
+        if ($name eq "none" && $index eq "") {
+            $nLeading = 0;
+            $indexseq = "";
+        } else {
+            die "Invalid index sequence $index" unless $index =~ m/^([nN]*)([ACGT]+)$/;
+            $nLeading = length($1);
+            $indexseq = $2;
+        }
+        die $line if !defined $nLeading || !defined $indexseq || !defined $name;
+        push @prefix, [ $nLeading, $indexseq, $name ];
     }
     close(INDEX) || die "Error reading $indexfile";
     print STDERR "Read " . scalar(@prefix) . " indices from $indexfile\n";
     my @prefixNames = map { $_->[2] } @prefix;
 
     while(my $header = <STDIN>) {
-	chomp $header;
-	my $seq = <STDIN>;
-	chomp $seq;
-	$nReads++;
-	<STDIN>;
-	my $quality = <STDIN>;
+        chomp $header;
+        my $seq = <STDIN>;
+        chomp $seq;
+        $nReads++;
+        <STDIN>;
+        my $quality = <STDIN>;
 
-	last if defined $nLimit && $nReads >= $nLimit;
+        last if defined $nLimit && $nReads >= $nLimit;
 
-	my $iPrefix = FindPrefix($seq, \@prefix);
-	next if $iPrefix < 0;
-	$nMulti++;
-	my ($nLeading, $indexseq, $prefixName) = @{ $prefix[$iPrefix] };
-	my ($barcode,$off) = FindBarcode($seq, $quality, $nLeading+length($indexseq));
-	next unless defined $barcode;
-	$nOff{$off}++;
-	next unless $off == 20;
-	if (!exists $codes{$barcode}) {
-	    $codes{$barcode} = [];
-	}
-	$codes{$barcode}[$iPrefix]++;
+        my $iPrefix = FindPrefix($seq, \@prefix);
+        next if $iPrefix < 0;
+        $nMulti++;
+        my ($nLeading, $indexseq, $prefixName) = @{ $prefix[$iPrefix] };
+        my ($barcode,$off) = FindBarcode($seq, $quality, $nLeading+length($indexseq));
+        next unless defined $barcode;
+        $nOff{$off}++;
+        next unless $off == 20;
+        if (!exists $codes{$barcode}) {
+            $codes{$barcode} = [];
+        }
+        $codes{$barcode}[$iPrefix]++;
     }
 
-	
+        
     my $nOffTot = Vector::sum(values %nOff);
     my $nUniq = scalar(keys %codes);
     print STDERR "Reads $nReads Multiplexed $nMulti Usable(20) $nOff{20} fraction " . ($nOff{20}/$nReads) . " unique codes $nUniq \n" if $nReads > 0;
     foreach my $off (18..22) {
-	print STDERR sprintf("Off\t%d\t%d\t%.3f\n", $off, $nOff{$off}, $nOff{$off}/$nOffTot) if $nOffTot > 0;
+        print STDERR sprintf("Off\t%d\t%d\t%.3f\n", $off, $nOff{$off}, $nOff{$off}/$nOffTot) if $nOffTot > 0;
     }
 
     my %nPerCount = (); # number of codes with that count
     open(CODES, ">", "$out.codes.tmp") || die "Cannot write to $out.codes.tmp";
     print CODES join("\t","barcode", @prefixNames)."\n";
     while (my ($code,$count) = each %codes) {
-	my @counts = ();
-	my $nPrefix = scalar(@prefix);
-	for (my $i=0; $i < $nPrefix; $i++) {
-	    push @counts, $count->[$i] || 0;
-	}
-	print CODES join("\t",$code,@counts)."\n";
-	my $nAll = Vector::sum(@counts);
-	$nPerCount{$nAll}++;
+        my @counts = ();
+        my $nPrefix = scalar(@prefix);
+        for (my $i=0; $i < $nPrefix; $i++) {
+            push @counts, $count->[$i] || 0;
+        }
+        print CODES join("\t",$code,@counts)."\n";
+        my $nAll = Vector::sum(@counts);
+        $nPerCount{$nAll}++;
     }
     close(CODES) || die "Error writing to $out.codes.tmp";
     rename("$out.codes.tmp","$out.codes") || die "Cannot rename to $out.codes";
@@ -138,7 +138,7 @@ my $dntag = 0;
     open(COUNTS, ">", "$out.counts") || die "Cannot write to $out.counts";
     print COUNTS join("\t", "Count", "nCodes", "Frac")."\n";
     foreach my $count (sort {$a<=>$b} keys %nPerCount) {
-	print COUNTS join("\t",$count,$nPerCount{$count},$nPerCount{$count}/$nUniq)."\n";
+        print COUNTS join("\t",$count,$nPerCount{$count},$nPerCount{$count}/$nUniq)."\n";
     }
     close(COUNTS) || die "Error writing to $out.counts";
     print STDERR "Wrote number of barcodes seen a certain number of times to $out.counts";
@@ -147,21 +147,21 @@ my $dntag = 0;
 
     # and look for off-by-1 cases, unless minQuality is off
     if ($minQuality != 0) {
-	open(CLOSE, ">", "$out.close") || die "Cannot write to $out.close";
-	print CLOSE join("\t",qw{code1 count1 code2 count2})."\n";
-	my $nCases = 0;
+        open(CLOSE, ">", "$out.close") || die "Cannot write to $out.close";
+        print CLOSE join("\t",qw{code1 count1 code2 count2})."\n";
+        my $nCases = 0;
 
-	while (my ($code,$count) = each %codes) {
-	    my @variants = Variants($code);
-	    foreach my $variant (@variants) {
-		if (($code cmp $variant) > 0 && exists $codes{$variant}) {
-		    print CLOSE join("\t",$code,Vector::sum(@$count),$variant,Vector::sum(@{$codes{$variant}}))."\n";
-		    $nCases++;
-		}
-	    }
-	}
-	close(CLOSE) || die "Error writing to $out.close";
-	print STDERR "Wrote $nCases off-by-1 pairs to $out.close\n";
+        while (my ($code,$count) = each %codes) {
+            my @variants = Variants($code);
+            foreach my $variant (@variants) {
+                if (($code cmp $variant) > 0 && exists $codes{$variant}) {
+                    print CLOSE join("\t",$code,Vector::sum(@$count),$variant,Vector::sum(@{$codes{$variant}}))."\n";
+                    $nCases++;
+                }
+            }
+        }
+        close(CLOSE) || die "Error writing to $out.close";
+        print STDERR "Wrote $nCases off-by-1 pairs to $out.close\n";
     }
 }
 
@@ -169,10 +169,10 @@ sub FindPrefix($$) {
     my ($seq, $indexes) = @_;
     my @matches = ();
     for (my $i = 0; $i < scalar(@$indexes); $i++) {
-	my ($nLeading,$indexseq,$name) = @{ $indexes->[$i] };
-	if (substr($seq, $nLeading, length($indexseq)) eq $indexseq) {
-	    push @matches, $i;
-	}
+        my ($nLeading,$indexseq,$name) = @{ $indexes->[$i] };
+        if (substr($seq, $nLeading, length($indexseq)) eq $indexseq) {
+            push @matches, $i;
+        }
     }
     return $matches[0] if @matches == 1;
     print STDERR "No prefix for $seq\n" if $debug;
@@ -186,62 +186,62 @@ sub FindBarcode($$$) {
 
     my $prepos = index($seq2, $preseq);
     unless($prepos >= 0 && $prepos >= $nPreExpected-2 && $prepos <= $nPreExpected+2) {
-	print STDERR "seq2 $seq2 has invalid index-of-preseq $prepos\n" if $debug;
-	return undef;
+        print STDERR "seq2 $seq2 has invalid index-of-preseq $prepos\n" if $debug;
+        return undef;
     }
     my $barcode = substr($seq2, $prepos+length($preseq), 20);
     unless(length($barcode) == 20 && $barcode =~ m/^[A-Z]+$/) {
-	# note barcodes with ambiguous sequences are ignored
-	# (we might want to allow one N in the future)
-	print STDERR "seq2 $seq2 has invalid barcode sequence $barcode\n" if $debug;
-	return undef;
+        # note barcodes with ambiguous sequences are ignored
+        # (we might want to allow one N in the future)
+        print STDERR "seq2 $seq2 has invalid barcode sequence $barcode\n" if $debug;
+        return undef;
     }
 
     my $postseqUsed = $postseq;
     $postseqUsed = "" if $minQuality == 0;
     if (length($seq2) < $prepos + length($preseq) + 20 + length($postseqUsed)) {
-	$postseqUsed = substr($postseqUsed, 0, 4);
-	print STDERR "Using postseq $postseqUsed\n" if $debug;
+        $postseqUsed = substr($postseqUsed, 0, 4);
+        print STDERR "Using postseq $postseqUsed\n" if $debug;
 
-	if (length($seq2) < $prepos + length($preseq) + 20) {
-	    print STDERR "Giving up, too short\n" if $debug;
-	    return undef;
-	}
-	if (length($seq2) < $prepos + length($preseq) + 20 + length($postseqUsed)) {
-	    print STDERR "Ignoring postseq, too short\n" if $debug;
-	    $postseqUsed = "";
-	}
+        if (length($seq2) < $prepos + length($preseq) + 20) {
+            print STDERR "Giving up, too short\n" if $debug;
+            return undef;
+        }
+        if (length($seq2) < $prepos + length($preseq) + 20 + length($postseqUsed)) {
+            print STDERR "Ignoring postseq, too short\n" if $debug;
+            $postseqUsed = "";
+        }
     }
 
     my $foundEnd = -1;
     if ($postseqUsed eq "") {
-	$foundEnd = 20;
+        $foundEnd = 20;
     } else {
-	# need to check 20 first in case end of barcode matches post-seq. (AGAG issue)
-	foreach my $off (20,19,21,18,22) {
-	    if (substr($seq2, $prepos + length($preseq) + $off, length($postseqUsed)) eq $postseqUsed) {
-		$foundEnd = $off;
-		last;
-	    }
-	}
+        # need to check 20 first in case end of barcode matches post-seq. (AGAG issue)
+        foreach my $off (20,19,21,18,22) {
+            if (substr($seq2, $prepos + length($preseq) + $off, length($postseqUsed)) eq $postseqUsed) {
+                $foundEnd = $off;
+                last;
+            }
+        }
     }
     if ($foundEnd == -1) {
-	print STDERR "seq2 $seq2 barcode $barcode postseq not found\n" if $debug;
-	return undef;
+        print STDERR "seq2 $seq2 barcode $barcode postseq not found\n" if $debug;
+        return undef;
     }
 
     if ($minQuality > 0) {
-	# the sanger code for !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJ
-	my $barqual = substr($quality2, $prepos+length($preseq), 20);
-	# quality score is encoded as 33+
-	my @scores = map { $_ - 33 } unpack("%C"x20, $barqual);
-	foreach my $score (@scores) {
-	    die "Invalid score $score from barcode $barcode quality $barqual" if $score < 0 || $score > 100;
-	    if ($score < $minQuality) {
-		print STDERR "Low quality $score for barcode $barcode in $seq2\n" if $debug;
-		return undef;
-	    }
-	}
+        # the sanger code for !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJ
+        my $barqual = substr($quality2, $prepos+length($preseq), 20);
+        # quality score is encoded as 33+
+        my @scores = map { $_ - 33 } unpack("%C"x20, $barqual);
+        foreach my $score (@scores) {
+            die "Invalid score $score from barcode $barcode quality $barqual" if $score < 0 || $score > 100;
+            if ($score < $minQuality) {
+                print STDERR "Low quality $score for barcode $barcode in $seq2\n" if $debug;
+                return undef;
+            }
+        }
     }
     return($barcode,$foundEnd);
 }
@@ -252,13 +252,13 @@ sub Variants($) {
     $baseseq = uc($baseseq);
     my $len = length($baseseq);
     foreach my $i (0..($len-1)) {
-	my $pre = substr($baseseq,0,$i);
-	my $char = substr($baseseq,$i,1);
-	my $post = substr($baseseq,$i+1);
-	next unless $char eq "A" || $char eq "C" || $char eq "G" || $char eq "T";
-	foreach my $newchar (qw{A C G T}) {
-	    push @out, $pre . $newchar . $post unless $newchar eq $char;
-	}
+        my $pre = substr($baseseq,0,$i);
+        my $char = substr($baseseq,$i,1);
+        my $post = substr($baseseq,$i+1);
+        next unless $char eq "A" || $char eq "C" || $char eq "G" || $char eq "T";
+        foreach my $newchar (qw{A C G T}) {
+            push @out, $pre . $newchar . $post unless $newchar eq $char;
+        }
     }
     return(@out);
 }
