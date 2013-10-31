@@ -1,8 +1,6 @@
 #!/usr/bin/perl -w
 use strict;
 use Getopt::Long;
-use lib "$ENV{HOME}/Genomics/Perl/modules";
-use Vector;
 
 my $minQuality = 10;
 
@@ -31,6 +29,7 @@ END
 sub Variants($); # return all 1-nt variants for a sequence
 sub FindPrefix($$); # sequence, list of index prefixes => index of prefix or -1
 sub FindBarcode($$$); # sequence, quality, first post-prefix index => (barcode, spacing) or undef
+sub sum(@); # sum of a list of values
 
 my $preseq = undef; # before the barcode
 my $postseq = undef; # after (for 50 nt reads this needs to be shortened to AGA)
@@ -110,8 +109,7 @@ my $dntag = 0;
         $codes{$barcode}[$iPrefix]++;
     }
 
-        
-    my $nOffTot = Vector::sum(values %nOff);
+    my $nOffTot = sum(values %nOff);
     my $nUniq = scalar(keys %codes);
     print STDERR "Reads $nReads Multiplexed $nMulti Usable(20) $nOff{20} fraction " . ($nOff{20}/$nReads) . " unique codes $nUniq \n" if $nReads > 0;
     foreach my $off (18..22) {
@@ -128,7 +126,7 @@ my $dntag = 0;
             push @counts, $count->[$i] || 0;
         }
         print CODES join("\t",$code,@counts)."\n";
-        my $nAll = Vector::sum(@counts);
+        my $nAll = sum(@counts);
         $nPerCount{$nAll}++;
     }
     close(CODES) || die "Error writing to $out.codes.tmp";
@@ -155,7 +153,7 @@ my $dntag = 0;
             my @variants = Variants($code);
             foreach my $variant (@variants) {
                 if (($code cmp $variant) > 0 && exists $codes{$variant}) {
-                    print CLOSE join("\t",$code,Vector::sum(@$count),$variant,Vector::sum(@{$codes{$variant}}))."\n";
+                    print CLOSE join("\t",$code,sum(@$count),$variant,sum(@{$codes{$variant}}))."\n";
                     $nCases++;
                 }
             }
@@ -263,3 +261,9 @@ sub Variants($) {
     return(@out);
 }
 
+sub sum( @ ) {
+    my @x = @_;
+    my $sum = 0;
+    foreach (@x) { $sum += $_ if defined $_; }
+    return $sum;
+}
