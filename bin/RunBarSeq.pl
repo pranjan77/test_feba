@@ -1,6 +1,10 @@
 #!/usr/bin/perl -w
 use strict;
+use warnings;
 use Getopt::Long;
+use FindBin '$Bin';
+use lib "$Bin/../lib";
+use FEBA_utils;
 
 my $usage = <<END
 Usage: RunBarSeq.pl [-nosplit] [-debug] [-minQuality 0 ] [ -restart ] [ -pieceLines 20000000 ]
