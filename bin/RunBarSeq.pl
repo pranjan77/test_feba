@@ -17,13 +17,16 @@ RunBarSeq.pl has two phases -- the first phase splits the fastq file
 (if necessary) and launches jobs to the cluster. Wait for these jobs
 to finish, then invoke RunBarSeq.pl again to assemble the results for
 the second phase. Use -restart to force it to go to the first phase.
-The second phase also runs sumCols.pl and join.pl
+To save memory, the second phase ignores barcodes that do not
+match the pool file, which is expected to be in
+    prefix/g/organism_name/pool or pool.n10
 
 Output files are in FEBA_2013/g/organism/ --
-setname.codes -- all the counts
 setname.colsum -- total parsed reads per index
 setname.poolcount -- counts for strains in the pool
-    based on joining to the pool.n10 file.
+    based on joining to the pool or pool.n10 file.
+setname.codes.ignored -- all the counts for the barcodes
+	that did not match the pool.
 
 END
     ;
