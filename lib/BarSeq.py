@@ -34,7 +34,7 @@ class BarSeqBarcodeParser:
                 self.mplex_bc_lengths.add((leading_Ns,len(bc_seq))
     #end __init__
     
-    def get_barseq_barcode(self,seq,qual):
+    def get_barcodes(self,seq,qual):
         barseq_read_seq = None
         barseq_read_qual = None
         mplex_bc_seq = None
@@ -72,7 +72,4 @@ class BarSeqBarcodeParser:
     #end get_barseq_barcode
 
 #end BarSeqBarcodeParser
-
-
-
 
