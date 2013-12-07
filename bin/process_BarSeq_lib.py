@@ -5,6 +5,9 @@ import argparse
 import multiprocessing
 import os
 import collections
+import copy
+import Queue
+import string
 
 ##updating the library look up path
 sys.path.append(os.path.join(os.path.dirname(__file__),'../lib'));
@@ -16,7 +19,7 @@ STOP = "NO MORE READS. THIS SHOULD PROBABLY BE SOMETHING ELSE, BUT I'M MAKING IT
 QUEUE_SIZE = 100000
 
 # run this to read the input fastqs 
-def read_reads(read_files, queue, buffer_size=1000):
+def read_reads(read_files, queue, buffer_size=1000, verbose=False):
     proc_name = multiprocessing.current_process().name
     count = 0
     buf = [None]*buffer_size
@@ -32,7 +35,8 @@ def read_reads(read_files, queue, buffer_size=1000):
                         for item in buf:
                             queue.put(item)
                         #map(queue.put,buf)
-                        sys.stderr.write("[%s] added %d reads to the input queue\n" % (proc_name,count))
+                        if verbose:
+                            sys.stderr.write("[%s] added %d reads to the input queue\n" % (proc_name,count))
                         added = True
                 count = 0   
     added = False
@@ -40,15 +44,19 @@ def read_reads(read_files, queue, buffer_size=1000):
         if queue.qsize() < QUEUE_SIZE - count:
             for i in xrange(count):
                 queue.put(buf[i])
-            sys.stderr.write("[%s] added remaining %d reads to the input queue\n" % (proc_name,count))
+            if verbose:
+                sys.stderr.write("[%s] added remaining %d reads to the input queue\n" % (proc_name,count))
             added = True
-        sys.stderr.write("[%s] sending STOP signal\n" % (proc_name))
+        if verbose:
+            sys.stderr.write("[%s] sending STOP signal\n" % (proc_name))
         queue.put(id(STOP))
-    sys.stderr.write("[%s] done reading reads\n" % (proc_name))
+    if verbose:
+        sys.stderr.write("[%s] done reading reads\n" % (proc_name))
+    return 0
 #end fill_input_read_queue
 
 # many of these will run in parallel to parse barcodes from each read
-def process_reads(parser, in_queue, out_queue, buffer_size=1000):
+def process_reads(parser, in_queue, out_queue, buffer_size=1000, verbose=False):
     proc_name = multiprocessing.current_process().name
     barcode_counts = get_counter(parser.get_multiplex_barcodes())
     reads = [None]*buffer_size
@@ -66,11 +74,13 @@ def process_reads(parser, in_queue, out_queue, buffer_size=1000):
                 for i in xrange(buffer_size):
                     reads[i] = in_queue.get(timeout=3)
                     if reads[i] == id(STOP):
-                        sys.stderr.write("[%s] found STOP signal\n" % (proc_name))
+                        if verbose:
+                            sys.stderr.write("[%s] found STOP signal\n" % (proc_name))
                         in_queue.put(id(STOP))
                         i -= 1
                         break
-                sys.stderr.write("[%s] retrieved %d reads from the input queue\n" % (proc_name,i+1))
+                if verbose:
+                    sys.stderr.write("[%s] retrieved %d reads from the input queue\n" % (proc_name,i+1))
                 retrieved = True
         # process each read in the buffer we just filled
         for read in reads:
@@ -85,12 +95,17 @@ def process_reads(parser, in_queue, out_queue, buffer_size=1000):
             if bc_count > 0 and (bc_count == buffer_size or read == id(STOP)):
                 for i in xrange(bc_count):
                     barcode_counts[barcodes[i][0]][barcodes[i][1]] += 1
-                sys.stderr.write("[%s] counted %d barcodes\n" % (proc_name,bc_count))
+                if verbose:
+                    sys.stderr.write("[%s] counted %d barcodes\n" % (proc_name,bc_count))
                 bc_count = 0
             if not more_reads:
                 break
-    out_queue.put(barcode_counts,timeout=5)
-    sys.stderr.write("[%s] added counts to out queue\n" % proc_name)
+    out_queue.put(barcode_counts)
+    if verbose:
+        #sys.stderr.write("[%s] added counts to out queue\n" % (proc_name))
+        sys.stderr.write("[%s] added counts to out queue. %d total items in the queue, id=%d\n" % (proc_name, out_queue.qsize(), id(out_queue)))
+
+    return 0
 #end process_reads
             
 def get_counter(mplex_barcodes):
@@ -111,6 +126,7 @@ def get_usr_args():
     parser.add_argument("fastq", nargs='+', type=str, help="One or more fastqs to count barcodes for")
     parser.add_argument("-eN","--expName", type=str, dest="exp_name", default=None, metavar="", help="Name of the experiment")
     parser.add_argument("-p", "--procs", type=int, dest="procs", default=multiprocessing.cpu_count(), help="the number of processes to use")
+    parser.add_argument("-v", "--verbose", action="store_true", default=False, help="be verbose")
     
     if len(sys.argv) == 1:
         parser.print_help()
@@ -123,12 +139,41 @@ def get_usr_args():
 def add_counts(main_counter, counts_to_add):
     for mplex_bc in counts_to_add.keys():
         for barseq_bc in counts_to_add[mplex_bc]:
-            main_counter[mplex_bc][barsqe_bc] += counts_to_add[barseq_bc] 
+            main_counter[mplex_bc][barseq_bc] += counts_to_add[mplex_bc][barseq_bc] 
 #end add_counts
-    
+
+def read_pool_file(pool_file):
+    barcodes = dict()
+    with open(pool_file,"r") as fh:
+        fh.readline()
+        for line in fh:
+            ar = line[:-1].split()
+            if ar[-1] == "unique":
+                barcodes[ar[0]] = (ar[1],ar[2],ar[3])
+    return barcodes
+#end read_pool_file
+
+def read_morgan_pool_file(pool_file):
+    barcodes = dict()
+    with open(pool_file,"r") as fh:
+        fh.readline()
+        for line in fh:
+            ar = line[:-1].split()
+            if ar[4] == "pastEnd":
+                barcodes[ar[0]] = (ar[4],"",ar[5])
+            else:
+                barcodes[ar[0]] = (ar[4],ar[5],ar[6])
+    return barcodes
+#end read_morgan_pool_file
+
+complements = string.maketrans('acgtrymkbdhvACGTRYMKBDHV', 'tgcayrkmvhdbTGCAYRKMVHDB')
+def rev_comp(barcode):
+    return barcode.translate(complements)[::-1]
+#end rev_comp
 
 def main():
-    
+   
+    #sys.stderr.write("Hello World! 1\n") 
     args = get_usr_args()
     proc_name = multiprocessing.current_process().name
 
@@ -136,78 +181,68 @@ def main():
     mplex_barcodes = read_parser.get_multiplex_barcodes()
     
     procs = [None]*max(2,args.procs)
+    #sys.stderr.write("Hello World! 2\n") 
 
     # a Queue for putting input reads into
     in_queue = multiprocessing.Queue(QUEUE_SIZE)
     # a Queue for getting passing counts back to the master process
     out_queue = multiprocessing.Queue()
     
-    procs[0] = multiprocessing.Process(target=read_reads, args=(args.fastq,in_queue)) 
-    procs[1] = multiprocessing.Process(target=process_reads, args=(read_parser,in_queue,out_queue,1000))
+    procs[0] = multiprocessing.Process(target=read_reads, args=(args.fastq,in_queue,10000,args.verbose)) 
+    procs[1] = multiprocessing.Process(target=process_reads, args=(copy.deepcopy(read_parser),in_queue,out_queue,10000,args.verbose))
     for i in xrange(2,len(procs)):
-        procs[i] = multiprocessing.Process(target=process_reads, args=(read_parser,in_queue,out_queue,1000))
+        procs[i] = multiprocessing.Process(target=process_reads, args=(copy.deepcopy(read_parser),in_queue,out_queue,10000,args.verbose))
+
 
 
     # start and wait for our processes to finish
-    for p in procs:
-        p.start()    
-
-
-    if not procs[-1].is_alive():
-        sys.stderr.write("[%s] %s is dead.\n" % (proc_name, procs[-1].name))
-    else:
-        sys.stderr.write("[%s] %s is alive.\n" % (proc_name, procs[-1].name))
-    
-    procs[-1].join()
-    sys.stderr.write("[%s] Made it past joining the last process\n" % proc_name)
-    for p in procs:
-        p.join()
-        sys.stderr.write("[%s] Process complete!\n" % p.name)
+    #for p in procs:
+    #for i in xrange(0,len(procs),-1):
+    for i in xrange(len(procs)):
+        sys.stderr.write("[%s] Attempting to start process %s\n" % (proc_name,procs[i].name))
+        procs[i].start()    
+        sys.stderr.write("[%s] %s started\n" % (proc_name,procs[i].name))
 
     # combine counts
     counts = get_counter(mplex_barcodes)
-    while not out_queue.empty():
+    recvd = 0
+    while recvd < len(procs) - 1:
         add_counts(counts,out_queue.get())
+        recvd += 1
+
+    sys.stderr.write("[%s] Read all counts\n" % (proc_name))
+    
+    sys.stderr.write("[%s] Loading pool file\n" % (proc_name))
+    barseq_barcodes = read_morgan_pool_file(args.pool_file)
+    sys.stderr.write("[%s] Found %d barcodes in pool file\n" % (proc_name,len(barseq_barcodes)))
+    #barseq_barcodes = read_pool_file(args.pool_file)
+    out = sys.stdout
+    sys.stderr.write("[%s] Writing poolcounts table.\n" % (proc_name))
+
+    out.write("barcode\trcbarcode\tscaffold\tstrand\tpos")
+    for mplex_bc in mplex_barcodes.keys():
+        out.write("\t%s" % mplex_barcodes[mplex_bc].name)
+    for barseq_bc in barseq_barcodes.keys():
+        tn_seq, tn_strand, tn_pos = barseq_barcodes[barseq_bc] 
+        out.write("%s\t%s\t%s\t%s\t%s" % (barseq_bc,rev_comp(barseq_bc),tn_seq,tn_strand,tn_pos))
+        for mplex_bc in mplex_barcodes.keys():
+            if barseq_bc in counts[mplex_bc]:
+                out.write("\t%d" % counts[mplex_bc][barseq_bc])
+            else:
+                out.write("\t0")
+        out.write("\n")
+    
 
     # export counts to stdout 
     for mplex_bc in counts.keys():
         print mplex_barcodes[mplex_bc].name
         for barseq_bc in counts[mplex_bc]:
-            print "\t%s: %d" % (barseq_bc,counts[barseq_bc]) 
+            print "%s\t%s\t%d" % (mplex_bc,barseq_bc,counts[mplex_bc][barseq_bc]) 
+    
+    
     
 #end main
 
 
 main()
-
-
-
-
-
-
-
-
-
-
-
-## run this to pull barcodes from a queue and tally occurences
-#def read_barcodes(barcode_counts, queue, lock, buffer_size=1000):
-#    barcodes = [None]*buffer_size
-#    total_barcodes_processed = 0
-#    while True:
-#        #lock.acquire()
-#        sys.stderr.write("getting %d processed barcodes from the output queue\n" % buffer_size)
-#        for i in xrange(buffer_size):
-#            barcodes[i] = queue.get()
-#            if barcodes[i] is STOP:
-#                break
-#        #lock.release()
-#        for bc in barcodes:
-#            if bc is STOP:
-#               return total_barcodes_processed
-#            mplex_bc, barseq_bc = bc
-#            barcode_counts[mplex_bc][barseq_bc] += 1
-#            total_barcodes_processed += 1        
-##end read_barcodes
-
 
