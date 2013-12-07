@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import collections
 
 
 # the length of BarSeq barcodes
@@ -21,8 +22,8 @@ class MultiplexBarcode:
 class BarSeqBarcodeParser:
     
     def __init__(self,mplex_bc_file_path, preseq="CAGCGTACG", postseq="AGAGACCTC", n_pre_expected=9):
-        self.mplex_barcodes = dict()
-        self.mplex_bc_lengths = set()
+        self.mplex_barcodes = collections.OrderedDict()
+        self.mplex_barcodes_lengths = set()
         self.preseq = preseq
         self.postseq = postseq
         self.n_pre_expected = n_pre_expected
@@ -30,13 +31,15 @@ class BarSeqBarcodeParser:
             for line in bc_file:
                 if line[0:4] == "name":
                     continue
+                ######################### check to make sure barcode file is as expected
                 (name,bc_seq) = line[:-1].split("\t")
                 leading_Ns = 0
+                ######################### assert only Ns at beginning
                 if bc_seq[0] == 'N' or bc_seq[0] == 'n':
                     leading_Ns = sentence.count('n') + sentence.count('N')
                     bc_seq = bc_seq[leading_Ns:]
                 self.mplex_barcodes[bc_seq] = MultiplexBarcode(name,bc_seq,leading_Ns)
-                self.mplex_bc_lengths.add((leading_Ns,len(bc_seq)))
+                self.mplex_barcodes_lengths.add((leading_Ns,len(bc_seq)))
     #end __init__
     
     def get_multiplex_barcodes(self):
@@ -48,7 +51,7 @@ class BarSeqBarcodeParser:
         barseq_read_qual = None
         mplex_bc_seq = None
         # find the multiplexing barcode first and remove it to get the barsq read
-        for leading_Ns, bc_len in self.mplex_bc_lengths:
+        for leading_Ns, bc_len in self.mplex_barcodes_lengths:
             mplex_bc_seq = seq[leading_Ns:leading_Ns+bc_len]
             if mplex_bc_seq in self.mplex_barcodes:
                 barseq_read_seq = seq[leading_Ns+bc_len:]
@@ -80,7 +83,7 @@ class BarSeqBarcodeParser:
     #end get_barseq_barcode
 
     def __str__(self):
-        return "barcodes:\n%s\nlengths:\n%s\n" % (str(self.mplex_barcodes), self.mplex_bc_lengths)
+        return "barcodes:\n%s\nlengths:\n%s\n" % (str(self.mplex_barcodes), self.mplex_barcodes_lengths)
 
 #end BarSeqBarcodeParser
 
