@@ -24,18 +24,21 @@ def read_reads(read_files, queue, buffer_size=1000, verbose=False):
     proc_name = multiprocessing.current_process().name
     count = 0
     start = datetime.datetime.now()
-    buf = [None]*buffer_size
+    buf = []
     added = False
     for read_file in read_files:
         for read1, read2 in readSeq.readSeq(read_file, paired=True):
-            buf[count] = read1
+            buf.append(read1)
             count += 1
             if count == buffer_size:
                 added = False
                 while not added:
-                    if queue.qsize() <= QUEUE_SIZE - count:
-                        for item in buf:
-                            queue.put(item)
+                    #if queue.qsize() <= QUEUE_SIZE - count:
+                    if queue.qsize() <= QUEUE_SIZE - 1:
+                        queue.put(buf)
+                        buf = []
+                        #for item in buf:
+                        #    queue.put(item)
                         #map(queue.put,buf)
                         end = datetime.datetime.now()
                         if verbose:
@@ -45,16 +48,18 @@ def read_reads(read_files, queue, buffer_size=1000, verbose=False):
                 start = datetime.datetime.now()
     added = False
     while not added:
-        if queue.qsize() < QUEUE_SIZE - count:
-            for i in xrange(count):
-                queue.put(buf[i])
+        #if queue.qsize() < QUEUE_SIZE - count:
+        if queue.qsize() < QUEUE_SIZE - 1:
+            queue.put(buf)
+            #for i in xrange(count):
+            #    queue.put(buf[i])
             end = datetime.datetime.now()
             if verbose:
                 sys.stderr.write("[%s] added remaining %d reads to the input queue. Took %s to complete\n" % (proc_name,count, str(end-start)))
             added = True
         if verbose:
             sys.stderr.write("[%s] sending STOP signal\n" % (proc_name))
-        queue.put(id(STOP))
+            queue.put(id(STOP))
     if verbose:
         sys.stderr.write("[%s] done reading reads\n" % (proc_name))
     return 0
@@ -67,7 +72,7 @@ def process_reads(parser, in_queue, out_queue, buffer_size=1000, verbose=False):
     reads = [None]*buffer_size
     barcodes = [None]*buffer_size
     more_reads = True
-    bc_count = 0
+    #bc_count = 0
     start = datetime.datetime.now()
     mplex_bc, barseq_bc = None, None
     retrieved = False
@@ -76,42 +81,61 @@ def process_reads(parser, in_queue, out_queue, buffer_size=1000, verbose=False):
         retrieved = False
         while not retrieved:
             if not in_queue.empty():
-                i = 0
-                for i in xrange(buffer_size):
-                    reads[i] = in_queue.get()
-                    if reads[i] == id(STOP):
-                        if verbose:
-                            sys.stderr.write("[%s] found STOP signal\n" % (proc_name))
-                        in_queue.put(id(STOP))
-                        i -= 1
-                        break
-                if verbose:
-                    sys.stderr.write("[%s] retrieved %d reads from the input queue\n" % (proc_name,i+1))
+                #i = 0
+                #for i in xrange(buffer_size):
+                #    reads[i] = in_queue.get()
+                #    if reads[i] == id(STOP):
+                #        if verbose:
+                #            sys.stderr.write("[%s] found STOP signal\n" % (proc_name))
+                #        in_queue.put(id(STOP))
+                #        i -= 1
+                #        break
+                reads = in_queue.get()
+                if reads == id(STOP):
+                    if verbose:
+                        sys.stderr.write("[%s] found STOP signal\n" % (proc_name))
+                    in_queue.put(id(STOP))
+                else:
+                    if verbose:
+                        sys.stderr.write("[%s] retrieved %d reads from the input queue\n" % (proc_name,len(reads)))
                 retrieved = True
         # process each read in the buffer we just filled
-        for read in reads:
-            if read == id(STOP):
-                more_reads = False
-                mplex_bc, barseq_bc = None, None
-            else:
+        #for read in reads:
+        #    if read == id(STOP):
+        #        more_reads = False
+        #        mplex_bc, barseq_bc = None, None
+        #    else:
+        #        mplex_bc, barseq_bc = parser.extract_barcodes(read.seq,read.qual)
+        #    if mplex_bc is not None:
+        #        barcodes[bc_count] = (mplex_bc, barseq_bc)
+        #        bc_count += 1
+        #    if bc_count > 0 and (bc_count == buffer_size or read == id(STOP)):
+        #        for i in xrange(bc_count):
+        #            barcode_counts[barcodes[i][0]][barcodes[i][1]] += 1
+        #        end = datetime.datetime.now()
+        #        if verbose:
+        #            sys.stderr.write("[%s] counted %d barcodes. Took %s to complete\n" % (proc_name,bc_count, str(end-start)))
+        #        bc_count = 0
+        #        start = datetime.datetime.now()
+        #    if not more_reads:
+        #        break
+        if reads != id(STOP):
+            bc_count = 0
+            for read in reads:
                 mplex_bc, barseq_bc = parser.extract_barcodes(read.seq,read.qual)
-            if mplex_bc is not None:
-                barcodes[bc_count] = (mplex_bc, barseq_bc)
-                bc_count += 1
-            if bc_count > 0 and (bc_count == buffer_size or read == id(STOP)):
-                for i in xrange(bc_count):
-                    barcode_counts[barcodes[i][0]][barcodes[i][1]] += 1
-                end = datetime.datetime.now()
-                if verbose:
-                    sys.stderr.write("[%s] counted %d barcodes. Took %s to complete\n" % (proc_name,bc_count, str(end-start)))
-                bc_count = 0
-                start = datetime.datetime.now()
-            if not more_reads:
-                break
+                if mplex_bc is not None:
+                    barcode_counts[mplex_bc][barseq_bc] += 1
+                    bc_count += 1
+            end = datetime.datetime.now()
+            if verbose:
+                sys.stderr.write("[%s] processed %d reads, found %d barcodes. Took %s to complete\n" % (proc_name,len(reads), bc_count, str(end-start)))
+            start = datetime.datetime.now()
+        else:
+            more_reads = False
     out_queue.put(barcode_counts)
     if verbose:
         #sys.stderr.write("[%s] added counts to out queue\n" % (proc_name))
-        sys.stderr.write("[%s] added counts to out queue. \n" % (proc_name, out_queue.qsize(), id(out_queue)))
+        sys.stderr.write("[%s] added barcode counts to out queue. \n" % (proc_name))
 
     return 0
 #end process_reads
@@ -246,7 +270,6 @@ def main():
         for mplex_bc in mplex_barcodes.keys():
             #if barseq_bc in counts[mplex_bc]:
             if rc_bc in counts[mplex_bc]:
-                sys.stderr.write("Found %s in table\n" % rc_bc)
                 out.write("\t%d" % counts[mplex_bc][rc_bc])
             else:
                 out.write("\t0")
