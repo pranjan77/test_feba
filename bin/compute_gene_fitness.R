@@ -1,6 +1,17 @@
 #!/usr/bin/env Rscript
 
+hurd = function(time) {
+    seconds = as.numeric(time)
+    hours = floor(seconds/3600)
+    seconds = seconds %% 3600
+    min = floor(seconds/60)
+    sec = seconds %% 60
+    return(gsub(" ","0",paste(sprintf("%2i",hours),sprintf("%2i",min),sprintf("%.2f",sec),sep=":")))
+}
+
 library('optparse')
+
+
 
 options_list = list (
                 make_option(c("-p","--pool"),help="pool file from TnSeq data"), 
@@ -13,9 +24,7 @@ options_list = list (
 option_parser = OptionParser(usage = "usage: %prog [options] outbase barseq_counts1 ... barseq_countsN", option_list = options_list)
 
 parsed_args = parse_args(option_parser,positional_arguments=TRUE)
-
 parsed_args
-
 
 attach(parsed_args)
 
@@ -29,9 +38,11 @@ source(FEBA_functions);
 outbase = args[1]
 args = args[2:length(args)]
 
+start = proc.time()
 
 
 # Load metadata about experiments and genes
+before = proc.time()
 write("Loading metadata about experiments and genes", stderr())
 exps = read.delim(options$experiments,as.is=T);
 ##exps = read.delim("g/psRCH2/FEBA_BarSeq.tsv",as.is=T);
@@ -42,14 +53,19 @@ rules = read.table(options$short_rule, as.is=T);
 expsUsed$short = applyRules(rules, expsUsed$Description);
 genes = read.delim(options$genes, as.is=T);
 ##genes = read.delim("g/psRCH2/genes.tab",as.is=T);
+after = proc.time()
+write(paste("Took",hurd(after[3]-before[3]),"to complete"),stderr())
 
 # Load the pool
+before = proc.time()
 write("Loading pool", stderr())
 pool10 = read.delim(options$pool ,as.is=T);
 ##pool10 = read.delim("g/psRCH2/pool.n10",as.is=T);
 pool10g = findWithinGrouped(split(without(pool10[!is.na(pool10$pos),],"scaffold"),pool10$scaffold[!is.na(pool10$pos)]), split(genes, genes$scaffoldId), "pos", "begin", "end");
 pool10g$f = (pool10g$pos - pool10g$begin) / (pool10g$end - pool10g$begin);
 pool10g2 = pool10g[pool10g$f >= 0.1 & pool10g$f <= 0.9,];
+after = proc.time()
+write(paste("Took",hurd(after[3]-before[3]),"to complete"),stderr())
 
 ## # Load the BarSeq
 ## psRCH2_ML7_set1_JGI = read.delim("g/psRCH2/psRCH2_ML7_set1.poolcount",as.is=T)
@@ -80,6 +96,7 @@ pool10g2 = pool10g[pool10g$f >= 0.1 & pool10g$f <= 0.9,];
 
 # initialize table
 write("Loading poolcounts", stderr())
+before = proc.time()
 write(paste("Loading",args[1]),stderr())
 all = read.delim(args[1],as.is=T)
 all = data.frame(all[,1:5],apply(prefixName(all[,-(1:5)],"set1"),2,na0))
@@ -88,6 +105,8 @@ for (i in 2:length(args)) {
     write(paste("Loading",args[i]),stderr())
     all = data.frame(all,apply(prefixName(read.delim(args[i], as.is=T)[,-(1:5)], paste("set",i,sep="")), 2, na0))
 }
+after = proc.time()
+write(paste("Took",hurd(after[3]-before[3]),"to complete"),stderr())
 
 # Keep only the columns that are supposed to be there
 # (often some few indexes are not used, these were removed from expsUsed by ignoring
@@ -96,17 +115,29 @@ all = cbind(all[,1:5], all[,as.character(expsUsed$name)]);
 
 # gene-relevant counts
 write("Merging poolcounts",stderr())
+before = proc.time()
 all_g2 = merge(pool10g2[,words("barcode rcbarcode strand pos locusId f")], all);
+after = proc.time()
+write(paste("Took",hurd(after[3]-before[3]),"to complete"),stderr())
 
 # The actual computation and statistics (still undergoing changes)
 # Needs to be run with okLane=TRUE in a few cases where there
 # is no matching time0 sample.
 write("Computing fitness scores",stderr())
+before = proc.time()
 fit = FEBA_Fit(expsUsed, all, all_g2, genes);
+after = proc.time()
+write(paste("Took",hurd(after[3]-before[3]),"to complete"),stderr())
 
 # FEBA_Save_Tables creates the files in the output directories
 # You'd need to change the topdir option
+dir.create(options$outdir,showWarnings=FALSE)
 write(paste("Saving fitness tables to",options$outdir),stderr())
-FEBA_Save_Tables(fit, genes, topdir=options$outdir, org="psRCH2", debug=TRUE);
+before = proc.time()
+FEBA_Save_Tables(fit, genes, topdir=options$outdir, org="psRCH2");
+after = proc.time()
+write(paste("Took",hurd(after[3]-before[3]),"to complete"),stderr())
 
+end = proc.time()
+write(paste("Took",hurd(end[3]-start[3]),"to complete entire process"),stderr())
 
