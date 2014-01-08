@@ -45,11 +45,18 @@ GeneFitness = function(genes, strainInfo, countCond, countT0,
       		         strainsUsed=strainsUsed & use1, genesUsed=genesUsed12, ...);
     d2 = AvgStrainFitness(countCond, countT0, strainInfo$locusId,
       		         strainsUsed=strainsUsed & !use1, genesUsed=genesUsed12, ...);
+    if(any(as.character(d1$locusId) != as.character(d2$locusId))) stop("Non-matching locusId");
 
-    d$fit1 = d1$fit[match(d$locusId, d1$locusId)];
-    d$fit2 = d2$fit[match(d$locusId, d1$locusId)];
+    i = match(d$locusId, d1$locusId);
+
+    d$fit1 = d1$fit[i];
+    d$fit2 = d2$fit[i];
     d$fitnorm1 = d$fit1 + (d$fitnorm-d$fit);
     d$fitnorm2 = d$fit2 + (d$fitnorm-d$fit);
+    d$tot1 = d1$tot[i];
+    d$tot1_0 = d1$tot0[i];
+    d$tot2 = d2$tot[i];
+    d$tot2_0 = d2$tot0[i];
 
     # for low n, the estimated variance is driven by the overall variance, which can be estimated
     # from the median difference between 1st and 2nd halves via the assumptions
@@ -489,7 +496,7 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 
 	if(writeImage) {
 	    img = format(Sys.time(),"fit%Y%b%d.image"); # e.g., fit2013Oct24.image
-	    save(fit, genes, file=nameToPath(img));
+	    save(fit, genes, expsUsed, file=nameToPath(img));
 	    wroteName(img);
 	    unlink(nameToPath("fit.image"));
 	    file.symlink(img, nameToPath("fit.image"));
