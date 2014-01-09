@@ -12,6 +12,7 @@ import os
 import logging
 import datetime
 import math
+import re
 
 logging.basicConfig(filename='genes.log',level=logging.DEBUG)
 logging.info(datetime.date.today().ctime())
@@ -24,22 +25,6 @@ grpInput.add_argument('--pool', type=str, dest='strInserts',default= "", help='E
 grpInput.add_argument('--pctoff', type=float, dest='dOffset',default= 0.0, help='This will ignore insertions in the first and last x% of the gene (.10,.20, etc.) ')
 args = parser.parse_args()
 
-
-
-"""
-Genes.tab - Header Information:
-(Field,Index)
-
-locusId 0
-sysName 1
-type    2
-scaffoldId  3
-begin   4
-end 5
-strand  6
-name    7
-desc    8
-"""
 #################################################################################
 # Load in the genes.tab file. For each unique ScaffoldId, make a sorted list of
 # positions, and save these in dictScaffoldPosLists.
@@ -48,32 +33,33 @@ desc    8
 dictScaffoldPosLists = {}
 
 with open(args.strGenes, 'rb') as fileGenes:
-	fileGenes.next()
 
+	iCount = 0
 	for astrLine in csv.reader(fileGenes,delimiter='\t'):
-		strScaffoldID = str(astrLine[3])
-		strSysName = astrLine[1]
-		iStart = int(astrLine[4])
-		iEnd = int(astrLine[5])
-		strDesc = astrLine[8]
+		if iCount ==0:
+			iScaffoldPos = astrLine.index("scaffoldId")
+			iStartPos = astrLine.index("begin")
+			iEndPos = astrLine.index("end")
+			iDescPos = astrLine.index("desc")
+			iSysPos = astrLine.index("sysName")
 
-		if strScaffoldID not in dictScaffoldPosLists:
-			dictScaffoldPosLists[strScaffoldID] = []
+		else:
+			strScaffoldID = str(astrLine[iScaffoldPos])
+			strSysName = astrLine[iSysPos]
+			iStart = int(astrLine[iStartPos])
+			iEnd = int(astrLine[iEndPos])
+			strDesc = astrLine[iDescPos]
 
-		dictScaffoldPosLists[strScaffoldID] = dictScaffoldPosLists[strScaffoldID] + [[iStart,iEnd,0,0]+[strSysName]+[strDesc]]
+			if strScaffoldID not in dictScaffoldPosLists:
+				dictScaffoldPosLists[strScaffoldID] = []
+
+			dictScaffoldPosLists[strScaffoldID] = dictScaffoldPosLists[strScaffoldID] + [[iStart,iEnd,0,0]+[strSysName]+[strDesc]]
+		iCount+=1
 
 # Sort the lists
 for key in dictScaffoldPosLists.keys():
 	dictScaffoldPosLists[key] = sorted(dictScaffoldPosLists[key], key=lambda x: float(x[0]))
 
-
-# DEBUGGING - Test to ensure the dictionaries are correct.
-"""
-for key in dictScaffoldPosLists.keys():
-	print key
-	for x in dictScaffoldPosLists[key]:
-		print x
-"""
 
 ################################################################################
 # Binary Search - Check if Insertion landed in a gene.
@@ -152,9 +138,6 @@ def FindClosestPos(aaChromosome, iPos,dPctOffset):
 	return aiHits
 
 
-
-
-
 """
 Pool.n10 - Header Information:
 (Field,Index)
@@ -208,13 +191,19 @@ with open(args.strInserts, 'rb') as fileInserts:
 						dictScaffoldPosLists[strScaffoldId][iIndex][iStrand] = dictScaffoldPosLists[strScaffoldId][iIndex][iStrand]+int(aGene[3])
 
 iNoInsertions = 0
+iTransNoInsertion =0
 
+print '\t'.join(["Name","Insertions","Description"])
 for key in dictScaffoldPosLists.keys():
 	for aGene in dictScaffoldPosLists[key]:
 		iCount = aGene[2] + aGene[3]
 		print '\t'.join([aGene[4],str(iCount),aGene[-1]])
-		#print '\t'.join(map(str,aGene))
+		# DO a re search here for "transpos" in aGene[-1], count the number of times it occures with hits=0
 		if iCount==0:
 			iNoInsertions+=1
+			mtchTranspos = re.search(r'transpos', aGene[-1])
+			if mtchTranspos:
+				iTransNoInsertion+=1
 
 print "Genes_without_insertions:\t"+str( iNoInsertions)
+print "Transposases_without_insertions:\t"+str( iTransNoInsertion)
