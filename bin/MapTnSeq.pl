@@ -218,6 +218,13 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
     print STDERR "Mapping attempted for $nTryToMap Mapped $nMapped Uniquely $nMapUnique\n";
     print STDERR "Hits past end of transposon: " . (scalar(keys %hitsPastEnd) - $nPastEndIgnored) .
         " plus $nPastEndIgnored weak/ambiguous; trumped hit to genome $nPastEndTrumps times\n";
+    print STDERR sprintf("Proportions: Long-enough %.3f Barcode %.3f Attempted %.3f Mapped %.3f Past-end %.3f\n",
+			 $nLong/$nReads,
+			 scalar(keys %nameToBarcode)/$nReads,
+			 $nTryToMap/$nReads,
+			 $nMapped/$nReads,
+			 (scalar(keys %hitsPastEnd) - $nPastEndIgnored)/$nReads)
+	if $nReads > 0;
 }
 
 sub FindSubstr($$$$) {

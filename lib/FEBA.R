@@ -45,11 +45,18 @@ GeneFitness = function(genes, strainInfo, countCond, countT0,
       		         strainsUsed=strainsUsed & use1, genesUsed=genesUsed12, ...);
     d2 = AvgStrainFitness(countCond, countT0, strainInfo$locusId,
       		         strainsUsed=strainsUsed & !use1, genesUsed=genesUsed12, ...);
+    if(any(as.character(d1$locusId) != as.character(d2$locusId))) stop("Non-matching locusId");
 
-    d$fit1 = d1$fit[match(d$locusId, d1$locusId)];
-    d$fit2 = d2$fit[match(d$locusId, d1$locusId)];
+    i = match(d$locusId, d1$locusId);
+
+    d$fit1 = d1$fit[i];
+    d$fit2 = d2$fit[i];
     d$fitnorm1 = d$fit1 + (d$fitnorm-d$fit);
     d$fitnorm2 = d$fit2 + (d$fitnorm-d$fit);
+    d$tot1 = d1$tot[i];
+    d$tot1_0 = d1$tot0[i];
+    d$tot2 = d2$tot[i];
+    d$tot2_0 = d2$tot0[i];
 
     # for low n, the estimated variance is driven by the overall variance, which can be estimated
     # from the median difference between 1st and 2nd halves via the assumptions
@@ -122,15 +129,20 @@ AvgStrainFitness = function(strainCounts, strainT0, strainLocus,
 	if(debug) cat("Median abs adjust: ", median(abs(strainFitAdjust)), "\n");
     }
 
+
     # Per-strain "smart" pseudocount to give a less biased per-strain fitness estimate.
     # This is the expected reads ratio, given data for the gene as a whole
     # Arguably, this should be weighted by T0 reads, but right now it isn't.
     # Also, do not do if we have just 1 or 2 strains, as it would just amplify noise
-    geneFit1 = aggregate(strainFit, list(locusId=strainLocus), mean);
-    geneFit1$x = mednorm(geneFit1$x);
-    nStrains = aggregate(strainFit, list(locusId=strainLocus), length);
-    i = match(strainLocus, geneFit1$locusId); # from strain index to gene index
-    strainPseudoCount = ifelse(nStrains$x[i] >= 3, 2**geneFit1$x[i] * readratio, readratio);
+
+    # note use of as.vector() to remove names -- necessary for speed
+    strainLocusF = as.factor(strainLocus);
+    nStrains = table(strainLocusF);
+    if(!all(names(nStrains)==levels(strainLocusF))) stop("Strain mismatch");
+    nStrains = as.vector(nStrains);
+    geneFit1 = mednorm(as.vector(tapply(strainFit, strainLocusF, mean)));
+    i = as.integer(strainLocusF); # from strain index to gene index
+    strainPseudoCount = ifelse(nStrains[i] >= 3, 2**geneFit1[i] * readratio, readratio);
 
     # And apportion the pseudocount equally (in log space) between condition-count and strain-count
     # to minimize the deviations from pseudocount = 1
@@ -144,27 +156,44 @@ AvgStrainFitness = function(strainCounts, strainT0, strainLocus,
     # even weighting is an option for testing purposes
     strainWeight = 0.5 + pmin(maxWeight, strainT0+strainCounts);
 
-    geneFit2 = aggregate(1:length(strainT0), list(locusId=strainLocus),
-    	                function(j) {
-			    totw = sum(strainWeight[j]);
-			    meanFit = sum(strainWeight[j] * strainFit[j]) / totw;
-			    c(fit = meanFit,
-			    	  sd = sqrt(sum(strainWeight[j]**2 * strainVar[j]))/totw,
-				  sumsq = sum(strainWeight[j] * (strainFit[j]-meanFit)**2)/totw,
-				  sdNaive = sqrt( 1/(1+sum(strainCounts[j])) + 1/(1+sum(strainT0[j])) ) / log(2),
-				  n = length(j),
-				  nEff = sum(strainWeight[j])/max(strainWeight[j]),
-				  tot = sum(strainCounts[j]),
-				  tot0 = sum(strainT0[j]));
-                        });
+# working in 0.24 seconds
+#    geneFit2 = aggregate(1:length(strainT0), list(locusId=strainLocusF),
+#    	                function(j) {
+#			    totw = sum(strainWeight[j]);
+#			    meanFit = sum(strainWeight[j] * strainFit[j]) / totw;
+#			    c(fit = meanFit,
+#			    	  sd = sqrt(sum(strainWeight[j]**2 * strainVar[j]))/totw,
+#				  sumsq = sum(strainWeight[j] * (strainFit[j]-meanFit)**2)/totw,
+#				  sdNaive = sqrt( 1/(1+sum(strainCounts[j])) + 1/(1+sum(strainT0[j])) ) / log(2),
+#				  n = length(j),
+#				  nEff = sum(strainWeight[j])/max(strainWeight[j]),
+#				  tot = sum(strainCounts[j]),
+#				  tot0 = sum(strainT0[j]));
+#                        });
     # a hack to get around the lists within the entries
-    geneFit2 = data.frame(locusId = geneFit2$locusId, geneFit2[,2]);
+#    geneFit2 = data.frame(locusId = geneFit2$locusId, geneFit2[,2]);
+#    geneFit2$fit = mednorm(geneFit2$fitRaw);
 
-    geneFit2$fitRaw = geneFit2$fit; # without the median normalization
-    geneFit2$fit = mednorm(geneFit2$fit);
-
-    geneFit2$fitNaive = mednorm(log2(1+geneFit2$tot) - log2(1+geneFit2$tot0));
-    return(geneFit2);
+     fitness = lapply(split(1:length(strainT0), list(locusId=strainLocus)),
+     	           function(j) {
+                       totw = sum(strainWeight[j]);
+		       fitRaw = sum(strainWeight[j] * strainFit[j]) / totw;
+		       tot = sum(strainCounts[j]);
+		       tot0 = sum(strainT0[j]);
+		       sd = sqrt(sum(strainWeight[j]**2 * strainVar[j]))/totw;
+		       sumsq = sum(strainWeight[j] * (strainFit[j]-fitRaw)**2)/totw;
+		       sdNaive = sqrt( 1/(1+tot) + 1/(1+tot0) ) / log(2);
+		       n = length(j);
+		       nEff = totw/max(strainWeight[j]);
+		       c(fitRaw=fitRaw, sd=sd, sumsq=sumsq, sdNaive=sdNaive, n=n, nEff=nEff,
+		         tot=tot, tot0=tot0);
+		});
+     fitness = data.frame(do.call(rbind, fitness));
+     fitness$fit = mednorm(fitness$fit);
+     fitness$fitNaive = mednorm(log2(1+fitness$tot) - log2(1+fitness$tot0));
+     fitness$locusId = row.names(fitness);
+     if (is.integer(strainLocus)) fitness$locusId = as.integer(as.character(fitness$locusId));
+     return(fitness);
 }
 
 # NormalizeByScaffold():
@@ -262,16 +291,17 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 	    }
 	}
 
+	# note that t0_g2 does not contain any metadata columns, but t0_gN does
 	t0_g2 = data.frame(lapply(expsT0, function(x) rowSums(all_g2[,x,drop=F])), check.names=F);
     write("Aggregating t0_g2",stderr())
 	t0_gN = aggregate(t0_g2, list(locusId=all_g2$locusId), sum);
 	cat("Reads per t0set, in millions:\n");
 	print(colSums(t0_g2)/1e6, digits=2);
 
-	if(is.null(strainsUsed)) strainsUsed = rowMeans(t0_g2[,-1,drop=F]) >= minT0Strain;
+	if(is.null(strainsUsed)) strainsUsed = rowMeans(t0_g2) >= minT0Strain;
 	if(is.null(genesUsed)) {
-		d = aggregate(t0_g2[strainsUsed,], list(locusId=all_g2$locusId[strainsUsed]), sum);
-		genesUsed = d$locusId[ rowMeans(d[,-1,drop=F]) >= minT0Gene ];
+		t0_gN_used = aggregate(t0_g2[strainsUsed,], list(locusId=all_g2$locusId[strainsUsed]), sum);
+		genesUsed = t0_gN_used$locusId[ rowMeans(t0_gN_used[,-1,drop=F]) >= minT0Gene ];
 	}
 	genesPerScaffold = table(genes$scaffoldId[genes$locusId %in% genesUsed]);
 	smallScaffold = names(genesPerScaffold)[genesPerScaffold < minGenesPerScaffold];
@@ -317,9 +347,8 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 	if(!any(keep)) stop("All comparisons failed\n");
 	all_fit = all_fit[keep, drop=F];
 	fit = list(g = all_fit[[1]]$locusId);
-	for(n in names(all_fit[[1]])[-1]) {
+	for(n in setdiff(names(all_fit[[1]]), "locusId"))
 	    fit[[n]] = data.frame(lapply(all_fit, function(x) x[[n]]));
-	}
 	names(fit) = sub("fitnorm","lrn",names(fit));
 	names(fit) = sub("fit","lr",names(fit));
 	if (debug) cat("Extracted fitness values\n");
@@ -494,7 +523,7 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 
 	if(writeImage) {
 	    img = format(Sys.time(),"fit%Y%b%d.image"); # e.g., fit2013Oct24.image
-	    save(fit, genes, file=nameToPath(img));
+	    save(fit, genes, expsUsed, file=nameToPath(img));
 	    wroteName(img);
 	    unlink(nameToPath("fit.image"));
 	    file.symlink(img, nameToPath("fit.image"));
