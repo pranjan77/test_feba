@@ -96,7 +96,8 @@ AvgStrainFitness = function(strainCounts, strainT0, strainLocus,
 		 nACG = NULL,
 		 genesUsed=NULL, strainsUsed=NULL,
 		 even=FALSE,
-		 maxWeight = if(even) 0 else 200,
+		 # maxWeight of 100 corresponds to having 100 reads on each side (if perfectly balanced)
+		 maxWeight = if(even) 0 else 100,
 		 debug=FALSE) {
     if (length(strainCounts) < 1 || length(strainT0) < 1 || length(strainLocus) < 1
         || length(strainCounts) != length(strainT0) || length(strainCounts) != length(strainLocus))
@@ -154,27 +155,10 @@ AvgStrainFitness = function(strainCounts, strainT0, strainLocus,
     strainFit = log2(condPseudoCount + strainCounts) - log2(t0PseudoCount + strainT0) - strainFitAdjust;
     strainVar = sqrt(1/(1+strainT0) + 1/(1+strainCounts)) / log(2);
     # even weighting is an option for testing purposes
-    strainWeight = 0.5 + pmin(maxWeight, strainT0+strainCounts);
+    # use harmonic mean for weighting
+    strainWeight = 0.5 + pmin(maxWeight, 2/( 1/(1+strainT0) + 1/(1+strainCounts) ) );
 
-# working in 0.24 seconds
-#    geneFit2 = aggregate(1:length(strainT0), list(locusId=strainLocusF),
-#    	                function(j) {
-#			    totw = sum(strainWeight[j]);
-#			    meanFit = sum(strainWeight[j] * strainFit[j]) / totw;
-#			    c(fit = meanFit,
-#			    	  sd = sqrt(sum(strainWeight[j]**2 * strainVar[j]))/totw,
-#				  sumsq = sum(strainWeight[j] * (strainFit[j]-meanFit)**2)/totw,
-#				  sdNaive = sqrt( 1/(1+sum(strainCounts[j])) + 1/(1+sum(strainT0[j])) ) / log(2),
-#				  n = length(j),
-#				  nEff = sum(strainWeight[j])/max(strainWeight[j]),
-#				  tot = sum(strainCounts[j]),
-#				  tot0 = sum(strainT0[j]));
-#                        });
-    # a hack to get around the lists within the entries
-#    geneFit2 = data.frame(locusId = geneFit2$locusId, geneFit2[,2]);
-#    geneFit2$fit = mednorm(geneFit2$fitRaw);
-
-     fitness = lapply(split(1:length(strainT0), list(locusId=strainLocus)),
+    fitness = lapply(split(1:length(strainT0), list(locusId=strainLocus)),
      	           function(j) {
                        totw = sum(strainWeight[j]);
 		       fitRaw = sum(strainWeight[j] * strainFit[j]) / totw;
@@ -182,18 +166,22 @@ AvgStrainFitness = function(strainCounts, strainT0, strainLocus,
 		       tot0 = sum(strainT0[j]);
 		       sd = sqrt(sum(strainWeight[j]**2 * strainVar[j]))/totw;
 		       sumsq = sum(strainWeight[j] * (strainFit[j]-fitRaw)**2)/totw;
+		       # high-N estimate of the noise in the log2 ratio of fitNaive
+		       # But sdNaive is actually pretty accurate for small n -- e.g.
+		       # simulations with E=10 on each side gave slightly light tails
+		       # (r.m.s.(z) = 0.94).
 		       sdNaive = sqrt( 1/(1+tot) + 1/(1+tot0) ) / log(2);
 		       n = length(j);
 		       nEff = totw/max(strainWeight[j]);
 		       c(fitRaw=fitRaw, sd=sd, sumsq=sumsq, sdNaive=sdNaive, n=n, nEff=nEff,
 		         tot=tot, tot0=tot0);
 		});
-     fitness = data.frame(do.call(rbind, fitness));
-     fitness$fit = mednorm(fitness$fit);
-     fitness$fitNaive = mednorm(log2(1+fitness$tot) - log2(1+fitness$tot0));
-     fitness$locusId = row.names(fitness);
-     if (is.integer(strainLocus)) fitness$locusId = as.integer(as.character(fitness$locusId));
-     return(fitness);
+    fitness = data.frame(do.call(rbind, fitness));
+    fitness$fit = mednorm(fitness$fit);
+    fitness$fitNaive = mednorm(log2(1+fitness$tot) - log2(1+fitness$tot0));
+    fitness$locusId = row.names(fitness);
+    if (is.integer(strainLocus)) fitness$locusId = as.integer(as.character(fitness$locusId));
+    return(fitness);
 }
 
 # NormalizeByScaffold():
