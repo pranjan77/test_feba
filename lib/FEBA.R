@@ -237,6 +237,9 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 
 	expsUsed$name = as.character(expsUsed$name);
 
+    write("Aggregating all_g2",stderr())
+    #write("all_g2",stdout())
+    #write(paste(head(all_g2)),stdout())
 	all_gN = aggregate(all_g2[,-(1:7)], list(locusId=all_g2$locusId), sum);
 
 	expsUsed$t0set = paste(expsUsed$Date_pool_expt_started, expsUsed$Set);
@@ -260,6 +263,7 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 	}
 
 	t0_g2 = data.frame(lapply(expsT0, function(x) rowSums(all_g2[,x,drop=F])), check.names=F);
+    write("Aggregating t0_g2",stderr())
 	t0_gN = aggregate(t0_g2, list(locusId=all_g2$locusId), sum);
 	cat("Reads per t0set, in millions:\n");
 	print(colSums(t0_g2)/1e6, digits=2);
@@ -351,7 +355,8 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 		 topdir="public_html/tmp",
 		 dir = paste(topdir,org,sep="/"),
 		 writeImage=TRUE) {
-	if(!file.exists(dir)) stop("No such directory ",dir);
+	#if(!file.exists(dir)) stop("No such directory ",dir);
+	if(!file.exists(dir)) dir.create(dir);
 
 	for (n in words("q lr lrn lrn1 lrn2 t")) {
 	    if (is.null(fit[[n]]) || !is.data.frame(fit[[n]])) {
@@ -640,3 +645,10 @@ findWithinGrouped = function(splitx, splity, by.x, begin, end, debug=FALSE, ...)
 	}
 	return(out);
 }
+
+without <- function(list,columns=list$without) {
+	list2 <- list;
+	for (i in columns) { list2[[i]] <- NULL; }
+	return(list2);
+}
+
