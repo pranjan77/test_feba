@@ -59,7 +59,7 @@ def read_reads(read_files, queue, buffer_size=1000, verbose=False):
             added = True
         if verbose:
             sys.stderr.write("[%s] sending STOP signal\n" % (proc_name))
-            queue.put(id(STOP))
+        queue.put(id(STOP))
     if verbose:
         sys.stderr.write("[%s] done reading reads\n" % (proc_name))
     return 0
@@ -238,9 +238,8 @@ def main():
     start = datetime.datetime.now()
     sys.stderr.write("[%s] %s\n" % (proc_name,start.strftime("DATE: %02m/%02d/%04Y %02H:%0M:%02S")))
     for i in xrange(len(procs)):
-        sys.stderr.write("[%s] Attempting to start process %s\n" % (proc_name,procs[i].name))
+        sys.stderr.write("[%s] Starting process %s\n" % (proc_name,procs[i].name))
         procs[i].start()    
-        sys.stderr.write("[%s] %s started\n" % (proc_name,procs[i].name))
 
     # combine counts
     counts = get_counter(mplex_barcodes)
@@ -252,8 +251,8 @@ def main():
     sys.stderr.write("[%s] Read all counts\n" % (proc_name))
     
     sys.stderr.write("[%s] Loading pool file\n" % (proc_name))
-    #barseq_barcodes = read_morgan_pool_file(args.pool_file)
-    barseq_barcodes = read_pool_file(args.pool_file)
+    barseq_barcodes = read_morgan_pool_file(args.pool_file)
+    #barseq_barcodes = read_pool_file(args.pool_file)
     sys.stderr.write("[%s] Found %d barcodes in pool file\n" % (proc_name,len(barseq_barcodes)))
     #barseq_barcodes = read_pool_file(args.pool_file)
     out = sys.stdout
@@ -282,10 +281,10 @@ def main():
 
     sys.exit(0)
     # export counts to stdout 
-    for mplex_bc in counts.keys():
-        print mplex_barcodes[mplex_bc].name
-        for barseq_bc in counts[mplex_bc]:
-            print "%s\t%s\t%d" % (mplex_bc,barseq_bc,counts[mplex_bc][barseq_bc]) 
+    #for mplex_bc in counts.keys():
+    #    print mplex_barcodes[mplex_bc].name
+    #    for barseq_bc in counts[mplex_bc]:
+    #        print "%s\t%s\t%d" % (mplex_bc,barseq_bc,counts[mplex_bc][barseq_bc]) 
 
     
     
