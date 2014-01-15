@@ -23,6 +23,8 @@ grpInput = parser.add_argument_group('Input')
 grpInput.add_argument('--genes', type=str, dest='strGenes',default= "", help='Enter the list of genes.')
 grpInput.add_argument('--pool', type=str, dest='strInserts',default= "", help='Enter the pool information.')
 grpInput.add_argument('--pctoff', type=float, dest='dOffset',default= 0.0, help='This will ignore insertions in the first and last x% of the gene (.10,.20, etc.) ')
+grpInput.add_argument('--locus_output',dest='bLocusOut',action='store_true', help='Set to \'True\' if you only wish to output the locus and insertion count.')
+parser.set_defaults(bLocusOut=False)
 args = parser.parse_args()
 
 #################################################################################
@@ -42,6 +44,7 @@ with open(args.strGenes, 'rb') as fileGenes:
 			iEndPos = astrLine.index("end")
 			iDescPos = astrLine.index("desc")
 			iSysPos = astrLine.index("sysName")
+			iLocusPos = astrLine.index("locusId")
 
 		else:
 			strScaffoldID = str(astrLine[iScaffoldPos])
@@ -49,11 +52,12 @@ with open(args.strGenes, 'rb') as fileGenes:
 			iStart = int(astrLine[iStartPos])
 			iEnd = int(astrLine[iEndPos])
 			strDesc = astrLine[iDescPos]
+			strLocus = astrLine[iLocusPos]
 
 			if strScaffoldID not in dictScaffoldPosLists:
 				dictScaffoldPosLists[strScaffoldID] = []
 
-			dictScaffoldPosLists[strScaffoldID] = dictScaffoldPosLists[strScaffoldID] + [[iStart,iEnd,0,0]+[strSysName]+[strDesc]]
+			dictScaffoldPosLists[strScaffoldID] = dictScaffoldPosLists[strScaffoldID] + [[iStart,iEnd,0,0]+[strSysName]+[strLocus]+[strDesc]]
 		iCount+=1
 
 # Sort the lists
@@ -193,11 +197,18 @@ with open(args.strInserts, 'rb') as fileInserts:
 iNoInsertions = 0
 iTransNoInsertion =0
 
-print '\t'.join(["Name","Insertions","Description"])
+if args.bLocusOut == True:
+	print '\t'.join(["Locus","Insertions"])
+else:
+	print '\t'.join(["Name","Insertions","Description"])
+
 for key in dictScaffoldPosLists.keys():
 	for aGene in dictScaffoldPosLists[key]:
 		iCount = aGene[2] + aGene[3]
-		print '\t'.join([aGene[4],str(iCount),aGene[-1]])
+		if args.bLocusOut == True:
+			print '\t'.join([aGene[5],str(iCount)])
+		else:
+			print '\t'.join([aGene[4],str(iCount),aGene[-1]])
 		# DO a re search here for "transpos" in aGene[-1], count the number of times it occures with hits=0
 		if iCount==0:
 			iNoInsertions+=1
