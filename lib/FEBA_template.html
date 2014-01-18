@@ -1,0 +1,53 @@
+<HTML>
+<HEAD>
+<TITLE>ORG</TITLE>
+</HEAD>
+<BODY>
+<H3>Fitness Data for ORG</H3>
+
+<P><small>NEXPS samples, DATE</small>
+
+<P><A>For documentation, see <A HREF="../fit_comments.html">here</A>
+
+<P>Tables
+<UL>
+<LI><A HREF="fit_genes.tab">Genes</A>
+<LI><A HREF="fit_quality.tab">Experiments</A> (including quality scores)
+<LI><A HREF="fit_logratios.tab">Gene Fitness</A> (log2 ratios, normalized)
+<UL>
+<LI><A HREF="fit_logratios_unnormalized.tab">Unnormalized logratios</A>
+<LI><A HREF="fit_logratios_unnormalized_naive.tab">Naive unnormalized logratios</A>
+</UL>
+<LI><A HREF="strain_fit.tab">Strain Fitness</A> (log2 ratios, normalized, large!)
+<LI>Statistics
+<UL>
+<LI><A HREF="fit_t.tab">t-like test statistic</A> (based on consistency of measurements for the gene)
+<LI><A HREF="fit_standard_error_obs.tab">estimated standard error</A> (based on variation across strains)
+<LI><A HREF="fit_standard_error_naive.tab">naive standard error</A> (based on total counts)
+</LI>
+</UL>
+</UL>
+
+<P>Plots
+<UL>
+<LI>Quality of experiments
+<UL>
+<LI><A HREF="fit_quality.pdf">Experiment quality</A> (grey: Time0; red: failed; green: OK; blue: OK, but maxFit > 5)
+<LI><A HREF="fit_quality_cor12.pdf">Cor12 for each experiment</A>
+</UL>
+<LI>Clustering of experiments (rotate clockwise to view)
+<UL>
+<LI><A HREF="fit_cluster_logratios.pdf">Clustering of log-ratios</A>
+<LI><A HREF="fit_cluster_logcounts.pdf">Clustering of log-counts</A>
+<LI>(The numbers before the sample id are the median #reads per gene and cor12, the correlation between the log-ratios for the 1st and 2nd half of genes)
+</UL>
+<LI><A HREF="cofitness.pdf">Distribution of cofitness</A>
+<LI><A HREF="fit_chr_bias.pdf">Chromosomal bias for each experiment</A>
+</UL>
+
+<P><A HREF="fit.image">R image (large!)</A>
+
+</BODY>
+</HTML>
+
+
