@@ -34,6 +34,7 @@ use strict;
     my %counts = (); # rcbarcode to vector of counts
     my @indexes = (); # vector of names of samples
     my @colSums = (); # samples to total number of counts
+    my @colSumsUsed = (); # samples to total number of counts for used barcodes
     my $nSamples = 0;
 
     my $nUsed = 0;
@@ -49,7 +50,8 @@ use strict;
 	if ($nSamples == 0) { # first file
 	    @indexes = @cols;
 	    $nSamples = scalar(@indexes);
-	    @colSums = (0) x $nSamples
+	    @colSums = (0) x $nSamples;
+	    @colSumsUsed = (0) x $nSamples;
 	} else {
 	    die "Wrong number of columns in $file" unless scalar(@cols) == scalar(@indexes);
 	    foreach my $i (0..(scalar(@cols)-1)) {
@@ -77,6 +79,9 @@ use strict;
 		    $counts{$barcode} = \@F;
 		}
 		$nUsed++;
+		for (my $i = 0; $i < $nSamples; $i++) {
+		    $colSumsUsed[$i] += $F[$i];
+		}
 	    } else {
 		print IGNORE join("\t",$barcode,@F)."\n";
 		$nIgnore++;
@@ -90,6 +95,12 @@ use strict;
     }
     print STDERR "Read $nUsed lines for codes in pool and $nIgnore ignored lines across " . scalar(@codesFiles) . " files\n";
     close(IGNORE) || die "Error writing to $out.codes.ignored";
+
+    print STDERR "Fraction Used:";
+    for(my $i = 0; $i < $nSamples; $i++) {
+	print STDERR sprintf(" %s %.3f", $indexes[$i], ($colSumsUsed[$i])/(1.0+$colSums[$i]));
+    }
+    print STDERR "\n";
 
     open(COUNT, ">", "$out.poolcount") || die "Cannot write to $out.poolcount";
     print COUNT join("\t", "barcode", "rcbarcode", "scaffold", "strand", "pos", @indexes)."\n";
