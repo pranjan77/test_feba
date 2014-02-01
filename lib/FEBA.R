@@ -428,8 +428,10 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 	fit$gN = all_gN;
 	fit$t0_gN = t0_gN;
 
-	# These include all strains, not just those in genes, and do not line up with strainsUsed
-	fit$strains = all[,metacolAll];
+	# These include all strains, not just those in genes
+	i = match(as.character(all$barcode), as.character(all_g2$barcode));
+	fit$strains = cbind(all[,metacolAll], cbind(all_g2[,words("locusId f")], used=fit$strainsUsed)[i,]);
+
 	fit$strain_lr = strain_fit;
 	fit$strain_se = strain_se;
 
@@ -454,7 +456,7 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 		fit$pairs = list(adjDiff=adjDiff, pred=pred);
 		random = data.frame(Gene1 = sample(fit$g, length(fit$g)*2, replace=T),
 		       	            Gene2 = sample(fit$g, length(fit$g)*2, replace=T));
-		random = random[random$Gene1 != random$Gene2,];
+		random = random[as.character(random$Gene1) != as.character(random$Gene2),];
 		random$rfit = cor12(random, fit$g, fit$lrn[,u]);
 		fit$pairs = list(adjDiff=adjDiff, pred=pred, random=random);
 	} else {
@@ -555,6 +557,7 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 
 	labelAll = sprintf("%.0f %.2f %s %25.25s",
 		      fit$q$gMed, fit$q$cor12, sub("set","",fit$q$name), fit$q$short);
+        labelAll = ifelse(fit$q$short=="Time0", paste(labelAll, fit$q$t0set), labelAll);
 
 	use = fit$q$short != "Time0";
 	lrClust = hclust(as.dist(1-cor(fit$lrn[,as.character(fit$q$name)[use]])));
@@ -571,9 +574,8 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 		title=paste(org,"Cluster Log Counts"));
 	# Some Time0s may be missing from fit$q
 	d = match(names(fit$gN)[-1], fit$q$name);
-	labelAll = sprintf("%.0f %.2f %s %15.15s",
-		      fit$q$gMed[d], fit$q$cor12[d], sub("set","",names(fit$gN)[-1]), ifelse(is.na(d),"Time0",fit$q$short[d]));
-	plot(countClust, labels=labelAll, main="");
+	labelAll2 = ifelse(is.na(d), paste("Time0", sub("set","",names(fit$gN)[-1])), labelAll[d]);
+	plot(countClust, labels=labelAll2, main="");
 	dev.off();
 	wroteName("fit_cluster_logcounts.pdf");
 
