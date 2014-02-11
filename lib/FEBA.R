@@ -11,6 +11,7 @@
 #      returns a complex data structure
 # FEBA_Save_Tables() -- Save the fitness data structure to tab-delimited files and an R image
 
+
 # GeneFitness():
 # genes -- must include locusId, scaffoldId, and begin
 # strainInfo -- must include locusId and (unless use1 is overridden) f, the fraction of the gene
@@ -96,7 +97,8 @@ AvgStrainFitness = function(strainCounts, strainT0, strainLocus,
 		 nACG = NULL,
 		 genesUsed=NULL, strainsUsed=NULL,
 		 even=FALSE,
-		 maxWeight = if(even) 0 else 200,
+		 # maxWeight of 100 corresponds to having 100 reads on each side (if perfectly balanced)
+		 maxWeight = if(even) 0 else 100,
 		 debug=FALSE) {
     if (length(strainCounts) < 1 || length(strainT0) < 1 || length(strainLocus) < 1
         || length(strainCounts) != length(strainT0) || length(strainCounts) != length(strainLocus))
@@ -154,27 +156,10 @@ AvgStrainFitness = function(strainCounts, strainT0, strainLocus,
     strainFit = log2(condPseudoCount + strainCounts) - log2(t0PseudoCount + strainT0) - strainFitAdjust;
     strainVar = sqrt(1/(1+strainT0) + 1/(1+strainCounts)) / log(2);
     # even weighting is an option for testing purposes
-    strainWeight = 0.5 + pmin(maxWeight, strainT0+strainCounts);
+    # use harmonic mean for weighting
+    strainWeight = 0.5 + pmin(maxWeight, 2/( 1/(1+strainT0) + 1/(1+strainCounts) ) );
 
-# working in 0.24 seconds
-#    geneFit2 = aggregate(1:length(strainT0), list(locusId=strainLocusF),
-#    	                function(j) {
-#			    totw = sum(strainWeight[j]);
-#			    meanFit = sum(strainWeight[j] * strainFit[j]) / totw;
-#			    c(fit = meanFit,
-#			    	  sd = sqrt(sum(strainWeight[j]**2 * strainVar[j]))/totw,
-#				  sumsq = sum(strainWeight[j] * (strainFit[j]-meanFit)**2)/totw,
-#				  sdNaive = sqrt( 1/(1+sum(strainCounts[j])) + 1/(1+sum(strainT0[j])) ) / log(2),
-#				  n = length(j),
-#				  nEff = sum(strainWeight[j])/max(strainWeight[j]),
-#				  tot = sum(strainCounts[j]),
-#				  tot0 = sum(strainT0[j]));
-#                        });
-    # a hack to get around the lists within the entries
-#    geneFit2 = data.frame(locusId = geneFit2$locusId, geneFit2[,2]);
-#    geneFit2$fit = mednorm(geneFit2$fitRaw);
-
-     fitness = lapply(split(1:length(strainT0), list(locusId=strainLocus)),
+    fitness = lapply(split(1:length(strainT0), list(locusId=strainLocus)),
      	           function(j) {
                        totw = sum(strainWeight[j]);
 		       fitRaw = sum(strainWeight[j] * strainFit[j]) / totw;
@@ -182,18 +167,22 @@ AvgStrainFitness = function(strainCounts, strainT0, strainLocus,
 		       tot0 = sum(strainT0[j]);
 		       sd = sqrt(sum(strainWeight[j]**2 * strainVar[j]))/totw;
 		       sumsq = sum(strainWeight[j] * (strainFit[j]-fitRaw)**2)/totw;
+		       # high-N estimate of the noise in the log2 ratio of fitNaive
+		       # But sdNaive is actually pretty accurate for small n -- e.g.
+		       # simulations with E=10 on each side gave slightly light tails
+		       # (r.m.s.(z) = 0.94).
 		       sdNaive = sqrt( 1/(1+tot) + 1/(1+tot0) ) / log(2);
 		       n = length(j);
 		       nEff = totw/max(strainWeight[j]);
 		       c(fitRaw=fitRaw, sd=sd, sumsq=sumsq, sdNaive=sdNaive, n=n, nEff=nEff,
 		         tot=tot, tot0=tot0);
 		});
-     fitness = data.frame(do.call(rbind, fitness));
-     fitness$fit = mednorm(fitness$fit);
-     fitness$fitNaive = mednorm(log2(1+fitness$tot) - log2(1+fitness$tot0));
-     fitness$locusId = row.names(fitness);
-     if (is.integer(strainLocus)) fitness$locusId = as.integer(as.character(fitness$locusId));
-     return(fitness);
+    fitness = data.frame(do.call(rbind, fitness));
+    fitness$fit = mednorm(fitness$fit);
+    fitness$fitNaive = mednorm(log2(1+fitness$tot) - log2(1+fitness$tot0));
+    fitness$locusId = row.names(fitness);
+    if (is.integer(strainLocus)) fitness$locusId = as.integer(as.character(fitness$locusId));
+    return(fitness);
 }
 
 # NormalizeByScaffold():
@@ -237,6 +226,38 @@ NormalizeByScaffold = function(values, locusId, genes, minForLoess=100, minToUse
     return(values);
 }
 
+# simple log-ratio with pseudocount (of 1) and normalized so each scaffold has a median of 0
+# note is *not* normalized except to set the total median to 0
+StrainFitness = function(count, countT0, scaffolds) {
+    fit = mednorm( log2(1+count) - log2(1+countT0) );
+    se = sqrt(1/(1+count) + 1/(1+countT0)) / log(2);
+    return(data.frame(fit=fit,se=se));
+}
+
+# For each strain, find the closest gene, as a row number -- returns a vector
+# If there is no gene on that scaffold, returns NA
+StrainClosestGenes = function(strains, genes) {
+	genes$index = 1:nrow(genes);
+	strainSplit = split(strains, strains$scaffold);
+	geneSplit = split(genes, genes$scaffold);
+	indexSplit = list();
+	for (sc in names(strainSplit)) {
+		s = strainSplit[[sc]];
+		g = geneSplit[[sc]];
+		if (is.null(g)) {
+		    indexSplit[[sc]] = rep(NA, nrow(s));
+		} else {
+		    g$pos = (g$begin + g$end) / 2;
+		    g = g[order(g$pos),];
+		    # rule 2 means use values from extrema
+		    i = round(approx(g$pos, 1:nrow(g), xout = s$pos, rule=2)$y);
+		    i = pmax(1, pmin(nrow(g), i));
+		    indexSplit[[sc]] = g$index[i];
+		}
+	}
+	unsplit(indexSplit, strains$scaffold);
+}
+
 FEBA_Fit = function(expsUsed, all, all_g2, genes,
 	   		       genesUsed=NULL, strainsUsed=NULL, genesUsed12=NULL,
 	   		       minT0Strain=3, minT0Gene=30,
@@ -245,10 +266,12 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 			       nACG=NULL, # normalize by ACG content if set
 			       pred=CrudeOp(genes),
 			       okLane=TRUE, # OK to use t0 from another lane if needed?
-	   		       metacol=1:7,
+	   		       metacol=1:7, # for all_g2
+			       metacolAll=1:5,
 			       # names of experiments to ignore
 			       ignore=NULL,
-			       debug=FALSE) {
+			       debug=FALSE,
+			       ...) {
 
 	if(!is.null(ignore)) {
 	    cat("Ignoring ",ignore,"\n");
@@ -263,6 +286,7 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 		stop("names missing from all");
 	if(is.null(genes$scaffoldId)) stop("No scaffold for genes");
 	if(is.null(genes$begin)) stop("No begin for genes");
+	if (is.null(genes$GC)) stop("Warning: no GC field in genes");
 
 	expsUsed$name = as.character(expsUsed$name);
 
@@ -326,26 +350,36 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 
 	if(!all(expsUsed$t0set %in% names(t0_g2))) stop("Illegal t0set", setdiff(expsUsed$t0set, names(t0_g2)));
 
-	all_fit = lapply(names(all_g2)[-metacol], function(n) {
+	all_fit = list();
+	strain_fit = list();
+	strain_se = list();
+	for(n in names(all_g2)[-metacol]) {
 		to_subtract = expsUsed$short[expsUsed$name==n] == "Time0";
 		if(debug) cat("GeneFitness() on", n,"t0set",expsUsed$t0set[expsUsed$name==n],
 			  			  if(to_subtract) "subtracted" else "", "\n");
                 x = all_g2[[n]];
-		t0 = t0_g2[[ expsUsed$t0set[expsUsed$name==n] ]];
+		t0set = as.character(expsUsed$t0set[expsUsed$name==n]);
+		t0 = t0_g2[[ t0set ]];
 		if(to_subtract) t0 = t0 - x;
 		if(any(t0 < 0)) stop("Illegal counts under 0 for ",n);
 		if(all(t0 == 0)) {
-		    if(debug) cat("Skipping ",n," which has no control counts\n");
-		    return(NULL);
-		}
-		GeneFitness(genes, all_g2[,words("locusId f")], x, t0,
+		    cat("Skipping ",n," which has no control counts\n"); # used to be debug only
+		} else {
+		    all_fit[[n]] = GeneFitness(genes, all_g2[,words("locusId f")], x, t0,
 				    strainsUsed, genesUsed, genesUsed12, nACG=nACG);
-	});
+                    cntrl = setdiff(as.character(expsUsed$name[expsUsed$t0set==t0set & expsUsed$short=="Time0"]), n);
+		    if(length(cntrl) < 1) stop("No Time0 experiments for ",n," should not be reachable");
+		    if(debug) cat("StrainFitness() on", n, "versus", cntrl,"\n");
+		    d = StrainFitness(all[[n]], rowSums(all[,cntrl,drop=F]));
+		    strain_fit[[n]] = d$fit;
+		    strain_se[[n]] = d$se;
+		}
+	}
+	strain_fit = data.frame(strain_fit);
+	strain_se = data.frame(strain_se);
+
+	if(length(all_fit) == 0) stop("All comparisons failed\n");
 	if(debug) cat("GeneFitness() succeeded\n");
-	names(all_fit) = names(all_g2)[-metacol];
-	keep = !sapply(all_fit, is.null); # drop comparisons which were "skipped"
-	if(!any(keep)) stop("All comparisons failed\n");
-	all_fit = all_fit[keep, drop=F];
 	fit = list(g = all_fit[[1]]$locusId);
 	for(n in setdiff(names(all_fit[[1]]), "locusId"))
 	    fit[[n]] = data.frame(lapply(all_fit, function(x) x[[n]]));
@@ -353,7 +387,7 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 	names(fit) = sub("fit","lr",names(fit));
 	if (debug) cat("Extracted fitness values\n");
 
-	q = expsUsed[keep, words("name short t0set")];
+	q = expsUsed[expsUsed$name %in% names(all_fit), words("name short t0set")];
 	nUse = as.character(q$name);
 	if(!all(nUse == names(fit$lrn))) stop("Mismatched names in fit");
 	q$nMapped = colSums(all[,nUse]);
@@ -364,8 +398,25 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 	q$gMedt0 = apply(fit$tot0,2,median);
 	q$gMean = apply(fit$tot, 2, mean);
 
+	adj = AdjacentPairs(genes);
+	adjDiff = adj[adj$strand1 != adj$strand2,];
+
+	# consistency of 1st and 2nd half; m.a.d. is median absolute difference
 	q$cor12 = mapply(function(x,y) cor(x,y,method="s",use="p"), fit$lrn1, fit$lrn2);
+	q$mad12 = apply(abs(fit$lrn1-fit$lrn2), 2, median, na.rm=T);
+
+	# consistency of log2 counts for 1st and 2nd half, for sample and for time0
+	q$mad12c = apply(abs(log2(1+fit$tot1) - log2(1+fit$tot2)), 2, median, na.rm=T);
+	q$mad12c_t0 = apply(abs(log2(1+fit$tot1_0) - log2(1+fit$tot2_0)), 2, median, na.rm=T);
+
+	# correlation of operon or adjacent different-strand pairs
 	q$opcor = apply(fit$lrn, 2, function(x) paircor(pred[pred$bOp,], fit$g, x, method="s"));
+	q$adjcor = sapply(as.character(q$name), function(x) paircor(adjDiff, fit$g, fit$lrn[[x]], method="s"));
+	# GC correlation -- a sign of PCR issues (and often associated with high adjcor)
+	# c() to make it be a vector instead of a matrix
+	q$gccor = c( cor(fit$lrn, genes$GC[ match(fit$g, genes$locusId) ]) );
+
+	# experiments with very high maximum fitness may not give meaningful results for the typical gene
 	q$maxFit = apply(fit$lrn,2,max);
 
 	fit$q = q;
@@ -377,13 +428,50 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 	fit$gN = all_gN;
 	fit$t0_gN = t0_gN;
 
+	# These include all strains, not just those in genes
+	i = match(as.character(all$barcode), as.character(all_g2$barcode));
+	fit$strains = cbind(all[,metacolAll], cbind(all_g2[,words("locusId f")], used=fit$strainsUsed)[i,]);
+
+	fit$strain_lr = strain_fit;
+	fit$strain_se = strain_se;
+
+	# Normalized per-strain values
+	strainToGene = StrainClosestGenes(fit$strains, genes[match(fit$g, genes$locusId),]);
+	fit$strain_lrn = mapply(function(sfit, gdiff) {
+		# Add the relevant gene normalization; or, if NA, normalize the scaffold to a median of 0
+		sdiff = gdiff[strainToGene];
+		sdiffSc = -ave(sfit, fit$strains$scaffold, FUN=median);
+		sdiff = ifelse(is.na(sdiff), sdiffSc, sdiff);
+		return(sfit + sdiff);
+	}, fit$strain_lr, fit$lrn-fit$lr);
+	fit$strain_lrn = data.frame(fit$strain_lrn);
+
+	# Statistics of cofitness on pairs
+        status = FEBA_Exp_Status(q, ...);
+	u = (status == "OK");
+	if (sum(u) >= 5) {
+		cat("Computing cofitness with ", sum(u), " experiments\n");
+		adjDiff$rfit = cor12(adjDiff, fit$g, fit$lrn[,u]);
+		pred$rfit = cor12(pred, fit$g, fit$lrn[,u]);
+		fit$pairs = list(adjDiff=adjDiff, pred=pred);
+		random = data.frame(Gene1 = sample(fit$g, length(fit$g)*2, replace=T),
+		       	            Gene2 = sample(fit$g, length(fit$g)*2, replace=T));
+		random = random[as.character(random$Gene1) != as.character(random$Gene2),];
+		random$rfit = cor12(random, fit$g, fit$lrn[,u]);
+		fit$pairs = list(adjDiff=adjDiff, pred=pred, random=random);
+	} else {
+		cat("Only", sum(u),"experiments passed quality filters!\n");
+	}
 	return(fit);
 }
 
 FEBA_Save_Tables = function(fit, genes, org="?",
 		 topdir="public_html/tmp",
 		 dir = paste(topdir,org,sep="/"),
-		 writeImage=TRUE) {
+		 writeImage=TRUE,
+		 template_file="src/feba/lib/FEBA_template.html",
+		 ... # for FEBA_Quality_Plot
+		 ) {
 	#if(!file.exists(dir)) stop("No such directory ",dir);
 	if(!file.exists(dir)) dir.create(dir);
 
@@ -437,26 +525,19 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	writeDelim(d, nameToPath("fit_standard_error_naive.tab"));
 	wroteName("fit_standard_error_naive.tab");
 
-	qCol = ifelse(fit$q$short=="Time0", "grey",
-		ifelse(fit$q$gMed < 50, "red",
-		ifelse(fit$q$maxFit > 5, "orange", "darkgreen")));
-	qLab = sub("set","",fit$q$name);
+	writeDelim(cbind(fit$strains,fit$strain_lrn), nameToPath("strain_fit.tab"));
+	wroteName("strain_fit.tab");
 
-	pdf(nameToPath("fit_quality.pdf"),
-		pointsize=8, width=8, height=4,
-		title=paste(org,"Fitness Quality"));
-	par(mfrow=c(1,2));
-	plotlab(pmax(0,fit$q$opcor), pmax(0,fit$q$cor12), qLab, col=qCol, ylim=0:1, xlim=0:1,
-			     cex=0.5,
-			     xlab="Operon Correlation", ylab="1st/2nd-half Correlation",
-			     main=org);
-	hline(0.5); vline(0.4);
-	plotlab(0.1+fit$q$gMed, pmax(0,fit$q$cor12), qLab, col=qCol, ylim=0:1, log="x", cex=0.5,
-			    xlab="Median Reads per Gene",
-			    ylab="1st/2nd-half Correlation");
-	hline(0.5); vline(50);
-	dev.off();
+	FEBA_Quality_Plot(fit$q, nameToPath("fit_quality.pdf"), org, ...);
 	wroteName("fit_quality.pdf");
+
+	if(is.null(fit$pairs)) {
+		paste("No data for cofitness plot\n");
+		unlink(nameToPath("cofitness.pdf"));
+	} else {
+		FEBA_Cofitness_Plot(fit$pairs, nameToPath("cofitness.pdf"), org);
+		wroteName("cofitness.pdf");
+	}
 
 	pdf(nameToPath("fit_quality_cor12.pdf"),
 		pointsize=10, width=5, height=5,
@@ -476,6 +557,7 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 
 	labelAll = sprintf("%.0f %.2f %s %25.25s",
 		      fit$q$gMed, fit$q$cor12, sub("set","",fit$q$name), fit$q$short);
+        labelAll = ifelse(fit$q$short=="Time0", paste(labelAll, fit$q$t0set), labelAll);
 
 	use = fit$q$short != "Time0";
 	lrClust = hclust(as.dist(1-cor(fit$lrn[,as.character(fit$q$name)[use]])));
@@ -492,9 +574,8 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 		title=paste(org,"Cluster Log Counts"));
 	# Some Time0s may be missing from fit$q
 	d = match(names(fit$gN)[-1], fit$q$name);
-	labelAll = sprintf("%.0f %.2f %s %15.15s",
-		      fit$q$gMed[d], fit$q$cor12[d], sub("set","",names(fit$gN)[-1]), ifelse(is.na(d),"Time0",fit$q$short[d]));
-	plot(countClust, labels=labelAll, main="");
+	labelAll2 = ifelse(is.na(d), paste("Time0", sub("set","",names(fit$gN)[-1])), labelAll[d]);
+	plot(countClust, labels=labelAll2, main="");
 	dev.off();
 	wroteName("fit_cluster_logcounts.pdf");
 
@@ -529,6 +610,87 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	    file.symlink(img, nameToPath("fit.image"));
 	    cat("Created link for ",nameToPath("fit.image"),"\n");
 	}
+
+	FEBA_Save_HTML(nameToPath("index.html"), template_file, org, nrow(fit$q));
+	wroteName("index.html");
+}
+
+FEBA_Quality_Plot = function(q, pdfFile, org,
+		min_gMed = 50, max_mad12 = 0.5, min_cor12 = 0.2,
+		max_gccor = 0.2, max_adjcor = 0.25) {
+        status = FEBA_Exp_Status(q,
+				 min_gMed=min_gMed, max_mad12=max_mad12, min_cor12=min_cor12,
+				 max_gccor=max_gccor, max_adjcor=max_adjcor);
+	print(table(status));
+	for(s in c("low_count","high_mad12","low_cor12","high_adj_gc_cor")) {
+	    if(sum(status==s) > 0) cat(s, ":", q$name[status==s],"\n");
+	}
+	qCol = ifelse(q$short=="Time0", "grey",
+		ifelse(status=="OK", ifelse(q$maxFit > 5, "blue", "darkgreen"), "red"));
+	qLab = sub("set","",q$name);
+
+	if(!is.null(pdfFile)) pdf(pdfFile,
+		pointsize=10, width=8, height=8,
+		title=paste(org,"Fitness Quality"));
+	oldpar = par(mfrow=c(2,2));
+
+	# mad12 vs. gMed
+	plotlab(0.1 + q$gMed, pmin(0.75,q$mad12), qLab, col=qCol, ylim=c(0,0.75), log="x",
+		            cex=0.8,
+			    xlab="Median Reads per Gene",
+			    ylab="Median abs. diff.(1st half, 2nd half)",
+			    main=paste(org,"mad12"));
+	vline(min_gMed); hline(max_mad12);
+
+	# cor12 vs. mad12
+	plotlab(pmin(0.75,q$mad12), pmax(0,q$cor12), qLab, col=qCol, xlim=c(0,0.75), ylim=0:1,
+			     cex=0.8,
+			     xlab="Median abs. diff.(1st half, 2nd half)", ylab="rho(1st half, 2nd half)",
+			     main=paste(org,"rho12"));
+	vline(max_mad12); hline(min_cor12);
+
+	# opcor vs. adjcor
+	plotlab(abs(q$adjcor), pmax(0,q$opcor), qLab, col=qCol, xlim=0:1, ylim=0:1,
+			     cex=0.8,
+			     xlab="| rho(adj. genes on diff. strands) |",
+			     ylab="rho(operon pairs)",
+			     main=paste(org,"rho(operons)"));
+	eqline();
+	vline(max_adjcor);
+
+	# adjcor vs. gccor
+	plotlab(abs(q$gccor), abs(q$adjcor), qLab, col=qCol, xlim=0:1, ylim=0:1,
+			     cex=0.8,
+			     xlab="| cor(gene GC, fitness) |",
+			     ylab="rho(adj. genes on diff. strands)",
+			     main=paste(org,"GC effects"));
+	eqline();
+	vline(max_gccor); hline(max_adjcor);
+
+	par(oldpar);
+	if(!is.null(pdfFile)) dev.off();
+}
+
+FEBA_Cofitness_Plot = function(pairs, pdfFile, org) {
+	if(!is.null(pdfFile)) pdf(pdfFile,
+		pointsize=10, width=4, height=4,
+		title=paste(org,"Cofitness"));
+	CompareDensities(list(Operon=withoutNA(pairs$pred$rfit[pairs$pred$bOp]),
+			          Adjacent=withoutNA(pairs$adjDiff$rfit),
+				  Random=pairs$random$rfit),
+			 legendX="topleft",
+			 xlim=c(-1,1),
+			 xlab="Cofitness", ylab="Density", lwd=c(1,2,2), col=c(3,2,1), lty=c(1,2,4),
+			 main=paste("Cofitness in",org));
+	if(!is.null(pdfFile)) dev.off();
+}
+
+FEBA_Save_HTML = function(outfile, template, org, nexps) {
+	lines = readLines(template);
+	lines = gsub("ORG", org, lines);
+	lines = gsub("DATE", date(), lines);
+	lines = gsub("NEXPS", nexps, lines);
+	writeLines(lines, outfile);
 }
 
 # Utilities
@@ -681,3 +843,89 @@ without <- function(list,columns=list$without) {
 	return(list2);
 }
 
+AdjacentPairs = function(genes) {
+	adj = data.frame(Gene1 = genes$locusId, Gene2=c(genes$locusId[-1],genes$locusId[1]));
+	adj = merge(merge(adj, genes, by.x="Gene1", by.y="locusId"), genes, by.x=c("Gene2","scaffoldId"), by.y=c("locusId","scaffoldId"), suffixes=1:2);
+	return(adj);
+}
+
+# Given a list of Gene1 Gene2 pairs, and a matrix of data (as genes and data-only matrix),
+# compute correlations for each pair or NA
+cor12 = function(pairs, genes, data, use="p", method="pearson", names=c("Gene1","Gene2")) {
+	i1 = match(pairs[[names[1]]], genes);
+	i2 = match(pairs[[names[2]]], genes);
+	return(sapply(1:nrow(pairs), function(x) if(is.na(i1[x]) | is.na(i2[x])) NA else
+		cor(c(data[i1[x],], recursive=T), c(data[i2[x],], recursive=T), method=method, use=use)));
+}
+
+# Returns status of each experiment -- "OK" is a non-Time0 experiment that passes all quality metrics
+FEBA_Exp_Status = function(q, min_gMed = 50, max_mad12 = 0.5, min_cor12 = 0.2,
+				 max_gccor = 0.2, max_adjcor = 0.25) {
+    with(q, ifelse(short=="Time0", "Time0",
+	           ifelse(gMed < min_gMed, "low_count",
+		   ifelse(mad12 > max_mad12, "high_mad12",
+		   ifelse(cor12 < min_cor12, "low_cor12",
+		   ifelse(abs(gccor) > max_gccor | abs(adjcor) > max_adjcor, "high_adj_gc_cor", "OK"))))));
+}
+
+withoutNA = function(x) x[!is.na(x)];
+
+CompareDensities <- function(list,labels=names(list),xlim=range(unlist(list)),ylim=c(0,3),
+		col=1:length(labels), lty=1:length(labels), lwd=rep(1,length(labels)),
+		legendX=mean(xlim),legendY=ylim[2],main="",xlab="",ylab="",showCounts=FALSE,
+		showLegend=TRUE, bty="o") {
+
+	for (i in 1:length(labels)) {
+		x = list[[ names(list)[i] ]];
+		d <- density(x,from=xlim[1],to=xlim[2]);
+		if(i==1) {
+			plot(d$x,d$y,type="l",col=col[i],lty=lty[i],lwd=lwd[i],
+				main=main,xlab=xlab,ylab=ylab,xlim=xlim,ylim=ylim);
+		} else {
+			lines(d$x,d$y,col=col[i],lty=lty[i],lwd=lwd[i]);
+		}
+		if (showCounts) labels[i] <- paste(labels[i]," (n=", sum(!is.na(x)), ")", sep="");
+	}
+	if(showLegend) {
+	       if(is.numeric(legendX)) {
+	           legend(legendX,legendY,labels,col=col,lty=lty,lwd=lwd, bty=bty);
+	       } else { # e.g. "topleft"
+	           legend(legendX, labels,col=col,lty=lty,lwd=lwd, bty=bty);
+ 	       }
+	}
+}
+
+# Given pairs of adjcent genes, identify the upstream and downstream genes,
+# as "up" and "dn"
+OpPairUpDn = function(oppairs, genes) {
+	oppairs$strand = genes$strand[match(oppairs$Gene1, genes$locusId)];
+	if(any(is.na(oppairs$strand))) stop("Unknown genes in Gene1 in OpPairUpDn()");
+
+	# mixing factors is problematic so make sure they are character or integer
+	if(is.factor(oppairs$Gene1)) oppairs$Gene1 = as.character(oppairs$Gene1);
+	if(is.factor(oppairs$Gene2)) oppairs$Gene2 = as.character(oppairs$Gene2);
+
+	oppairs$up = ifelse(oppairs$strand=="+", oppairs$Gene1, oppairs$Gene2);
+	oppairs$dn = ifelse(oppairs$strand=="-", oppairs$Gene1, oppairs$Gene2);
+	return(oppairs);
+}
+
+# How often upstream-only is sick vs. downstream-only
+# oppairs must include "up", "dn" (as in returned values from OpPairUpDn)
+OperonPairSick = function(oppairs, g, lrn, t,
+			sick = -1, min_diff = 0.75, max_t = -4) {
+	oppairs = oppairs[oppairs$up %in% g & oppairs$dn %in% g,];
+	if(is.vector(lrn)) {
+		i1 = match(oppairs$up, g);
+		i2 = match(oppairs$dn, g);
+		uponly = sum(lrn[i1] < sick & lrn[i2] > sick & t[i1] < max_t & t[i2] > max_t
+			& abs(lrn[i1]-lrn[i2]) > min_diff);
+		dnonly = sum(lrn[i2] < sick & lrn[i1] > sick & t[i2] < max_t & t[i1] > max_t
+			& abs(lrn[i1]-lrn[i2]) > min_diff);
+		both = sum(lrn[i1] < sick & lrn[i2] < sick & t[i1] < sick & t[i2] < sick);
+		return(c(uponly=uponly, dnonly=dnonly, both=both));
+	}
+	#else make a table, where the row names will be the experiment names
+	as.data.frame(t(mapply(function(x,y)
+	    OperonPairSick(oppairs, g, x, y, sick=sick, min_diff=min_diff, max_t=max_t), lrn, t)));
+}
