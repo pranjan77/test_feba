@@ -90,16 +90,32 @@ def process_reads(fastq, read_parser, mapper_stdin):
         mapper_stdin.write("@%s\n%s\n+%s\n%s\n" % (genomic_hdr,genomic_seq,genomic_qseq))
 # end process_reads
 
+cigar_re = re.compile('([MIDNSHPX=])')
+cigar_len_chars = {'M','D','=','X','N'} # Sum of the lengths of these operations gets 
 def get_barcode_location(sam_line):
-    # TODO: do some stuff to parse the SAM line
+    # do some stuff to parse the SAM line
     sam_ar = sam_line.split('\t')
     hdr = sam_ar[0]
-    flag = int(sam_ar[1])
     ref = sam_ar[2]
-    cigar = sam_ar[5]
-    pos = get_strand(flag)
+    pos = int(sam_ar[3]) if sam_ar[3] != '*' else None
+    if not pos:
+        return None, None, None, None
+    strand = (int(sam_ar[1]) >> 4) % 2
     
-    pass
+    # if on negative strand, need to compute mapping length to get 5prime start
+    if strand == 1:
+        cigar = sam_ar[5]
+        cigar_ar = cigar_re.split(cigar)
+        for i in xrange(1,len(cigar_ar),2):
+            if cigar_ar[i] in cigar_len_chars:
+                pos += int(cigar_ar[i-1])
+        strand = NEG_STRAND
+    else:
+        strand = POS_STRAND
+    
+    barcode = hdr.split(":")[-1]
+    
+    return barcode, ref, strand, pos
 #end get_barcode_and_position
 
 def process_mapping_results(mapper_stdout, counter):
