@@ -65,6 +65,13 @@ END
                "n","scaffold","strand","pos",
                "n2","scaffold2","strand2","pos2","nPastEnd")."\n";
 
+    # The Chao2 estimator of diversity is tot + f1**2/(2*f2), where tot is the number of barcodes seen,
+    # f1 is the number seen exactly once, and f2 is the number seen exactly twice
+    # This does not account for sequencing error and does not account for reuse of a barcode across strains
+    my $f1 = 0;
+    my $f2 = 0;
+    my $totcodes = 0;
+
     my %nInCategory = (); # classification of barcodes
     my ($SCAFFOLD,$POS,$STRAND,$UNIQ,$QBEG,$QEND,$SCORE,$IDENTITY) = (0,1,2,3,4,5,6,7);
     my $nMulti = 0; # barcodes seen >once
@@ -73,6 +80,13 @@ END
     while(my ($barcode, $hits) = each %barHits) {
         my $nPastEnd = $pastEnd{$barcode} || 0;
         my $nTot = scalar(@$hits) + $nPastEnd;
+	if ($nTot == 1) {
+	    $f1++;
+	} elsif ($nTot == 2) {
+	    $f2++;
+	} else {
+	    $totcodes++;
+	}
         next unless $nTot >= $minN;
         $nMulti++;
         
@@ -155,6 +169,8 @@ END
     print STDERR "Masked $nMasked off-by-1 barcodes ($nMaskedReads reads) leaving $nOut barcodes\n";
     print STDERR sprintf("Reads for those barcodes: %d of %d (%.1f%%)\n",
                          $nReadsForUsable, $nMapped, 100*$nReadsForUsable/($nMapped + 1e-6));
+    my $chao = int($totcodes + $f1**2/(2*$f2 + 1));
+    print STDERR "Chao2 estimate of #barcodes present (may be inflated for sequencing error): $chao\n";
 }
 
 sub Variants($) {
