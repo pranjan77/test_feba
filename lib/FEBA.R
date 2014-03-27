@@ -12,6 +12,11 @@
 # FEBA_Save_Tables() -- Save the fitness data structure to tab-delimited files and an R image
 
 
+# Limitations:
+# High memory usage (~10GB to process 200K strains x 500 experiments)
+# Genes that wrap around the origin (i.e., begin > end) are ignored (no strain will map within them)
+
+
 # GeneFitness():
 # genes -- must include locusId, scaffoldId, and begin
 # strainInfo -- must include locusId and (unless use1 is overridden) f, the fraction of the gene
@@ -466,10 +471,11 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 }
 
 FEBA_Save_Tables = function(fit, genes, org="?",
-		 topdir="public_html/tmp",
+		 topdir="public_html/FEBA",
 		 dir = paste(topdir,org,sep="/"),
 		 writeImage=TRUE,
 		 template_file="src/feba/lib/FEBA_template.html",
+		 expsU=expsUsed,
 		 ... # for FEBA_Quality_Plot
 		 ) {
 	#if(!file.exists(dir)) stop("No such directory ",dir);
@@ -560,13 +566,15 @@ FEBA_Save_Tables = function(fit, genes, org="?",
         labelAll = ifelse(fit$q$short=="Time0", paste(labelAll, fit$q$t0set), labelAll);
 
 	use = fit$q$short != "Time0";
-	lrClust = hclust(as.dist(1-cor(fit$lrn[,as.character(fit$q$name)[use]])));
-	pdf(nameToPath("fit_cluster_logratios.pdf"),
-		pointsize=8, width=0.25*sum(use), height=8,
+	if(sum(use) > 2) {
+	    lrClust = hclust(as.dist(1-cor(fit$lrn[,as.character(fit$q$name)[use]])));
+	    pdf(nameToPath("fit_cluster_logratios.pdf"),
+		pointsize=8, width=0.25*pmax(8,sum(use)), height=8,
 		title=paste(org,"Cluster Logratios"));
-	plot(lrClust, labels=labelAll[use], main="");
-	dev.off();
-	wroteName("fit_cluster_logratios.pdf");
+	    plot(lrClust, labels=labelAll[use], main="");
+	    dev.off();
+	    wroteName("fit_cluster_logratios.pdf");
+	}
 
 	countClust = hclust(as.dist(1-cor(log2(1+fit$gN[fit$gN$locusId %in% fit$genesUsed,-1]))));
 	pdf(nameToPath("fit_cluster_logcounts.pdf"),
@@ -604,6 +612,7 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 
 	if(writeImage) {
 	    img = format(Sys.time(),"fit%Y%b%d.image"); # e.g., fit2013Oct24.image
+	    expsUsed = expsU;
 	    save(fit, genes, expsUsed, file=nameToPath(img));
 	    wroteName(img);
 	    unlink(nameToPath("fit.image"));
@@ -611,8 +620,10 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	    cat("Created link for ",nameToPath("fit.image"),"\n");
 	}
 
-	FEBA_Save_HTML(nameToPath("index.html"), template_file, org, nrow(fit$q));
-	wroteName("index.html");
+	if(!is.null(template_file)) {
+	    FEBA_Save_HTML(nameToPath("index.html"), template_file, org, nrow(fit$q));
+	    wroteName("index.html");
+	}
 }
 
 FEBA_Quality_Plot = function(q, pdfFile, org,
