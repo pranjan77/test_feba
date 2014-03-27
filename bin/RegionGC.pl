@@ -44,7 +44,7 @@ use strict;
     open (FNA, "<", $fnaFile) || die "Error reading $fnaFile";
     while(<FNA>) {
 	s/[\r\n]+$//;
-	if (m/>(.*)$/) {
+	if (m/>(\S+)/) {
 	    $lastName = $1;
 	    $seqs{$lastName} = "";
 	} else {
@@ -77,8 +77,13 @@ use strict;
 	my $seq = $seqs{$seqName};
 	my $len = length($seq);
 	die "Sequence for $seqName is too short: $end versus $len" if $end > $len;
-	die "begin must be less than end: $begin $end" unless $begin < $end;
-	my $subseq = substr($seq, $begin-1, $end-$begin+1);
+	my $subseq;
+	if ($begin < $end) {
+	    $subseq = substr($seq, $begin-1, $end-$begin+1);
+	} else {
+	    print STDERR "Warning: wraparound orf $scaffold $begin $end\n";
+	    $subseq = substr($seq, $begin-1) . substr($seq, 0, $end);
+	}
 	my $sublen = length($subseq);
 
 	my @hits;
