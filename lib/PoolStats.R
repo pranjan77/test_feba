@@ -39,7 +39,8 @@ RunPoolStats = function(args = commandArgs(trailingOnly=TRUE)) {
 PoolReport = function(poolfile, poolg, genes, nreadstot) {
 	# Insertions within central part of gene
 	poolg2 = poolg[poolg$f >= 0.1 & poolg$f <= 0.9,];
-	err_printf("Found %d insertions in central 10-90%% of genes\n", nrow(poolg2));
+	err_printf("Found %d insertions (%d distinct locations) in central 10-90%% of genes\n",
+		nrow(poolg2), nrow(unique(poolg2[,words("scaffold pos strand")])));
 	err_printf("Found central insertions for %d of %d protein-coding genes\n",
 		sum(genes$type==1 & genes$locusId %in% poolg2$locusId),
 		sum(genes$type==1));
