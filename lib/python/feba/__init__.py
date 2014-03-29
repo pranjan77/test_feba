@@ -1,3 +1,3 @@
 #!/usr/bin/env python
 
-from ReadParser import ReadParser
+from TnSeqReadParser import TnSeqReadParser
