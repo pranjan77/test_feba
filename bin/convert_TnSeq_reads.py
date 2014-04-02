@@ -28,7 +28,7 @@ def get_args():
     desc = "Process TnSeq reads by removing trimming pre and post sequences and barcode. Reads printed to stdout"
     parser = argparse.ArgumentParser(usage="%(prog)s fastq [options]", description=desc)
     parser.add_argument("fastq", type=str, help="the fastq to process")
-    parser.add_argument("-m", "--model", type=str, help="the model with which to process reads")
+    parser.add_argument("-m", "--model", default=__DEFAULT_MODEL__, type=str, help="the model with which to process reads")
     parser.add_argument("-u","--unpaired", action='store_true', default=False, help="reads are single-end")
     
     return parser.parse_args()
