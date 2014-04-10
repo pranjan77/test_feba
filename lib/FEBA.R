@@ -372,7 +372,7 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 		} else {
 		    all_fit[[n]] = GeneFitness(genes, all_g2[,words("locusId f")], x, t0,
 				    strainsUsed, genesUsed, genesUsed12, nACG=nACG);
-                    cntrl = setdiff(as.character(expsUsed$name[expsUsed$t0set==t0set & expsUsed$short=="Time0"]), n);
+                    cntrl = setdiff(expsT0[[ t0set ]], n);
 		    if(length(cntrl) < 1) stop("No Time0 experiments for ",n," should not be reachable");
 		    if(debug) cat("StrainFitness() on", n, "versus", cntrl,"\n");
 		    d = StrainFitness(all[[n]], rowSums(all[,cntrl,drop=F]));
@@ -493,7 +493,7 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	if(!all(names(fit$lrn) == fit$q$name)) stop("Name mismatch");
 
 	nameToPath = function(filename) paste(dir,filename,sep="/");
-	wroteName = function(x) cat("Wrote ",dir,"/",x,"\n",sep="");
+	wroteName = function(x) cat("Wrote ",nameToPath(x),"\n");
 
 	writeDelim(fit$q, nameToPath("fit_quality.tab"));
 	wroteName("fit_quality.tab");
@@ -515,6 +515,19 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	names(d)[-(1:3)] = paste(fit$q$name,fit$q$short);
 	writeDelim(d, nameToPath("fit_logratios.tab"));
 	wroteName("fit_logratios.tab");
+
+        status = FEBA_Exp_Status(fit$q);
+	u = (status == "OK");
+	if (sum(u) == 0) {
+		cat("Warning: FEBA_Exp_Status returned 0 OK entries\n");
+	} else {
+		d = genes[,c("locusId","sysName","desc")];
+		d$comb = paste(d$sysName, d$desc); # for MeV
+		d = merge(d, cbind(locusId=fit$g,fit$lrn[,u]));
+		names(d)[-(1:4)] = paste(fit$q$name,fit$q$short)[u];
+		writeDelim(d, nameToPath("fit_logratios_good.tab"));
+		cat("Wrote fitness for ",sum(u), " successful experiments to ", nameToPath("fit_logratios_good.tab"),"\n");
+	}
 
 	d = merge(genes[,c("locusId","sysName","desc")], cbind(locusId=fit$g,fit$t));
 	names(d)[-(1:3)] = paste(fit$q$name,fit$q$short);
@@ -870,7 +883,10 @@ cor12 = function(pairs, genes, data, use="p", method="pearson", names=c("Gene1",
 }
 
 # Returns status of each experiment -- "OK" is a non-Time0 experiment that passes all quality metrics
-FEBA_Exp_Status = function(q, min_gMed = 50, max_mad12 = 0.5, min_cor12 = 0.2,
+# Note -- arguably min_cor12 should be based on linear correlation not Spearman.
+# 0.1 threshold was chosen based on Marinobacter set5, in which defined media experiments with cor12 = 0.1-0.2
+# clearly worked, and Kang Polymyxin B (set1), with cor12 ~= 0.13 and they barely worked.
+FEBA_Exp_Status = function(q, min_gMed = 50, max_mad12 = 0.5, min_cor12 = 0.1,
 				 max_gccor = 0.2, max_adjcor = 0.25) {
     with(q, ifelse(short=="Time0", "Time0",
 	           ifelse(gMed < min_gMed, "low_count",
