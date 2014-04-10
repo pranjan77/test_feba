@@ -11,8 +11,9 @@
 <UL>
 <LI><A HREF="fit_genes.tab">Genes</A>
 <LI><A HREF="fit_quality.tab">Experiments</A> (including quality scores)
-<LI><A HREF="fit_logratios.tab">Gene Fitness</A> (log2 ratios, normalized)
+<LI><A HREF="fit_logratios_good.tab">Gene Fitness</A> for successful experiments (normalized log2 ratios)
 <UL>
+<LI>or for <A HREF="fit_logratios.tab">all</A> experiments</LI>
 <LI><A HREF="fit_logratios_unnormalized.tab">Unnormalized logratios</A>
 <LI><A HREF="fit_logratios_unnormalized_naive.tab">Naive unnormalized logratios</A>
 </UL>
@@ -152,6 +153,17 @@ an experiment failed, either because most genes have few reads (low
 gMed) or because only a few strains grow.
 
 </UL>
+
+As of April 9, 2014, the requirements for a "good" experiment are:
+<UL>
+<LI>not a Time0
+<LI>gMed &ge;50
+<LI>mad12 &le; 0.5
+<LI>cor12 &ge; 0.1
+<LI> |gccor| &le; 0.2 and |adjcor| &le; 0.25
+</UL>
+
+(The rules are implemented in FEBA_Exp_Status() in FEBA.R)
 
 <H3>Source code</H3>
 
