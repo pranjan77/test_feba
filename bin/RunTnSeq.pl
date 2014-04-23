@@ -58,7 +58,7 @@ use FEBA_utils;
         open (my $qsub_script_fh,">",$qsub_script) or die "Can't open $qsub_script\n";
         my @modules = ( "blat" );
         my @cmds = ( $map_tn_seq_cmd );
-        FEBA_utils::create_job_array_script($qsub_script_fh,1,"5G","12:00:00", $gp_project, \@cmds, \@modules );
+        FEBA_utils::create_job_array_script($qsub_script_fh,1,"5G","12:00:00", $gp_project, \@cmds, \@modules);
         close $qsub_script_fh;
         
         my $job_id = FEBA_utils::submit_job_array($qsub_script,"runTnSeq",1,scalar(@fq_parts),1,$debug);
@@ -83,7 +83,7 @@ use FEBA_utils;
         open(my $qsub_script_fh,">",$qsub_script) or die "Can't open $qsub_script\n";
         my $design_random_pool_cmd = "$Bin/DesignRandomPool.pl -minN 10 ".join(" ",@mapped)." > $outdir/$outbase.pool.n10 2> $outdir/$outbase.pool.n10.log";
         my @cmds = ( $design_random_pool_cmd );
-        FEBA_utils::create_job_script($qsub_script_fh,1,"5G","12:00:00",\@cmds);
+        FEBA_utils::create_job_script($qsub_script_fh,1,"5G","12:00:00",$gp_project,\@cmds);
         my $job_id = FEBA_utils::submit_job($qsub_script,"designRandomPool",$debug);
         print STDERR "DesignRandomPool job running under job id $job_id\n";
         exit if $debug;
