@@ -49,8 +49,13 @@ sub submit_job {
     my $qsub_script = shift;
     my $job_name = shift;
     my $debug = shift;
+    my $hold_jid = shift;
     
-    my $qsub_cmd = "qsub -N $job_name $qsub_script";
+    my $qsub_cmd = "qsub -N $job_name ";
+    if ($hold_jid){
+        $qsub_cmd .= "-hold_jid $hold_jid ";
+    }
+    $qsub_cmd .= "$qsub_script ";
     if ($debug){ 
         print STDERR "$qsub_cmd\n";
         return 0;
@@ -102,8 +107,13 @@ sub submit_job_array {
     my $array_end = shift;
     my $array_step = shift;
     my $debug = shift;
+    my $hold_jid = shift;
     
-    my $qsub_cmd = "qsub -N $job_name -t $array_start-$array_end:$array_step $qsub_script";
+    my $qsub_cmd = "qsub -N $job_name -t $array_start-$array_end:$array_step ";
+    if ($hold_jid){
+        $qsub_cmd .= "-hold_jid $hold_jid ";
+    }
+    $qsub_cmd .= "$qsub_script ";
     if ($debug){ 
         print STDERR "$qsub_cmd\n";
         return 0;

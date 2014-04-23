@@ -48,6 +48,7 @@ use FEBA_utils;
     if (scalar(@fq_parts ) != scalar(@mapped) && @mapped > 0) {
         die "Warning: mapped files do not match part files for\n$outdir/${outbase}_TnSeq.part*[0-9]*\nDelete codes files (or both) and rerun\n";
     }
+    my $map_job_id = 0;
     if (scalar(@mapped) == 0){ 
         my $map_tn_seq_cmd = "$Bin/MapTnSeq.pl -genome $fna_file ".
                              "-blat blat ".
@@ -61,11 +62,11 @@ use FEBA_utils;
         FEBA_utils::create_job_array_script($qsub_script_fh,1,"5G","12:00:00", $gp_project, \@cmds, \@modules);
         close $qsub_script_fh;
         
-        my $job_id = FEBA_utils::submit_job_array($qsub_script,"runTnSeq",1,scalar(@fq_parts),1,$debug);
+        $map_job_id = FEBA_utils::submit_job_array($qsub_script,"runTnSeq",1,scalar(@fq_parts),1,$debug);
         
         exit if $debug;
-        print STDERR "MapTnSeq job running under job id $job_id\n";
-        FEBA_utils::wait($job_id);
+        print STDERR "MapTnSeq job running under job id $map_job_id\n";
+        #FEBA_utils::wait($job_id);
         @mapped = glob($map_glob);
     } else {
         print STDERR "Found ".scalar(@mapped)." mapped files\n";
@@ -83,11 +84,11 @@ use FEBA_utils;
         open(my $qsub_script_fh,">",$qsub_script) or die "Can't open $qsub_script\n";
         my $design_random_pool_cmd = "$Bin/DesignRandomPool.pl -minN 10 ".join(" ",@mapped)." > $outdir/$outbase.pool.n10 2> $outdir/$outbase.pool.n10.log";
         my @cmds = ( $design_random_pool_cmd );
-        FEBA_utils::create_job_script($qsub_script_fh,1,"5G","12:00:00",$gp_project,\@cmds);
-        my $job_id = FEBA_utils::submit_job($qsub_script,"designRandomPool",$debug);
-        print STDERR "DesignRandomPool job running under job id $job_id\n";
+        FEBA_utils::create_job_script($qsub_script_fh,1,"120G","12:00:00",$gp_project,\@cmds);
+        my $randpool_job_id = FEBA_utils::submit_job($qsub_script,"designRandomPool",$debug,$map_job_id);
+        print STDERR "DesignRandomPool job running under job id $randpool_job_id\n";
         exit if $debug;
-        FEBA_utils::wait($job_id);
+        #FEBA_utils::wait($job_id);
     }
 
 }
