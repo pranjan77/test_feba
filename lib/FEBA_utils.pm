@@ -22,6 +22,7 @@ sub create_job_script {
     my $pe_slots = shift;
     my $ram = shift;
     my $time = shift;
+    my $project = shift;
     my $cmds = shift;
     my $modules = shift;
     print $fh "#!/bin/bash -l\n".
@@ -31,7 +32,7 @@ sub create_job_script {
               "#\$ -pe pe_slots $pe_slots\n".
               "#\$ -l ram.c=$ram\n".
               "#\$ -l h_rt=$time\n".
-              "#\$ -P gentech-rqc.p\n".
+              "#\$ -P $project.p\n".
               "\n";
     if ($modules){
         foreach my $mod (@{$modules}){
