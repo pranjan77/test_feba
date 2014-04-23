@@ -17,14 +17,43 @@ from matplotlib.backends.backend_pdf import PdfPages
 plt.ioff()
 
 import readSeq
-import qcutils
 import feba
 
 
 NEG_STRAND = 0
 POS_STRAND = 1
+strand_to_symbol = ('-','+')
 
 ### BEGIN ARGUMENT PARSING
+
+def ref_base(fasta):
+    start_idx = fasta.rfind("/")+1
+    if fasta.endswith(".fasta") or fasta.endswith(".FASTA"):
+        return fasta[start_idx:-6]
+    elif fasta.endswith(".fa"):
+        return fasta[start_idx:-3]
+    elif fasta.endswith(".fna"):
+        return fasta[start_idx:-4]
+    else:
+        return fasta[start_idx:]
+#ref_base
+
+# strips off any compression extension and then any FastQ extension of a filename
+def get_fastq_basename(fastq):
+    ret=""
+    start = fastq.rfind("/")+1
+    if fastq.endswith(".gz"):
+        ret = fastq[start:-3]
+    elif fastq.endswith(".bz2"):
+        ret = fastq[start:-4]
+    else:
+        ret = fastq[start:]
+    if ret.endswith(".fastq"):
+        ret = ret[0:-6]
+    elif ret.endswith(".fq"):
+        ret = ret[0:-3]
+    return ret
+#end get_fastq_basename
 
 '''
 Function to ensure the read model is valid input
@@ -65,7 +94,7 @@ def get_usr_args():
     # build the output basename if it hasn't been given
     args = parser.parse_args()
     if not args.outbase:
-        args.outbase = "%s.v.%s" % ("-".join([ qcutils.get_basename(fq) for fq in args.fastq ]), qcutils.ref_base(args.ref))
+        args.outbase = "%s.v.%s" % ("-".join([ get_fastq_basename(fq) for fq in args.fastq ]), ref_base(args.ref))
 
     return args
 #end get_usr_args
@@ -165,14 +194,6 @@ def process_mapping_results(mapper_stdout, counter, bam_out=None):
                 unmapped += 1
                 continue
             mapped += 1
-            #if not barcode:
-            #    sys.stderr.write("bad barcode: %s %s %s %s\n" % (str(barcode), str(contig), str(strand), str(pos)))
-            #if not contig:
-            #    sys.stderr.write("bad contig: %s %s %s %s\n" % (str(barcode), str(contig), str(strand), str(pos)))
-            #if not strand:
-            #    sys.stderr.write("bad strand: %s %s %s %s\n" % (str(barcode), str(contig), str(strand), str(pos)))
-            #if not pos:
-            #    sys.stderr.write("bad pos: %s %s %s %s\n" % (str(barcode), str(contig), str(strand), str(pos)))
             if barcode not in counter:
                 counter[barcode] = dict()
             if contig not in counter[barcode]:
@@ -240,7 +261,7 @@ def main():
     
     sys.stderr.write("[%s] Using %s\n" % (PROG,sys.executable))
     sys.stderr.write("[%s] %s\n" % (PROG," ".join(sys.argv)))
-    index_base = "%s/%s.ref" % (args.outdir,qcutils.ref_base(args.ref))
+    index_base = "%s/%s.ref" % (args.outdir,ref_base(args.ref))
     out_prefix = "%s/%s" % (args.outdir,args.outbase)
  
     # parser for pulling genomic DNA out of TnSeq read
@@ -274,8 +295,6 @@ def main():
     
     mapper_stdin = map_proc.stdin
     mapper_stdout = map_proc.stdout
-    #mapper_stdin = os.fdopen(map_proc.stdin.fileno(), 'w', 0)
-    #mapper_stdout = os.fdopen(map_proc.stdout.fileno(), 'r', 0)
     
     # if debugging, save cleaned reads and alignment output in a BAM file
     if args.debug:
@@ -295,10 +314,8 @@ def main():
         process_mapping_results_args = (mapper_stdout, barcode_counter)
 
     # create a process to read fastq and parse reads for piping to bowtie2    
-    #read_in_proc = multiprocessing.Process(target=process_reads, args=process_reads_args)
     read_in_proc = threading.Thread(target=process_reads, args=process_reads_args)
     # create a process for reading SAM output from bowtie2 and counting barcodes
-    #map_out_proc = multiprocessing.Process(target=process_mapping_results, args=process_mapping_results_args)
     map_out_proc = threading.Thread(target=process_mapping_results, args=process_mapping_results_args)
 
     # start processes
@@ -324,14 +341,15 @@ def main():
             for strand in barcode_counter[barcode][contig]:
                 for position in barcode_counter[barcode][contig][strand]:
                     count = barcode_counter[barcode][contig][strand][position]
-                    sys.stdout.write("%s\t%s\t%s\t%d\t%d\n" % (barcode, contig, strand, position, count))
+                    s = strand_to_symbol[strand]
+                    sys.stdout.write("%s\t%s\t%s\t%d\t%d\n" % (barcode, contig, s, position, count))
                     all_counts.append(count)
                     if count >= args.min_count:
                         filtered_counts.append(count)
     pdf = PdfPages("%s.plots.pdf" % out_prefix)
 
     # Add a plot for Barcode counts
-    all_counts = np.fromiter(all_counts,dtype=np.int)
+    all_counts = np.array(all_counts,dtype=np.int)
     count_hist_fig, count_hist_plot = plt.subplots(nrows=1,ncols=1)
     count_hist_plot.hist(all_counts)
     count_hist_plot.set_title("Raw Counts")
