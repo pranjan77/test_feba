@@ -31,7 +31,7 @@ sub create_job_script {
               "#\$ -pe pe_slots $pe_slots\n".
               "#\$ -l ram.c=$ram\n".
               "#\$ -l h_rt=$time\n".
-              "#\$ -P gentech-qaqc.p\n".
+              "#\$ -P gentech-rqc.p\n".
               "\n";
     if ($modules){
         foreach my $mod (@{$modules}){
