@@ -68,6 +68,7 @@ sub create_job_array_script {
     my $pe_slots = shift;
     my $ram = shift;
     my $time = shift;
+    my $project = shift;
     my $cmds = shift;
     my $modules = shift;
     print $fh "#!/bin/bash -l\n".
@@ -77,7 +78,7 @@ sub create_job_array_script {
               "#\$ -pe pe_slots $pe_slots\n".
               "#\$ -l ram.c=$ram\n".
               "#\$ -l h_rt=$time\n".
-              "#\$ -P gentech-qaqc.p\n".
+              "#\$ -P $project.p\n".
               "\n".
               "PART_NUM=`printf \"%.2d\" \$((\$SGE_TASK_ID-1))`\n".
               "\n";
