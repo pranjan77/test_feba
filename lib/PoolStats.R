@@ -37,6 +37,8 @@ RunPoolStats = function(args = commandArgs(trailingOnly=TRUE)) {
 
 # Separated out for convenient debugging
 PoolReport = function(poolfile, poolg, genes, nreadstot) {
+	if(is.null(genes$type)) genes$type = 1;
+
 	# Insertions within central part of gene
 	poolg2 = poolg[poolg$f >= 0.1 & poolg$f <= 0.9,];
 	err_printf("Found %d insertions (%d distinct locations) in central 10-90%% of genes\n",
