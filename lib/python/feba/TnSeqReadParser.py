@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import re
+import os
 import string
 import collections
 
@@ -8,9 +9,12 @@ class TnSeqReadParser():
     def __init__(self,read_model):
         # parse read model from a fasta file and store information in object
         model = None
-        with open(read_model, 'r') as read_model_file:
-            read_model_file.readline()
-            model = read_model_file.readline()[:-1]
+        if os.path.isfile(read_model):
+            with open(read_model, 'r') as read_model_file:
+                read_model_file.readline()
+                model = read_model_file.readline()[:-1]
+        else:
+            model = read_model
         
         N_match = re.search('(N+)',model)
         n_match = re.search('(n+)',model)
@@ -30,13 +34,18 @@ class TnSeqReadParser():
         # use this to count the start of key sequences in reads
         self.barcode_start_counts = collections.Counter()
         self.genomic_start_counts = collections.Counter()
+        self.reads_with_barcode = 0
+        self.total_reads_processed = 0
     #end __init__
 
     def parse_read(self,hdr,seq,qseq):
         preseq_start = string.find(seq, self.preseq)
         postseq_start = string.find(seq, self.postseq, preseq_start)
+        self.total_reads_processed += 1
         if preseq_start == -1 or postseq_start == -1:
             return None, None, None
+
+        self.reads_with_barcode += 1
 
         # get barcode sequence
         barcode_start = preseq_start+len(self.preseq)
@@ -49,7 +58,7 @@ class TnSeqReadParser():
 
         # create a new header that contains the original header with the barcode sequence
         new_header = None
-        header_index_pos = hdr.find(" ")
+        header_index_pos = hdr.rfind(" ")
         if header_index_pos >= 0:
             new_header = "%s:%s" % (hdr[0:header_index_pos],barcode_seq)
         else:

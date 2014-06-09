@@ -22,6 +22,7 @@ sub create_job_script {
     my $pe_slots = shift;
     my $ram = shift;
     my $time = shift;
+    my $project = shift;
     my $cmds = shift;
     my $modules = shift;
     print $fh "#!/bin/bash -l\n".
@@ -31,7 +32,7 @@ sub create_job_script {
               "#\$ -pe pe_slots $pe_slots\n".
               "#\$ -l ram.c=$ram\n".
               "#\$ -l h_rt=$time\n".
-              "#\$ -P gentech-qaqc.p\n".
+              "#\$ -P $project.p\n".
               "\n";
     if ($modules){
         foreach my $mod (@{$modules}){
@@ -48,8 +49,13 @@ sub submit_job {
     my $qsub_script = shift;
     my $job_name = shift;
     my $debug = shift;
+    my $hold_jid = shift;
     
-    my $qsub_cmd = "qsub -N $job_name $qsub_script";
+    my $qsub_cmd = "qsub -N $job_name ";
+    if ($hold_jid){
+        $qsub_cmd .= "-hold_jid $hold_jid ";
+    }
+    $qsub_cmd .= "$qsub_script ";
     if ($debug){ 
         print STDERR "$qsub_cmd\n";
         return 0;
@@ -68,6 +74,7 @@ sub create_job_array_script {
     my $pe_slots = shift;
     my $ram = shift;
     my $time = shift;
+    my $project = shift;
     my $cmds = shift;
     my $modules = shift;
     print $fh "#!/bin/bash -l\n".
@@ -77,7 +84,7 @@ sub create_job_array_script {
               "#\$ -pe pe_slots $pe_slots\n".
               "#\$ -l ram.c=$ram\n".
               "#\$ -l h_rt=$time\n".
-              "#\$ -P gentech-qaqc.p\n".
+              "#\$ -P $project.p\n".
               "\n".
               "PART_NUM=`printf \"%.2d\" \$((\$SGE_TASK_ID-1))`\n".
               "\n";
@@ -100,8 +107,13 @@ sub submit_job_array {
     my $array_end = shift;
     my $array_step = shift;
     my $debug = shift;
+    my $hold_jid = shift;
     
-    my $qsub_cmd = "qsub -N $job_name -t $array_start-$array_end:$array_step $qsub_script";
+    my $qsub_cmd = "qsub -N $job_name -t $array_start-$array_end:$array_step ";
+    if ($hold_jid){
+        $qsub_cmd .= "-hold_jid $hold_jid ";
+    }
+    $qsub_cmd .= "$qsub_script ";
     if ($debug){ 
         print STDERR "$qsub_cmd\n";
         return 0;
