@@ -275,7 +275,7 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 			       metacolAll=1:5,
 			       # names of experiments to ignore
 			       ignore=NULL,
-			       debug=FALSE,
+			       debug=FALSE, computeCofit=TRUE,
 			       ...) {
 
 	if(!is.null(ignore)) {
@@ -294,6 +294,9 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 	if (is.null(genes$GC)) stop("Warning: no GC field in genes");
 
 	expsUsed$name = as.character(expsUsed$name);
+
+	# if Group = Time0, it is a Time0, even if "short" has a different description
+	if(!is.null(expsUsed$Group)) expsUsed$short[expsUsed$Group == "Time0"] = "Time0";
 
     write("Aggregating all_g2",stderr())
     #write("all_g2",stdout())
@@ -395,7 +398,7 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 	q = expsUsed[expsUsed$name %in% names(all_fit), words("name short t0set")];
 	nUse = as.character(q$name);
 	if(!all(nUse == names(fit$lrn))) stop("Mismatched names in fit");
-	q$nMapped = colSums(all[,nUse]);
+	q$nMapped = colSums(all[,nUse,drop=F]);
 	q$nPastEnd = colSums(all[all$scaffold=="pastEnd",nUse,drop=F]);
 	q$nGenic = colSums(all_g2[,nUse,drop=F]);
 	q$nUsed = colSums(fit$tot);
@@ -419,10 +422,10 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 	q$adjcor = sapply(as.character(q$name), function(x) paircor(adjDiff, fit$g, fit$lrn[[x]], method="s"));
 	# GC correlation -- a sign of PCR issues (and often associated with high adjcor)
 	# c() to make it be a vector instead of a matrix
-	q$gccor = c( cor(fit$lrn, genes$GC[ match(fit$g, genes$locusId) ]) );
+	q$gccor = c( cor(fit$lrn, genes$GC[ match(fit$g, genes$locusId) ], use="p") );
 
 	# experiments with very high maximum fitness may not give meaningful results for the typical gene
-	q$maxFit = apply(fit$lrn,2,max);
+	q$maxFit = apply(fit$lrn,2,max,na.rm=T);
 
 	fit$q = q;
 	fit$genesUsed = genesUsed;
@@ -454,7 +457,8 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 	# Statistics of cofitness on pairs
         status = FEBA_Exp_Status(q, ...);
 	u = (status == "OK");
-	if (sum(u) >= 5) {
+	u[is.na(u)] = FALSE;
+	if (computeCofit && sum(u) >= 5) {
 		cat("Computing cofitness with ", sum(u), " experiments\n");
 		adjDiff$rfit = cor12(adjDiff, fit$g, fit$lrn[,u]);
 		pred$rfit = cor12(pred, fit$g, fit$lrn[,u]);
@@ -622,6 +626,11 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	}
 	dev.off();
 	wroteName("fit_chr_bias.pdf");
+
+	if (!is.null(expsU)) {
+		writeDelim(expsU, nameToPath("expsUsed"));
+		wroteName("expsUsed");
+	}
 
 	if(writeImage) {
 	    img = format(Sys.time(),"fit%Y%b%d.image"); # e.g., fit2013Oct24.image
