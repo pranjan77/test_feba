@@ -10,7 +10,10 @@
 <P>Tables
 <UL>
 <LI><A HREF="fit_genes.tab">Genes</A>
-<LI><A HREF="fit_quality.tab">Experiments</A> (including quality scores)
+<LI><A HREF="fit_quality.tab">Experiments</A> including quality scores
+<UL>
+<LI><A HREF="expsUsed">detailed metadata</A>
+</UL>
 <LI><A HREF="fit_logratios_good.tab">Gene Fitness</A> for successful experiments (normalized log2 ratios)
 <UL>
 <LI>or for <A HREF="fit_logratios.tab">all</A> experiments</LI>
@@ -31,7 +34,7 @@
 <UL>
 <LI>Quality of experiments
 <UL>
-<LI><A HREF="fit_quality.pdf">Experiment quality</A> (grey: Time0; red: failed; green: OK; blue: OK, but maxFit > 5)
+<LI><A HREF="fit_quality.pdf">Experiment quality</A> (grey: Time0, i.e. negative control; red: failed; green: OK; blue: OK, but maxFit > 5)
 <LI><A HREF="fit_quality_cor12.pdf">Cor12 for each experiment</A>
 </UL>
 <LI>Clustering of experiments (rotate clockwise to view)
@@ -85,6 +88,8 @@ recovering plasmids can vary. So, for each plasmid (if this organism
 has any), the median fitness of the genes on the plasmid is set to
 zero. Plasmids with very few genes cannot be normalized and so they are excluded.
 
+<P>If the genome sequence is not complete and is in many fragments, then it is not easy to tell if there is an effect of proximity to the terminus. Assuming that each scaffold is small, there will not be a significant variation in copy number across the scaffold. Since each scaffold is normalized separately, this should correct for the varying copy numbers of the scaffolds (but this has not been verified).
+
 <H3><A NAME="qual">Quality scores in the table of experiments</A></H3>
 
 <UL>
@@ -92,7 +97,7 @@ zero. Plasmids with very few genes cannot be normalized and so they are excluded
 
 <LI><B>short</B> -- shortened description. Samples with the same value are replicates.
 
-<LI><B>t0set</B> -- which set of Time0 samples this was compared to. If this is a Time0 sample, then the self-counts were subtracted out of the other side of the comparison (starting Dec. 2013).
+<LI><B>t0set</B> -- which set of Time0 samples this was compared to. If this is a Time0 sample, then the self-counts were subtracted out of the other side of the comparison (starting Dec. 2013) as a negative control.
 
 <LI><B>nMapped</B> -- #reads for that sample that corresponded to a known strain
 
@@ -156,7 +161,7 @@ gMed) or because only a few strains grow.
 
 As of April 9, 2014, the requirements for a "good" experiment are:
 <UL>
-<LI>not a Time0
+<LI>not a Time0 (Time0 "fitness" values are computed as a negative control)
 <LI>gMed &ge;50
 <LI>mad12 &le; 0.5
 <LI>cor12 &ge; 0.1
