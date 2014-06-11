@@ -42,10 +42,11 @@ GeneFitness = function(genes, strainInfo, countCond, countT0,
 	    	    strainsUsed, genesUsed, genesUsed12,
 		    use1 = strainInfo$f < 0.5,
 		    base_se = 0.1,
+		    minGenesPerScaffold=10,
 		    ...) {
     d = AvgStrainFitness(countCond, countT0, strainInfo$locusId,
       		         strainsUsed=strainsUsed, genesUsed=genesUsed, ...);
-    d$fitnorm = NormalizeByScaffold(d$fit, d$locusId, genes);
+    d$fitnorm = NormalizeByScaffold(d$fit, d$locusId, genes, minToUse=minGenesPerScaffold);
 
     d1 = AvgStrainFitness(countCond, countT0, strainInfo$locusId,
       		         strainsUsed=strainsUsed & use1, genesUsed=genesUsed12, ...);
@@ -251,6 +252,9 @@ StrainClosestGenes = function(strains, genes) {
 		g = geneSplit[[sc]];
 		if (is.null(g)) {
 		    indexSplit[[sc]] = rep(NA, nrow(s));
+		} else if (nrow(g) == 1) {
+		    # cannot approx with 1 value so:
+		    indexSplit[[sc]] = rep(g$index[1], nrow(s));
 		} else {
 		    g$pos = (g$begin + g$end) / 2;
 		    g = g[order(g$pos),];
@@ -374,7 +378,8 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 		    cat("Skipping ",n," which has no control counts\n"); # used to be debug only
 		} else {
 		    all_fit[[n]] = GeneFitness(genes, all_g2[,words("locusId f")], x, t0,
-				    strainsUsed, genesUsed, genesUsed12, nACG=nACG);
+				    strainsUsed, genesUsed, genesUsed12, 
+				    nACG=nACG, minGenesPerScaffold=minGenesPerScaffold);
                     cntrl = setdiff(expsT0[[ t0set ]], n);
 		    if(length(cntrl) < 1) stop("No Time0 experiments for ",n," should not be reachable");
 		    if(debug) cat("StrainFitness() on", n, "versus", cntrl,"\n");
@@ -584,7 +589,7 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 
 	use = fit$q$short != "Time0";
 	if(sum(use) > 2) {
-	    lrClust = hclust(as.dist(1-cor(fit$lrn[,as.character(fit$q$name)[use]])));
+	    lrClust = hclust(as.dist(1-cor(fit$lrn[,as.character(fit$q$name)[use]], use="p")));
 	    pdf(nameToPath("fit_cluster_logratios.pdf"),
 		pointsize=8, width=0.25*pmax(8,sum(use)), height=8,
 		title=paste(org,"Cluster Logratios"));
@@ -649,7 +654,7 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 }
 
 FEBA_Quality_Plot = function(q, pdfFile, org,
-		min_gMed = 50, max_mad12 = 0.5, min_cor12 = 0.2,
+		min_gMed = 50, max_mad12 = 0.5, min_cor12 = 0.1,
 		max_gccor = 0.2, max_adjcor = 0.25) {
         status = FEBA_Exp_Status(q,
 				 min_gMed=min_gMed, max_mad12=max_mad12, min_cor12=min_cor12,
@@ -710,7 +715,7 @@ FEBA_Cofitness_Plot = function(pairs, pdfFile, org) {
 		title=paste(org,"Cofitness"));
 	CompareDensities(list(Operon=withoutNA(pairs$pred$rfit[pairs$pred$bOp]),
 			          Adjacent=withoutNA(pairs$adjDiff$rfit),
-				  Random=pairs$random$rfit),
+				  Random=withoutNA(pairs$random$rfit)),
 			 legendX="topleft",
 			 xlim=c(-1,1),
 			 xlab="Cofitness", ylab="Density", lwd=c(1,2,2), col=c(3,2,1), lty=c(1,2,4),
