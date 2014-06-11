@@ -84,9 +84,8 @@ END
 	    $f1++;
 	} elsif ($nTot == 2) {
 	    $f2++;
-	} else {
-	    $totcodes++;
 	}
+	$totcodes++;
         next unless $nTot >= $minN;
         $nMulti++;
         
