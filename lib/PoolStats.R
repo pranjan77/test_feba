@@ -64,6 +64,19 @@ PoolReport = function(poolfile, poolg, genes, nreadstot) {
 	err_printf("Wrote %d genes with surprising insertions in central 10-90%% to %s\n",
 			length(d), surprisehitfile);
 
+	# tabulate strains per gene and reads per gene (only genes with hits)
+	strainsPerGene = as.data.frame.table(table(poolg2$locusId, dnn="locusId"), responseName="nStrains");
+	readsPerGene = aggregate(list(nReads=poolg2$n), list(locusId=poolg2$locusId), sum);
+	d = genes[,words("locusId scaffoldId begin")];
+	if(!is.null(genes$sysName)) d$sysName = genes$sysName;
+	d$desc = genes$desc;
+	d = merge(merge(d, strainsPerGene), readsPerGene);
+	d = d[order(d$scaffold,d$begin),];
+	d$begin = NULL;
+	hitfile = paste(poolfile,".hit",sep="");
+	writeDelim(d, hitfile);
+	err_printf("Wrote read and strain counts for hit genes to %s\n",hitfile);
+
 	nstrain = table(poolg2$locusId[poolg2$locusId %in% genes$locusId[genes$type==1]]);
 	err_printf("Strains per hit protein: median %.0f mean %.1f\n", median(nstrain), mean(nstrain));
 
