@@ -3,7 +3,9 @@ use strict;
 # Given a bunch of files with counts for barcodes, pick out the
 # ones from the pool and make a small table of their counts (out.poolcount).
 # Also makes a table of total counts (out.colsum)
-# and a file of ignored lines (out.codes.ignored)
+# and a file of ignored lines (out.codes.ignored).
+# Expects either that all columns are in all files,
+# or that each file has just one column
 
 {
     die "Usage: combineBarSeq.pl out pool_file codesfiles...\n"
@@ -36,6 +38,8 @@ use strict;
     my @colSums = (); # samples to total number of counts
     my @colSumsUsed = (); # samples to total number of counts for used barcodes
     my $nSamples = 0;
+    my $oneperfile = 0;
+    my $thisIndex = undef; # if in one-per-file mode, which index is this file?
 
     my $nUsed = 0;
     my $nIgnore = 0;
@@ -52,6 +56,23 @@ use strict;
 	    $nSamples = scalar(@indexes);
 	    @colSums = (0) x $nSamples;
 	    @colSumsUsed = (0) x $nSamples;
+	    if (scalar(@cols) == 1) {
+		$oneperfile = 1;
+		$thisIndex = 0;
+	    }
+	} elsif ($oneperfile) {
+	    die "More than one data column in $file" unless scalar(@cols) == 1;
+	    my %oldcol = map { $indexes[$_] => $_ } (0..(scalar(@indexes)-1));
+	    my $thisCol = $cols[0];
+	    if (exists $oldcol{ $thisCol }) {
+		$thisIndex = $oldcol{ $thisCol };
+	    } else {
+		$nSamples++;
+		push @indexes, $thisCol;
+		$thisIndex = scalar(@indexes)-1;
+		push @colSums, 0;
+		push @colSumsUsed, 0;
+	    }
 	} else {
 	    die "Wrong number of columns in $file" unless scalar(@cols) == scalar(@indexes);
 	    foreach my $i (0..(scalar(@cols)-1)) {
@@ -68,26 +89,35 @@ use strict;
 	    my $barcode = shift @F; # actually rcbarcode
 	    # note am allowing N in barcode but not in pool
 	    die "Invalid barcode: $barcode" unless $barcode =~ m/^[ACGTN]+$/; 
-	    die "Wrong number of columns in $file" unless scalar(@F) == $nSamples;
+	    die "Wrong number of columns in $file" unless scalar(@F) == ($oneperfile ? 1 : $nSamples);
 	    if (exists $pool{$barcode}) {
-		if (exists $counts{$barcode}) {
-		    my $row = $counts{$barcode};
-		    for (my $i = 0; $i < $nSamples; $i++) {
-			$row->[$i] += $F[$i];
-		    }
-		} else {
-		    $counts{$barcode} = \@F;
-		}
 		$nUsed++;
-		for (my $i = 0; $i < $nSamples; $i++) {
-		    $colSumsUsed[$i] += $F[$i];
+		if ($oneperfile) {
+		    $colSumsUsed[$thisIndex] += $F[0];
+		    $counts{$barcode}[$thisIndex] += $F[0];
+		} else {
+		    for (my $i = 0; $i < $nSamples; $i++) {
+			$colSumsUsed[$i] += $F[$i];
+		    }
+		    if (exists $counts{$barcode}) {
+			my $row = $counts{$barcode};
+			for (my $i = 0; $i < $nSamples; $i++) {
+			    $row->[$i] += $F[$i];
+			}
+		    } else {
+			$counts{$barcode} = \@F;
+		    }
 		}
 	    } else {
 		print IGNORE join("\t",$barcode,@F)."\n";
 		$nIgnore++;
 	    }
-	    for (my $i = 0; $i < $nSamples; $i++) {
-		$colSums[$i] += $F[$i];
+	    if ($oneperfile) {
+		$colSums[$thisIndex] += $F[0];
+	    } else {
+		for (my $i = 0; $i < $nSamples; $i++) {
+		    $colSums[$i] += $F[$i];
+		}
 	    }
 	}
 	close(IN) || die "Error reading from $file";
@@ -109,6 +139,9 @@ use strict;
 	my $counts = $counts{$rcbarcode};
 	my @out = ($barcode,$rcbarcode,$scaffold,$strand,$pos);
 	if (defined $counts) {
+	    for (my $i = 0; $i < $nSamples; $i++) {
+		$counts->[$i] += 0; # ensure vector is full length, not undef;
+	    }
 	    push @out, @$counts;
 	} else {
 	    push @out, (0) x $nSamples;
