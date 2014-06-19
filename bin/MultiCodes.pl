@@ -6,7 +6,7 @@ my $minQuality = 10;
 
 my $usage = <<END
 Usage: MultiCodes.pl [ -debug ] [ -dntag ] [ -limit maxReads ] [ -minQuality $minQuality ]
-          -primers PrimerIndexTable -out out_prefix < fastq
+          [ -index name | -primers PrimerIndexTable ] -out out_prefix < fastq
     PrimerIndexTable should be tab-delimited with multiplex name and a primer like nACGACG
     The fastq file should be fastq with phred+33 ("sanger") encoding of quality scores
     (as in MiSeq or 2012+ HiSeq)
@@ -17,6 +17,9 @@ for primer nATCACGAG (nLeading=1, indexseq=ATCACGAG), where the 20 Ns are the ba
 
 or, if -dntag is specified,
 nATCACGAG CGGTGTCGGTCTCGTAG 20N CGATGAATTCGAGCTCGTT
+
+or, if the index is specified, there is no multiplexing, and the read is
+nnnnn GTCGACCTGCAGCGTACG 20N AGAGACC (where the leading ns are random and are ignored)
 
 For a barcode to be counted, the 9 nt upstream of the barcode much match exactly;
 the 9 nt downstream of the barcode much also be correct unless the sequence
@@ -36,25 +39,30 @@ my $postseq = undef; # after (for 50 nt reads this needs to be shortened to AGA)
 my $nPreExpected = 0; # nt between prefix and preseq
 my $debug = 0;
 my $dntag = 0;
+my $iname = undef;
 
 {
     my ($indexfile,$out,$nLimit);
-    (GetOptions('primers=s' => \$indexfile, 'out=s' => \$out,
+    (GetOptions('primers=s' => \$indexfile,
+		'out=s' => \$out,
+		'index=s' => \$iname,
                 'minQuality=i' => \$minQuality,
                 'limit=i' => \$nLimit,
                 'nPreExpected=i' => \$nPreExpected,
                 'dntag' => \$dntag,
                 'debug' => \$debug)
-     && defined $indexfile && defined $out)
+     && defined $out)
         || die $usage;
+    die $usage unless (defined $indexfile xor defined $iname);
 
     if ($dntag) {
+	die "-index with -dntag not supported" if defined $iname;
         $preseq = "GTCTCGTAG";
         $nPreExpected = 8;
         $postseq = "CGATGAATT";
     } else {
         $preseq = "CAGCGTACG";
-        $nPreExpected = 9;
+        $nPreExpected = defined $iname ? 14 : 9;
         $postseq = "AGAGACCTC";
     }
     my $nReads = 0;
@@ -63,27 +71,34 @@ my $dntag = 0;
     my %codes = (); # barcode => number of times barcode is seen, with an array of one entry per multiplex tag
     my @prefix = (); # list of [ nLeading, indexseq (no leading Ns), name ]
 
-    open(INDEX, "<", $indexfile) || die "Error reading $indexfile";
-    while (my $line = <INDEX>) {
-        chomp $line;
-        my ($name,$index) = split /\t/, $line;
-        next if $name =~ m/name/i;
-        my $nLeading;
-        my $indexseq;
-        if ($name eq "none" && $index eq "") {
-            $nLeading = 0;
-            $indexseq = "";
-        } else {
-            die "Invalid index sequence $index" unless $index =~ m/^([nN]*)([ACGT]+)$/;
-            $nLeading = length($1);
-            $indexseq = $2;
-        }
-        die $line if !defined $nLeading || !defined $indexseq || !defined $name;
-        push @prefix, [ $nLeading, $indexseq, $name ];
+    my @prefixNames = ();
+    if (defined $indexfile) {
+	open(INDEX, "<", $indexfile) || die "Error reading $indexfile";
+	while (my $line = <INDEX>) {
+	    chomp $line;
+	    my ($name,$index) = split /\t/, $line;
+	    next if $name =~ m/name/i;
+	    my $nLeading;
+	    my $indexseq;
+	    if ($name eq "none" && $index eq "") {
+		$nLeading = 0;
+		$indexseq = "";
+	    } else {
+		die "Invalid index sequence $index" unless $index =~ m/^([nN]*)([ACGT]+)$/;
+		$nLeading = length($1);
+		$indexseq = $2;
+	    }
+	    die $line if !defined $nLeading || !defined $indexseq || !defined $name;
+	    push @prefix, [ $nLeading, $indexseq, $name ];
+	}
+	close(INDEX) || die "Error reading $indexfile";
+	print STDERR "Read " . scalar(@prefix) . " indices from $indexfile\n";
+	@prefixNames = map { $_->[2] } @prefix;
     }
-    close(INDEX) || die "Error reading $indexfile";
-    print STDERR "Read " . scalar(@prefix) . " indices from $indexfile\n";
-    my @prefixNames = map { $_->[2] } @prefix;
+    if (defined $iname) {
+	@prefix = ( [0, "", $iname] );
+	@prefixNames = ( $iname );
+    }
 
     while(my $header = <STDIN>) {
         chomp $header;
@@ -95,7 +110,7 @@ my $dntag = 0;
 
         last if defined $nLimit && $nReads >= $nLimit;
 
-        my $iPrefix = FindPrefix($seq, \@prefix);
+        my $iPrefix = defined $iname ? 0 : FindPrefix($seq, \@prefix);
         next if $iPrefix < 0;
         $nMulti++;
         my ($nLeading, $indexseq, $prefixName) = @{ $prefix[$iPrefix] };
