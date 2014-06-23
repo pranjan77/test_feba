@@ -26,7 +26,11 @@ RunPoolStats = function(args = commandArgs(trailingOnly=TRUE)) {
 	genes = read.delim(genesfile, as.is=T);
 	for (n in words("scaffoldId begin end strand desc"))
 		if(!n %in% names(genes)) stop("Missing column ", n, " from genes file ", genesfile);
-	err_printf("Read %d strains and %d genes\n", nrow(pool), nrow(genes));
+	err_printf("Read %d strains (%d in genome, %d locations) and %d genes\n",
+	     nrow(pool),
+	     sum(pool$scaffold != "pastEnd"),
+	     nrow(unique(pool[pool$scaffold != "pastEnd",words("scaffold strand pos")])),
+	     nrow(genes));
 
 	poolg = findWithinGrouped(split(pool, pool$scaffold),
 				split(without(genes, genes$scaffoldId), genes$scaffoldId),
