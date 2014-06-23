@@ -37,8 +37,8 @@ Usage: MapTnSeq.pl [ -debug ] [ -limit maxReads ] [ -minQuality $minQuality ] [-
     (as in MiSeq or 2012+ HiSeq). If it is named .gz, it will be gunzipped before reading.
     If it contains paired-end reads, the second read (name matching " 2:") will be ignored.
 
-    The model file contains two lines -- the first shows what a
-    typical read should look like, e.g.
+    The model file contains 1-2 lines -- the first shows what a
+    typical read should look like up until the junction with the genome, e.g.
     
     nnnnnnCGCCCTGCAGGGATGTCCACGAGGTCTCTNNNNNNNNNNNNNNNNNNNNCGTACGCTGCAGGTCGACGGCCGGCCAGACCGGGGACTTATCAGCCAACCTGT
 
@@ -46,10 +46,11 @@ Usage: MapTnSeq.pl [ -debug ] [ -limit maxReads ] [ -minQuality $minQuality ] [-
     optional block of n\'s at the front and a block of Ns which
     represents the barcode.
 
-    The second line in the model file contains the sequence "past the
-    end" of the transposon that might arise from residual delivery vector.
+    The second line in the model file is optional and contains the
+    sequence "past the end" of the transposon that might arise from
+    residual intact plasmid.
 
-    At present, this script does not handle sample multiplexing.
+    This script does not handle sample multiplexing.
 
     The output file is tab-delimited and contains, for each usable
     read, the read name, the barcode, which scaffold the insertion
@@ -59,8 +60,9 @@ Usage: MapTnSeq.pl [ -debug ] [ -limit maxReads ] [ -minQuality $minQuality ] [-
     after trimming the transposon sequence, the bit score, and the
     %identity.
 
-    minQuality specifies the minimum quality score for each character in the barcode.
-    flanking specifies the minimum number of nucleotides on each side that must match exactly.
+    minQuality specifies the minimum quality score for each character
+    in the barcode.  flanking specifies the minimum number of
+    nucleotides on each side that must match exactly.
 END
     ;
 
@@ -96,14 +98,19 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
     $model =~ s/[\r\n]+$//;
     die "Invalid model: $model" unless $model =~ m/^n*[ACGT]+N+[ACGT]+$/;
     my $pastEnd = <MODEL>;
-    chomp $pastEnd;
-    die "Invalid past-end sequence: $pastEnd" unless $pastEnd =~ m/^[ACGT]+$/;
+    if (defined $pastEnd) {
+	chomp $pastEnd;
+	die "Invalid past-end sequence: $pastEnd" unless $pastEnd =~ m/^[ACGT]+$/;
+}	
     close(MODEL) || die "Error reading $modelFile";
 
     my $barcodeStart = index($model, "N");
     my $barcodeEnd = rindex($model, "N");
     my $barcodeLen = $barcodeEnd-$barcodeStart+1;
-    print STDERR "Parsed model $modelFile for barcodes of length $barcodeLen and expected transposon region of " . length($model) . "\n";
+    print STDERR "Parsed model $modelFile\n";
+    print STDERR "Barcodes of length $barcodeLen, expected transposon region of " . length($model);
+    print STDERR ", no pastEnd" if !defined $pastEnd;
+    print STDERR "\n";
 
     my $pipe = 0;
     if ($fastqFile =~ m/[.]gz$/) {
@@ -168,25 +175,27 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
 
     my %hitsPastEnd = (); # read to score of match to past-end sequence
 
-    # Map to past-end-of transposon
-    my $endFna = $tmpdir . "/MapTnSeq_end" . $$ . "_" . "_$rand.fna";
-    open(END, ">", $endFna) || die "Cannot write to $endFna";
-    print END ">pastend\n$pastEnd\n";
-    close(END) || die "Error writing to $endFna";
-    my $blat8 = BLAT8($tmpFna, $endFna, $tmpdir, $blatcmd, $minScore, $minIdentity);
-    print STDERR "Parsing past-end hits to $blat8\n" if defined $debug;
-    open(BLAT, "<", $blat8) || die "Cannot read $blat8";
-    while(<BLAT>) {
-        chomp;
-        my @F = split /\t/, $_;
-        my ($query, $subject, $identity, $len, $mm, $gaps, $qBeg, $qEnd, $sBeg, $sEnd, $eval, $score) = @F;
-        $hitsPastEnd{$query} = $score unless exists $hitsPastEnd{$query} && $hitsPastEnd{$query} > $score;
+    if (defined $pastEnd) {
+	# Map to past-end-of transposon
+	my $endFna = $tmpdir . "/MapTnSeq_end" . $$ . "_" . "_$rand.fna";
+	open(END, ">", $endFna) || die "Cannot write to $endFna";
+	print END ">pastend\n$pastEnd\n";
+	close(END) || die "Error writing to $endFna";
+	my $blat8 = BLAT8($tmpFna, $endFna, $tmpdir, $blatcmd, $minScore, $minIdentity);
+	print STDERR "Parsing past-end hits to $blat8\n" if defined $debug;
+	open(BLAT, "<", $blat8) || die "Cannot read $blat8";
+	while(<BLAT>) {
+	    chomp;
+	    my @F = split /\t/, $_;
+	    my ($query, $subject, $identity, $len, $mm, $gaps, $qBeg, $qEnd, $sBeg, $sEnd, $eval, $score) = @F;
+	    $hitsPastEnd{$query} = $score unless exists $hitsPastEnd{$query} && $hitsPastEnd{$query} > $score;
+	}
+	close(BLAT) || die "Error reading $blat8";
+	unlink($blat8) unless defined $debug;
     }
-    close(BLAT) || die "Error reading $blat8";
-    unlink($blat8) unless defined $debug;
 
     # Map to the genome
-    $blat8 = BLAT8($tmpFna, $genomeFile, $tmpdir, $blatcmd, $minScore, $minIdentity);
+    my $blat8 = BLAT8($tmpFna, $genomeFile, $tmpdir, $blatcmd, $minScore, $minIdentity);
     print STDERR "Parsing $blat8\n" if defined $debug;
     open(BLAT, "<", $blat8) || die "Cannot read $blat8";
     my @lines = ();
