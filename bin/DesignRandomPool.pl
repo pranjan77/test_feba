@@ -72,7 +72,7 @@ END
     my $f2 = 0;
     my $totcodes = 0;
 
-    my %nInCategory = (); # classification of barcodes
+    my %nInCategory = ("Usable" => 0); # classification of barcodes
     my ($SCAFFOLD,$POS,$STRAND,$UNIQ,$QBEG,$QEND,$SCORE,$IDENTITY) = (0,1,2,3,4,5,6,7);
     my $nMulti = 0; # barcodes seen >once
     my %barcodeAt = (); # barcode to list of nTot, nMax, at, nNext, nextAt
@@ -136,7 +136,9 @@ END
 
     print STDERR "$nMulti barcodes seen $minN or more times, map $nInCategory{Usable} (minFrac $minFrac minRatio $minRatio)\n";
     foreach my $category (sort keys %nInCategory) {
-        print STDERR sprintf("%s\t%d\t%.4f\n", $category, $nInCategory{$category}, $nInCategory{$category} / $nMulti);
+        print STDERR sprintf("%s\t%d\t%.4f\n", $category, $nInCategory{$category},
+			     $nInCategory{$category} / $nMulti)
+	    if $nInCategory{$category} > 0;
     }
 
     my $nOut = 0;
