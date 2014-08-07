@@ -94,17 +94,24 @@ GeneFitness = function(genes, strainInfo, countCond, countT0,
 # If genesUsed (as a list of locusId) and strainsUsed (as boolean vector) are provided,
 # then considers only those strains & genes; minimum requirements.
 #
-# If provided,
-# nACG should include columns nA, nG, and nC with the counts of each nucleotides in the rcbarcodes
+# nACG is normally not used. If provided, it should include columns
+#  nA, nG, and nC with the counts of each nucleotides in the rcbarcodes
 #
-# debug & even are for testing purposes.
+# if returnStrainInfo is set, returns a list of two data frames, "genes" and "strains"
+# normally returns a per-gene data frame.
+#
+# debug is for testing purposes.
 AvgStrainFitness = function(strainCounts, strainT0, strainLocus,
 		 minStrainT0 = 4, minGeneT0 = 40,
 		 nACG = NULL,
 		 genesUsed=NULL, strainsUsed=NULL,
-		 even=FALSE,
-		 # maxWeight of 100 corresponds to having 100 reads on each side (if perfectly balanced)
-		 maxWeight = if(even) 0 else 100,
+		 # maxWeight of N corresponds to having N reads on each side (if perfectly balanced); use 0 for even weighting
+		 # 20 on each side corresponds to a standard error of ~0.5; keep maxWeight low because outlier strains
+		 # often have higher weights otherwise.
+		 # Use maxWeight = 0 for unweighted averages.
+		 maxWeight = 20,
+		 minGeneFactorNStrains=3,
+		 returnStrainInfo=FALSE,
 		 debug=FALSE) {
     if (length(strainCounts) < 1 || length(strainT0) < 1 || length(strainLocus) < 1
         || length(strainCounts) != length(strainT0) || length(strainCounts) != length(strainLocus))
@@ -148,9 +155,9 @@ AvgStrainFitness = function(strainCounts, strainT0, strainLocus,
     nStrains = table(strainLocusF);
     if(!all(names(nStrains)==levels(strainLocusF))) stop("Strain mismatch");
     nStrains = as.vector(nStrains);
-    geneFit1 = mednorm(as.vector(tapply(strainFit, strainLocusF, mean)));
+    geneFit1 = mednorm(as.vector(tapply(strainFit, strainLocusF, median))); # used to use mean
     i = as.integer(strainLocusF); # from strain index to gene index
-    strainPseudoCount = ifelse(nStrains[i] >= 3, 2**geneFit1[i] * readratio, readratio);
+    strainPseudoCount = ifelse(nStrains[i] >= minGeneFactorNStrains, 2**geneFit1[i] * readratio, readratio);
 
     # And apportion the pseudocount equally (in log space) between condition-count and strain-count
     # to minimize the deviations from pseudocount = 1
@@ -158,27 +165,26 @@ AvgStrainFitness = function(strainCounts, strainT0, strainLocus,
     t0PseudoCount = 1/sqrt(strainPseudoCount);
     # (or could do some sort of weighted likelihood-based inference of fitness values, might be better)
 
-    # for each strain: fitness, variance, and weight
+    # for each strain: fitness, s.d., and weight
     strainFit = log2(condPseudoCount + strainCounts) - log2(t0PseudoCount + strainT0) - strainFitAdjust;
-    strainVar = sqrt(1/(1+strainT0) + 1/(1+strainCounts)) / log(2);
-    # even weighting is an option for testing purposes
-    # use harmonic mean for weighting
+    strainSd = sqrt(1/(1+strainT0) + 1/(1+strainCounts)) / log(2);
+    # use harmonic mean for weighting; add as small number to allow maxWeight = 0.
     strainWeight = 0.5 + pmin(maxWeight, 2/( 1/(1+strainT0) + 1/(1+strainCounts) ) );
 
     fitness = lapply(split(1:length(strainT0), list(locusId=strainLocus)),
      	           function(j) {
+		       n = length(j);
                        totw = sum(strainWeight[j]);
 		       fitRaw = sum(strainWeight[j] * strainFit[j]) / totw;
 		       tot = sum(strainCounts[j]);
 		       tot0 = sum(strainT0[j]);
-		       sd = sqrt(sum(strainWeight[j]**2 * strainVar[j]))/totw;
+		       sd = sqrt(sum(strainWeight[j]**2 * strainSd[j]))/totw;
 		       sumsq = sum(strainWeight[j] * (strainFit[j]-fitRaw)**2)/totw;
 		       # high-N estimate of the noise in the log2 ratio of fitNaive
 		       # But sdNaive is actually pretty accurate for small n -- e.g.
 		       # simulations with E=10 on each side gave slightly light tails
 		       # (r.m.s.(z) = 0.94).
 		       sdNaive = sqrt( 1/(1+tot) + 1/(1+tot0) ) / log(2);
-		       n = length(j);
 		       nEff = totw/max(strainWeight[j]);
 		       c(fitRaw=fitRaw, sd=sd, sumsq=sumsq, sdNaive=sdNaive, n=n, nEff=nEff,
 		         tot=tot, tot0=tot0);
@@ -188,6 +194,10 @@ AvgStrainFitness = function(strainCounts, strainT0, strainLocus,
     fitness$fitNaive = mednorm(log2(1+fitness$tot) - log2(1+fitness$tot0));
     fitness$locusId = row.names(fitness);
     if (is.integer(strainLocus)) fitness$locusId = as.integer(as.character(fitness$locusId));
+
+    if(returnStrainInfo) return(list(genes=fitness,
+        strains=data.frame(strainLocusF,strainCounts,strainT0,strainPseudoCount,strainFit,strainSd,strainWeight)));
+    # else
     return(fitness);
 }
 
@@ -936,7 +946,7 @@ CompareDensities <- function(list,labels=names(list),xlim=range(unlist(list)),yl
 	}
 }
 
-# Given pairs of adjcent genes, identify the upstream and downstream genes,
+# Given pairs of adjacent genes, identify the upstream and downstream genes,
 # as "up" and "dn"
 OpPairUpDn = function(oppairs, genes) {
 	oppairs$strand = genes$strand[match(oppairs$Gene1, genes$locusId)];
