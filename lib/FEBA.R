@@ -205,14 +205,14 @@ AvgStrainFitness = function(strainCounts, strainT0, strainLocus,
 # values -- fitness values (as a vector)
 # locusId -- the corresponding locusIds
 # genes contains locusId, scaffoldId, and begin
-# minForLoess -- how many genes a scaffold needs to contain before we try to use Loess to eliminate bias
-#     For those scaffolds, it also estimates the mode and removes that
+# window -- window size for smoothing by medians. Must be odd, default 251. For scaffolds
+#     with fewer genes than this, just uses the median.
 # minToUse -- if a scaffold has too few genes, cannot correct for possible DNA extraction bias
 # 	   so need to remove data for that gene (i.e., returns NA for them).
 # returns
 # normalized -- data with scaffold and position effects removed
 #
-NormalizeByScaffold = function(values, locusId, genes, minForLoess=100, minToUse=10, debug=FALSE) {
+NormalizeByScaffold = function(values, locusId, genes, window=251, minToUse=10, debug=FALSE) {
     i = match(locusId, genes$locusId);
     if(any(is.na(i))) stop("Fitness data for loci not in genes");
     beg = genes$begin[i];
@@ -228,10 +228,17 @@ NormalizeByScaffold = function(values, locusId, genes, minForLoess=100, minToUse
 	    if(debug) cat("Subtract median for ", scaffoldId, " ", med, "\n");
 	    values[rows] = values[rows] - med;
 
-	    if (length(rows) >= minForLoess) {
-                d = lowess(beg[rows], values[rows]);
-	        if(debug) cat("Subtract loess for ", scaffoldId, " max effect is ", diff(range(d$y)), "\n");
-	        values[rows] = values[rows] - approx(d$x,d$y, xout=beg[rows], rule=2, ties="ordered")$y;
+	    if (length(rows) >= window) {
+	        # Used to use lowess
+                # d = lowess(beg[rows], values[rows]);
+	        # if(debug) cat("Subtract loess for ", scaffoldId, " max effect is ", diff(range(d$y)), "\n");
+		# values[rows] = values[rows] - approx(d$x,d$y, xout=beg[rows], rule=2, ties="ordered")$y;
+
+		o = order(beg[rows]);
+		m = runmed(values[rows[o]], window, endrule="constant");
+		if(debug) cat("Subtract smoothed median for ", scaffoldId, " max effect is ",diff(range(m)), "\n");
+		values[rows[o]] = values[rows[o]] - m;
+
 	        d = density(values[rows]);
 	        mode = d$x[which.max(d$y)];
 	        if (debug) cat("Subtract mode for ", scaffoldId, " which is at ", mode, "\n");
