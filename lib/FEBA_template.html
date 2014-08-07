@@ -209,7 +209,7 @@ The R image includes:
 </UL>
 <LI>per-strain information:
 <UL>
-<LI><B>strains</B> -- a table of all mapped strains. This describes the barcode (as seen in TnSeq) and its reverse complement (as seen in BarSeq), where the insertion is, and what orientation it is in. If the insertion mapped to the delivery vector then scaffold = "pastEnd". If the strain is within the central 10-90% of a gene, then the locusId is indicated. If the strain was within 10-90% of a gene and had enough reads to be included in the gene fitness calcuation, then used=TRUE.
+<LI><B>strains</B> -- a table of all mapped strains. This describes the barcode (as seen in TnSeq) and its reverse complement (as seen in BarSeq), where the insertion is, and what orientation it is in. If the insertion mapped to the delivery vector then scaffold = "pastEnd". If the strain is within the central 10-90% of a gene, then the locusId is indicated. If the strain was within 10-90% of a gene and had enough reads to be included in the gene fitness calcuation, then used=TRUE. "f" is the fractional position in the gene (in scaffold orientation, not in the gene's orientation), i.e. 0.5 for an insertion in the middle of the gene.
 <LI><B>strain_lrn</B> -- fitness values for each strain (in the same order as in strains). These will often be noisy due to low counts. Also see non-normalized fitness values in strain_lr.
 <LI><B>strain_se</B> -- a rough estimate of how noisy the per-strain fitness values are
 </UL>
