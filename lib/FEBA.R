@@ -296,10 +296,16 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 			       metacolAll=1:5,
 			       # names of experiments to ignore
 			       ignore=NULL,
+			       minSampleReads = 200*1000, # ignore those below this threshold, unless ignore is set
 			       debug=FALSE, computeCofit=TRUE,
 			       ...) {
 
-	if(!is.null(ignore)) {
+
+	if (is.null(ignore)) {
+	    tot = colSums(all[,-metacolAll]);
+	    ignore = names(all)[-metacolAll][tot < minSampleReads];
+        }
+	if(length(ignore) > 0) {
 	    cat("Ignoring ",ignore,"\n");
 	    expsUsed = expsUsed[!expsUsed$name %in% ignore,];
 	    all = all[, !names(all) %in% ignore,];
@@ -319,9 +325,8 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 	# if Group = Time0, it is a Time0, even if "short" has a different description
 	if(!is.null(expsUsed$Group)) expsUsed$short[expsUsed$Group == "Time0"] = "Time0";
 
-    write("Aggregating all_g2",stderr())
-    #write("all_g2",stdout())
-    #write(paste(head(all_g2)),stdout())
+   
+        write("Aggregating all_g2",stderr());
 	all_gN = aggregate(all_g2[,-(1:7)], list(locusId=all_g2$locusId), sum);
 
 	expsUsed$t0set = paste(expsUsed$Date_pool_expt_started, expsUsed$Set);
@@ -448,7 +453,15 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 
 	# experiments with very high maximum fitness may not give meaningful results for the typical gene
 	q$maxFit = apply(fit$lrn,2,max,na.rm=T);
+        status = FEBA_Exp_Status(q, ...);
+	q$u = (status == "OK");
+	q$u[is.na(q$u)] = FALSE;
+	print(table(status));
+	for(s in c("low_count","high_mad12","low_cor12","high_adj_gc_cor")) {
+	    if(sum(status==s) > 0) cat(s, ":", q$name[status==s],"\n");
+	}
 
+	fit$version = "0.9.0";
 	fit$q = q;
 	fit$genesUsed = genesUsed;
 	fit$strainsUsed = strainsUsed;
@@ -465,33 +478,30 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 	fit$strain_lr = strain_fit;
 	fit$strain_se = strain_se;
 
-	# Normalized per-strain values
+	# Normalized per-strain values, based on the closest gene
 	strainToGene = StrainClosestGenes(fit$strains, genes[match(fit$g, genes$locusId),]);
 	fit$strain_lrn = mapply(function(sfit, gdiff) {
 		# Add the relevant gene normalization; or, if NA, normalize the scaffold to a median of 0
-		sdiff = gdiff[strainToGene];
+		sdiffGene = gdiff[strainToGene];
 		sdiffSc = -ave(sfit, fit$strains$scaffold, FUN=median);
-		sdiff = ifelse(is.na(sdiff), sdiffSc, sdiff);
+		sdiff = ifelse(is.na(sdiffGene), sdiffSc, sdiffGene);
 		return(sfit + sdiff);
 	}, fit$strain_lr, fit$lrn-fit$lr);
 	fit$strain_lrn = data.frame(fit$strain_lrn);
 
 	# Statistics of cofitness on pairs
-        status = FEBA_Exp_Status(q, ...);
-	u = (status == "OK");
-	u[is.na(u)] = FALSE;
-	if (computeCofit && sum(u) >= 5) {
-		cat("Computing cofitness with ", sum(u), " experiments\n");
-		adjDiff$rfit = cor12(adjDiff, fit$g, fit$lrn[,u]);
-		pred$rfit = cor12(pred, fit$g, fit$lrn[,u]);
+	if (computeCofit && sum(q$u) >= 5) {
+		cat("Computing cofitness with ", sum(q$u), " experiments\n");
+		adjDiff$rfit = cor12(adjDiff, fit$g, fit$lrn[,q$u]);
+		pred$rfit = cor12(pred, fit$g, fit$lrn[,q$u]);
 		fit$pairs = list(adjDiff=adjDiff, pred=pred);
 		random = data.frame(Gene1 = sample(fit$g, length(fit$g)*2, replace=T),
 		       	            Gene2 = sample(fit$g, length(fit$g)*2, replace=T));
 		random = random[as.character(random$Gene1) != as.character(random$Gene2),];
-		random$rfit = cor12(random, fit$g, fit$lrn[,u]);
+		random$rfit = cor12(random, fit$g, fit$lrn[,q$u]);
 		fit$pairs = list(adjDiff=adjDiff, pred=pred, random=random);
 	} else {
-		cat("Only", sum(u),"experiments passed quality filters!\n");
+		cat("Only", sum(q$u),"experiments of", nrow(q)," passed quality filters!\n");
 	}
 	return(fit);
 }
@@ -542,17 +552,15 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	writeDelim(d, nameToPath("fit_logratios.tab"));
 	wroteName("fit_logratios.tab");
 
-        status = FEBA_Exp_Status(fit$q);
-	u = (status == "OK");
-	if (sum(u) == 0) {
-		cat("Warning: FEBA_Exp_Status returned 0 OK entries\n");
+	if (sum(fit$q$u) == 0) {
+		cat("Warning: 0 OK experiments\n");
 	} else {
 		d = genes[,c("locusId","sysName","desc")];
 		d$comb = paste(d$sysName, d$desc); # for MeV
-		d = merge(d, cbind(locusId=fit$g,fit$lrn[,u]));
-		names(d)[-(1:4)] = paste(fit$q$name,fit$q$short)[u];
+		d = merge(d, cbind(locusId=fit$g,fit$lrn[,fit$q$u]));
+		names(d)[-(1:4)] = paste(fit$q$name,fit$q$short)[fit$q$u];
 		writeDelim(d, nameToPath("fit_logratios_good.tab"));
-		cat("Wrote fitness for ",sum(u), " successful experiments to ", nameToPath("fit_logratios_good.tab"),"\n");
+		cat("Wrote fitness for ",sum(fit$q$u), " successful experiments to ", nameToPath("fit_logratios_good.tab"),"\n");
 	}
 
 	d = merge(genes[,c("locusId","sysName","desc")], cbind(locusId=fit$g,fit$t));
@@ -617,7 +625,7 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 
 	countClust = hclust(as.dist(1-cor(log2(1+fit$gN[fit$gN$locusId %in% fit$genesUsed,-1]))));
 	pdf(nameToPath("fit_cluster_logcounts.pdf"),
-		pointsize=8, width=0.25*nrow(fit$q), height=8,
+		pointsize=8, width=pmax(5,0.25*nrow(fit$q)), height=8,
 		title=paste(org,"Cluster Log Counts"));
 	# Some Time0s may be missing from fit$q
 	d = match(names(fit$gN)[-1], fit$q$name);
@@ -665,23 +673,20 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	}
 
 	if(!is.null(template_file)) {
-	    FEBA_Save_HTML(nameToPath("index.html"), template_file, org, nrow(fit$q));
+	    FEBA_Save_HTML(nameToPath("index.html"), template_file,
+			   list(ORG=org,
+			        NEXPS=sum(fit$q$short != "Time0"),
+				NSUCCESS=sum(fit$q$u),
+				VERSION=fit$version,
+				DATE=date()));
 	    wroteName("index.html");
 	}
 }
 
 FEBA_Quality_Plot = function(q, pdfFile, org,
-		min_gMed = 50, max_mad12 = 0.5, min_cor12 = 0.1,
-		max_gccor = 0.2, max_adjcor = 0.25) {
-        status = FEBA_Exp_Status(q,
-				 min_gMed=min_gMed, max_mad12=max_mad12, min_cor12=min_cor12,
-				 max_gccor=max_gccor, max_adjcor=max_adjcor);
-	print(table(status));
-	for(s in c("low_count","high_mad12","low_cor12","high_adj_gc_cor")) {
-	    if(sum(status==s) > 0) cat(s, ":", q$name[status==s],"\n");
-	}
+		             min_gMed=50, max_mad12=0.5, max_adjcor = 0.25, max_gccor = 0.2, min_cor12 = 0.1) {
 	qCol = ifelse(q$short=="Time0", "grey",
-		ifelse(status=="OK", ifelse(q$maxFit > 5, "blue", "darkgreen"), "red"));
+		ifelse(q$u, ifelse(q$maxFit > 5, "blue", "darkgreen"), "red"));
 	qLab = sub("set","",q$name);
 
 	if(!is.null(pdfFile)) pdf(pdfFile,
@@ -740,11 +745,9 @@ FEBA_Cofitness_Plot = function(pairs, pdfFile, org) {
 	if(!is.null(pdfFile)) dev.off();
 }
 
-FEBA_Save_HTML = function(outfile, template, org, nexps) {
+FEBA_Save_HTML = function(outfile, template, values) {
 	lines = readLines(template);
-	lines = gsub("ORG", org, lines);
-	lines = gsub("DATE", date(), lines);
-	lines = gsub("NEXPS", nexps, lines);
+	for (n in names(values)) lines = gsub(n, values[[n]], lines);
 	writeLines(lines, outfile);
 }
 

@@ -5,7 +5,7 @@
 <BODY>
 <H2>Fitness Data for ORG</H3>
 
-<P><small>NEXPS samples, DATE</small>
+<P><small>NEXPS condition samples (NSUCCESS successful), DATE, statistics version VERSION</small>
 
 <P>Tables
 <UL>
@@ -157,9 +157,10 @@ indicate strong positive selection in the sample. This often explains why
 an experiment failed, either because most genes have few reads (low
 gMed) or because only a few strains grow.
 
+<LI><B>u</B> -- Whether the experiment was successful and is used in global analyses.
 </UL>
 
-As of April 9, 2014, the requirements for a "good" experiment are:
+As of April 9, 2014, the requirements for a successful experiment are:
 <UL>
 <LI>not a Time0 (Time0 "fitness" values are computed as a negative control)
 <LI>gMed &ge;50
