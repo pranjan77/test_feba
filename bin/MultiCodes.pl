@@ -6,7 +6,9 @@ my $minQuality = 10;
 
 my $usage = <<END
 Usage: MultiCodes.pl [ -debug ] [ -dntag ] [ -limit maxReads ] [ -minQuality $minQuality ]
-          [ -index name | -primers PrimerIndexTable ] -out out_prefix < fastq
+          [ -index name | -primers PrimerIndexTable ]
+          [ -preseq CAGCGTACG -postseq AGAGACCTC -nPreExpected 9 ]
+ -out out_prefix < fastq
     PrimerIndexTable should be tab-delimited with multiplex name and a primer like nACGACG
     The fastq file should be fastq with phred+33 ("sanger") encoding of quality scores
     (as in MiSeq or 2012+ HiSeq)
@@ -21,11 +23,18 @@ nATCACGAG CGGTGTCGGTCTCGTAG 20N CGATGAATTCGAGCTCGTT
 or, if the index is specified, there is no multiplexing, and the read is
 nnnnn GTCGACCTGCAGCGTACG 20N AGAGACC (where the leading ns are random and are ignored)
 
-For a barcode to be counted, the 9 nt upstream of the barcode much match exactly;
-the 9 nt downstream of the barcode much also be correct unless the sequence
-is too short (in which 4 or 0 are checked) or minQuality = 0 (in which case
-the post-sequence is not checked and there is no guarantee that the barcode
-is the correct length).
+or, if -preseq -postseq -nPreExpected are all used, it expects a read of the form
+   nPreExpected characters (any, although this includes the multiplexing tag unless -index is used)
+   preseq
+   barcode
+   postseq
+
+For a barcode to be counted, the preseq (9 nt upstream of the barcode)
+much match exactly; the postseq (9 nt downstream of the barcode) much
+also be correct unless the sequence is too short (in which 4 or 0 are
+checked) or minQuality = 0 (in which case the post-sequence is not
+checked and there is no guarantee that the barcode is the correct
+length).
 END
     ;
 
@@ -49,21 +58,28 @@ my $iname = undef;
                 'minQuality=i' => \$minQuality,
                 'limit=i' => \$nLimit,
                 'nPreExpected=i' => \$nPreExpected,
+		'preseq=s' => \$preseq,
+		'postseq=s' => \$postseq,
                 'dntag' => \$dntag,
                 'debug' => \$debug)
      && defined $out)
         || die $usage;
     die $usage unless (defined $indexfile xor defined $iname);
 
-    if ($dntag) {
-	die "-index with -dntag not supported" if defined $iname;
-        $preseq = "GTCTCGTAG";
-        $nPreExpected = 8;
-        $postseq = "CGATGAATT";
+    if (defined $preseq) {
+	die "Missing -postseq: $usage" unless defined $postseq;
+	die "Missing -nPreExpected: $usage" unless defined $nPreExpected;
     } else {
-        $preseq = "CAGCGTACG";
-        $nPreExpected = defined $iname ? 14 : 9;
-        $postseq = "AGAGACCTC";
+	if ($dntag) {
+	    die "-index with -dntag not supported" if defined $iname;
+	    $preseq = "GTCTCGTAG";
+	    $nPreExpected = 8;
+	    $postseq = "CGATGAATT";
+	} else {
+	    $preseq = "CAGCGTACG";
+	    $nPreExpected = defined $iname ? 14 : 9;
+	    $postseq = "AGAGACCTC";
+	}
     }
     my $nReads = 0;
     my $nMulti = 0; # number with prefix identified
