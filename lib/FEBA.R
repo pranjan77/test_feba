@@ -294,7 +294,7 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 			       okLane=TRUE, # OK to use t0 from another lane if needed?
 	   		       metacol=1:7, # for all_g2
 			       metacolAll=1:5,
-			       # names of experiments to ignore
+			       # names of experiments to ignore; experiments with Drop=TRUE are also ignored
 			       ignore=NULL,
 			       minSampleReads = 200*1000, # ignore those below this threshold, unless ignore is set
 			       debug=FALSE, computeCofit=TRUE,
@@ -305,6 +305,9 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 	    tot = colSums(all[,-metacolAll]);
 	    ignore = names(all)[-metacolAll][tot < minSampleReads];
         }
+	if (!is.null(expsUsed$Drop) && any(expsUsed$Drop)) {
+	    ignore = unique(c(ignore, expsUsed$name[expsUsed$Drop]));
+	}
 	if(length(ignore) > 0) {
 	    cat("Ignoring ",ignore,"\n");
 	    expsUsed = expsUsed[!expsUsed$name %in% ignore,];
