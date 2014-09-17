@@ -305,7 +305,7 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 	    tot = colSums(all[,-metacolAll]);
 	    ignore = names(all)[-metacolAll][tot < minSampleReads];
         }
-	if (!is.null(expsUsed$Drop) && any(expsUsed$Drop)) {
+	if (!is.null(expsUsed$Drop) && any(expsUsed$Drop, na.rm=TRUE)) {
 	    ignore = unique(c(ignore, expsUsed$name[expsUsed$Drop]));
 	}
 	if(length(ignore) > 0) {
