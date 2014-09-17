@@ -60,7 +60,7 @@ LoadOrgs = function(orgnames) {
 	for(n in orgnames) {
 	       cat("Loading ",n,"\n",sep="");
 		exps = read.delim(paste("public_html/FEBA/",n,"/expsUsed",sep=""),as.is=T);
-		genes = read.delim(paste("data/FEBA/g/",n,"/genes.tab",sep=""), as.is=T);
+		genes = read.delim(paste("data/FEBA/g/",n,"/genes.tab",sep=""), as.is=T, quote="");
 		q = read.delim(paste("public_html/FEBA/",n,"/fit_quality.tab",sep=""), as.is=T);
 		if(!all(q$name %in% exps$name)) stop(n, ": Unmatched names in q: ", setdiff(q$name,exps$name));
 		lrn = read.delim(paste("public_html/FEBA/",n,"/fit_logratios_good.tab",sep=""),check.names=F,as.is=T);
