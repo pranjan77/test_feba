@@ -7,6 +7,10 @@ use strict;
 # Expects either that all columns are in all files,
 # or that each file has just one column
 
+use POSIX; # for floor, ceil
+sub median;
+sub ShortList; # prettier form of a list of indexes
+
 {
     die "Usage: combineBarSeq.pl out pool_file codesfiles...\n"
 	unless @ARGV >= 3;
@@ -126,11 +130,38 @@ use strict;
     print STDERR "Read $nUsed lines for codes in pool and $nIgnore ignored lines across " . scalar(@codesFiles) . " files\n";
     close(IGNORE) || die "Error writing to $out.codes.ignored";
 
-    print STDERR "Fraction Used:";
-    for(my $i = 0; $i < $nSamples; $i++) {
-	print STDERR sprintf(" %s %.3f", $indexes[$i], ($colSumsUsed[$i])/(1.0+$colSums[$i]));
+    # categorize reads
+    my @lowcountI = (); # indexes with < 200,000 reads
+    my @lowcounts = (); # those actual counts
+    my @fractions = (); # fraction used for indexes with plenty of reads only
+    my @lowhitI = (); # indexes with fraction < 0.25
+    my @okI = (); # indexes with enough reads and fraction above 0.25
+    my $totalReads = 0;
+    foreach my $i (0..(scalar(@indexes)-1)) {
+	$totalReads += $colSums[$i];
+	if ($colSums[$i] < 200*1000) {
+	    push @lowcountI, $indexes[$i];
+	    push @lowcounts, $colSums[$i];
+	} else {
+	    my $fraction = $colSumsUsed[$i] / $colSums[$i];
+	    push @fractions, $fraction;
+	    if ($fraction < 0.25) {
+		push @lowhitI, $indexes[$i];
+	    } else {
+		push @okI, $indexes[$i];
+	    }
+	}
     }
-    print STDERR "\n";
+    print STDERR sprintf("Indexes %d Success %d LowCount %d LowFraction %d Total Reads (millions): %.3f \n",
+			 scalar(@indexes), scalar(@okI), scalar(@lowcountI), scalar(@lowhitI), $totalReads/1e6);
+    print STDERR sprintf("Median Fraction (LowCount Excluded) %.3f\n",
+			 &median(@fractions));
+    print STDERR "Success " . &ShortList(@okI) . "\n" if @okI > 0;
+    print STDERR sprintf("LowCount (median %d) %s\n",
+			 &median(@lowcounts), &ShortList(@lowcountI))
+	if @lowcountI > 0;
+    print STDERR "LowFraction " . &ShortList(@lowhitI) . "\n"
+	if @lowhitI > 0;
 
     open(COUNT, ">", "$out.poolcount") || die "Cannot write to $out.poolcount";
     print COUNT join("\t", "barcode", "rcbarcode", "scaffold", "strand", "pos", @indexes)."\n";
@@ -152,8 +183,51 @@ use strict;
     print STDERR "Wrote $out.poolcount\n";
 
     open(SUM, ">", "$out.colsum") || die "Cannot write to $out.colsum";
-    print SUM join("\t", @indexes)."\n";
-    print SUM join("\t", @colSums)."\n";
+    print SUM join("\t", qw{Index nReads nUsed fraction})."\n";
+    foreach my $i (0..(scalar(@indexes)-1)) {
+	print SUM join("\t", $indexes[$i], $colSums[$i], $colSumsUsed[$i], $colSumsUsed[$i]/(0.5 + $colSums[$i]))."\n";
+    }
     close(SUM) || die "Error writing to $out.colsum";
     print STDERR "Wrote $out.colsum\n";
+}
+
+sub median {
+    return undef if scalar(@_) == 0;
+    my @sorted = sort { $a <=> $b } @_;
+    my $midindex = (scalar(@sorted) - 1)/2;
+    return ($sorted[floor($midindex)] + $sorted[ceil($midindex)]) / 2.0;
+}
+
+# assume indexes are of the form alphabetic_prefix followed by a number
+# shortens it by replacing prefix1 prefix2 prefix3 with prefix1:3
+# outputs a pretty string to print
+sub ShortList(@_) {
+    my @list = @_;
+    return join(" ", @list) unless $list[0] =~ m/^([a-zA-Z]+)\d+$/;
+    my $prefix = $1;
+    my $prelen = length($prefix);
+    my @numbers = map { substr($_, 0, $prelen) eq $prefix && substr($_, $prelen) =~ m/^\d+$/ ?
+			    substr($_, $prelen) : undef } @list;
+    my $lastno = undef;
+    my $inrun = 0;
+    my $sofar = "";
+    foreach my $i (0..(scalar(@list)-1)) {
+	my $string = $list[$i];
+	my $number = $numbers[$i];
+	if (defined($number) && defined($lastno) && $number == $lastno+1) {
+	    $sofar .= ":$number" if $inrun && $i == scalar(@list)-1; # terminate if at end of list
+	    $inrun = 1; # start or continue a run
+	    $lastno = $number;
+	} else {
+	    if (defined $lastno) {
+		$sofar .= ":$lastno" if $inrun;
+		$lastno = undef;
+	    }
+	    $inrun = 0;
+	    $sofar .= " " unless $sofar eq "";
+	    $sofar .= $string;
+	    $lastno = $number;
+	}
+    }
+    return($sofar);
 }
