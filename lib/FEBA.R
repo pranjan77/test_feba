@@ -1,20 +1,20 @@
 # FEBA.R -- analysis scripts for barcode sequencing data
-#
+
 # The key routines are:
 #
+# FEBA_Fit() -- analyze many fitness experiments with AvgStrainFitness() and NormalizeByScaffold()
+#      returns a complex data structure
+# FEBA_Save_Tables() -- Save the fitness data structure to tab-delimited files and an R image
+#
+# Also see:
 # AvgStrainFitness -- compute fitness values from counts for the post-experiment counts
 #     and the Time0 counts
 # NormalizeByScaffold -- normalize the fitness values by scaffold and position
 # GeneFitness -- combines the above two, and also computes a t-like test statistic ("t").
 #	To do this, it also computes fitness values for the 1st and 2nd half of most genes
-# FEBA_Fit() -- analyze many fitness experiments with AvgStrainFitness() and NormalizeByScaffold()
-#      returns a complex data structure
-# FEBA_Save_Tables() -- Save the fitness data structure to tab-delimited files and an R image
-
-
+#
 # Limitations:
 # High memory usage (~10GB to process 200K strains x 500 experiments)
-# Genes that wrap around the origin (i.e., begin > end) are ignored (no strain will map within them)
 
 
 # GeneFitness():
@@ -94,16 +94,12 @@ GeneFitness = function(genes, strainInfo, countCond, countT0,
 # If genesUsed (as a list of locusId) and strainsUsed (as boolean vector) are provided,
 # then considers only those strains & genes; minimum requirements.
 #
-# nACG is normally not used. If provided, it should include columns
-#  nA, nG, and nC with the counts of each nucleotides in the rcbarcodes
-#
 # if returnStrainInfo is set, returns a list of two data frames, "genes" and "strains"
 # normally returns a per-gene data frame.
 #
 # debug is for testing purposes.
 AvgStrainFitness = function(strainCounts, strainT0, strainLocus,
 		 minStrainT0 = 4, minGeneT0 = 40,
-		 nACG = NULL,
 		 genesUsed=NULL, strainsUsed=NULL,
 		 # maxWeight of N corresponds to having N reads on each side (if perfectly balanced); use 0 for even weighting
 		 # 20 on each side corresponds to a standard error of ~0.5; keep maxWeight low because outlier strains
@@ -134,16 +130,6 @@ AvgStrainFitness = function(strainCounts, strainT0, strainLocus,
     # is about the same regardless of how well sampled the strain or gene is
     strainFit = mednorm(log2(sqrt(readratio) + strainCounts) - log2(1/sqrt(readratio) + strainT0));
     strainFitAdjust = 0;
-
-    if (!is.null(nACG)) {
-        if (nrow(nACG) != length(strainsUsed)) stop("Wrong number of rows in nACG");
-    	nACG = nACG[strainsUsed,];
-	model = lm(strainFit ~ nACG$nA + nACG$nC + nACG$nG);
-	if(debug) print(summary(model));
-	strainFitAdjust = mednorm(predict(model));
-	if(debug) cat("Median abs adjust: ", median(abs(strainFitAdjust)), "\n");
-    }
-
 
     # Per-strain "smart" pseudocount to give a less biased per-strain fitness estimate.
     # This is the expected reads ratio, given data for the gene as a whole
@@ -284,16 +270,15 @@ StrainClosestGenes = function(strains, genes) {
 	unsplit(indexSplit, strains$scaffold);
 }
 
-FEBA_Fit = function(expsUsed, all, all_g2, genes,
+FEBA_Fit = function(expsUsed, all, genes,
 	   		       genesUsed=NULL, strainsUsed=NULL, genesUsed12=NULL,
 	   		       minT0Strain=3, minT0Gene=30,
 			       minT0GeneSide=minT0Gene/2,
 			       minGenesPerScaffold=10,
-			       nACG=NULL, # normalize by ACG content if set
 			       pred=CrudeOp(genes),
-			       okLane=TRUE, # OK to use t0 from another lane if needed?
-	   		       metacol=1:7, # for all_g2
-			       metacolAll=1:5,
+			       okDay=TRUE, # OK to use Time0 from another day on the same lane, if necessary?
+			       okLane=TRUE, # OK to compare to Time0 from another lane, if necessary?
+	   		       metacol=1:7, # for all
 			       # names of experiments to ignore; experiments with Drop=TRUE are also ignored
 			       ignore=NULL,
 			       minSampleReads = 200*1000, # ignore those below this threshold, unless ignore is set
@@ -302,21 +287,18 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 
 
 	if (is.null(ignore)) {
-	    tot = colSums(all[,-metacolAll]);
-	    ignore = names(all)[-metacolAll][tot < minSampleReads];
+	    tot = colSums(all[,-metacol]);
+	    ignore = names(all)[-metacol][tot < minSampleReads];
         }
 	if (!is.null(expsUsed$Drop) && any(expsUsed$Drop, na.rm=TRUE)) {
-	    ignore = unique(c(ignore, expsUsed$name[expsUsed$Drop]));
+	    ignore = unique(c(ignore, expsUsed$name[!is.na(expsUsed$Drop) & expsUsed$Drop]));
 	}
 	if(length(ignore) > 0) {
 	    cat("Ignoring ",ignore,"\n");
 	    expsUsed = expsUsed[!expsUsed$name %in% ignore,];
 	    all = all[, !names(all) %in% ignore,];
-	    all_g2 = all_g2[, !names(all_g2) %in% ignore,];
 	}
 
-	if(!all(expsUsed$name == names(all_g2)[-metacol]))
-		stop("names do not match");
 	if(!all(expsUsed$name %in% names(all)))
 		stop("names missing from all");
 	if(is.null(genes$scaffoldId)) stop("No scaffold for genes");
@@ -327,41 +309,54 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 
 	# if Group = Time0, it is a Time0, even if "short" has a different description
 	if(!is.null(expsUsed$Group)) expsUsed$short[expsUsed$Group == "Time0"] = "Time0";
-
    
-        write("Aggregating all_g2",stderr());
-	all_gN = aggregate(all_g2[,-(1:7)], list(locusId=all_g2$locusId), sum);
+        write("Aggregating all over genes",stderr());
+	has_gene2 = !is.na(all$f) & all$f >= 0.1 & all$f <= 0.9; # has gene and is central
+	all_gN = aggregate(all[has_gene2,-metacol], list(locusId=all$locusId[has_gene2]), sum);
 
 	expsUsed$t0set = paste(expsUsed$Date_pool_expt_started, expsUsed$Set);
 	d = expsUsed[expsUsed$short=="Time0",];
 	expsT0 = split(d$name, d$t0set);
-	no_t0 = setdiff(expsUsed$t0set, expsUsed$t0set[expsUsed$short=="Time0"]);
+
 	# If there is no matched lane/date t0, use the same date from other lane(s)
-	# if okLane is TRUE
-	if(length(no_t0) > 0) {
-	    if(okLane) {
-	        newt0 = unique(expsUsed$Date_pool_expt_started[expsUsed$t0set %in% no_t0]);
-	        cat("Using t0 from other lanes instead for ", no_t0,"\n");
-	        cat("Experiments affected: ", expsUsed$name[expsUsed$short!="Time0" & expsUsed$t0set %in% no_t0],"\n");
-	        expsUsed$t0set[expsUsed$t0set %in% no_t0] = expsUsed$Date_pool_expt_started[expsUsed$t0set %in% no_t0];
-		for(n in newt0) {
-		    expsT0[[n]] = expsUsed$name[expsUsed$Date_pool_expt_started==n & expsUsed$short=="Time0"];
-		}
+	for (t0set in setdiff(expsUsed$t0set, expsUsed$t0set[expsUsed$short=="Time0"])) {
+	    u = which(expsUsed$t0set == t0set); # affected rows
+
+	    date = unique(expsUsed$Date_pool_expt_started[u]);
+	    set = unique(expsUsed$SetName[u]);
+
+	    if (okLane && any(expsUsed$Date_pool_expt_started == date & expsUsed$short == "Time0")) {
+		expsT0[[t0set]] = NULL; # no longer used
+	        cat("Using Time0 from other lanes instead for ", t0set,"\n");
+	        cat("Experiments affected: ", expsUsed$name[u],"\n");
+	        expsUsed$t0set[u] = date;
+		expsT0[[date]] = expsUsed$name[expsUsed$Date_pool_expt_started == date & expsUsed$short == "Time0"];
+	    } else if (okDay && any(expsUsed$SetName == set & expsUsed$short == "Time0")) {
+		expsT0[[t0set]] = NULL; # no loner used
+		newt0set = unique(expsUsed$t0set[expsUsed$short == "Time0" & expsUsed$SetName == set]);
+		newt0set = newt0set[1]; # pick the first t0set arbitrarily
+		cat("Warning! Using Time0 from other days instead for ", t0set, "\n");
+		cat("Experiments affected: ", expsUsed$name[u], "\n");
+		expsUsed$t0set[u] = newt0set;
 	    } else {
-	        stop("No Time0 for ",no_t0);
+		stop("No Time0 for", t0set);
 	    }
 	}
 
-	# note that t0_g2 does not contain any metadata columns, but t0_gN does
-	t0_g2 = data.frame(lapply(expsT0, function(x) rowSums(all_g2[,x,drop=F])), check.names=F);
-    write("Aggregating t0_g2",stderr())
-	t0_gN = aggregate(t0_g2, list(locusId=all_g2$locusId), sum);
-	cat("Reads per t0set, in millions:\n");
-	print(colSums(t0_g2)/1e6, digits=2);
+	# note that t0tot does not contain any metadata columns, but t0_gN does
+	t0tot = data.frame(lapply(expsT0, function(x) rowSums(all[,x,drop=F])), check.names=F);
+        write("Aggregating Time0 totals",stderr());
+	t0_gN = aggregate(t0tot[has_gene2,,drop=F], list(locusId=all$locusId[has_gene2]), sum);
+	cat("Central Reads per t0set, in millions:\n");
+	print(colSums(t0_gN[,-1,drop=F])/1e6, digits=2);
 
-	if(is.null(strainsUsed)) strainsUsed = rowMeans(t0_g2) >= minT0Strain;
+	if(is.null(strainsUsed)) {
+	    strainsUsed = has_gene2 & rowMeans(t0tot) >= minT0Strain;
+	} else {
+	    strainsUsed = strainsUsed & has_gene2;
+	}
 	if(is.null(genesUsed)) {
-		t0_gN_used = aggregate(t0_g2[strainsUsed,], list(locusId=all_g2$locusId[strainsUsed]), sum);
+		t0_gN_used = aggregate(t0tot[strainsUsed,], list(locusId=all$locusId[strainsUsed]), sum);
 		genesUsed = t0_gN_used$locusId[ rowMeans(t0_gN_used[,-1,drop=F]) >= minT0Gene ];
 	}
 	genesPerScaffold = table(genes$scaffoldId[genes$locusId %in% genesUsed]);
@@ -369,42 +364,42 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 	if (length(smallScaffold) > 0) cat("Ignoring genes on small scaffolds ",smallScaffold,"\n");
 	genesUsed = genesUsed[!genesUsed %in% genes$locusId[genes$scaffoldId %in% smallScaffold]];
 
-	if(length(strainsUsed) != nrow(all_g2)) stop("Invalid strainsUsed");
-	cat("Using ",sum(strainsUsed)," of ",nrow(all_g2)," genic strains\n");
+	if(length(strainsUsed) != nrow(all)) stop("Invalid strainsUsed");
+	cat("Using ",sum(strainsUsed)," of ",sum(has_gene2)," genic strains\n");
 	if(length(genesUsed) < 100 || !all(genesUsed %in% genes$locusId)) stop("Invalid genesUsed");
 
-	cat("Using ",length(genesUsed)," of ",length(unique(all_g2$locusId))," genes with data\n");
+	cat("Using ",length(genesUsed)," of ",length(unique(all$locusId[has_gene2]))," genes with data\n");
 
 	if (is.null(genesUsed12)) {
-  	    d1 = aggregate(t0_g2[strainsUsed & all_g2$f < 0.5,],
-	     		   list(locusId=all_g2$locusId[strainsUsed & all_g2$f < 0.5]), sum);
-	    d2 = aggregate(t0_g2[strainsUsed & all_g2$f >= 0.5,],
-	     		   list(locusId=all_g2$locusId[strainsUsed & all_g2$f >= 0.5]), sum);
+  	    d1 = aggregate(t0tot[strainsUsed & all$f < 0.5,],
+	     		   list(locusId=all$locusId[strainsUsed & all$f < 0.5]), sum);
+	    d2 = aggregate(t0tot[strainsUsed & all$f >= 0.5,],
+	     		   list(locusId=all$locusId[strainsUsed & all$f >= 0.5]), sum);
 	    genesUsed12 = intersect(d1$locusId[ MyRowMin(d1[,-1,drop=F]) >= minT0GeneSide],
 		      		    d2$locusId[ MyRowMin(d2[,-1,drop=F]) >= minT0GeneSide]);
 	}
         cat("For cor12, using ",length(genesUsed12),"genes\n");
 
-	if(!all(expsUsed$t0set %in% names(t0_g2))) stop("Illegal t0set", setdiff(expsUsed$t0set, names(t0_g2)));
+	if(!all(expsUsed$t0set %in% names(t0tot))) stop("Illegal t0set ", setdiff(expsUsed$t0set, names(t0tot)));
 
 	all_fit = list();
 	strain_fit = list();
 	strain_se = list();
-	for(n in names(all_g2)[-metacol]) {
+	for(n in names(all)[-metacol]) {
 		to_subtract = expsUsed$short[expsUsed$name==n] == "Time0";
 		if(debug) cat("GeneFitness() on", n,"t0set",expsUsed$t0set[expsUsed$name==n],
 			  			  if(to_subtract) "subtracted" else "", "\n");
-                x = all_g2[[n]];
+                x = all[[n]];
 		t0set = as.character(expsUsed$t0set[expsUsed$name==n]);
-		t0 = t0_g2[[ t0set ]];
+		t0 = t0tot[[ t0set ]];
 		if(to_subtract) t0 = t0 - x;
 		if(any(t0 < 0)) stop("Illegal counts under 0 for ",n);
 		if(all(t0 == 0)) {
-		    cat("Skipping ",n," which has no control counts\n"); # used to be debug only
+		    cat("Skipping log ratios for ",n," which has no control counts\n");
 		} else {
-		    all_fit[[n]] = GeneFitness(genes, all_g2[,words("locusId f")], x, t0,
-				    strainsUsed, genesUsed, genesUsed12, 
-				    nACG=nACG, minGenesPerScaffold=minGenesPerScaffold);
+		    all_fit[[n]] = GeneFitness(genes, all[has_gene2,words("locusId f")], x[has_gene2], t0[has_gene2],
+				    strainsUsed[has_gene2], genesUsed, genesUsed12, 
+				    minGenesPerScaffold=minGenesPerScaffold);
                     cntrl = setdiff(expsT0[[ t0set ]], n);
 		    if(length(cntrl) < 1) stop("No Time0 experiments for ",n," should not be reachable");
 		    if(debug) cat("StrainFitness() on", n, "versus", cntrl,"\n");
@@ -426,11 +421,12 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 	if (debug) cat("Extracted fitness values\n");
 
 	q = expsUsed[expsUsed$name %in% names(all_fit), words("name short t0set")];
+	if(!is.null(expsUsed$num)) q$num = expsUsed$num;
 	nUse = as.character(q$name);
 	if(!all(nUse == names(fit$lrn))) stop("Mismatched names in fit");
 	q$nMapped = colSums(all[,nUse,drop=F]);
 	q$nPastEnd = colSums(all[all$scaffold=="pastEnd",nUse,drop=F]);
-	q$nGenic = colSums(all_g2[,nUse,drop=F]);
+	q$nGenic = colSums(all[has_gene2,nUse,drop=F]);
 	q$nUsed = colSums(fit$tot);
 	q$gMed = apply(fit$tot,2,median);
 	q$gMedt0 = apply(fit$tot0,2,median);
@@ -464,20 +460,17 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 	    if(sum(status==s) > 0) cat(s, ":", q$name[status==s],"\n");
 	}
 
-	fit$version = "0.9.0";
+	fit$version = "1.0.0";
 	fit$q = q;
 	fit$genesUsed = genesUsed;
 	fit$strainsUsed = strainsUsed;
 	fit$genesUsed12 = genesUsed12;
-	fit$t0_g2 = t0_g2;
 	# these gene totals are based on all strains, not on used strains, and will not match tot or tot0
 	fit$gN = all_gN;
 	fit$t0_gN = t0_gN;
 
 	# These include all strains, not just those in genes
-	i = match(as.character(all$barcode), as.character(all_g2$barcode));
-	fit$strains = cbind(all[,metacolAll], cbind(all_g2[,words("locusId f")], used=fit$strainsUsed)[i,]);
-
+	fit$strains = cbind(all[,metacol], used=fit$strainsUsed);
 	fit$strain_lr = strain_fit;
 	fit$strain_se = strain_se;
 
@@ -494,7 +487,7 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 
 	# Statistics of cofitness on pairs
 	if (computeCofit && sum(q$u) >= 5) {
-		cat("Computing cofitness with ", sum(q$u), " experiments\n");
+		cat("Computing cofitness with ", sum(q$u), " experiments\n", file=stderr());
 		adjDiff$rfit = cor12(adjDiff, fit$g, fit$lrn[,q$u]);
 		pred$rfit = cor12(pred, fit$g, fit$lrn[,q$u]);
 		fit$pairs = list(adjDiff=adjDiff, pred=pred);
@@ -510,10 +503,11 @@ FEBA_Fit = function(expsUsed, all, all_g2, genes,
 }
 
 FEBA_Save_Tables = function(fit, genes, org="?",
-		 topdir="public_html/FEBA",
+		 topdir="data/FEBA/html/",
 		 dir = paste(topdir,org,sep="/"),
 		 writeImage=TRUE,
-		 template_file="src/feba/lib/FEBA_template.html",
+		 FEBAdir="src/feba/lib",
+		 template_file=paste(FEBAdir,"/lib/FEBA_template.html",sep=""),
 		 expsU=expsUsed,
 		 ... # for FEBA_Quality_Plot
 		 ) {
@@ -532,7 +526,7 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	if(!all(names(fit$lrn) == fit$q$name)) stop("Name mismatch");
 
 	nameToPath = function(filename) paste(dir,filename,sep="/");
-	wroteName = function(x) cat("Wrote ",nameToPath(x),"\n");
+	wroteName = function(x) cat("Wrote ",nameToPath(x),"\n",file=stderr());
 
 	writeDelim(fit$q, nameToPath("fit_quality.tab"));
 	wroteName("fit_quality.tab");
@@ -563,7 +557,8 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 		d = merge(d, cbind(locusId=fit$g,fit$lrn[,fit$q$u]));
 		names(d)[-(1:4)] = paste(fit$q$name,fit$q$short)[fit$q$u];
 		writeDelim(d, nameToPath("fit_logratios_good.tab"));
-		cat("Wrote fitness for ",sum(fit$q$u), " successful experiments to ", nameToPath("fit_logratios_good.tab"),"\n");
+		cat("Wrote fitness for ",sum(fit$q$u), " successful experiments to ", nameToPath("fit_logratios_good.tab"),"\n",
+		    file=stderr());
 	}
 
 	d = merge(genes[,c("locusId","sysName","desc")], cbind(locusId=fit$g,fit$t));
@@ -672,7 +667,7 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	    wroteName(img);
 	    unlink(nameToPath("fit.image"));
 	    file.symlink(img, nameToPath("fit.image"));
-	    cat("Created link for ",nameToPath("fit.image"),"\n");
+	    cat("Created link for ",nameToPath("fit.image"),"\n", file=stderr());
 	}
 
 	if(!is.null(template_file)) {
@@ -833,74 +828,9 @@ CountACG = function(rcbarcodes) {
 	 return(data.frame(nA=nA,nC=nC,nG=nG));
 }
 
-# Utilities for mapping items within regions
-# e.g. for identifying strains that lie within genes
-
-# by.x is a column name in x and begin and end are column names in y
-# only returns the first matching row in y (as sorted by begin) for each row in x
-# but if you specify all="y" then it returns the first matching row in x for
-# each row in y
-# If you specify unique=T then tries to find cases where y is the only match for that row in x
-#	but it still returns some duplicates (e.g. it is fooled if row yA is within row yB)
-# If minmax=T, allows begin > end (takes pairwise minima and maxima) and writes "left" and "right"
-findWithin = function(x, y, by.x, begin, end, all="x", unique=FALSE, minmax=F) {
-	if (nrow(x) == 0 || nrow(y) == 0) return(NULL); # one input is empty
-
-	if(is.null(y[[begin]])) stop("no field named",begin," in y argument");
-	if (minmax) {
-		y$left = pmin(y[[begin]], y[[end]]);
-		y$right = pmax(y[[begin]], y[[end]]);
-		begin = "left";
-		end = "right";
-	}
-	if (all=="x") {
-		y2 = y[order(y[[begin]]),];
-		if (nrow(y) == 1) {
-			floorI = rep(1,nrow(x));
-		} else {
-			floorI = floor(approx(y2[[begin]],1:nrow(y2), xout=x[[by.x]], rule=2, ties=min)$y);
-		}
-		outy = y2[floorI,];
-		keepx = x[[by.x]] >= outy[[begin]] & x[[by.x]] <= outy[[end]];
-		if (unique) {
-			floorI2 = ceiling(approx(y2[[end]],1:nrow(y2), xout=x[[by.x]], rule=2, ties=max)$y);
-			keepx = keepx & floorI==floorI2;
-			# Is this where it gets fooled?
-		}
-		return(data.frame(cbind(x[keepx,], outy[keepx,])));
-	} else if (all == "y") {
-		if(unique) stop("unique not supported with all=y");
-		x2 = x[order(x[[by.x]]),];
-		floorI = floor(approx(x2[[by.x]],1:nrow(x2), xout=y[[end]], rule=2,
-			ties='ordered')$y);
-		outx = x2[floorI,];
-		keepy = outx[[by.x]] >= y[[begin]] & outx[[by.x]] <= y[[end]];
-		return(data.frame(cbind(outx[keepy,], y[keepy,])));
-	} else {
-		stop("Unknown value of option all in findWithin",all);
-	}
-}
-
-# given that data is subgrouped by the same markers (such as a scaffold),
-# do findWithin on each and merge the results
-findWithinGrouped = function(splitx, splity, by.x, begin, end, debug=FALSE, ...) {
-	out = NULL;
-	for(i in names(splitx)) {
-		if (!is.null(splity[[i]])) {
-			if(debug) cat("Running group ",i,"\n");
-			rows = findWithin(splitx[[i]], splity[[i]], by.x, begin, end, ...);
-			if(debug) cat("Ran group ",i,"rows",nrow(rows),"\n");
-			if(!is.null(rows) && nrow(rows) > 0) {
-				out = if(is.null(out)) rows else rbind(out,rows);
-			}
-		}
-	}
-	return(out);
-}
-
-without <- function(list,columns=list$without) {
-	list2 <- list;
-	for (i in columns) { list2[[i]] <- NULL; }
+without = function(list,columns=list$without) {
+	list2 = list;
+	for (i in columns) { list2[[i]] = NULL; }
 	return(list2);
 }
 
@@ -993,3 +923,72 @@ OperonPairSick = function(oppairs, g, lrn, t,
 	as.data.frame(t(mapply(function(x,y)
 	    OperonPairSick(oppairs, g, x, y, sick=sick, min_diff=min_diff, max_t=max_t), lrn, t)));
 }
+
+# Utilities for mapping items within regions
+# e.g. for identifying strains that lie within genes
+# These routines were originally used to map strains to genes, but that has been
+# replaced by BarSeqR.pl
+# Limitations: No items will map within regions that wrap around the origin (i.e., begin > end)
+
+# by.x is a column name in x and begin and end are column names in y
+# only returns the first matching row in y (as sorted by begin) for each row in x
+# but if you specify all="y" then it returns the first matching row in x for
+# each row in y
+# If you specify unique=T then tries to find cases where y is the only match for that row in x
+#	but it still returns some duplicates (e.g. it is fooled if row yA is within row yB)
+# If minmax=T, allows begin > end (takes pairwise minima and maxima) and writes "left" and "right"
+findWithin = function(x, y, by.x, begin, end, all="x", unique=FALSE, minmax=F) {
+	if (nrow(x) == 0 || nrow(y) == 0) return(NULL); # one input is empty
+
+	if(is.null(y[[begin]])) stop("no field named",begin," in y argument");
+	if (minmax) {
+		y$left = pmin(y[[begin]], y[[end]]);
+		y$right = pmax(y[[begin]], y[[end]]);
+		begin = "left";
+		end = "right";
+	}
+	if (all=="x") {
+		y2 = y[order(y[[begin]]),];
+		if (nrow(y) == 1) {
+			floorI = rep(1,nrow(x));
+		} else {
+			floorI = floor(approx(y2[[begin]],1:nrow(y2), xout=x[[by.x]], rule=2, ties=min)$y);
+		}
+		outy = y2[floorI,];
+		keepx = x[[by.x]] >= outy[[begin]] & x[[by.x]] <= outy[[end]];
+		if (unique) {
+			floorI2 = ceiling(approx(y2[[end]],1:nrow(y2), xout=x[[by.x]], rule=2, ties=max)$y);
+			keepx = keepx & floorI==floorI2;
+			# Is this where it gets fooled?
+		}
+		return(data.frame(cbind(x[keepx,], outy[keepx,])));
+	} else if (all == "y") {
+		if(unique) stop("unique not supported with all=y");
+		x2 = x[order(x[[by.x]]),];
+		floorI = floor(approx(x2[[by.x]],1:nrow(x2), xout=y[[end]], rule=2,
+			ties='ordered')$y);
+		outx = x2[floorI,];
+		keepy = outx[[by.x]] >= y[[begin]] & outx[[by.x]] <= y[[end]];
+		return(data.frame(cbind(outx[keepy,], y[keepy,])));
+	} else {
+		stop("Unknown value of option all in findWithin",all);
+	}
+}
+
+# given that data is subgrouped by the same markers (such as a scaffold),
+# do findWithin on each and merge the results
+findWithinGrouped = function(splitx, splity, by.x, begin, end, debug=FALSE, ...) {
+	out = NULL;
+	for(i in names(splitx)) {
+		if (!is.null(splity[[i]])) {
+			if(debug) cat("Running group ",i,"\n");
+			rows = findWithin(splitx[[i]], splity[[i]], by.x, begin, end, ...);
+			if(debug) cat("Ran group ",i,"rows",nrow(rows),"\n");
+			if(!is.null(rows) && nrow(rows) > 0) {
+				out = if(is.null(out)) rows else rbind(out,rows);
+			}
+		}
+	}
+	return(out);
+}
+
