@@ -43,7 +43,7 @@ RunFEBA = function(args = commandArgs(trailingOnly=TRUE)) {
 	d = unique(all$locusId[all$locusId != "" & !is.na(all$locusId)]);
 	if (!all(d %in% genes$locusId)) stop("Unknown genes in ",allfile);
 	cat(sprintf("Read %d genes, %d exps, and data for %d barcodes\n",
-	            nrow(genes), nrow(all), nrow(exps)));
+	            nrow(genes), nrow(exps), nrow(all) ));
 
 	# fix up names of all to be shorter
 	SetNames = unique(exps$SetName);
