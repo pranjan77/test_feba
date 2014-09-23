@@ -7,47 +7,67 @@
 
 <P><small>NEXPS condition samples (NSUCCESS successful), DATE, statistics version VERSION</small>
 
-<P>Tables
-<UL>
-<LI><A HREF="fit_genes.tab">Genes</A>
-<LI><A HREF="fit_quality.tab">Experiments</A> including quality scores
-<UL>
-<LI><A HREF="expsUsed">detailed metadata</A>
-</UL>
-<LI><A HREF="fit_logratios_good.tab">Gene Fitness</A> for successful experiments (normalized log2 ratios)
-<UL>
-<LI>or for <A HREF="fit_logratios.tab">all</A> experiments</LI>
-<LI><A HREF="fit_logratios_unnormalized.tab">Unnormalized logratios</A>
-<LI><A HREF="fit_logratios_unnormalized_naive.tab">Naive unnormalized logratios</A>
-</UL>
-<LI><A HREF="strain_fit.tab">Strain Fitness</A> (log2 ratios, normalized, large!)
-<LI>Statistics
-<UL>
-<LI><A HREF="fit_t.tab">t-like test statistic</A> (based on consistency of measurements for the gene)
-<LI><A HREF="fit_standard_error_obs.tab">estimated standard error</A> (based on variation across strains)
-<LI><A HREF="fit_standard_error_naive.tab">naive standard error</A> (based on total counts)
-</LI>
-</UL>
-</UL>
-
-<P>Plots
+<P><B>Plots</B>
 <UL>
 <LI>Quality of experiments
 <UL>
-<LI><A HREF="fit_quality.pdf">Experiment quality</A> (grey: Time0, i.e. negative control; red: failed; green: OK; blue: OK, but maxFit > 5)
-<LI><A HREF="fit_quality_cor12.pdf">Cor12 for each experiment</A> (genes with |t| &gt; 3 are in red)
+<LI><A HREF="fit_quality.pdf">Experiment quality</A>
+<UL>
+<LI>Grey: Time0, i.e. negative control; red: failed; green: OK; blue: OK, but maxFit > 5
+<LI>After the main page there are separate pages for subsets of experiments by date and lane.
+</UL>
+<LI><A HREF="fit_quality_cor12.pdf">Rho12 for each experiment</A> (genes with |t| &gt; 3 are in red)
 </UL>
 <LI>Clustering of experiments (rotate clockwise to view)
 <UL>
 <LI><A HREF="fit_cluster_logratios.pdf">Clustering of log-ratios</A>
 <LI><A HREF="fit_cluster_logcounts.pdf">Clustering of log-counts</A>
-<LI>(The numbers before the sample id are the median #reads per gene and cor12, the correlation between the log-ratios for the 1st and 2nd half of genes)
 </UL>
 <LI><A HREF="cofitness.pdf">Distribution of cofitness</A>
 <LI><A HREF="fit_chr_bias.pdf">Chromosomal bias for each experiment</A>
 </UL>
 
-<P><A HREF="fit.image">R image (large!)</A>
+<P><B>Tables</B>
+<UL>
+<LI>Experiments
+<UL>
+<LI><A HREF="fit_quality.tab">Experiments and quality scores</A>
+<LI><A HREF="expsUsed">Detailed metadata for experiments</A>
+</UL>
+<LI>Genes
+<UL>
+<LI><A HREF="fit_genes.tab">Gene annotations</A>
+<LI><A HREF="fit_logratios_good.tab">Gene fitness</A> (normalized log2 ratios for successful experiments )
+<UL>
+<LI>or for <A HREF="fit_logratios.tab">all</A> experiments</LI>
+<LI><A HREF="fit_logratios_unnormalized.tab">Unnormalized logratios</A>
+<LI><A HREF="fit_logratios_unnormalized_naive.tab">Naive unnormalized logratios</A>
+</UL>
+<LI><A HREF="fit_t.tab">t-like test statistic</A> (based on consistency of measurements for the gene)
+<UL>
+<LI>Or <A HREF="fit_standard_error_obs.tab">estimated standard error</A> (based on variation across strains)
+<LI>Or <A HREF="fit_standard_error_naive.tab">naive standard error</A> (based on total counts)
+</LI>
+</UL>
+<LI><A HREF="cofit">Top cofitness hits</A>
+<LI><A HREF="specific_phenotypes">Specific phenotypes</A>
+</UL>
+<LI>Strains</LI>
+<UL>
+<LI><A HREF="all.poolcount">BarSeq count for each strain by each sample</A> (large)
+<LI><A HREF="strain_fit.tab">Strain fitness</A> (log2 ratios, normalized, large)
+</UL>
+</UL>
+
+<P><B>R</B>
+<UL>
+<LI><A HREF="fit.image">R image</A> (large)
+<LI><A HREF="log">Log file from processing in R</A>
+<LI>Source code: see bin/RunFEBA.R and lib/FEBA.R in the dev branch of the <A HREF="https://bitbucket.org/berkeleylab/feba">FEBA BitBucket repository</A>
+<LI>Input files for RunFEBA.R: <A HREF="genes">genes</A>, <A HREF="exps">exps</A>, <A HREF="all.poolcount">all.poolcount</A> (large!)
+<LI>Also see the <A HREF="pool">pool</A>
+</UL>
+
 
 <H2>Documentation</H2>
 
@@ -86,18 +106,20 @@ zero.
 <P>Also, in different preparations of genomic DNA, the efficiency of
 recovering plasmids can vary. So, for each plasmid (if this organism
 has any), the median fitness of the genes on the plasmid is set to
-zero. Plasmids with very few genes cannot be normalized and so they are excluded.
+zero. Plasmids with very few genes cannot be normalized and so their genes are excluded.
 
-<P>If the genome sequence is not complete and is in many fragments, then it is not easy to tell if there is an effect of proximity to the terminus. Assuming that each scaffold is small, there will not be a significant variation in copy number across the scaffold. Since each scaffold is normalized separately, this should correct for the varying copy numbers of the scaffolds (but this has not been verified).
+<P>If the genome sequence is not complete and is in many fragments, then it is not easy to tell if there is an effect of proximity to the terminus. Assuming that each scaffold is small, there will not be a significant variation in copy number across the scaffold. Since each scaffold is normalized separately, this should correct for the varying copy numbers of the scaffolds (but this has not been verified). Also, since it is difficult to a distinguish a small scaffold from a plasmid, genes from small scaffolds are excluded.
 
-<H3><A NAME="qual">Quality scores in the table of experiments</A></H3>
+<H3><A NAME="qual">The quality scores in the table of experiments</A></H3>
 
 <UL>
-<LI><B>name</B> -- set1H1 means index H1 in set1 for that organism. This is shortened to "1H1" in some plots. These experiment names are the column names in most of the other tables.
+<LI><B>name</B> -- set1H1 means index H1 in set1 for that organism. These experiment names are the column names in most of the other tables.
 
 <LI><B>short</B> -- shortened description. Samples with the same value are replicates.
 
-<LI><B>t0set</B> -- which set of Time0 samples this was compared to. If this is a Time0 sample, then the self-counts were subtracted out of the other side of the comparison (starting Dec. 2013) as a negative control.
+<LI><B>t0set</B> -- which set of Time0 samples this was compared to. If this is a Time0 sample, then the self-counts were subtracted out of the other side of the comparison as a negative control.
+
+<LI><B>num</B> -- another unique identifier, the row number in the input exps file. Used in the plots for compactness and shown in the cluster diagrams with "#", i.e. "set1H1 #3".
 
 <LI><B>nMapped</B> -- #reads for that sample that corresponded to a known strain
 
@@ -121,7 +143,7 @@ be far higher than gMed because of a strong skew in the sampling of
 gene mutants. This usually indicates strong positive selection for
 mutants in a few genes.
 
-<LI><B>cor12</B> -- A measure of how consistent the fitness data is for each
+<LI><B>cor12</B> -- (called rho12 in the plots) -- A measure of how consistent the fitness data is for each
 gene.  For each gene, we estimate the (normalized) fitness using only insertions
 within the first half of each gene (10-50%) or only within the second
 half of each gene (50-90%). cor12 is the Spearman rank correlation of
@@ -171,13 +193,7 @@ As of April 9, 2014, the requirements for a successful experiment are:
 
 (The rules are implemented in FEBA_Exp_Status() in FEBA.R)
 
-<H3>Source code</H3>
-
-See
-<A HREF="https://bitbucket.org/berkeleylab/feba">FEBA bitbucket</A>, especially
-R code in FEBA.R (currently in the dev branch only).
-
-<H3>R image</H3>
+<H3>The R image</H3>
 
 The R image includes:
 
@@ -199,7 +215,7 @@ The R image includes:
 <LI><B>g</B> -- the corresponding locusId for each row in the per-gene tables. Genes that are not in this list might lack mapped insertions (e.g. because they are short, duplicated, or essential). Or, they might have insertions but not enough reads at Time0 to compute a fitness value (perhaps because the mutants are very sick).
 <LI><B>lrn</B> -- normalized gene fitness (in the same order as in g)
 <LI><B>lr</B> -- unnormalized gene fitness
-<LI><B>lrn1</B>, <B>lrn2</B> -- normalized gene fitness using only strains within the 1st or 2nd half of each gene. These were used to compute the cor12 quality metric. These should also be useful for checking whether a specific gene's fitness measurement is reliable. Also see <B>lr1</B> and <B>lr2</B> for the corresponding unnormalized values.
+<LI><B>lrn1</B>, <B>lrn2</B> -- normalized gene fitness using only strains within the 1st or 2nd half of each gene. These were used to compute the cor12 (or rho12) quality metric. These should also be useful for checking whether a specific gene's fitness measurement is reliable. Also see <B>lr1</B> and <B>lr2</B> for the corresponding unnormalized values.
 <LI><B>t</B> -- a t-like test statistic that gives an estimate of how significant this gene's measurement is
 <LI><B>se</B> -- an estimate of how noisy this gene's measurement is (se is short for standard error)
 <LI><B>sdNaive</B> -- the best-case of how noisy this gene's measurement would be, based on the total counts
@@ -210,15 +226,36 @@ The R image includes:
 </UL>
 <LI>per-strain information:
 <UL>
-<LI><B>strains</B> -- a table of all mapped strains. This describes the barcode (as seen in TnSeq) and its reverse complement (as seen in BarSeq), where the insertion is, and what orientation it is in. If the insertion mapped to the delivery vector then scaffold = "pastEnd". If the strain is within the central 10-90% of a gene, then the locusId is indicated. If the strain was within 10-90% of a gene and had enough reads to be included in the gene fitness calcuation, then used=TRUE. "f" is the fractional position in the gene (in scaffold orientation, not in the gene's orientation), i.e. 0.5 for an insertion in the middle of the gene.
+<LI><B>strains</B> -- a table of all mapped strains. This describes the barcode (as seen in TnSeq) and its reverse complement (as seen in BarSeq), where the insertion is, and what orientation it is in. If the insertion mapped to the delivery vector then scaffold = "pastEnd". If the strain is within the central 10-90% of a gene, then the locusId is indicated. If the strain was within 10-90% of a gene and had enough reads to be included in the gene fitness calcuation, then used=TRUE. "f" is the fractional position in the gene (in the gene's orientation), i.e. 0.5 for an insertion in the middle of the gene and near 0 for an insertion at the very 5' end.
 <LI><B>strain_lrn</B> -- fitness values for each strain (in the same order as in strains). These will often be noisy due to low counts. Also see non-normalized fitness values in strain_lr.
 <LI><B>strain_se</B> -- a rough estimate of how noisy the per-strain fitness values are
 </UL>
-</UL>
+<LI>simple gene-wise analyses:
+<UL>
+<LI><B>cofit</B> -- top cofitness hits for each gene
+<LI><B>specphe</B> -- specific phenotypes. A genes' phenotype is considered specific for a condition if abs(fit) > 1 and abs(fit) > percentileFit + 0.5 and abs(t) > 5, where percentileFit is the 95th percentile of abs(fit) for that gene. A gene may have more than one specific phenotypes.
+</UL></UL>
 <LI><B>expsUsed</B> -- a table of experiments
 </UL>
 
-<P>Written by <A HREF="mailto:funwithwords26@gmail.com">Morgan Price</A>, Arkin group, Lawrence Berkeley Lab, January 2014
+<H3>The pool of mutants</H3>
+
+The <A HREF="pool">pool</A> file is used to assign barcodes ot strains while assembling <A HREF="all.poolcount">all.poolcount</A>. It includes a separate row for each strain:
+
+<UL>
+<LI><B>barcode</B> -- The barcode identified by TnSeq
+<LI><B>rcbarcode</B> -- The reverse complement of barcode, which is what is seen during BarSeq
+<LI><B>nTot</B> -- The total number of TnSeq reads that mapped to either the genome or the delivery vector and contained this barcode.
+<LI><B>n</B> -- #mapped TnSeq reads for this barcode at its primary location. n will often be a bit less than nTot because of chimeric reads that arise during the PCR step of the TnSeq protocol.
+<LI><B>scaffold, strand, pos</B> -- The primary location that this barcode maps to. If it maps to the delivery vector, then scaffold="pastEnd" and strand and pos are blank. Otherwise, pos is 1-based.
+<LI><B>n2</B> -- #mapped TnSeq reads for this barcode at its second-most-popular location. n2 << n because other barcodes are filtered out when "designing" the pool.
+<LI><B>scaffold2, strand2, pos2</B> -- the secondary location
+<LI><B>pastEnd</B> -- #TnSeq reads for this barcode that map to the delivery vector.
+</UL>
+
+(Mutant libraries made with transpososomes instead of a suicide plasmid do not have a delivery vector and will not have any "pastEnd" reads.)
+
+<p>Written by <A HREF="mailto:funwithwords26@gmail.com">Morgan Price</A>, Arkin group, Lawrence Berkeley Lab, January 2014
 
 </BODY>
 </HTML>

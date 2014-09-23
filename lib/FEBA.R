@@ -4,7 +4,7 @@
 #
 # FEBA_Fit() -- analyze many fitness experiments with AvgStrainFitness() and NormalizeByScaffold()
 #      returns a complex data structure
-# FEBA_Save_Tables() -- Save the fitness data structure to tab-delimited files and an R image
+# FEBA_Save_Tables() -- Save the fitness data structure to a mini web-site, tab-delimited files and an R image
 #
 # Also see:
 # AvgStrainFitness -- compute fitness values from counts for the post-experiment counts
@@ -420,8 +420,9 @@ FEBA_Fit = function(expsUsed, all, genes,
 	names(fit) = sub("fit","lr",names(fit));
 	if (debug) cat("Extracted fitness values\n");
 
-	q = expsUsed[expsUsed$name %in% names(all_fit), words("name short t0set")];
-	if(!is.null(expsUsed$num)) q$num = expsUsed$num;
+	q_names = words("name short t0set");
+	if(!is.null(expsUsed$num)) q_names = c(q_names, "num");
+	q = expsUsed[expsUsed$name %in% names(all_fit), q_names];
 	nUse = as.character(q$name);
 	if(!all(nUse == names(fit$lrn))) stop("Mismatched names in fit");
 	q$nMapped = colSums(all[,nUse,drop=F]);
@@ -485,8 +486,8 @@ FEBA_Fit = function(expsUsed, all, genes,
 	}, fit$strain_lr, fit$lrn-fit$lr);
 	fit$strain_lrn = data.frame(fit$strain_lrn);
 
-	# Statistics of cofitness on pairs
-	if (computeCofit && sum(q$u) >= 5) {
+	# Statistics of cofitness on pairs, top cofitness hits, specific phenotypes
+	if (computeCofit && sum(q$u) >= 20) {
 		cat("Computing cofitness with ", sum(q$u), " experiments\n", file=stderr());
 		adjDiff$rfit = cor12(adjDiff, fit$g, fit$lrn[,q$u]);
 		pred$rfit = cor12(pred, fit$g, fit$lrn[,q$u]);
@@ -496,8 +497,11 @@ FEBA_Fit = function(expsUsed, all, genes,
 		random = random[as.character(random$Gene1) != as.character(random$Gene2),];
 		random$rfit = cor12(random, fit$g, fit$lrn[,q$u]);
 		fit$pairs = list(adjDiff=adjDiff, pred=pred, random=random);
+		fit$cofit = TopCofit(fit$g, fit$lrn[,fit$q$u]);
+		d = merge(fit$q[fit$q$u,], expsUsed, by=words("name short"));
+		fit$specphe = SpecificPhenotypes(fit$g, d, fit$lrn[,q$u], fit$t[,q$u]);
 	} else {
-		cat("Only", sum(q$u),"experiments of", nrow(q)," passed quality filters!\n");
+		cat("Only", sum(q$u),"experiments of", nrow(q)," passed quality filters!\n", file=stderr());
 	}
 	return(fit);
 }
@@ -506,12 +510,11 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 		 topdir="data/FEBA/html/",
 		 dir = paste(topdir,org,sep="/"),
 		 writeImage=TRUE,
-		 FEBAdir="src/feba/lib",
+		 FEBAdir="src/feba",
 		 template_file=paste(FEBAdir,"/lib/FEBA_template.html",sep=""),
 		 expsU=expsUsed,
 		 ... # for FEBA_Quality_Plot
 		 ) {
-	#if(!file.exists(dir)) stop("No such directory ",dir);
 	if(!file.exists(dir)) dir.create(dir);
 
 	for (n in words("q lr lrn lrn1 lrn2 t")) {
@@ -549,17 +552,17 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	writeDelim(d, nameToPath("fit_logratios.tab"));
 	wroteName("fit_logratios.tab");
 
+	d = genes[genes$locusId %in% fit$g, c("locusId","sysName","desc")];
+	d$comb = paste(d$sysName, d$desc); # for MeV
 	if (sum(fit$q$u) == 0) {
 		cat("Warning: 0 OK experiments\n");
 	} else {
-		d = genes[,c("locusId","sysName","desc")];
-		d$comb = paste(d$sysName, d$desc); # for MeV
 		d = merge(d, cbind(locusId=fit$g,fit$lrn[,fit$q$u]));
 		names(d)[-(1:4)] = paste(fit$q$name,fit$q$short)[fit$q$u];
-		writeDelim(d, nameToPath("fit_logratios_good.tab"));
-		cat("Wrote fitness for ",sum(fit$q$u), " successful experiments to ", nameToPath("fit_logratios_good.tab"),"\n",
-		    file=stderr());
 	}
+	writeDelim(d, nameToPath("fit_logratios_good.tab"));
+	cat("Wrote fitness for ",sum(fit$q$u), " successful experiments to ", nameToPath("fit_logratios_good.tab"),"\n",
+	    file=stderr());
 
 	d = merge(genes[,c("locusId","sysName","desc")], cbind(locusId=fit$g,fit$t));
 	names(d)[-(1:3)] = paste(fit$q$name,fit$q$short);
@@ -591,14 +594,14 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	}
 
 	pdf(nameToPath("fit_quality_cor12.pdf"),
-		pointsize=10, width=5, height=5,
+		pointsize=10, width=6, height=6,
 		title=paste(org,"Fitness Cor12 Plots"));
 	for (i in 1:nrow(fit$q)) {
 	    n = as.character(fit$q$name[i]);
 	    changers = fit$g[abs(fit$t[[n]]) >= 3];
 	    plot(fit$lrn1[[n]], fit$lrn2[[n]],
-	    		  main=sprintf("Cor12 for %s %s (%.0f %.3f)\n%s",
-			  	org, n, fit$q$gMed[i], fit$q$cor12[i], fit$q$short[i]),
+	    		  main=sprintf("%s %s #%d (gMed=%.0f rho12=%.3f)\n%s",
+			  	org, n, fit$q$num[i], fit$q$gMed[i], fit$q$cor12[i], fit$q$short[i]),
 	    		  xlab="First Half", ylab="Second Half",
 			  col=ifelse(fit$g %in% changers, 2, 1));
 	    eqline(); hline(0); vline(0);
@@ -606,8 +609,8 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	dev.off();
 	wroteName("fit_quality_cor12.pdf");
 
-	labelAll = sprintf("%.0f %.2f %s %25.25s",
-		      fit$q$gMed, fit$q$cor12, sub("set","",fit$q$name), fit$q$short);
+	labelAll = sprintf("%s #%d gMed=%.0f rho12=%.2f %30.30s",
+		      sub("^set","",fit$q$name), fit$q$num, fit$q$gMed, fit$q$cor12, fit$q$short);
         labelAll = ifelse(fit$q$short=="Time0", paste(labelAll, fit$q$t0set), labelAll);
 
 	use = fit$q$short != "Time0";
@@ -627,7 +630,7 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 		title=paste(org,"Cluster Log Counts"));
 	# Some Time0s may be missing from fit$q
 	d = match(names(fit$gN)[-1], fit$q$name);
-	labelAll2 = ifelse(is.na(d), paste("Time0", sub("set","",names(fit$gN)[-1])), labelAll[d]);
+	labelAll2 = ifelse(is.na(d), paste("Time0", sub("^set","",names(fit$gN)[-1])), labelAll[d]);
 	plot(countClust, labels=labelAll2, main="");
 	dev.off();
 	wroteName("fit_cluster_logcounts.pdf");
@@ -638,13 +641,13 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	beg = ifelse(fit$g %in% genes$locusId[genes$scaffold==maxSc],
 	    genes$begin[match(fit$g, genes$locusId)], NA);
 
-	pdf(nameToPath("fit_chr_bias.pdf"), pointsize=10, width=5, height=5,
+	pdf(nameToPath("fit_chr_bias.pdf"), pointsize=10, width=6, height=6,
 	          title=paste(org,"Chromosome Bias"));
 	for (i in 1:nrow(fit$q)) {
 	    n = as.character(fit$q$name[i]);
 	    plot(beg, pmax(-2,pmin(2,fit$lr[[n]])),
-	    		  main=sprintf("%s %s (%.0f %.3f)\n%s",
-			  	org, n, fit$q$gMed[i], fit$q$cor12[i], fit$q$short[i]),
+	    		  main=sprintf("%s %s #%d (gMed=%.0f rho12=%.3f)\n%s",
+			  	org, sub("^set","",n), fit$q$num[i], fit$q$gMed[i], fit$q$cor12[i], fit$q$short[i]),
 	    		  xlab="Position on Main Scaffold",
 			  ylab="Fitness (Unnormalized)",
 			  ylim=c(-2,2), col="darkgrey");
@@ -659,6 +662,26 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 		writeDelim(expsU, nameToPath("expsUsed"));
 		wroteName("expsUsed");
 	}
+
+	if (is.null(fit$cofit)) {
+	    d = data.frame(locusId="",sysName="",desc="",hitId="",cofit=0,rank=0,hitSysName="",hitDesc="");
+	} else {
+	    d = merge(genes[,words("locusId sysName desc")], fit$cofit, by="locusId");
+	    d = merge(d, data.frame(hitId=genes$locusId, hitSysName=genes$sysName, hitDesc=genes$desc));
+	    d = d[order(d$locusId,d$rank),];
+	}
+	writeDelim(d, nameToPath("cofit"));
+	wroteName("cofit");
+
+	if (is.null(fit$specphe)) {
+	   d = data.frame(locusId="",sysName="",desc="",name="",short="",Group="",Condition_1="",Concentration_1="",Units_1="",
+	                  Condition_2="",Concentration_2="",Units_2="");
+	   d = d[0,];
+	} else {
+	   d = merge(genes[,words("locusId sysName desc")], fit$specphe, by="locusId");
+	}
+	writeDelim(d, nameToPath("specific_phenotypes"));
+	wroteName("specific_phenotypes");
 
 	if(writeImage) {
 	    img = format(Sys.time(),"fit%Y%b%d.image"); # e.g., fit2013Oct24.image
@@ -682,10 +705,11 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 }
 
 FEBA_Quality_Plot = function(q, pdfFile, org,
-		             min_gMed=50, max_mad12=0.5, max_adjcor = 0.25, max_gccor = 0.2, min_cor12 = 0.1) {
+		             min_gMed=50, max_mad12=0.5, max_adjcor = 0.25, max_gccor = 0.2, min_cor12 = 0.1,
+			     multiples=TRUE) {
 	qCol = ifelse(q$short=="Time0", "grey",
 		ifelse(q$u, ifelse(q$maxFit > 5, "blue", "darkgreen"), "red"));
-	qLab = sub("set","",q$name);
+	qLab = q$num;
 
 	if(!is.null(pdfFile)) pdf(pdfFile,
 		pointsize=10, width=8, height=8,
@@ -725,6 +749,11 @@ FEBA_Quality_Plot = function(q, pdfFile, org,
 	eqline();
 	vline(max_gccor); hline(max_adjcor);
 
+	if (!is.null(pdfFile) && multiples) {
+	    for(t0set in unique(q$t0set)) {
+	        FEBA_Quality_Plot(q[q$t0set==t0set,], pdfFile=NULL, org=t0set, multiples=FALSE);
+	    }
+	}
 	par(oldpar);
 	if(!is.null(pdfFile)) dev.off();
 }
@@ -992,3 +1021,50 @@ findWithinGrouped = function(splitx, splity, by.x, begin, end, debug=FALSE, ...)
 	return(out);
 }
 
+# g is genes (i.e., locusIds)
+# r is a matrix of fitness values with columns as experiments
+TopCofit = function(g, r,
+		debug = FALSE,
+		fraction=0.02,
+		n = pmin(pmax(1,round(length(g)*fraction)),length(g)-1)) {
+	if (length(g) != nrow(r)) stop("rows and number of genes does not match");
+	cofits = cor(t(r),use="p"); # correlation between rows
+	if(debug) cat("nTop",n,"\n");
+	nOut = length(g) * n;
+	out = data.frame(locusId=rep(g,each=n), hitId=NA, cofit=NA, rank=rep(1:n,length(g)));
+	if(debug) cat("Making output with",nrow(out),"rows\n");
+	for (i in 1:length(g)) {
+		values = cofits[i,];
+		j = order(-values)[2:(n+1)]; # assume self is in position 1
+		outi = (i-1)*n + (1:n); # where to put inside out
+		out$hitId[outi] = g[j];
+		out$cofit[outi] = values[j];
+	}
+	return(out);
+}
+
+# Identify "specific phenotypes" -- cases where a gene is sick
+# in some experiment(s), with |fit| > minFit and |fit| > percentileFit + minDelta and |t| > minT
+# percentileFit is defined as the 95th percentile (by default) of |fit| for that gene
+#
+# exps ideally includes name (the column names of lrn and tval) along with
+# short, Group, Condition_1, Concentration_1, Units_1, Condition_2, Concentration_2, Units_2
+#
+# Returns a data frame of locusId, fit, t, name, short, etc.
+SpecificPhenotypes = function(g, exps, lrn, tval,
+	   	    minT = 5, minFit = 1.0,
+		    percentile = 0.95, percentileFit = 1.0, minDelta = 0.5,
+		    expsFields = intersect(names(exps),
+		         words("name short Group Condition_1 Concentration_1 Units_1 Condition_2 Concentration_2 Units_2")))
+{
+	rowHi = apply(abs(lrn), 1, quantile, percentile);
+	bool = abs(lrn) > minFit & abs(lrn) > rowHi+minDelta & rowHi < percentileFit & abs(tval) > minT;
+	specsick = data.frame(which(bool, arr.in=T));
+	specsick$locusId = g[specsick$row];
+	specsick$name = names(lrn)[specsick$col];
+	specsick$lrn = as.matrix(lrn)[cbind(specsick$row,specsick$col)];
+	specsick$t = as.matrix(tval)[cbind(specsick$row,specsick$col)];
+	specsick$row = NULL;
+	specsick$col = NULL;
+	return(merge(specsick, exps[,expsFields]));
+}
