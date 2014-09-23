@@ -26,11 +26,9 @@ RunPoolStats = function(args = commandArgs(trailingOnly=TRUE)) {
 	genes = read.delim(genesfile, as.is=T, quote="");
 	for (n in words("scaffoldId begin end strand desc"))
 		if(!n %in% names(genes)) stop("Missing column ", n, " from genes file ", genesfile);
-	err_printf("Read %d strains (%d in genome, %d locations) and %d genes\n",
-	     nrow(pool),
+	err_printf("%d insertions in genome are at %d different locations\n",
 	     sum(pool$scaffold != "pastEnd"),
-	     nrow(unique(pool[pool$scaffold != "pastEnd",words("scaffold strand pos")])),
-	     nrow(genes));
+	     nrow(unique(pool[pool$scaffold != "pastEnd",words("scaffold strand pos")])));
 
 	poolg = findWithinGrouped(split(pool, pool$scaffold),
 				split(without(genes, genes$scaffoldId), genes$scaffoldId),
@@ -53,7 +51,7 @@ PoolReport = function(poolfile, poolg, genes, nreadstot) {
 
 	genes$expess = genes$type==1 & grepl("ribosomal protein|tRNA synthetase|cell division", genes$desc, ignore.case=T);
 	genes$goodhit = genes$locusId %in% poolg2$locusId;
-	err_printf("Hit rate in expected_essentials: %.2f other %.2f\n",
+	err_printf("Hit rate in (crude) likely essentials: %.2f other %.2f\n",
 			sum(genes$expess & genes$goodhit)/sum(genes$expess),
 			sum(!genes$expess & genes$goodhit)/sum(!genes$expess));
 

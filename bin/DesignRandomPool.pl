@@ -6,6 +6,7 @@
 # read, barcode, scaffold, position, strand, unique flag, qBeg, qEnd, bit score, %identity
 use strict;
 use Getopt::Long;
+use FindBin qw($Bin);
 sub reverseComplement($);
 sub Variants($); # return all 1-nt variants for a sequence
 
@@ -15,26 +16,49 @@ my $minRatio = 8.0;
 my $maxQBeg = 3;
 
 my $usage = <<END
-Usage: DesignRandomPool.pl [ -minN $minN ] [ -minFrac $minFrac ]
-             [ -minRatio $minRatio ] [ -maxQBeg $maxQBeg ]
-             MapTnSeq_files > pool_file
-    The input must be tab-delimited with fields
+Usage: DesignRandomPool.pl -pool pool_file -genes genes_table [ -minN $minN ]
+          [ -minFrac $minFrac ] [ -minRatio $minRatio ] [ -maxQBeg $maxQBeg ]
+          MapTnSeq_file1 ... MapTnSeq_fileN
+
+DesignRandomPool.pl identifies the reliably mapped barcodes and writes
+a pool file, as well as to auxilliary files pool.hit (strains per
+gene), pool.unhit (proteins without insertions), pool.surprise.
+
+The MapTnSeq files must be tab-delimited with fields
     read,barcode,scaffold,pos,strand,uniq,qBeg,qEnd,score,identity
-    where qBeg and qEnd are positions in the read that match the genome after trimming the transposon.
+where qBeg and qEnd are the positions in the read, after the
+transposon sequence is removed, that match the genome.
+
+The genes table must include the fields
+   scaffoldId, begin, end, strand, desc
+and it should either include only protein-coding genes or it should
+include the field 'type' with type=1 for protein-coding genes.
+
+Optional arguments:
 
 minN is the minimum number of "good" reads for a barcode supporting
 its mapping.  (Good means a unique hit to the genome and qBeg=1.)
+
 minFrac is the minimum fraction of input reads for the barcode that
-agree with the preferred mapping.  minRatio is the minimum ratio of
-reads for preferred mapping over the2nd-most-frequent mapping.
+agree with the preferred mapping.
+
+minRatio is the minimum ratio of
+reads for preferred mapping over the 2nd-most-frequent mapping.
 END
     ;
 
 {
+    my $poolfile = undef;
+    my $genesfile = undef;
     GetOptions('minN=i' => \$minN,
                'minFrac=f' => \$minFrac, 'minRatio=f' => \$minRatio,
+	       'pool=s' => \$poolfile,
+	       'genes=s' => \$genesfile,
                'maxQBeg=i' => \$maxQBeg )
         || die $usage;
+    die $usage if !defined $poolfile;
+    die $usage if !defined $genesfile;
+    die "No such file: $genesfile" unless -e $genesfile;
 
     my %barHits = (); # barcode => list of (scaffold,position,strand,uniqueness,qBeg,qEnd)
 
@@ -61,7 +85,8 @@ END
     print STDERR "Read $nMapped mapped reads for " . scalar(keys %barHits) . " distinct barcodes\n";
     print STDERR "(Skipped $nSkipQBeg reads with qBeg > $maxQBeg)\n" if $nSkipQBeg > 0;
 
-    print join("\t", "barcode", "rcbarcode", "nTot",
+    open(POOL, ">", $poolfile) || die "Cannot write to $poolfile";
+    print POOL join("\t", "barcode", "rcbarcode", "nTot",
                "n","scaffold","strand","pos",
                "n2","scaffold2","strand2","pos2","nPastEnd")."\n";
 
@@ -100,7 +125,7 @@ END
         if ($nPastEnd >= $nTot/2 || $nPastEnd >= $nMax) {
             $nInCategory{"PastEnd"}++;
             my $n2 = $nMax || 0; # note we do not report secondary location (doubt it matters)
-            print join("\t", $barcode, reverseComplement($barcode),
+            print POOL join("\t", $barcode, reverseComplement($barcode),
                        $nTot, $nPastEnd, "pastEnd","","",$n2,"","","",$nPastEnd)."\n";
             next;
         }
@@ -163,15 +188,17 @@ END
         my @atSplit = split /\t/, $maxAt;
         my @nextAtSplit = split /\t/, $nextAt, -1; # keep empty entries
         my $nPastEnd = $pastEnd{$barcode} || 0;
-        print join("\t", $barcode, reverseComplement($barcode),
+        print POOL join("\t", $barcode, reverseComplement($barcode),
                    $nTot, $nMax, @atSplit, $nNext, @nextAtSplit,$nPastEnd)."\n";
         $nOut++;
     }
+    close(POOL) || die "Error writing to $poolfile";
     print STDERR "Masked $nMasked off-by-1 barcodes ($nMaskedReads reads) leaving $nOut barcodes\n";
     print STDERR sprintf("Reads for those barcodes: %d of %d (%.1f%%)\n",
                          $nReadsForUsable, $nMapped, 100*$nReadsForUsable/($nMapped + 1e-6));
     my $chao = int($totcodes + $f1**2/(2*$f2 + 1));
     print STDERR "Chao2 estimate of #barcodes present (may be inflated for sequencing error): $chao\n";
+    system("$Bin/../lib/PoolStats.R", $poolfile, $genesfile, $nMapped) == 0 || die $!;
 }
 
 sub Variants($) {
