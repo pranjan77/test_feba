@@ -33,9 +33,9 @@
 #
 
 # Programmer Utilities:
-# get_genes(), get_exps(), get_fit(), get_t(), all_cofitness()
-
-# Use names(orgs) to list which FEBA nicknames are included.
+# Use LoadOrgs(list of organism nicknames) to create the data structures
+# Use names(orgs) to list which FEBA nicknames are included
+# Use get_genes(), get_exps(), get_fit(), get_t(), all_cofitness() to get at data items
 
 # Data structures (created by LoadOrgs()):
 # orgs -- a separate data structure for each bug
@@ -52,31 +52,29 @@
 # ccofit -- cofitness that is conserved for orthologous pairs (conserved cofit)
 # 	 only has pairs in the order locus1 < locus2
 
-if(file.access("src/feba/lib/FEBA.R")==0) source("src/feba/lib/FEBA.R");	
-
 # note hard-coding of paths, should be fixed
-LoadOrgs = function(orgnames) {
+LoadOrgs = function(orgnames, base="data/FEBA/", html=paste(base,"/html/",sep="")) {
 	orgs = list();
 	for(n in orgnames) {
 	       cat("Loading ",n,"\n",sep="");
-		exps = read.delim(paste("public_html/FEBA/",n,"/expsUsed",sep=""),as.is=T);
-		genes = read.delim(paste("data/FEBA/g/",n,"/genes.tab",sep=""), as.is=T, quote="");
-		q = read.delim(paste("public_html/FEBA/",n,"/fit_quality.tab",sep=""), as.is=T);
+		exps = read.delim(paste(html,n,"/expsUsed",sep=""),as.is=T);
+		genes = read.delim(paste(html,n,"/genes",sep=""), as.is=T, quote="");
+		q = read.delim(paste(html,n,"/fit_quality.tab",sep=""), as.is=T);
 		if(!all(q$name %in% exps$name)) stop(n, ": Unmatched names in q: ", setdiff(q$name,exps$name));
-		lrn = read.delim(paste("public_html/FEBA/",n,"/fit_logratios_good.tab",sep=""),check.names=F,as.is=T);
+		lrn = read.delim(paste(html,n,"/fit_logratios_good.tab",sep=""),check.names=F,as.is=T);
 		names(lrn) = sub(" .*","",names(lrn));
 		if(is.null(q$u)) q$u = q$name %in% names(lrn);
 		g = lrn$locusId;
 		lrn = lrn[,-(1:4)];
 		if(!all(names(lrn) %in% q$name)) stop(n, ": Unmatched names in lrn: ", setdiff(names(lrn),q$name));
 
-		tval = read.delim(paste("public_html/FEBA/",n,"/fit_t.tab",sep=""),as.is=T,check.names=F);
+		tval = read.delim(paste(html,n,"/fit_t.tab",sep=""),as.is=T,check.names=F);
 		tval = tval[,-(1:3)];
 		names(tval) = sub(" .*","",names(tval));
 		tval = tval[,q$u];
 		if(!all(names(tval)==names(lrn))) stop("Invalid names in fit_t.tab");
 
-		file = paste("public_html/FEBA/",n,"/cofit",sep="");
+		file = paste(html,n,"/cofit",sep="");
 		if (file.access(file,mode=4) != 0) {
 			cat("Warning: cannot read cofitness file for ",n,"\n",sep="");
 			cofit = NULL;
@@ -84,13 +82,13 @@ LoadOrgs = function(orgnames) {
 			cofit = read.delim(file, as.is=T);
 		}
 
-		file = paste("public_html/FEBA/",n,"/gffmo",sep="");
+		file = paste(html,n,"/gffmo",sep="");
 		if (file.access(file,mode=4) == 0) {# readable
 		    gffmo = read.delim(file,as.is=T);
 		    genes = merge(genes, gffmo[,words("locusId VIMSS")], all.x=T);
 		}
 
-		specsick = read.delim(paste("public_html/FEBA/",n,"/specsick",sep=""),as.is=T);
+		specsick = read.delim(paste(html,n,"/specsick",sep=""),as.is=T);
 
 		orgs[[n]] = list(genes=genes, exps=exps, g=g, q=q, lrn=lrn, t=tval, specsick=specsick, cofit=cofit);
 	}
@@ -99,17 +97,11 @@ LoadOrgs = function(orgnames) {
 	for(i in names(d)) d[[i]]$org = i;
 	specsicks <<- do.call(rbind,d);
 
-	css <<- read.delim("data/FEBA/css",as.is=T); # conserved specific sick
+	css <<- read.delim(paste(base,"css",sep=""), as.is=T); # conserved specific sick
 
-	cofitpairs = read.delim("data/FEBA/comb_cofit.pairs",as.is=T);
-	# organism name is already present, so have locusIds be simple without the org: prefix
-	cofitpairs$locus1 = sub(".*:","",cofitpairs$locus1);
-	cofitpairs$locus2 = sub(".*:","",cofitpairs$locus2);
-	cofitpairs$orth1 = sub(".*:","",cofitpairs$orth1);
-	cofitpairs$orth2 = sub(".*:","",cofitpairs$orth2);
-	ccofit <<- cofitpairs;
+	cofitpairs = read.delim(paste(base,"comb_cofit.pairs",sep=""),as.is=T);
 
-	para <<- read.delim("data/FEBA/aaseqs.para", as.is=T, header=F, col.names=words("org locusId para bits ratio"));
+	para <<- read.delim(base,"aaseqs.para",sep="") as.is=T, header=F, col.names=words("org locusId para bits ratio"));
 	para <<- split(para, para$org);
 	for(org in names(orgs)) {
 	    if (!is.null(para[[org]])) {
@@ -399,3 +391,6 @@ all_cofitness = function(org, genes) {
 	out = out[order(-out$r),];
 	return(out);
 }
+
+# split a string separated by spaces into a list of word
+words = function(s, by=" ", ...) { strsplit(s[1], by, ...)[[1]]; }

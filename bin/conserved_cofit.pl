@@ -5,25 +5,27 @@ use strict;
 use Getopt::Long;
 
 sub ReadOrthTable($);
-sub ReadCofitFile($$$);
+sub ReadCofitFile($$$$);
 
 {
     my $usage = qq{
-Usage: conserved_cofit.pl -orth ortholog_table -out prefix cofitfile1 ... cofitfileN > pairs
+Usage: conserved_cofit.pl -orth ortholog_table -out prefix org1 cofitfile1 ... orgN cofitfileN > pairs
 
 The ortholog table should contain locusId, taxonomyId, and
 orthNNNN.locusId, where NNNN is the taxonomyId and orthologs in its
-own genome are ignored.  The cofitness files (1 per organism) should
-contain locusId, hitId, cofit, and rank. All input files
+own genome are ignored, and locusIds are of the form organism:geneId.
+The cofitness files (1 per organism) should contain locusIdId, hitId,
+cofit, and rank (with no org: in the locusId or hitId). All input files
 should be tab delimited with a header line.
+
 };
     my $orthfile;
     my $out;
     (GetOptions('orth=s' => \$orthfile, 'out=s' => \$out)
      && defined $orthfile && defined $out) || die $usage;
-
-    my @cofitfiles = @ARGV;
-    die "No cofitness files" unless @cofitfiles > 0;
+    die "No cofitness files" unless @ARGV > 0;
+    die "Must have pairs of organism cofitness_file\n" unless scalar(@ARGV) % 2 == 0;
+    my %cofitfiles = @ARGV; # organism => file
 
     # taxa: taxonomyId => locusId => 1
     # orth: locusId => taxonomyId => orthologId if it exists
@@ -42,10 +44,9 @@ should be tab delimited with a header line.
     }
 
     my %cofit = (); # taxon => locusId => hitId => [rank,cofitness]
-    foreach my $cofitfile (@cofitfiles) {
-	my ($taxonomyId, $cofit) = ReadCofitFile($cofitfile, $taxa, $orth);
+    while (my ($taxonomyId, $cofitfile) = each %cofitfiles) {
 	die "More than one cofitness file for $taxonomyId" if exists $cofit{$taxonomyId};
-	$cofit{$taxonomyId} = $cofit;
+	$cofit{$taxonomyId} = ReadCofitFile($cofitfile, $taxonomyId, $taxa, $orth);
     }
     foreach my $taxonomyId (sort keys %$taxa) {
 	print STDERR "No cofitness file for $taxonomyId\n" unless exists $cofit{$taxonomyId};
@@ -83,8 +84,12 @@ should be tab delimited with a header line.
 			my $orank2 = $cofit{$othertax}{$orth1}{$orth2}[0];
 			my $orank = $orank1 > $orank2 ? $orank1 : $orank2;
 			my $ocofit = $cofit{$othertax}{$orth1}{$orth2}[1];
-			print OUT join("\t",$taxonomyId,$locus1,$locus2,$rank,$cofit1,
-				       $othertax,$orth1,$orth2,$orank,$ocofit)."\n";
+			my (undef,$locus1Show) = split /:/, $locus1;
+			my (undef,$locus2Show) = split /:/, $locus2;
+			my (undef,$orth1Show) = split /:/, $orth1;
+			my (undef,$orth2Show) = split /:/, $orth2;
+			print OUT join("\t",$taxonomyId,$locus1Show,$locus2Show,$rank,$cofit1,
+				       $othertax,$orth1Show,$orth2Show,$orank,$ocofit)."\n";
 		    }
 		}
 	    }
@@ -134,25 +139,35 @@ sub ReadOrthTable($) {
     return(\%taxa, \%orth);
 }
 
-# returns taxonomyId and a hash of locusId => hitId => [rank,cofitness]
-sub ReadCofitFile($$$) {
-    my ($cofitfile,$taxa,$orth) = @_;
+# inputs: filename, taxonomyId, hash of taxa => taxonomyId => 1, and hash of locusId => taxonomyId => orthologId
+# returns a hash of locusId => hitId => [rank,cofitness]
+
+sub ReadCofitFile($$$$) {
+    my ($cofitfile, $taxonomyId, $taxa, $orth) = @_;
     open(COFIT, "<", $cofitfile) || die "Cannot read $cofitfile";
     my $header = <COFIT>;
     chomp $header;
-    my @colnames = split /\t/, $header;
-    die "Invalid cofitness file $cofitfile" unless @colnames >= 4
-	&& $colnames[0] eq "locusId"
-	&& uc($colnames[3]) eq uc("rank");
+    my @colnames = split /\t/, $header, -1;
+    my %colnames = map { $colnames[$_] => $_ } (0..(scalar(@colnames)-1));
+    die "Invalid cofitness file $cofitfile"
+	unless exists $colnames{"locusId"} && exists $colnames{"hitId"} && exists $colnames{"cofit"} && exists $colnames{"rank"};
 
     my %cofit = (); # locusId => hitId => [rank,cofitness]
     my %skip = (); # locusIds not in keys of %$orth
     while(my $line = <COFIT>) {
 	chomp $line;
-	my @F = split /\t/, $line;
+	my @F = split /\t/, $line, -1;
 	die "Error reading cofitness file $cofitfile:\n$line\nhas wrong number of columns"
 	    unless scalar(@F) == scalar(@colnames);
-	my ($locusId,$hitId,$cor,$rank) = @F;
+	my $locusId = $F[ $colnames{"locusId"} ];
+	my $hitId = $F[ $colnames{"hitId"} ];
+	my $cor = $F[ $colnames{"cofit"} ];
+	my $rank = $F[ $colnames{"rank"} ];
+	die "Colon should not be in locusId in $cofitfile: $locusId" if $locusId =~ m/:/;
+	die "Colon should not be in hitId in $cofitfile: $hitId" if $hitId =~ m/:/;
+
+	$locusId = "$taxonomyId:$locusId";
+	$hitId = "$taxonomyId:$hitId";
 	if (!exists $orth->{$locusId}) {
 	    $skip{$locusId} = 1;
 	} else {
@@ -163,16 +178,7 @@ sub ReadCofitFile($$$) {
 	    }
 	}
     }
-    # and check what taxon we are in
-    die "No known loci in $cofitfile" unless scalar(keys %cofit) > 0;
-    my $locus1 = (keys %cofit)[0];
-    my @taxonomyIds = grep { exists $taxa->{$_}{$locus1} } (keys %$taxa);
-    my $taxonomyId = $taxonomyIds[0];
-    foreach my $locusId (keys %cofit) {
-	die "locus $locusId in $cofitfile is not in taxonomyId $taxonomyId"
-	    unless exists $taxa->{$taxonomyId}{$locusId};
-    }
     print STDERR "Skipping loci for taxon $taxonomyId in $cofitfile: " . join(" ",sort keys %skip) . "\n"
 	if scalar(keys %skip) > 0;
-    return($taxonomyId,\%cofit);
+    return \%cofit;
 }
