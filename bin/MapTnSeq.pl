@@ -4,6 +4,7 @@
 #
 use strict;
 use Getopt::Long;
+use FindBin qw($Bin);
 
 my $minQuality = 10; # every nucleotide in a barcode must be at least this quality
 my $flanking = 5; # number of nucleotides on each side that must match
@@ -76,7 +77,8 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
     my $fastqFile = undef;
     my $genomeFile = undef;
     my $modelFile = undef;
-    my $blatcmd = "/usr2/people/gtl/bin/blat64/blat";
+    my $blatcmd = -e "$Bin/blat" ? "$Bin/blat" : "blat";
+    
     my $minGenomeId = 90;
 
     (GetOptions('debug' => \$debug, 'limit=i' => \$limit, 'minQuality=i' => \$minQuality,
@@ -301,7 +303,7 @@ sub BLAT8($$$$$$) {
     print OLD_STDOUT ""; # prevent warning
     open(STDOUT, ">", "/dev/null");
     system($blatcmd, "-out=blast8", "-t=dna", "-q=dna", "-minScore=$minScore", "-minIdentity=$minIdentity", "-maxIntron=0", "-noTrimA", $dbFile, $queriesFile, $blat8File) == 0
-        || die "Cannot run $blatcmd";
+        || die "Cannot run $blatcmd: $!";
     close(STDOUT);
     open(STDOUT, ">&OLD_STDOUT") || die "Cannot restore stdout: $!";
     return($blat8File);
