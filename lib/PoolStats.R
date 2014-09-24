@@ -21,6 +21,10 @@ RunPoolStats = function(args = commandArgs(trailingOnly=TRUE)) {
 
 	# Loading and checking input files
 	pool = read.delim(poolfile, as.is=T);
+	if (is.null(pool) || nrow(pool) == 0) {
+	    err_printf("No strains in pool\n");
+	    return();
+	}
 	for (n in words("nTot n scaffold strand pos"))
 		if(!n %in% names(pool)) stop("Missing column ", n, " from pool file ", poolfile);
 	genes = read.delim(genesfile, as.is=T, quote="");
@@ -33,8 +37,12 @@ RunPoolStats = function(args = commandArgs(trailingOnly=TRUE)) {
 	poolg = findWithinGrouped(split(pool, pool$scaffold),
 				split(without(genes, genes$scaffoldId), genes$scaffoldId),
 				"pos", "begin", "end");
-	poolg$f = (poolg$pos - poolg$begin) / (poolg$end - poolg$begin);
-	PoolReport(poolfile, poolg, genes, nreadstot);
+	if (nrow(poolg) == 0) {
+	    err_printf("No insertions within genes\n");
+	} else {
+	    poolg$f = (poolg$pos - poolg$begin) / (poolg$end - poolg$begin);
+	    PoolReport(poolfile, poolg, genes, nreadstot);
+	}
 }
 
 # Separated out for convenient debugging
