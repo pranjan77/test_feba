@@ -1,68 +1,80 @@
 #!/usr/bin/perl -w
+# submitter.pl -- submit jobs and wait for them to finish
 use strict;
 use POSIX qw(sys_wait_h);
+
+my $debug = 0;
+
 my $wait = 2;
-my $n = undef;
 my $verbose = 0;
-my $usage = "Usage: submitter.pl [-shell rsh|ssh] [-host X,Y,Z] [-wait $wait] [-n nCPUs] [-cd dir]"
-    . "    [-log name] [-env file] commandsFile\n"
-    . "host is the list of machine(s) to run the jobs on (or this machine if none)\n\n"
-    . "shell (ignored if no host) is ssh by default\n\n"
-    . "cd is the directory to change to before running each job\n\n"
-    . "log is the prefix of the filename (relative to the cd dir) to use for each log\n"
-    . "(it defaults to commandFile)\n\n"
-    . "env should be a list of lines of the form VARNAME=VALUE (lines starting with ! or # ignored)\n\n"
-    . "the commands in commandsFile will be executed by either\n"
-    . "ssh host '(cd dir; var1=value1...; time LINE) >& dir/log-CMDNO' (if host(s) are specified)\n"
-    . "or by (cd dir; var1=value1...; time LINE) >& dir/log-CMDNO (if no host is specified)\n"
-    . "(lines starting with ! or # also ignored)\n\n";
-
-die $usage if (scalar @ARGV) % 2 == 0;
-
-my $maxload = (`egrep -c '^processor' /proc/cpuinfo`) + 1;
-$n = int(0.6 * $maxload) if !defined $n;
+my $nCPUs = (`egrep -c '^processor' /proc/cpuinfo`);
+my $maxload = $ENV{SUBMITTER_MAXLOAD} || $nCPUs+1;
+my $n = $ENV{SUBMITTER_NJOBS} || int(0.6 * ($nCPUs+1));
 $n = 1 if $n < 1;
-my @hosts = ("");
+my $shell = $ENV{SUBMITTER_SHELL} || "ssh";
+my $hosts = $ENV{SUBMITTER_HOSTS} || undef;
+
 my $cd = "";
-my $shell="ssh";
 my $logPrefix = "";
 my $envFile = "";
-my $commandsFile = "";
+
+my $usage = <<END
+Usage: submitter.pl [-shell rsh|ssh] [-host X,Y,Z] [-wait $wait]
+    [-n $n ] [ -maxload $maxload ] [-cd dir] [-verbose 0]
+    [-log name] [-env file] commandsFile
+
+host is the list of machine(s) to run the jobs on (or this machine if none)
+
+shell (ignored if no host) is ssh by default. You can use the
+environment variable SUBMITTER_SHELL instead of -shell to set this.
+
+n is the maximum number of jubs to run in parallel -- you can also use
+the environment variable SUBMITTER_NJOBS instead of -n to set this.
+
+maxload is the maximum load on the current machine or the ssh-into
+machine. If uptime returns a higher value then it waits. You can set
+this parameter with the environment variable SUBMITTER_MAXLOAD instead
+of with the -maxload option.
+
+cd is the directory to change to before running each job
+
+-log is the prefix of the filename (relative to the cd dir) to use for each log
+(it defaults to commandFile)
+
+env should be a list of lines of the form VARNAME=VALUE (lines starting with ! or # ignored)
+
+The commands in commandsFile will be executed by either
+ssh host '(cd dir; var1=value1...; time LINE) >& dir/log-CMDNO' (if host(s) are specified)
+or by
+(cd dir; var1=value1...; time LINE) >& dir/log-CMDNO
+
+Lines in commandFile that start with ! or # are also ignored.
+
+END
+    ;
+
+use Getopt::Long;
+die $usage unless GetOptions('debug=i' => \$debug,
+			     'shell=s' => \$shell,
+			     'host=s' => \$hosts,
+			     'wait=i' => \$wait,
+			     'n=i' => \$n,
+			     'maxload=i' => \$maxload,
+			     'cd=s' => \$cd,
+			     'verbose=i' => \$verbose,
+			     'logPrefix=s' => \$logPrefix,
+			     'env=s' => \$envFile) && @ARGV==1;
+my $commandsFile = shift @ARGV;
+			     
 my @commands = ();
 my @envNames = ();
 my @envValues = ();
-my $debug = 0;
 
-while (scalar @ARGV > 2) {
-    my $option = shift @ARGV;
-    my $value = shift @ARGV;
-    if ($option eq "-host") {
-	@hosts = split /,/, $value;
-    } elsif ($option eq "-wait") {
-	$wait = $value;
-    } elsif ($option eq "-n" || $option eq "-load") {
-	$n = $value;
-    } elsif ($option eq "-cd") {
-	$cd = $value;
-    } elsif ($option eq "-log") {
-	$logPrefix = $value;
-    } elsif ($option eq "-env") {
-	$envFile = $value;
-    } elsif ($option eq "-debug") {
-	$debug = $value;
-    } elsif ($option eq "-shell") {
-	$shell = $value;
-	$shell = "rsh -n" if $shell eq "rsh"; # so that we don't pause if in the background
-    } elsif ($option eq "-verbose") {
-	$verbose = $value;
-    } else {
-	die "Unrecognized option $option\n\n$usage";
-    }
-}
+my @hosts = (""); # a single host with no name if running jobs locally
+@hosts = split /,/, $hosts if defined $hosts;
 
+$shell = "rsh -n" if $shell eq "rsh";
 
-$commandsFile = shift @ARGV;
-die $usage if scalar @ARGV != 0;
 $logPrefix = $commandsFile if ($logPrefix eq "");
 
 open(COMMANDS, "<", $commandsFile) || die "Cannot open commands file $commandsFile";
@@ -96,6 +108,7 @@ if ($envFile ne "") {
 
     if ($verbose) {
 	print "HOSTS=",join(",",@hosts),"\n";
+	print "SHELL=$shell\n" if defined $hosts;
 	print "Wait=$wait\nJobs=$n\nCD=$cd\nmax_load=$maxload\n";
 	print "ENV: $envCommand\n";
 	print "CMDS:\n",join("\n",@commands),"\n";
