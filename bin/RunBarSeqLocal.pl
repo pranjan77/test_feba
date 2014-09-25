@@ -1,4 +1,6 @@
 #!/usr/bin/perl -w
+# RunBarSeqLocal.pl -- process a lane of barseq into a table of counts for each strain in each sample
+# issuing jobs locally using submitter.pl
 use strict;
 use warnings;
 use Getopt::Long;
@@ -6,7 +8,7 @@ use FindBin '$Bin';
 use lib "$Bin/../lib";
 
 my $usage = <<END
-Usage: RunBarSeq.pl  [-minQuality 0 ] [ -pieceLines 20000000 ]
+Usage: RunBarSeqLocal.pl  [-minQuality 0 ] [ -pieceLines 20000000 ]
 	  [-nosplit] [-debug] [ -limit 1000 ]
           [ -indexes BarSeqPrimersH48 ]
           organism_directory setname fastq.gz_file_or_directory_with_fastq.gz_files
