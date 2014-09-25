@@ -126,7 +126,7 @@ if ($envFile ne "") {
 			    print "Failed child $child job $ncmdOld status $? : $commands[$ncmdOld]\n";
 			    $failed++;
 			} else {
-			    print "Completed child $child job $ncmdOld : $commands[$ncmdOld]\n";
+			    print "Completed child $child job $ncmdOld : $commands[$ncmdOld]\n" if $verbose > 0;
 			}
 			$joblist[$slot] = -1;
 		    }
