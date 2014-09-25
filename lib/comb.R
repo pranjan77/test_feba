@@ -88,7 +88,7 @@ LoadOrgs = function(orgnames, base="data/FEBA/", html=paste(base,"/html/",sep=""
 		    genes = merge(genes, gffmo[,words("locusId VIMSS")], all.x=T);
 		}
 
-		specsick = read.delim(paste(html,n,"/specsick",sep=""),as.is=T);
+		specsick = read.delim(paste(html,n,"/specific_phenotypes",sep=""),as.is=T);
 
 		orgs[[n]] = list(genes=genes, exps=exps, g=g, q=q, lrn=lrn, t=tval, specsick=specsick, cofit=cofit);
 	}
@@ -99,9 +99,9 @@ LoadOrgs = function(orgnames, base="data/FEBA/", html=paste(base,"/html/",sep=""
 
 	css <<- read.delim(paste(base,"css",sep=""), as.is=T); # conserved specific sick
 
-	cofitpairs = read.delim(paste(base,"comb_cofit.pairs",sep=""),as.is=T);
+	ccofit <<- read.delim(paste(base,"comb_cofit.pairs",sep=""),as.is=T);
 
-	para <<- read.delim(base,"aaseqs.para",sep="") as.is=T, header=F, col.names=words("org locusId para bits ratio"));
+	para <<- read.delim(paste(base,"aaseqs.para",sep=""), as.is=T, header=F, col.names=words("org locusId para bits ratio"));
 	para <<- split(para, para$org);
 	for(org in names(orgs)) {
 	    if (!is.null(para[[org]])) {
@@ -141,14 +141,17 @@ gene_info = function(org, loci, n=5) {
 	info = genes[match(loci, genes$locusId),];
 	info$data = info$locusId %in% orgs[[org]]$g;
 	if(is.null(info) || nrow(info) == 0) stop("No such gene in ",org,": ",arg);
-	out = info[,words("locusId sysName desc data")];
+	out = info[,words("locusId sysName name desc data")];
+	out$desc = sub("(NCBI ptt file)","", out$desc, fixed=T);
 	if(!is.null(info$VIMSS)) out$VIMSS = info$VIMSS;
 	row.names(out) = 1:nrow(out);
 	print(out);
 	cofit = orgs[[org]]$cofit;
 	for(locusId in info$locusId[info$data]) {
-		out = specsicks[specsicks$org %in% org & specsicks$locusId %in% locusId,words("name cond lrn t")];
-		out$conserved = out$cond %in% css$cond[css$locusId %in% locusId & css$tax %in% org];
+		out = specsicks[specsicks$org %in% org & specsicks$locusId %in% locusId,words("name short lrn t")];
+		# need to go from specsicks$short to a Condition_1
+		out = merge(out, orgs[[org]]$exps[,words("Condition_1 name")]);
+		out$conserved = out$Condition_1 %in% css$cond[css$locusId %in% locusId & css$tax %in% org];
 		locusShow = locusId;
 		if (!is.null(info$VIMSS)) locusShow = paste(locusShow, "VIMSS", info$VIMSS[info$locusId %in% locusId]);
 		cat("\nSpecific phenotypes for", locusShow,
@@ -160,12 +163,13 @@ gene_info = function(org, loci, n=5) {
 		    out = cofit[cofit$locusId %in% locusId & cofit$rank <= n,];
 		    out$conserved = out$hitId %in% ccofit$locus2[ccofit$tax == org & ccofit$locus1 %in% locusId] |
 					out$hitId %in% ccofit$locus1[ccofit$tax == org & ccofit$locus2 %in% locusId];
-		    out$locusId = NULL;
-		    out = merge(out, genes, by.x="hitId", by.y="locusId");
+		    out = merge(out, genes[,words("locusId name")], by.x="hitId", by.y="locusId");
+		    names(out)[names(out)=="name"] = "hitName";
 		    out = out[order(out$rank),];
 		    row.names(out) = 1:nrow(out);
 		    out2 = out;
-		    out2 = out2[,words("cofit hitId sysName desc conserved")];
+		    out2 = out2[,words("cofit hitId hitSysName hitName hitDesc conserved")];
+		    out2$hitDesc = sub("(NCBI ptt file)","", out2$hitDesc, fixed=T);
 		    if(!is.null(out$VIMSS)) out2$VIMSS = out$VIMSS;
 		    cat("\nTop cofit hits for", locusShow,
 			info$sysName[info$locusId %in% locusId],
@@ -257,7 +261,7 @@ identify_genes = function(org, x, y, col=2, newcol=2, ...) {
 	    if(nrow(row) != 1) stop("Illegal index ",i);
 	    id = as.character(row$locusId);
 	    if(!is.null(row$VIMSS)) id = paste(id, row$VIMSS);
-	    cat(sprintf("%d: %.3f %.3f %s %s %s\n", n, x[i], y[i], id, row$sysName, row$desc));
+	    cat(sprintf("%d: %.3f %.3f %s %s %s %s\n", n, x[i], y[i], id, row$sysName, row$name, row$desc));
 	    if(!is.null(newcol)) points(x[i],y[i],col=newcol);
 	    n = n+1;
 	}
@@ -351,14 +355,15 @@ show_fit = function(org, loci, labels=NULL, locate=TRUE, around=0, condspec=NULL
 		    g = loci[iGene];
 		    geneinfo = genes[genes$locusId == g,];
 		    if (nrow(geneinfo) != 1) stop("no metdata for gene: ",g);
+		    geneinfo$desc = sub("(NCBI ptt file)","", geneinfo$desc, fixed=T);
 
 		    # iOExp is the sorted order shown, iExp is the order in q
 		    iOExp = pmax(1, pmin(length(labRows), 1 + round(y * (length(labRows)-1))));
 		    iExp = o[iOExp];
 		    locusString = as.character(g);
 		    if (!is.null(geneinfo$VIMSS)) locusString = sprintf("%s VIMSS %d",locusString,geneinfo$VIMSS);
-		    cat(sprintf("Gene: %s %s %s\nExperiment: %s %s\nFitness: %.3f (t %.3f)\n\n",
-				locusString, geneinfo$sysName, geneinfo$desc,
+		    cat(sprintf("Gene: %s %s %s %s\nExperiment: %s %s\nFitness: %.3f (t %.3f)\n\n",
+				locusString, geneinfo$sysName, geneinfo$name, geneinfo$desc,
 				q$name[iExp], q$short[iExp],
 				mat[iExp,iGene], tval[iExp,iGene]));
 		}
