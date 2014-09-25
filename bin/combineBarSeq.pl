@@ -2,14 +2,15 @@
 use strict;
 # Given a bunch of files with counts for barcodes, pick out the
 # ones from the pool and make a small table of their counts (out.poolcount).
-# Also makes a table of total counts (out.colsum)
-# and a file of ignored lines (out.codes.ignored).
+# Also makes a table of total counts (out.colsum).
 # Expects either that all columns are in all files,
 # or that each file has just one column
 
 use POSIX; # for floor, ceil
 sub median;
 sub ShortList; # prettier form of a list of indexes
+
+my $save_ignore = 0; # make a file of ignored lines (out.codes.ignored) ?
 
 {
     die "Usage: combineBarSeq.pl out pool_file codesfiles...\n"
@@ -35,7 +36,9 @@ sub ShortList; # prettier form of a list of indexes
     die "No entries in pool file $poolfile" unless scalar(keys %pool) > 0;
     print STDERR "Read " . scalar(keys %pool) . " pool entries from $poolfile\n";
 
-    open(IGNORE, ">", "$out.codes.ignored") || die "Cannot write to $out.codes.ignored";
+    if ($save_ignore) {
+	open(IGNORE, ">", "$out.codes.ignored") || die "Cannot write to $out.codes.ignored";
+    }
 
     my %counts = (); # rcbarcode to vector of counts
     my @indexes = (); # vector of names of samples
@@ -113,7 +116,7 @@ sub ShortList; # prettier form of a list of indexes
 		    }
 		}
 	    } else {
-		print IGNORE join("\t",$barcode,@F)."\n";
+		print IGNORE join("\t",$barcode,@F)."\n" if $save_ignore;
 		$nIgnore++;
 	    }
 	    if ($oneperfile) {
@@ -128,7 +131,9 @@ sub ShortList; # prettier form of a list of indexes
 	print STDERR "Warning: no entries in $file\n" if $nThisFile == 0;
     }
     print STDERR "Read $nUsed lines for codes in pool and $nIgnore ignored lines across " . scalar(@codesFiles) . " files\n";
-    close(IGNORE) || die "Error writing to $out.codes.ignored";
+    if ($save_ignore) {
+	close(IGNORE) || die "Error writing to $out.codes.ignored";
+    }
 
     # categorize reads
     my @lowcountI = (); # indexes with < 200,000 reads
@@ -155,7 +160,7 @@ sub ShortList; # prettier form of a list of indexes
     print STDERR sprintf("Indexes %d Success %d LowCount %d LowFraction %d Total Reads (millions): %.3f \n",
 			 scalar(@indexes), scalar(@okI), scalar(@lowcountI), scalar(@lowhitI), $totalReads/1e6);
     print STDERR sprintf("Median Fraction (LowCount Excluded) %.3f\n",
-			 &median(@fractions));
+			 &median(@fractions)) if scalar(@fractions) > 0;
     print STDERR "Success " . &ShortList(@okI) . "\n" if @okI > 0;
     print STDERR sprintf("LowCount (median %d) %s\n",
 			 &median(@lowcounts), &ShortList(@lowcountI))
