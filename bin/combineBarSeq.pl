@@ -220,7 +220,7 @@ sub ShortList(@_) {
 	my $string = $list[$i];
 	my $number = $numbers[$i];
 	if (defined($number) && defined($lastno) && $number == $lastno+1) {
-	    $sofar .= ":$number" if $inrun && $i == scalar(@list)-1; # terminate if at end of list
+	    $sofar .= ":$number" if $i == scalar(@list)-1; # terminate if at end of list
 	    $inrun = 1; # start or continue a run
 	    $lastno = $number;
 	} else {
