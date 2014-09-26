@@ -37,7 +37,7 @@ RunPoolStats = function(args = commandArgs(trailingOnly=TRUE)) {
 	poolg = findWithinGrouped(split(pool, pool$scaffold),
 				split(without(genes, genes$scaffoldId), genes$scaffoldId),
 				"pos", "begin", "end");
-	if (nrow(poolg) == 0) {
+	if (is.null(poolg) || nrow(poolg) == 0) {
 	    err_printf("No insertions within genes\n");
 	} else {
 	    poolg$f = (poolg$pos - poolg$begin) / (poolg$end - poolg$begin);
