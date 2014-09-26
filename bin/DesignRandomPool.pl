@@ -60,14 +60,14 @@ END
     die $usage if !defined $genesfile;
     die "No such file: $genesfile" unless -e $genesfile;
 
-    my %barHits = (); # barcode => list of (scaffold,position,strand,uniqueness,qBeg,qEnd)
+    my $nMapped = 0; # reads considered
+    my $nSkipQBeg = 0; # reads ignored because qBeg > maxQBeg
 
-    my $nMapped = 0;
-    my $nHitsRepeat = 0;
-    my $nUsable = 0;
-    my $nSkipQBeg = 0;
+    my %barPosCount = (); # barcode => scaffold:strand:position => list of nReads, nGoodReads
+    # where a "good" read has uniq=1 and qBeg=1
 
     my %pastEnd = (); # number of reads for that barcode mapped past the end
+    # (pastEnd reads are not included in barPosCount)
 
     while(<>) {
         chomp;
@@ -76,13 +76,15 @@ END
             $pastEnd{$barcode}++;
             $nMapped++;
         } elsif ($maxQBeg >= 1 && $qBeg <= $maxQBeg)  {
-            push @{ $barHits{$barcode} }, [$scaffold,$pos,$strand,$uniq,$qBeg,$qEnd,$score,$identity];
+	    my $key = join(":",$scaffold,$strand,$pos);
+	    $barPosCount{$barcode}{$key}[0]++;
+	    $barPosCount{$barcode}{$key}[1]++ if $uniq eq "1" && $qBeg eq "1";
             $nMapped++;
         } else {
             $nSkipQBeg++;
         }
     }
-    print STDERR "Read $nMapped mapped reads for " . scalar(keys %barHits) . " distinct barcodes\n";
+    print STDERR "Read $nMapped mapped reads for " . scalar(keys %barPosCount) . " distinct barcodes\n";
     print STDERR "(Skipped $nSkipQBeg reads with qBeg > $maxQBeg)\n" if $nSkipQBeg > 0;
 
     open(POOL, ">", $poolfile) || die "Cannot write to $poolfile";
@@ -102,9 +104,12 @@ END
     my $nMulti = 0; # barcodes seen >once
     my %barcodeAt = (); # barcode to list of nTot, nMax, at, nNext, nextAt
     my $nReadsForUsable = 0;
-    while(my ($barcode, $hits) = each %barHits) {
+    while(my ($barcode, $hash) = each %barPosCount) {
         my $nPastEnd = $pastEnd{$barcode} || 0;
-        my $nTot = scalar(@$hits) + $nPastEnd;
+	my $nTot = $nPastEnd;
+	while (my ($key,$value) = each %$hash) {
+	    $nTot += $value->[0]; # the total reads
+	}
 	if ($nTot == 1) {
 	    $f1++;
 	} elsif ($nTot == 2) {
@@ -114,12 +119,8 @@ END
         next unless $nTot >= $minN;
         $nMulti++;
         
-
-        # Is there a location that accounts for at least 90% of the reads, including the past-end reads?
-        my @ats = map { join("\t", $_->[$SCAFFOLD], $_->[$STRAND], $_->[$POS]) } @$hits;
-        my %nAts = ();
-        foreach my $at (@ats) { $nAts{$at}++; }
-        my @nAt = sort {$a<=>$b} values(%nAts);
+        # Is there a location that accounts for most of the reads, including the past-end reads?
+        my @nAt = sort {$a<=>$b} map { $_->[0] } values(%$hash);
         my $nMax = $nAt[-1];
 
         if ($nPastEnd >= $nTot/2 || $nPastEnd >= $nMax) {
@@ -134,20 +135,19 @@ END
             next;
         }
 
-        my $maxAt = (grep { $nAts{$_} == $nMax } @ats)[0];
-        my @iModal = grep { $ats[$_] eq $maxAt } (0..(scalar(@ats)-1));
+        my $maxAt = (grep { $hash->{$_}[0] == $nMax } (keys %$hash))[0];
 
         # checking unique & qbeg=1 -- but the latter part may be redundant with maxQBeg
-        my $nGood = scalar( grep { $_->[$UNIQ] eq "1" && $_->[$QBEG] eq "1" } @$hits[@iModal] );
+        my $nGood = $hash->{$maxAt}[1] || 0;
         unless ($nGood >= $minN && $nGood/$nTot >= $minFrac) {
             $nInCategory{"FewGood"}++;
             next;
         }
 
         my $nNext = @nAt > 1 ? $nAt[-2] : 0;
-        my $nextAt = join("\t","","",""); # second-most-common at
+        my $nextAt = "::"; # second-most-common key
         if ($nNext >= 2) {
-            my @nextAt = grep {$nAts{$_} == $nNext} @ats;
+            my @nextAt = grep {$hash->{$_}[0] == $nNext} (keys %$hash);
             $nextAt = $nextAt[0];
         }
         unless($nMax >= $minRatio * $nNext) {
@@ -185,11 +185,11 @@ END
             }
         }
         next if $mask;
-        my @atSplit = split /\t/, $maxAt;
-        my @nextAtSplit = split /\t/, $nextAt, -1; # keep empty entries
+        my @atSplit = split /:/, $maxAt;
+        my @nextAtSplit = split /:/, $nextAt, -1; # keep empty entries
         my $nPastEnd = $pastEnd{$barcode} || 0;
         print POOL join("\t", $barcode, reverseComplement($barcode),
-                   $nTot, $nMax, @atSplit, $nNext, @nextAtSplit,$nPastEnd)."\n";
+                   $nTot, $nMax, @atSplit, $nNext, @nextAtSplit, $nPastEnd)."\n";
         $nOut++;
     }
     close(POOL) || die "Error writing to $poolfile";
