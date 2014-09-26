@@ -6,12 +6,14 @@
 # Genes that wrap around the origin (i.e., begin > end) are ignored (no strain will map within them)
 use strict;
 use Getopt::Long;
-use FindBin qw($Bin);
 use FileHandle;
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+use FindGene; # for LocationToGene()
 
 sub ReadTable($*); # filename and list of required fields => list of hashes, each with field->value
 sub ReadColumnNames($); # filename to list of column names
-sub FindGene($$$); # input: scaffold, pos, and hash of scaffold => list of sorted genes; output: locusId, f
+
 
 my $usage = <<END
 Usage: BarSeqR.pl -org organism [ -indir g/organism ]
@@ -296,7 +298,7 @@ END
 		die "Missing count for $key" unless defined $counts{$key};
 		push @countsUsed, $counts{$key};
 	    }
-	    my ($locusId, $f) = &FindGene($metavalues[$SCAFFOLD], $metavalues[$POS], \%genesSorted);
+	    my ($locusId, $f) = &LocationToGene($metavalues[$SCAFFOLD], $metavalues[$POS], \%genesSorted);
 	    $nInGene++ if $locusId ne "";
 	    print ALL join("\t", @metavalues, $locusId, $f, @countsUsed)."\n";
 	}
@@ -359,47 +361,6 @@ sub ReadTable($*) {
     }
     close(IN) || die "Error reading $filename";
     return @rows;
-}
-
-# inputs: scaffold, pos, and hash of scaffold => list of sorted genes
-# output: locusId, and the fraction through the gene it is in (as a list of 2 elements)
-# if the location overlaps multiple genes, returns locusId = "", f = "".
-# This code does not support orfs that wrap around the origin.
-sub FindGene($$$) {
-    my ($scaffold, $pos, $sortedGenes) = @_;
-    return ("","") if $scaffold eq "pastEnd";
-
-    my $genelist = $sortedGenes->{$scaffold};
-    return ("","") if !defined $genelist;
-
-    # binary search
-    # at all times, either the true index is between lo and hi, or there is no hit
-    my $nGenes = scalar(@$genelist);
-    my $lo = 0;
-    my $hi = $nGenes-1;
-    for (my $nRound = 0; $nRound < 100000; $nRound++) {
-	my $mid = int(($lo+$hi)/2);
-	my $iBegin = $genelist->[$mid]{begin};
-	my $iEnd = $genelist->[$mid]{end};
-
-	if ($pos < $iBegin) {
-	    return ("","") if $mid == $lo;
-	    $hi = $mid-1;
-	} elsif ($pos > $iEnd) {
-	    return ("","") if $mid == $hi;
-	    $lo = $mid+1;
-	} else {
-	    # does the previous or next gene also overlap this position?
-	    return ("","") if ($mid > 0 && $genelist->[$mid-1]{begin} <= $pos && $pos <= $genelist->[$mid-1]{end});
-	    return ("","") if ($mid < $nGenes-1 && $genelist->[$mid+1]{begin} <= $pos && $pos <= $genelist->[$mid+1]{end});
-	    my $f = $iBegin == $iEnd ? 0 : ($pos - $iBegin)/($iEnd-$iBegin);
-	    my $strand = $genelist->[$mid]{strand};
-	    # insertions near N terminus of gene should have f near 0 regardless of strand
-	    $f = 1.0-$f if $strand eq "-";
-	    return($genelist->[$mid]{locusId}, $f);
-	}
-    }
-    die "Unreachable";
 }
 
 sub ReadColumnNames($) {
