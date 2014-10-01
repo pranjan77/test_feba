@@ -110,6 +110,7 @@ my $debug = undef;
             my $cmd = "gunzip -c $fastq | split -l $linesPerPiece -d - $prefix/${setname}_BarSeq.part";
             maybeRun($cmd);
             system("touch $prefix/${setname}_BarSeq.part00") if defined $debug;
+	    @parts = glob("$prefix/${setname}_BarSeq.part*[0-9]"); # now @parts is actually there
         }
     }
 
@@ -140,6 +141,7 @@ my $debug = undef;
 	    push @codes, "$out.codes";
             print CMDS "zcat $i | $corecmd -out $out >& $out.log"."\n";
         } else {
+	    push @codes, "$i.codes";
             print CMDS "$corecmd -out $i < $i >& $i.log"."\n";
         }
     }
