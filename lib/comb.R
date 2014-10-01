@@ -94,8 +94,19 @@ LoadOrgs = function(orgnames, base="data/FEBA/", html=paste(base,"/html/",sep=""
 	}
 
 	d = lapply(orgs, function(x) x$specsick);
-	for(i in names(d)) d[[i]]$org = i;
-	specsicks <<- do.call(rbind,d);
+	for(i in names(d)) {
+	    if(nrow(d[[i]]) > 0) {
+	        d[[i]]$org = i;
+	    } else {
+	        d[[i]] = NULL; # remove it;
+	    }
+	}
+	if (!is.null(d) && length(d) > 0) {
+	   specsicks <<- do.call(rbind,d);
+	} else {
+	   cat("Warning: all specific_phenotypes files were empty\n");
+	   specsicks <<- NULL;
+ 	}
 
 	css <<- read.delim(paste(base,"css",sep=""), as.is=T); # conserved specific sick
 
