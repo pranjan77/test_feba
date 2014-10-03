@@ -1,1 +1,0 @@
-from BWA import BWA
