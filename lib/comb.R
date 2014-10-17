@@ -88,9 +88,27 @@ LoadOrgs = function(orgnames, base="data/FEBA/", html=paste(base,"/html/",sep=""
 		    genes = merge(genes, gffmo[,words("locusId VIMSS")], all.x=T);
 		}
 
+		file = paste(base,"/g/",n,"/pfam.tab", sep="");
+		if (file.access(file,mode=4) == 0) {
+		    pfam = read.delim(file, as.is=T, quote="");
+		} else {
+		    cat("Warning: no pfam.tab file for ", n, "\n");
+		    pfam = data.frame(locusId=genes$locusId[1], domainId="PF0000.00", domainName="undef")[0,];
+		}
+
+		file = paste(base,"/g/",n,"/tigrfam.tab", sep="");
+		if (file.access(file,mode=4) == 0) {
+		    tigrfam = read.delim(file, as.is=T, quote="");
+		} else {
+		    cat("Warning: no tigrfam.tab file for ", n, "\n");
+		    tigrfam = data.frame(locusId=genes$locusId[1], domainId="TIGR00000", domainName="undef")[0,];
+		}
+
 		specsick = read.delim(paste(html,n,"/specific_phenotypes",sep=""),as.is=T);
 
-		orgs[[n]] = list(genes=genes, exps=exps, g=g, q=q, lrn=lrn, t=tval, specsick=specsick, cofit=cofit);
+		orgs[[n]] = list(org=n, genes=genes, exps=exps, g=g, q=q, lrn=lrn, t=tval,
+			         specsick=specsick, cofit=cofit,
+				 pfam=pfam, tigrfam=tigrfam);
 	}
 
 	d = lapply(orgs, function(x) x$specsick);
@@ -121,7 +139,25 @@ LoadOrgs = function(orgnames, base="data/FEBA/", html=paste(base,"/html/",sep=""
 	    }
 	}
 
+	DUFs = read.delim(paste(base,"/DUFs",sep=""), as.is=T);
+	DUFs <<- DUFs;
+	for(org in names(orgs)) {
+	    orgs[[org]]$genes$isDUF =  with(orgs[[org]],
+	    {
+	        sub_dom = sub("[.]\\d+$", "", pfam$domainId, perl=T);
+	        genes$locusId %in% pfam$locusId[sub_dom %in% DUFs$domainId] & !genes$locusId %in% pfam$locusId[!sub_dom %in% DUFs$domainId];
+	    });
+	}
+
 	orgs <<- orgs;
+
+	tigrfams = read.delim(paste(base,"/tigrinfo",sep=""), as.is=T, quote="");
+	roles = read.delim(paste(base,"/tigrroles",sep=""), as.is=T, quote="");
+	roles = merge(roles[roles$level=="main",], roles[roles$level=="sub1",], by="roleId", suffixes=c("",".sub"));
+	tigrfams = merge(tigrfams, data.frame(roleId=roles$roleId, toprole=roles$description, subrole=roles$description.sub),
+		         by="roleId", all.x=T);
+	tigrfams <<- tigrfams;
+	tigrroles <<- tigrfams[!is.na(tigrfams$toprole),];
 }
 
 # turn list (or space-delimited) systematic names or VIMSS ids or locusIds into a list of locusIds
@@ -138,10 +174,10 @@ get_genes = function(org, specs) {
 	return(ids);
 }
 
-get_exps = function(org, pattern, ignore.case=T, perl=T) {
+get_exps = function(org, pattern, fixed=FALSE, ignore.case=!fixed, perl=!fixed) {
 	q = orgs[[org]]$q;
 	if(is.null(q)) stop("Invalid organism: ",org);
-	return(q$name[q$u & grepl(pattern, q$short, ignore.case=ignore.case, perl=perl)]);
+	return(q$name[q$u & grepl(pattern, q$short, ignore.case=ignore.case, perl=perl, fixed=fixed)]);
 }
 
 gene_info = function(org, loci, n=5) {
@@ -186,6 +222,15 @@ gene_info = function(org, loci, n=5) {
 			info$sysName[info$locusId %in% locusId],
 			info$desc[info$locusId %in% locusId], "\n");
 		    print(out2,digits=2);
+		}
+
+		dom = with(orgs[[org]], rbind(pfam[pfam$locusId %in% locusId,], tigrfam[tigrfam$locusId %in% locusId,]));
+		if (nrow(dom) > 0) {
+		    cat("\nPfam and/or TIGRfam hits for", locusShow,
+			info$sysName[info$locusId %in% locusId],
+			info$desc[info$locusId %in% locusId], "\n");
+		    dom = dom[order(dom$begin),];
+		    print(dom[,words("domainId domainName begin end score evalue")]);
 		}
 	}
 }
@@ -305,8 +350,10 @@ andNoNA = function(x) ifelse(is.na(x),FALSE,x);
 # scale: by default, colors are for fitness = -2 to +2. To focus on stronger differences use scale=3.
 # ylabmax: maximum number of characters for the condition labels
 # cex: adjust the font size (e.g. cex=0.5 for tiny text)
+# sort: sort by average fitness value, and show a maximum of maxsort experiments -- very handy for larger data sets
 #
-show_fit = function(org, loci, labels=NULL, locate=TRUE, around=0, condspec=NULL, scale=2, ylabmax=20, cex=1) {
+show_fit = function(org, loci, labels=NULL, locate=TRUE, around=0, condspec=NULL, scale=2, ylabmax=20, cex=1,
+	            sort=FALSE, maxsort=50) {
 	if (length(loci==1) && grepl(" ",loci)) loci = words(loci);
 	if(is.null(labels)) labels = loci;
 	loci = get_genes(org, loci);
@@ -327,17 +374,28 @@ show_fit = function(org, loci, labels=NULL, locate=TRUE, around=0, condspec=NULL
 
 	q = orgs[[org]]$q;
 	q = q[q$u,];
+	u = rep(TRUE, nrow(q));
 	if(!is.null(condspec)) {
 	    u = grepl(condspec,q$short,perl=T);
 	    if(sum(u) == 0) stop("No conditions matching: ",condspec);
-	    q = q[u,];
-	    mat = mat[u,];
-	    tval = tval[u,];
 	}
+	if (sort && sum(u) > maxsort) {
+	    thresh = sort(abs(rowMeans(mat)), decreasing=T)[maxsort];
+	    cat("Threshold |fit| to show: ", thresh, "\n");
+	    u = u & abs(rowMeans(mat)) > thresh;
+	}
+	q = q[u,];
+	mat = as.matrix(mat[u,]);
+	tval = as.matrix(tval[u,]);
+
 	if(length(q$short) != nrow(mat)) stop("Wrong number of rows");
 	if (!all(q$name == row.names(mat))) stop("Name mismatch");
 
-	o = order(q$short,decreasing=TRUE);
+	if (sort) {
+		o = order(rowMeans(mat), decreasing=T);
+	} else {
+		o = order(q$short, decreasing=TRUE);
+	}
 	labRows = q$short[o];
 	labRows = sub("[0-9.]+ mM$","",labRows);
 	labRows = sub("[0-9.]+ mg/ml$","",labRows);
