@@ -61,18 +61,21 @@ LoadOrgs = function(orgnames, base="data/FEBA/", html=paste(base,"/html/",sep=""
 		genes = read.delim(paste(html,n,"/genes",sep=""), as.is=T, quote="");
 		q = read.delim(paste(html,n,"/fit_quality.tab",sep=""), as.is=T);
 		if(!all(q$name %in% exps$name)) stop(n, ": Unmatched names in q: ", setdiff(q$name,exps$name));
-		lrn = read.delim(paste(html,n,"/fit_logratios_good.tab",sep=""),check.names=F,as.is=T);
+		lrn = read.delim(paste(html,n,"/fit_logratios.tab",sep=""),check.names=F,as.is=T);
 		names(lrn) = sub(" .*","",names(lrn));
-		if(is.null(q$u)) q$u = q$name %in% names(lrn);
+		if(is.null(q$u)) stop("Missing u column in experiment quality table is no longer supported");
 		g = lrn$locusId;
-		lrn = lrn[,-(1:4)];
-		if(!all(names(lrn) %in% q$name)) stop(n, ": Unmatched names in lrn: ", setdiff(names(lrn),q$name));
+		if(!all(q$name %in% names(lrn))) stop(n, ": in q but not in lrn: ", setdiff(q$name, names(lrn)));
 
 		tval = read.delim(paste(html,n,"/fit_t.tab",sep=""),as.is=T,check.names=F);
-		tval = tval[,-(1:3)];
 		names(tval) = sub(" .*","",names(tval));
-		tval = tval[,q$u];
-		if(!all(names(tval)==names(lrn))) stop("Invalid names in fit_t.tab");
+		if(!all(q$name %in% names(tval))) stop(n, ": in q but not in t: ", setdiff(q$name, names(tval)));
+
+		# Save Time0s, then remove unsuccessful experiments and Time0s from the main tables
+		lrn_t0 = lrn[,q$name[q$short=="Time0"]];
+		t_t0 = tval[,names(lrn_t0)];
+		lrn = lrn[,q$name[q$u]];
+		tval = tval[,names(lrn)];
 
 		file = paste(html,n,"/cofit",sep="");
 		if (file.access(file,mode=4) != 0) {
@@ -106,7 +109,7 @@ LoadOrgs = function(orgnames, base="data/FEBA/", html=paste(base,"/html/",sep=""
 
 		specsick = read.delim(paste(html,n,"/specific_phenotypes",sep=""),as.is=T);
 
-		orgs[[n]] = list(org=n, genes=genes, exps=exps, g=g, q=q, lrn=lrn, t=tval,
+		orgs[[n]] = list(org=n, genes=genes, exps=exps, g=g, q=q, lrn=lrn, t=tval, lrn_t0=lrn_t0, t_t0=t_t0,
 			         specsick=specsick, cofit=cofit,
 				 pfam=pfam, tigrfam=tigrfam);
 	}
@@ -137,16 +140,6 @@ LoadOrgs = function(orgnames, base="data/FEBA/", html=paste(base,"/html/",sep=""
 	        orgs[[org]]$parahits = para[[org]];
 	        orgs[[org]]$para = aggregate(para[[org]][,"ratio",drop=F], para[[org]][,"locusId",drop=F], max);
 	    }
-	}
-
-	DUFs = read.delim(paste(base,"/DUFs",sep=""), as.is=T);
-	DUFs <<- DUFs;
-	for(org in names(orgs)) {
-	    orgs[[org]]$genes$isDUF =  with(orgs[[org]],
-	    {
-	        sub_dom = sub("[.]\\d+$", "", pfam$domainId, perl=T);
-	        genes$locusId %in% pfam$locusId[sub_dom %in% DUFs$domainId] & !genes$locusId %in% pfam$locusId[!sub_dom %in% DUFs$domainId];
-	    });
 	}
 
 	orgs <<- orgs;
@@ -194,13 +187,14 @@ gene_info = function(org, loci, n=5) {
 	row.names(out) = 1:nrow(out);
 	print(out);
 	cofit = orgs[[org]]$cofit;
-	for(locusId in info$locusId[info$data]) {
+	for(locusId in info$locusId) {
+	    locusShow = locusId;
+	    if (!is.null(info$VIMSS)) locusShow = paste(locusShow, "VIMSS", info$VIMSS[info$locusId %in% locusId]);
+	    if(locusId %in% info$locusId[info$data]) {
 		out = specsicks[specsicks$org %in% org & specsicks$locusId %in% locusId,words("name short lrn t")];
 		# need to go from specsicks$short to a Condition_1
 		out = merge(out, orgs[[org]]$exps[,words("Condition_1 name")]);
 		out$conserved = out$Condition_1 %in% css$cond[css$locusId %in% locusId & css$tax %in% org];
-		locusShow = locusId;
-		if (!is.null(info$VIMSS)) locusShow = paste(locusShow, "VIMSS", info$VIMSS[info$locusId %in% locusId]);
 		cat("\nSpecific phenotypes for", locusShow,
 			info$sysName[info$locusId %in% locusId],
 			info$desc[info$locusId %in% locusId], "\n");
@@ -223,15 +217,16 @@ gene_info = function(org, loci, n=5) {
 			info$desc[info$locusId %in% locusId], "\n");
 		    print(out2,digits=2);
 		}
+	    }
 
-		dom = with(orgs[[org]], rbind(pfam[pfam$locusId %in% locusId,], tigrfam[tigrfam$locusId %in% locusId,]));
-		if (nrow(dom) > 0) {
+	    dom = with(orgs[[org]], rbind(pfam[pfam$locusId %in% locusId,], tigrfam[tigrfam$locusId %in% locusId,]));
+	    if (nrow(dom) > 0) {
 		    cat("\nPfam and/or TIGRfam hits for", locusShow,
 			info$sysName[info$locusId %in% locusId],
 			info$desc[info$locusId %in% locusId], "\n");
 		    dom = dom[order(dom$begin),];
 		    print(dom[,words("domainId domainName begin end score evalue")]);
-		}
+	    }
 	}
 }
 
@@ -380,9 +375,9 @@ show_fit = function(org, loci, labels=NULL, locate=TRUE, around=0, condspec=NULL
 	    if(sum(u) == 0) stop("No conditions matching: ",condspec);
 	}
 	if (sort && sum(u) > maxsort) {
-	    thresh = sort(abs(rowMeans(mat)), decreasing=T)[maxsort];
+	    thresh = sort(abs(rowMeans(mat,na.rm=T)), decreasing=T)[maxsort];
 	    cat("Threshold |fit| to show: ", thresh, "\n");
-	    u = u & abs(rowMeans(mat)) > thresh;
+	    u = u & abs(rowMeans(mat,na.rm=T)) > thresh;
 	}
 	q = q[u,];
 	mat = as.matrix(mat[u,]);
@@ -392,7 +387,7 @@ show_fit = function(org, loci, labels=NULL, locate=TRUE, around=0, condspec=NULL
 	if (!all(q$name == row.names(mat))) stop("Name mismatch");
 
 	if (sort) {
-		o = order(rowMeans(mat), decreasing=T);
+		o = order(rowMeans(mat,na.rm=T), decreasing=T);
 	} else {
 		o = order(q$short, decreasing=TRUE);
 	}
