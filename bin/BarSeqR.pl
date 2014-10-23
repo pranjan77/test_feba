@@ -10,9 +10,7 @@ use FileHandle;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use FindGene; # for LocationToGene()
-
-sub ReadTable($*); # filename and list of required fields => list of hashes, each with field->value
-sub ReadColumnNames($); # filename to list of column names
+use FEBA_Utils; # for ReadTable(), ReadColumnNames()
 
 
 my $usage = <<END
@@ -338,38 +336,4 @@ END
 	die "R failed, see $outdir/log\n" unless -e "$outdir/.FEBA.success";
 	print STDERR "Success for $org, please visit $outdir/index.html\n";
     }
-}
-
-sub ReadTable($*) {
-    my ($filename,@required) = @_;
-    open(IN, "<", $filename) || die "Cannot read $filename";
-    my $headerLine = <IN>;
-    chomp $headerLine;
-    my @cols = split /\t/, $headerLine;
-    my %cols = map { $cols[$_] => $_ } (0..(scalar(@cols)-1));
-    foreach my $field (@required) {
-	die "No field $field in $filename" unless exists $cols{$field};
-    }
-    my @rows = ();
-    while(my $line = <IN>) {
-	chomp $line;
-	my @F = split /\t/, $line, -1;
-	die "Wrong number of columns in:\n$line\nin $filename"
-	    unless scalar(@F) == scalar(@cols);
-	my %row = map { $cols[$_] => $F[$_] } (0..(scalar(@cols)-1));
-	push @rows, \%row;
-    }
-    close(IN) || die "Error reading $filename";
-    return @rows;
-}
-
-sub ReadColumnNames($) {
-    my ($filename) = @_;
-    open(IN, "<", $filename) || die "Cannot read $filename";
-    my $line = <IN>;
-    close(IN) || die "Error reading $filename";
-
-    chomp $line;
-    my @cols = split /\t/, $line;
-    return @cols;
 }
