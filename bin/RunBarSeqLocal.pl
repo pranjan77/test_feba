@@ -19,8 +19,8 @@ Usage: RunBarSeqLocal.pl  [-minQuality 0 ] [ -pieceLines 20000000 ]
 RunBarSeq.pl has two phases -- the first phase splits the fastq file
 (if necessary) and counts the barcodes in each piece. If the indexes
 are specified, then it demultiplexes the reads, otherwise it assumes
-that each file is demultiplexed with a code such as IT094 which
-indicates which sample it is.
+that each file is demultiplexed with a code in the filename such as
+_IT094_ or _10_TAGCTT_ which indicates which sample it is.
 
 The second phase aggregates the counts of these barcodes. To save
 memory, it ignores barcodes that do not match the pool file, which is
@@ -132,8 +132,16 @@ my $debug = undef;
 	    my $name = pop @path;
 	    my @pieces = split /[._]/, $name;
 	    my @indexes = grep m/^IT\d+$/, @pieces;
-	    die "Cannot identify the index ITnnn from file $i" unless scalar(@indexes) == 1;
-	    $corecmd .= " -index $indexes[0]";
+	    my $index = undef;
+	    if (@indexes == 1) {
+		$index = $indexes[0];
+	    } elsif ($name =~ m/_(\d+)_[ACGT][ACGT][ACGT][ACGT][ACGT][ACGT]_/) {
+		# e.g. FEBA_BS_60_10_TAGCTT_L001_R1_001.fastq.gz
+		$index = sprintf("IT%03d", $1);
+	    } else {
+		die "Cannot identify the index ITnnn from file $i";
+	    }
+	    $corecmd .= " -index $index";
 	}
         if ($i =~ m/[.]gz$/) {
             my $out = $i;
