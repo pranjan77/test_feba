@@ -208,6 +208,7 @@ sub median {
 # outputs a pretty string to print
 sub ShortList(@_) {
     my @list = @_;
+    @list = sort(@list);
     return join(" ", @list) unless $list[0] =~ m/^([a-zA-Z]+)\d+$/;
     my $prefix = $1;
     my $prelen = length($prefix);
