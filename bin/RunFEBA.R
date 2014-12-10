@@ -38,7 +38,7 @@ RunFEBA = function(args = commandArgs(trailingOnly=TRUE)) {
 	rules = read.table(paste(FEBAdir,"/lib/desc_short_rules",sep=""),as.is=T);
 
 	genes = read.delim(genesfile,quote="",as.is=T);
-	all = read.delim(allfile,as.is=T);
+	all = read.delim(allfile,as.is=T,check.names=F);
 	exps = read.delim(expsfile,as.is=T);
 	d = unique(all$locusId[all$locusId != "" & !is.na(all$locusId)]);
 	if (!all(d %in% genes$locusId)) stop("Unknown genes in ",allfile);
