@@ -135,9 +135,13 @@ my $debug = undef;
 	    my $index = undef;
 	    if (@indexes == 1) {
 		$index = $indexes[0];
-	    } elsif ($name =~ m/_(\d+)_[ACGT][ACGT][ACGT][ACGT][ACGT][ACGT]_/) {
+	    } elsif ($name =~ m/_(\d+)_[ACGT][ACGT][ACGT][ACGT][ACGT][ACGT]_/
+		     || $name =~ m/_Index(\d+)_[ACGT][ACGT][ACGT][ACGT][ACGT][ACGT]_/) {
 		# e.g. FEBA_BS_60_10_TAGCTT_L001_R1_001.fastq.gz
 		$index = sprintf("IT%03d", $1);
+	    } elsif ($name =~ m/undetermined/i) {
+		print STDERR "Skipping $name\n";
+		next;
 	    } else {
 		die "Cannot identify the index ITnnn from file $i";
 	    }
