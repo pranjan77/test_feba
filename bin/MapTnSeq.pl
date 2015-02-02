@@ -31,7 +31,7 @@ my %nameToBarcode = ();
 my $usage = <<END
 Usage: MapTnSeq.pl [ -debug ] [ -limit maxReads ] [ -minQuality $minQuality ] [-flanking $flanking]
             [ -minIdentity $minIdentity ] [ -minScore $minScore ]
-            [-tmpdir $tmpdir ]
+            [-tmpdir $tmpdir ] [ -unmapped saveTo ]
             -genome fasta_file -model model_file -first fastq_file > output_file
 
     The fastq file should have phred+33 ("sanger") encoding of quality scores
@@ -78,10 +78,12 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
     my $genomeFile = undef;
     my $modelFile = undef;
     my $blatcmd = -e "$Bin/blat" ? "$Bin/blat" : "blat";
+    my $unmappedFile = undef;
     
     my $minGenomeId = 90;
 
     (GetOptions('debug' => \$debug, 'limit=i' => \$limit, 'minQuality=i' => \$minQuality,
+		'unmapped=s' => \$unmappedFile,
                 'flanking=i' => \$flanking, 'minIdentity=i' => \$minIdentity, 'minScore=i' => \$minScore,
                 'tmpdir=s' => \$tmpdir,
                 'blat=s' => \$blatcmd,
@@ -103,7 +105,7 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
     if (defined $pastEnd) {
 	chomp $pastEnd;
 	die "Invalid past-end sequence: $pastEnd" unless $pastEnd =~ m/^[ACGT]+$/;
-}	
+    }	
     close(MODEL) || die "Error reading $modelFile";
 
     my $barcodeStart = index($model, "N");
@@ -134,6 +136,9 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
 
     my $nReads = 0;
     my $nTryToMap = 0;
+    # read name => 1 if mapped or pastEnd, 0 otherwise
+    # to save memory, only fill out with the -unmapped option
+    my %mapnames  = ();
 
     # Find barcodes and end of transposon and write remaining sequence to TMPFNA
     while(!defined $limit || $nReads < $limit) {
@@ -167,6 +172,7 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
             my $inGenome = substr($seq, $transposonEnd+1);
             print TMPFNA ">$name\n$inGenome\n";
             $nTryToMap++;
+	    $mapnames{$name} = 0 if defined $unmappedFile;
         }
     }
 
@@ -191,6 +197,7 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
 	    my @F = split /\t/, $_;
 	    my ($query, $subject, $identity, $len, $mm, $gaps, $qBeg, $qEnd, $sBeg, $sEnd, $eval, $score) = @F;
 	    $hitsPastEnd{$query} = $score unless exists $hitsPastEnd{$query} && $hitsPastEnd{$query} > $score;
+	    $mapnames{$query} = 1 if defined $unmappedFile;
 	}
 	close(BLAT) || die "Error reading $blat8";
 	unlink($blat8) unless defined $debug;
@@ -205,6 +212,7 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
         chomp;
         my @F = split /\t/, $_;
         my ($query, $subject, $identity, $len, $mm, $gaps, $qBeg, $qEnd, $sBeg, $sEnd, $eval, $score) = @F;
+	$mapnames{$query} = 1 if defined $unmappedFile;
         if (@lines == 0 || $query eq $lines[0][0]) {
             push @lines, \@F;
         } else {
@@ -216,6 +224,27 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
 
     close(BLAT) || die "Error reading $blat8";
     unlink($blat8) unless defined $debug;
+
+    if (defined $unmappedFile) {
+	my $nUnmapped = 0;
+	open(UNMAPPED, ">", $unmappedFile) || die "Cannot write to $unmappedFile";
+	open(FNA, "<", $tmpFna) || die "Cannot read $tmpFna";
+	while(my $header = <FNA>) {
+	    chomp $header;
+	    $header =~ m/^>(.*)$/ || die "Cannot parse $header";
+	    my $name = $1;
+	    my $seq = <FNA>;
+	    chomp $seq;
+	    $seq =~ m/^[ACGTN]+$/ || die "Cannot parse $seq in $tmpFna";
+	    if ($mapnames{$name} == 0) {
+		print UNMAPPED ">$nameToBarcode{$name} $name\n$seq\n";
+		$nUnmapped++;
+	    }
+	}
+	close(FNA) || die "Error reading $tmpFna";
+	close(UNMAPPED) || die "Error writing to $unmappedFile";
+	print STDERR "Wrote $nUnmapped unmapped reads to $unmappedFile in fasta format\n";
+    }
 
     unlink($tmpFna) unless defined $debug;
 
