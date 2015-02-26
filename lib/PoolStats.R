@@ -33,7 +33,9 @@ RunPoolStats = function(args = commandArgs(trailingOnly=TRUE)) {
 	err_printf("%d insertions in genome are at %d different locations\n",
 	     sum(pool$scaffold != "pastEnd"),
 	     nrow(unique(pool[pool$scaffold != "pastEnd",words("scaffold strand pos")])));
-
+	nSeen = sum(pool$scaffold != "pastEnd" & pool$n >= 2);
+	nSeenTwice = sum(pool$scaffold != "pastEnd" & pool$n == 2);
+	if (nSeenTwice > 0) diversity_cmp(nreadstot, nSeen, nSeenTwice, sum(pool$n[pool$scaffold != "pastEnd" & pool$n >= 2])/nreadstot);
 	poolg = findWithinGrouped(split(pool, pool$scaffold),
 				split(without(genes, genes$scaffoldId), genes$scaffoldId),
 				"pos", "begin", "end");
@@ -99,6 +101,16 @@ PoolReport = function(poolfile, poolg, genes, nreadstot) {
 	# Note reads per million uses total reads from TnSeq, not what is in the pool file
 	err_printf("Reads per million for hit proteins: median %.2f mean %.2f\n",
 			  median(nreads$n)*1e6/nreadstot, mean(nreads$n)*1e6/nreadstot);
+}
+
+diversity_cmp = function(nReads, nStrainsSeen, nSeenTwice, coverage) {
+	nStrainsTot = round(nStrainsSeen / coverage);
+	fOnce = dbinom(1, size=nReads, prob=1/nStrainsTot);
+	fTwice = dbinom(2, size=nReads, prob=1/nStrainsTot);
+	err_printf("Naive diversity (under)estimate: %d insertions in genome\n", nStrainsTot);
+	err_printf("  coverage: %.3f vs. naive-expected %.3f\n", coverage, 1 - fOnce*nStrainsTot/nReads);
+        err_printf("  fraction of strains seen just twice: %.2f vs. naive-expected %.2f\n",
+	           nSeenTwice/nStrainsSeen, fTwice/(1-fOnce));
 }
 
 # Helper functions
