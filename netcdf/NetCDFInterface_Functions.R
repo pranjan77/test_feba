@@ -340,7 +340,7 @@ maxSc_netcdf = function(genes, col_scaffold) {
 # geneFrac: fraction of the pdf file reserved for labels
 # linesAt: vector of coordinates (in bp) to which a vertical line will be drawn
 # lineCol: color of the line drawn
-strainHeatmap_netcdf = function(posfit, posfit_field_axis, posfit_lrn, posfit_order, genes, gene_field_axis, begin, end, scaffoldId=NULL, clustOrder = TRUE, expand=20, geneFrac=0.1, linesAt = NULL, lineCol=2, file="perstrain.pdf") {
+strainHeatmap_netcdf = function(posfit, posfit_field_axis, posfit_lrn, posfit_order, genes, gene_field_axis, begin, end, scaffoldId=NULL, clustOrder = TRUE, expand=20, geneFrac=0.1, linesAt = NULL, lineCol=2, file="perstrain.pdf", width=6, height=4) {
   gene_col_scaffold = which(gene_field_axis=="scaffoldId")
   gene_col_begin=which(gene_field_axis == "begin")
   gene_col_end = which(gene_field_axis == "end")
@@ -365,7 +365,7 @@ strainHeatmap_netcdf = function(posfit, posfit_field_axis, posfit_lrn, posfit_or
   posmin = pmax(pos-expand, c(begin,0.5+pos[-length(pos)])); 
   posmax = pmin(pos+expand, c(pos[-1]-0.5, end));
   
-  if(!is.null(file)) pdf(file, width=6, height=4, pointsize=10); 
+  if(!is.null(file)) pdf(file, width=width, height=height, pointsize=10); 
   oldpar = par(no.readonly=T);
   layout(matrix(c(1,2),ncol=1), heights=c(1-geneFrac,geneFrac)); 
   par(mar=c(0,4,0,0.5),oma=c(4,0,0,0));  
