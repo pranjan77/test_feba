@@ -76,7 +76,10 @@ use strict;
 	die "No sequence for $scaffold" if !defined $seqName;
 	my $seq = $seqs{$seqName};
 	my $len = length($seq);
-	die "Sequence for $seqName is too short: $end versus $len" if $end > $len;
+	if ($end > $len) {
+	    print STDERR "Warning: sequence for $seqName is too short: $end versus $len\n";
+	    $end = $len;
+	}
 	my $subseq;
 	if ($begin < $end) {
 	    $subseq = substr($seq, $begin-1, $end-$begin+1);
