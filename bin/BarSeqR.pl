@@ -78,7 +78,7 @@ END
 	$poolfile = "$indir/pool" if ! -e $poolfile;
 	die "No pool file: $poolfile.n10 or $poolfile" if ! -e $poolfile;
     } else {
-	die "No such pool file: $poolfile";
+	die "No such pool file: $poolfile" if ! -e $poolfile;
     }
     my @poolcols = ReadColumnNames($poolfile);
     my %poolcols = map { $_ => 1 } @poolcols;
