@@ -270,6 +270,14 @@ StrainClosestGenes = function(strains, genes) {
 	unsplit(indexSplit, strains$scaffold);
 }
 
+getenv_numeric_or_default = function(envname, default) {
+	value = Sys.getenv(envname);
+	if (value=="") return(default);
+	value = as.numeric(value);
+	if (is.na(value)) return(default);
+	return(value);
+}
+
 FEBA_Fit = function(expsUsed, all, genes,
 	   		       genesUsed=NULL, strainsUsed=NULL, genesUsed12=NULL,
 	   		       minT0Strain=3, minT0Gene=30,
@@ -281,7 +289,8 @@ FEBA_Fit = function(expsUsed, all, genes,
 	   		       metacol=1:7, # for all
 			       # names of experiments to ignore; experiments with Drop=TRUE are also ignored
 			       ignore=NULL,
-			       minSampleReads = 200*1000, # ignore those below this threshold, unless ignore is set
+			       # ignore those below this threshold, unless ignore is set
+			       minSampleReads = getenv_numeric_or_default("FEBA_MIN_SAMPLE_READS", 200*1000),
 			       debug=FALSE, computeCofit=TRUE,
 			       ...) {
 
@@ -355,6 +364,7 @@ FEBA_Fit = function(expsUsed, all, genes,
 	} else {
 	    strainsUsed = strainsUsed & has_gene2;
 	}
+	if (length(unique(all$locusId[strainsUsed])) < 10) stop("strainsUsed is nearly empty");
 	if(is.null(genesUsed)) {
 		t0_gN_used = aggregate(t0tot[strainsUsed,], list(locusId=all$locusId[strainsUsed]), sum);
 		genesUsed = t0_gN_used$locusId[ rowMeans(t0_gN_used[,-1,drop=F]) >= minT0Gene ];
@@ -624,16 +634,18 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	    wroteName("fit_cluster_logratios.pdf");
 	}
 
-	countClust = hclust(as.dist(1-cor(log2(1+fit$gN[fit$gN$locusId %in% fit$genesUsed,-1]))));
-	pdf(nameToPath("fit_cluster_logcounts.pdf"),
+	if (ncol(fit$gN)-1 >= 3) { # at least 3 things to cluster
+	    countClust = hclust(as.dist(1-cor(log2(1+fit$gN[fit$gN$locusId %in% fit$genesUsed,-1]))));
+	    pdf(nameToPath("fit_cluster_logcounts.pdf"),
 		pointsize=8, width=pmax(5,0.25*nrow(fit$q)), height=8,
 		title=paste(org,"Cluster Log Counts"));
-	# Some Time0s may be missing from fit$q
-	d = match(names(fit$gN)[-1], fit$q$name);
-	labelAll2 = ifelse(is.na(d), paste("Time0", sub("^set","",names(fit$gN)[-1])), labelAll[d]);
-	plot(countClust, labels=labelAll2, main="");
-	dev.off();
-	wroteName("fit_cluster_logcounts.pdf");
+	    # Some Time0s may be missing from fit$q
+	    d = match(names(fit$gN)[-1], fit$q$name);
+	    labelAll2 = ifelse(is.na(d), paste("Time0", sub("^set","",names(fit$gN)[-1])), labelAll[d]);
+	    plot(countClust, labels=labelAll2, main="");
+	    dev.off();
+	    wroteName("fit_cluster_logcounts.pdf");
+	}
 
         d = table(genes$scaffoldId[genes$locusId %in% fit$genesUsed]);
 	maxSc = names(d)[which.max(d)];
