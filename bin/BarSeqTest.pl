@@ -56,27 +56,25 @@ my $test = undef; # check for files, but do no work
 
     # find the fastq files
     my %fastqFiles = (); # index => list of matching files within $fastqdir
-    opendir(DIR, $fastqdir) || die $!;
-    while(my $filename = readdir(DIR)) {
-	if ($filename =~ m/[.]gz$/) {
-	    foreach my $index (@indexes) {
-		if ($filename =~ m/^${index}_/ || $filename =~ m/_${index}_/) {
-		    push @{ $fastqFiles{$index} }, $filename;
-		    print STDERR "fastq for index $index: $filename\n";
-		    last;
-		}
+    my @files = `find $fastqdir -name '*.fastq.gz'`;
+    foreach my $file (@files) {
+	chomp $file;
+	foreach my $index (@indexes) {
+	    if ($file =~ m/^${index}_/ || $file =~ m/_${index}_/) {
+		push @{ $fastqFiles{$index} }, $file;
+		print STDERR "fastq for index $index: $file\n";
+		last;
 	    }
 	}
     }
-    closedir(DIR);
 
     $outdir = "g/$org/barseqtest" if !defined $outdir;
     mkdir($outdir) if ! -d $outdir && !defined $test;
     my @codesFiles = ();
     foreach my $index (@indexes) {
+	die "No fastq files for $index in $fastqdir\n" if !exists $fastqFiles{$index};
 	my @filenames = @{ $fastqFiles{$index} };
-	my @files = map "$fastqdir/$_", @filenames;
-	my $pathSpec = join(" ", @files);
+	my $pathSpec = join(" ", @filenames);
 	push @codesFiles, "$outdir/$index.codes";
 	&maybeRun("zcat $pathSpec | $Bin/MultiCodes.pl -minQuality 0 -index $index -out $outdir/$index");
     }
