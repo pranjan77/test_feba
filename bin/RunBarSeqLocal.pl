@@ -15,12 +15,22 @@ Usage: RunBarSeqLocal.pl  [-minQuality 0 ] [ -pieceLines 20000000 ]
    e.g.:
    feba/bin/RunBarSeqLocal.pl g/Keio Keio_ML9_set1 fastq/Keio_ML9_set1
    feba/bin/RunBarSeqLocal.pl -indexes feba/primers/BarSeqPrimersH48 g/MR1 MR1_ML3_set1 fastq/MR1_ML3_set1
+   feba/bin/RunBarSeqLocal.pl -indexes feba/primers/BarSeqPrimersH48 g/psRCH2 psRCH2_ML7_set1 fastq/7341.4.68147.fastq.gz 
 
-RunBarSeq.pl has two phases -- the first phase splits the fastq file
-(if necessary) and counts the barcodes in each piece. If the indexes
-are specified, then it demultiplexes the reads, otherwise it assumes
-that each file is demultiplexed with a code in the filename such as
-_IT094_ or _10_TAGCTT_ which indicates which sample it is.
+RunBarSeq.pl has two phases -- the first phase counts the barcodes in
+the fastq file(s).  If the BarSeq was run with the newer style of
+primers that have names like IT001, then do not use the -indexes
+argument.  In this case it will only accept a directory as input, and
+it will assume that each fastq or fastq.gz file in that directory is
+already demultiplexed, with a code in the filename such as _IT094_ or
+_10_TAGCTT_ to indicate which sample it is from. There can be more
+than one file per sample.  For older experiments, where the primers
+have names like H01 or M01, use the -indexes argument to describe
+which primers were used.  RunBarSeq.pl will use this information to
+demultiplex the reads.  If -indexes is used, then RunBarSeq.pl can
+accept as input either a directory that contains fastq or fastq.gz
+files or a single large_fastq.gz file. Given a single fastq.gz file,
+it will split it and process each piece in parallel.
 
 The second phase aggregates the counts of these barcodes. To save
 memory, it ignores barcodes that do not match the pool file, which is
