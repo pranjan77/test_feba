@@ -1,0 +1,30 @@
+Only the cgi scripts are in the code respository. These files need to
+be set up for the web site to work.  (All paths are within the main
+feba/ directory of the repository)
+
+A SQL database using mysqlite, which is in
+	cgi_data/feba.db
+
+BLAST executables (blastall, fastacmd, formatdb), which should be in
+	bin/blast/
+(or this can be a symlink to a location where they are available)
+
+A BLAST database of amino acid sequences, which is in
+	cgi_data/aaseqs
+and must be formatted with
+	bin/formatdb -o T -p T -d cgi_data/aaseqs
+
+Some of the scripts also write temporary files to
+	tmp/
+This directory will need to be writable by the web server, i.e.,
+	chmod a+w tmp
+
+The other dependencies are perl modules:
+	CGI
+	DBI
+	List::Util;
+	Time::HiRes (for making unique file names)
+	Bio::SeqIO (used to read FASTA files)
+
+P.S. the front page for the web site is:
+	cgi/myFrontPage.cgi
