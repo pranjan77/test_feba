@@ -418,7 +418,7 @@ show_fit = function(org, loci, labels=NULL, locate=TRUE, around=0, condspec=NULL
 		    iGene = pmax(1, pmin(length(labels), 1 + round(x * (length(labels)-1))));
 		    g = loci[iGene];
 		    geneinfo = genes[genes$locusId == g,];
-		    if (nrow(geneinfo) != 1) stop("no metdata for gene: ",g);
+		    if (nrow(geneinfo) != 1) stop("no metadata for gene: ",g);
 		    geneinfo$desc = sub("(NCBI ptt file)","", geneinfo$desc, fixed=T);
 
 		    # iOExp is the sorted order shown, iExp is the order in q
