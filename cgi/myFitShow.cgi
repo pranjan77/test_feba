@@ -13,7 +13,7 @@ use strict;
 use CGI qw(:standard Vars);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
-use List::Util 'max';
+use List::Util 'min';
 
 use lib "../lib";
 use Utils;
@@ -25,6 +25,7 @@ my $style = Utils::get_style();
 
 my $species = $cgi->param('species') || "";
 my $gene = $cgi->param('gene') || die "no gene name found\n";
+my $showAll = $cgi->param('showAll') || 0;
 
 $gene =~ s/ *$//;
 $gene =~ s/^ *//;
@@ -35,7 +36,6 @@ print $cgi->start_html(
     -style => {-code => $style},
     -author=>'wjshaoATberkeley.edu',
     -meta=>{'copyright'=>'copyright 2015 UC Berkeley'},
-#    -BGCOLOR=>'#fffacd'
 );
 
 # check user input
@@ -52,8 +52,10 @@ my ($stmt, $sth, $rv, $nickname, $locusId, $sys, $desc, $genus, $g);
 # When no species has been specified, get the species name and gene locusId, which may not be unique
 
 if ($species eq "All 17 genomes" || $species eq "") {
-    $stmt = qq(SELECT nickname, locusId, sysName, desc, gene FROM Gene WHERE locusId = "$gene" OR sysName = "$gene" OR upper(gene) = upper("$gene"););
-    $sth = Utils::execute_db($dbh, $stmt);
+    $stmt = qq(SELECT nickname, locusId, sysName, desc, gene FROM Gene WHERE locusId = ? OR sysName = ? OR upper(gene) = upper(?););
+    $sth = $dbh->prepare( $stmt );
+    $rv = $sth->execute($gene,$gene,$gene) or die $DBI::errstr;
+    print $DBI::errstr if($rv < 0);
 
     my $cnt = 0;
     my @hits = ();
@@ -61,12 +63,18 @@ if ($species eq "All 17 genomes" || $species eq "") {
     while(my @row = $sth->fetchrow_array()) {
         ($nickname,$locusId,$sys,$desc,$g) = @row;
 
-        my $stmt = qq(SELECT genus, species FROM Organism WHERE name = "$nickname";);
-        my $sth2 = Utils::execute_db($dbh, $stmt);
+        my $stmt = qq(SELECT genus, species FROM Organism WHERE name = ?;);
+        my $sth2 = $dbh->prepare( $stmt );
+        $rv = $sth2->execute($nickname) or die $DBI::errstr;
+        print $DBI::errstr if($rv < 0);
+
         ($genus,$species) = $sth2->fetchrow_array();
 
-        $stmt = qq(SELECT expName, fit, t FROM GeneFitness WHERE species = "$nickname" AND locusId = "$locusId";);
-        my $sth3 = Utils::execute_db($dbh, $stmt);
+        $stmt = qq(SELECT expName, fit, t FROM GeneFitness WHERE species = ? AND locusId = ?;);
+        my $sth3 = $dbh->prepare( $stmt );
+        $rv = $sth3->execute($nickname, $locusId) or die $DBI::errstr;
+        print $DBI::errstr if($rv < 0);
+
         my $fitness = "no data";
         if (my @row3 = $sth3->fetchrow_array()) {
             my $dest = "myFitShow.cgi?species=$nickname&gene=$locusId";
@@ -109,97 +117,100 @@ if ($species eq "All 17 genomes" || $species eq "") {
     my @t = split(" ",$species);
 
     if ($#t >= 1) {
-        $stmt = qq(SELECT name FROM Organism WHERE species = "$species";);
-        $sth = Utils::execute_db($dbh, $stmt);
+        $stmt = qq(SELECT name FROM Organism WHERE species = ?;);
+        $sth = $dbh->prepare( $stmt );
+        $rv = $sth->execute($species) or die $DBI::errstr;
+        print $DBI::errstr if($rv < 0);
+
         ($nickname) = $sth->fetchrow_array();
     } else {
-        $stmt = qq(SELECT species, name FROM Organism WHERE name = "$species";);
-        $sth = Utils::execute_db($dbh, $stmt);
+        $stmt = qq(SELECT species, name FROM Organism WHERE name = ?;);
+        $sth = $dbh->prepare( $stmt );
+        $rv = $sth->execute($species) or die $DBI::errstr;
+        print $DBI::errstr if($rv < 0);
+
         ($species, $nickname) = $sth->fetchrow_array();
     }
 
     # get other information for the gene
 
-    $stmt = qq(SELECT locusId, sysName, gene, desc FROM Gene WHERE (nickname = "$nickname" OR nickname = "$species") AND (locusId = "$gene" OR sysName = "$gene" OR upper(gene) = upper("$gene")););
-    $sth = Utils::execute_db($dbh, $stmt);
+    $stmt = qq(SELECT locusId, sysName, gene, desc FROM Gene WHERE (nickname = ? OR nickname = ?) AND (locusId = ? OR sysName = ? OR upper(gene) = upper(?)););
+    $sth = $dbh->prepare( $stmt );
+    $rv = $sth->execute($nickname, $species, $gene, $gene, $gene) or die $DBI::errstr;
+    print $DBI::errstr if($rv < 0);
+
     ($locusId, $sys, $g, $desc) = $sth->fetchrow_array();
 
 }
 
 # get the fitness data from the database
 
-$stmt = qq(SELECT expName, fit, t FROM GeneFitness WHERE species = "$nickname" AND locusId = "$locusId";);
-$sth = Utils::execute_db($dbh, $stmt);
+$stmt = qq(SELECT expName, fit, t FROM GeneFitness WHERE species = ? AND locusId = ?;);
+$sth = $dbh->prepare( $stmt );
+$rv = $sth->execute($nickname, $locusId) or die $DBI::errstr;
+print $DBI::errstr if($rv < 0);
 
-my (@exp,@fit,@t);
-my $hasFit = 0;
+my @outRows = ();
+my $fitCnt = 0;
 while(my @row = $sth->fetchrow_array()) {
-    push @exp, $row[0];
-    push @fit, $row[1];
-    push @t, $row[2];
-    $hasFit = 1;
+    push @outRows, {exp => $row[0], fit => $row[1], t => $row[2]};
+    $fitCnt += 1;
 }
 
-if ($hasFit > 0) {
+if ($fitCnt > 0) {
 
     print $cgi->p("Fitness data for gene $gene: $sys $locusId $desc in $species");
 
     # sort by fitness value
 
-    my @sorted_fit_indexes = sort { abs($fit[$b]) <=> abs($fit[$a]) } 0..$#fit;
-    my $limit = $#fit > 19 ? 19 : $#fit;
-    my @top_indexes = @sorted_fit_indexes[0..$limit];
-    @exp = @exp[@top_indexes];
-    @fit = @fit[@top_indexes];
-    @t = @t[@top_indexes];
-    @sorted_fit_indexes = sort { $fit[$a] <=> $fit[$b] } 0..$#fit;
-    @exp = @exp[@sorted_fit_indexes];
-    @fit = @fit[@sorted_fit_indexes];
-    @t = @t[@sorted_fit_indexes];
+    my $limit = $#outRows > 19 ? 19 : $#outRows;
+    $limit = $showAll ? $#outRows : $limit;
+    @outRows = sort { abs($b->{ 'fit' }) <=> abs($a->{ 'fit' }) } @outRows;
+    @outRows = @outRows[0..$limit];
+    @outRows = sort { $a->{ 'fit' } <=> $b->{ 'fit' } } @outRows;
+
+    my @absfit = map { abs($_->{ 'fit' }) } @outRows;
+    my $sig = sprintf("%.1f",min(@absfit));
 
     my $len = $limit + 1;
-    my @absfit = map { abs($_) } @fit;
-    my $sig = sprintf("%.1f",max(@absfit));
 
-    print $cgi->h5("Note: only the top $len experiments with the most significant phenotypes are shown (|fitness| > $sig).");
+    if (!$showAll) {
+        print $cgi->h5("Note: only the top $len experiments with the most significant phenotypes are shown (|fitness| > $sig).");
+    } else {
+        print $cgi->h5("All experiments are shown here.");
+    }
 
     # get meta info for the experiments
 
     my @out;
-    foreach my $i (0..$#t) {
-        $stmt = qq(SELECT expDesc FROM QualityExperiment WHERE nickname = "$nickname" AND expName = "$exp[$i]";);
-        $sth = Utils::execute_db($dbh, $stmt);
+    foreach my $i (0..$#outRows) {
+        $stmt = qq(SELECT expDesc FROM QualityExperiment WHERE nickname = ? AND expName = ?;);
+        $sth = $dbh->prepare( $stmt );
+        $rv = $sth->execute($nickname, $outRows[$i]->{ 'exp' }) or die $DBI::errstr;
+        print $DBI::errstr if($rv < 0);
+
         my $desc;
         while(my @row = $sth->fetchrow_array()) {
             ($desc) = @row;
         }
 
-        push @out, $desc;
-        push @out, sprintf("%.1f",$fit[$i]);
-        push @out, sprintf("%.1f",$t[$i]);
+        push @out, {exp => $desc, fit => sprintf("%.1f",$outRows[$i]->{ 'fit' }), t => sprintf("%.1f",$outRows[$i]->{ 't' })};
     }
     my @td = ();
-    while ( my @elems = splice @out, 0, 3 ) {
-        my ($exp, $fit, $t) = @elems;
+    foreach my $elem ( @out ) {
 
         # color code fitness value in range (-3 .. 3)
 
-        my $perc;
-        if ($fit > 3) {
-            $perc = 1;
-        } elsif ($fit < -3) {
-            $perc = 0;
-        } else {
-            $perc = ($fit + 3)/6;
-        }
+        my $fit = $elem->{ 'fit' };
+        my $perc = ($fit + 3)/6;
+        $perc = $perc > 1 ? 1 : $perc;
+        $perc = $perc < 0 ? 0 : $perc;
+
         my ($color) = Utils::get_color($perc);
 
         # color code only the fitness cell 
 
-        my @elem1 = ($exp);
-        my @elem2 = ($fit);
-        my @elem3 = ($t);
-        my $td = $cgi->td( \@elem1 ) . $cgi->td({-bgcolor => "$color" }, \@elem2 ) . $cgi->td( \@elem3 );
+        my $td = $cgi->td( [ $elem->{ 'exp' } ] ) . $cgi->td({-bgcolor => "$color" }, [ $elem->{ 'fit' } ] ) . $cgi->td( [ $elem->{ 't' } ] );
         push @td, $td;
     }
     print $cgi->table(
@@ -208,6 +219,14 @@ if ($hasFit > 0) {
             $cgi->th( [ 'experiment','fitness','t score' ] ) ),
             $cgi->Tr( \@td )
     );
+
+    if ($showAll == 0) {
+        my $showAllDest = qq(myFitShow.cgi?species=$nickname&gene=$locusId&showAll=1);
+        print $cgi->h4(qq(<a href=$showAllDest>Show all fitness data</a>));
+    } else {
+        my $showFewDest = qq(myFitShow.cgi?species=$nickname&gene=$locusId&showAll=0);
+        print $cgi->h4(qq(<a href=$showFewDest>Show fewer fitness data</a>));
+    }
 
     my $dest = qq(mySeqSearch.cgi?species=$nickname&gene=$locusId);
     print $cgi->h4(qq(<a href=$dest>Check homologs</a>));
@@ -227,4 +246,3 @@ exit 0;
 # END
 
 #----------------------------------------
-

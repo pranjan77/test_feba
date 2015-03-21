@@ -112,7 +112,6 @@ if ($query =~ m/[A-Za-z]/) {
 
 # parse and report the blast result:
 # blast output fields: (1)queryId, (2)subjectId, (3)percIdentity, (4)alnLength, (5)mismatchCount, (6)gapOpenCount, (7)queryStart, (8)queryEnd, (9)subjectStart, (10)subjectEnd, (11)eVal, (12)bitScore
-
 # sort the blast result by bit score, E-value, and percent identity
 system('sort','-k1,1','-k12,12gr','-k11,11g','-k3,3gr',$blastOut,'-o',$blastSort)==0 || die "Error running sort: $!";
 
@@ -137,19 +136,25 @@ while(<RES>) {
     $percIdentity = sprintf("%.1f", $percIdentity);
 
     # select gene information from the database
-    my $stmt = qq(SELECT genus, species FROM Organism WHERE name = "$nickname";);
-    $sth = Utils::execute_db($dbh, $stmt);
+    my $stmt = qq(SELECT genus, species FROM Organism WHERE name = ?;);
+    $sth = $dbh->prepare( $stmt );
+    $rv = $sth->execute( $nickname ) or die $DBI::errstr;
+    print $DBI::errstr if($rv < 0);
 
     my ($genus,$species) = $sth->fetchrow_array();
 
-    $stmt = qq(SELECT sysName, gene, desc FROM Gene WHERE nickname = "$nickname" AND locusId = "$locusId";);
-    $sth = Utils::execute_db($dbh, $stmt);
+    $stmt = qq(SELECT sysName, gene, desc FROM Gene WHERE nickname = ? AND locusId = ?;);
+    $sth = $dbh->prepare( $stmt );
+    $rv = $sth->execute( $nickname, $locusId ) or die $DBI::errstr;
+    print $DBI::errstr if($rv < 0);
 
     my ($sys,$gene,$desc) = $sth->fetchrow_array();
 
     #check if any fitness data exists
-    $stmt = qq(SELECT expName, fit, t FROM GeneFitness WHERE species = "$nickname" AND locusId = "$locusId";);
-    $sth = Utils::execute_db($dbh, $stmt);
+    $stmt = qq(SELECT expName, fit, t FROM GeneFitness WHERE species = ? AND locusId = ?;);
+    $sth = $dbh->prepare( $stmt );
+    $rv = $sth->execute( $nickname, $locusId ) or die $DBI::errstr;
+    print $DBI::errstr if($rv < 0);
 
     my $fitness = "no data";
     while(my @row = $sth->fetchrow_array()) {
