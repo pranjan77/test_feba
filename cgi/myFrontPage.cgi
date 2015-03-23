@@ -21,23 +21,24 @@ my $style = Utils::get_style();
 
 print $cgi->header;
 print $cgi->start_html(
-    -title =>"FitBlast Start",
+    -title =>"Fitness Web Site",
     -style => {-code => $style},
     -author=>'wjshaoATberkeley.edu',
     -meta=>{'copyright'=>'copyright 2015 UC Berkeley'},
 #    -BGCOLOR=>'#fffacd'
 );
 
-print $cgi->h2("This is the FitBlast entering page!");
+print $cgi->h2("Fitness Web Site");
+print $cgi->h6(q(This web site contains <i>unpublished</i> fitness experiments from the Deutschbauer lab, the Arkin lab, and collaborators. Contact <A HREF="mailto:AMDeutschbauer.lbl.gov">Adam Deutschbauer</A> for more information.));
 
-print $cgi->h4("Search by gene name:");
+print $cgi->h3("Search by Gene Name");
 print $cgi->start_form(
         -name    => 'input',
         -method  => 'GET',
         -action  => 'myFitShow.cgi',
 );
-print $cgi->p("Choose Species Name:");
-print $cgi->h6("Note: all species with fitness data are listed here.");
+print "<P>Choose species: ";
+#print $cgi->h6("Note: all species with fitness data are listed here.");
 
 my $dbh = Utils::get_dbh();
 my $stmt = qq(SELECT species FROM Organism;);
@@ -55,15 +56,14 @@ print $cgi->popup_menu(
     -default => $species[0],
 );
 
-print $cgi->p(q(Enter Gene Name<font color="red">*</font>:));
-print $cgi->h6(q(Example: 7022746 (gene locusId) or Shewana3_0001 (gene sysName) or recA (gene name)));
+print q(<P>Enter gene name: );
 print $cgi->textfield(
     -name      => 'gene',
     -size      => 20,
     -maxlength => 100,
 );
+print $cgi->h6(q(Example: 7022746 (gene locusId) or Shewana3_0001 (gene sysName) or recA (gene name)));
 print <<EndOfSubmitOne;
-<BR><BR>
 <INPUT TYPE="submit" VALUE="Start fitness lookup">
 <INPUT TYPE="reset" VALUE="Clear" onClick="input.gene.value=''">
 EndOfSubmitOne
@@ -71,28 +71,28 @@ EndOfSubmitOne
 print $cgi->end_form;
 print "<BR>\n";
 
-print $cgi->h4(qq(Search by gene sequence:));
+print $cgi->h3(qq(Or Search by Gene Sequence));
 print $cgi->start_form(
         -name    => 'input',
         -method  => 'POST',
         -action  => 'mySeqSearch.cgi',
 );
 
-print $cgi->p(q(Choose Query Type<font color="red">*</font>:));
+print q(<P>Choose query type: );
 my @qtype = ("protein","nucleotide");
 print $cgi->popup_menu(
     -name    => 'qtype',
     -values  => \@qtype,
     -default => $qtype[0],
 );
-print $cgi->p(q(Enter Query Sequence<font color="red">*</font>:));
+print $cgi->p(q(Enter query sequence:));
 print $cgi->textarea(
     -name  => 'query',
     -value => '',
     -cols  => 70,
     -rows  => 10,
 );
-print $cgi->p(qq(Enter the number of Hits to show:));
+print qq(<P>Enter the number of hits to show: );
 my @num = (5,10,25,50,100);
 print $cgi->popup_menu(
     -name    => 'numHit',
@@ -108,6 +108,7 @@ EndOfSubmitTwo
 
 print $cgi->end_form;
 
+print $cgi->h6(q(Developed by Wenjun Shao and Morgan Price. Please report any bugs to <A HREF="mailto:funwithwords26@gmail.com">Morgan</A>.));
 print $cgi->end_html;
 
 # END
