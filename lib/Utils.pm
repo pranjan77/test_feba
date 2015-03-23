@@ -46,7 +46,6 @@ sub get_style() {
     }
     p {
         color: darkblue;
-        font-variant: small-caps;
         font-weight: bold;
     }
     table {
