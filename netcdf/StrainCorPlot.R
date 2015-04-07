@@ -38,7 +38,7 @@ StrainCorPlot = function(args = commandArgs(trailing=TRUE)) {
 	load_nc_variables(nc);
 	cat("Opened ", nc_file, " with ", ncol(nc_lrn), "experiments\n");
 
-	i = which( genes[,gene_col_name]==locusId | genes[,gene_col_sysname]==locusId );
+	i = which( gene_locusId_axis %in% locusId | genes[,gene_col_name]==locusId | genes[,gene_col_sysname]==locusId );
 	if (length(i) < 1) stop("No such gene: ", locusId);
 	i = i[1];
 
@@ -68,8 +68,8 @@ load_strains = function(nc){
 load_nc_variables = function(nc){
   gene_field_axis <<- ncvar_get(nc, "gene_fieldname_axis")
   nc_lrn <<- ncvar_get(nc, "fit/lrn")
-  pergene_locusId_axis <<- ncvar_get(nc, "pergene_locusId_axis")
-  gene_locusId_axis <<- ncvar_get(nc, "locusId_axis")
+  pergene_locusId_axis <<- ncvar_get(nc, "pergene_locusId_axis") # for lrn
+  gene_locusId_axis <<- ncvar_get(nc, "locusId_axis") # for genes
   genes <<- ncvar_get(nc, "genes")
   s_lrn <<- ncvar_get(nc, "fit/strain_lrn")
   gene_col_name <<- which(gene_field_axis=="name")
@@ -82,7 +82,7 @@ load_nc_variables = function(nc){
 
 scatter_plot= function(begin, end, refGeneName, scaffoldId=NULL, file="scatter.pdf", showUnused=TRUE,
 	               width=7, height=5, pointsize=10, geneFrac=0.2) {
-  refLocusId = gene_locusId_axis[which(genes[,gene_col_name]==refGeneName | genes[,gene_col_sysname]==refGeneName)]
+  refLocusId = gene_locusId_axis[gene_locusId_axis %in% refGeneName | genes[,gene_col_name]==refGeneName | genes[,gene_col_sysname]==refGeneName ];
   ref_gene_names = genes[which(gene_locusId_axis == refLocusId), c(gene_col_name, gene_col_sysname)]
   pergene_vector = nc_lrn[which(pergene_locusId_axis == refLocusId),]
   if (is.null(scaffoldId)){
@@ -115,7 +115,8 @@ scatter_plot= function(begin, end, refGeneName, scaffoldId=NULL, file="scatter.p
   plot(c(begin, end)/1000, c(-1,1), pch=NA,
        yaxt="n", xaxt="n", ylab="", xlab="Position (kb)");
   # gets genes of the specified scaffold and position range
-  geneSet = genes[as.integer(genes[,gene_col_begin]) <= end & as.integer(genes[,gene_col_end]) >= begin & genes[,gene_col_scaffold]==scaffoldId,]
+  genesI = which(as.integer(genes[,gene_col_begin]) <= end & as.integer(genes[,gene_col_end]) >= begin & genes[,gene_col_scaffold]==scaffoldId);
+  geneSet = genes[genesI,];
   if (!is.matrix(geneSet)){
     geneSet = t(as.matrix(geneSet))
   }
@@ -135,6 +136,7 @@ scatter_plot= function(begin, end, refGeneName, scaffoldId=NULL, file="scatter.p
     text((gx1+gx2)/2000, ifelse(geneStrand=="+",y1, y2), namesAbove, pos=3); # above
     namesBelow = geneSet[,gene_col_sysname];
     namesBelow = sub("^.*_","_",namesBelow,perl=T);
+    namesBelow = ifelse(namesBelow=="NA", gene_locusId_axis[genesI], namesBelow);
     text((gx1+gx2)/2000, ifelse(geneStrand=="+",y1, y2), namesBelow, pos=1); # below
   }
   if(is.null(file)) { par(oldpar); } else { dev.off(); cat("Wrote ",file,"\n");
