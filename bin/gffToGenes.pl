@@ -4,7 +4,12 @@ use strict;
 # In RefSeq files, the locus_tag is on a gene line that is just before the CDS/tRNA/rRNA line
 
 {
-    die "Run as a filter\n" unless @ARGV == 0;
+    my $prefix = "GFF";
+    if (@ARGV >= 2 && $ARGV[0] eq "-prefix") {
+	shift @ARGV;
+	$prefix = shift @ARGV;
+    }
+    die "gffToGenes.pl [ -prefix GFF ] < file.gff > out.gff\n" unless @ARGV == 0;
     my $nGFF = 0;
     my %types = ("CDS" => 1, "rRNA" => 2, "tRNA" => 5, "RNA" => 6, "transcript" => 6);
     print join("\t",qw{locusId sysName type scaffoldId begin end strand name desc})."\n";
@@ -56,7 +61,7 @@ use strict;
 	    $sysName = $1 if $last->{attributes} =~ m/\blocus_tag=([^ ;]+)\b/;
 	}
 
-	my $locusId = "GFF$nGFF";
+	my $locusId = "$prefix$nGFF";
 	if ($sysName ne "") {
 	    if (exists $sysNameSeen{$sysName}) {
 		print STDERR "Warning: duplicate locus tag $sysName\n";
