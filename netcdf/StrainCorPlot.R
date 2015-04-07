@@ -36,7 +36,7 @@ StrainCorPlot = function(args = commandArgs(trailing=TRUE)) {
 	}
 	nc = nc_open(nc_file);
 	load_nc_variables(nc);
-	cat("Opened ", nc_file, "\n");
+	cat("Opened ", nc_file, " with ", ncol(nc_lrn), "experiments\n");
 
 	i = which( genes[,gene_col_name]==locusId | genes[,gene_col_sysname]==locusId );
 	if (length(i) < 1) stop("No such gene: ", locusId);
@@ -83,8 +83,8 @@ load_nc_variables = function(nc){
 scatter_plot= function(begin, end, refGeneName, scaffoldId=NULL, file="scatter.pdf", showUnused=TRUE,
 	               width=7, height=5, pointsize=10, geneFrac=0.2) {
   refLocusId = gene_locusId_axis[which(genes[,gene_col_name]==refGeneName | genes[,gene_col_sysname]==refGeneName)]
-  ref_gene_names = genes[which(as.numeric(gene_locusId_axis)==refLocusId), c(gene_col_name, gene_col_sysname)]
-  pergene_vector = nc_lrn[which(as.numeric(pergene_locusId_axis)==refLocusId),]
+  ref_gene_names = genes[which(gene_locusId_axis == refLocusId), c(gene_col_name, gene_col_sysname)]
+  pergene_vector = nc_lrn[which(pergene_locusId_axis == refLocusId),]
   if (is.null(scaffoldId)){
     scaffoldId = maxSc_netcdf(genes, gene_col_scaffold)
   }
@@ -99,10 +99,11 @@ scatter_plot= function(begin, end, refGeneName, scaffoldId=NULL, file="scatter.p
   par(mar=c(1,4,2,2),oma=c(0,0,0,0));  
   par(xaxs="i", yaxs="i",bty="n"); 
 
+  gene_header = if (as.character(ref_gene_names[1]) == "NA") ref_gene_names[2] else sprintf("%s (%s)", ref_gene_names[1], ref_gene_names[2]);
   plot(s$pos[index]/1000, r,
 		ylim=c(-1,1), xlim=c(floor(begin/1000), ceiling(end/1000)),
-		ylab="r",
-		main=sprintf("perstrain fitness correlation with %s (%s)", ref_gene_names[1], ref_gene_names[2]),
+		ylab="Correlation",
+		main=paste("Strain Similarity with", gene_header),
 		col=ifelse(s$used[index], ifelse(strand=="+", "darkgreen", "red"), "darkgrey"),
 		pch=strand,
 		cex=ifelse(s$used[index], 1, 2/3) * ifelse(strand=="+",1,1.25),
@@ -129,9 +130,12 @@ scatter_plot= function(begin, end, refGeneName, scaffoldId=NULL, file="scatter.p
     # draws arrows for each gene and labels with gene name
     arrows(gx1/1000, gy, gx2/1000, gy, code=2, length=1/12);
     geneStrand = geneSet[,gene_col_strand];
-    text((gx1+gx2)/2000, ifelse(geneStrand=="+",y1, y2),
-    	 sprintf("%s %s", geneSet[,gene_col_name], geneSet[,gene_col_sysname]),
-	 pos = ifelse(geneStrand=="+", 3,1)); # 3 means above, 1 means below
+    namesAbove = as.character(geneSet[,gene_col_name]);
+    namesAbove = ifelse(namesAbove=="NA","",namesAbove);
+    text((gx1+gx2)/2000, ifelse(geneStrand=="+",y1, y2), namesAbove, pos=3); # above
+    namesBelow = geneSet[,gene_col_sysname];
+    namesBelow = sub("^.*_","_",namesBelow,perl=T);
+    text((gx1+gx2)/2000, ifelse(geneStrand=="+",y1, y2), namesBelow, pos=1); # below
   }
   if(is.null(file)) { par(oldpar); } else { dev.off(); cat("Wrote ",file,"\n");
   }
