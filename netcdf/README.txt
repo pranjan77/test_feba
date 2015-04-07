@@ -35,13 +35,13 @@ Author: Shiori Sagawa <ssagawa@berkeley.edu>
 ***************************
 *** .NC FILE COMPONENTS ***
 ***************************
-For definition of each variables, refer to http://morgannprice.org/FEBA/psRCH2/
-- genes (variable)
+For definition of each variables, refer to ../lib/FEBA_template.html
+- genes (variable) # locusIds are in gene_locusId
 - expsUsed (variable)
 - fit (group): holds fitness data
 	- q (variable)
 	- lr (variable)
-	- lrn (variable)
+	- lrn (variable) # gene axis is in pergene_locusId
 	- lr1 (variable)
 	- lr2 (variable)
 	- lrn1 (variable)
