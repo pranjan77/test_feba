@@ -36,7 +36,6 @@ StrainCorPlot = function(args = commandArgs(trailing=TRUE)) {
 	}
 	nc = nc_open(nc_file);
 	load_nc_variables(nc);
-	cat("Opened ", nc_file, " with ", ncol(nc_lrn), "experiments\n");
 
 	i = which( gene_locusId_axis %in% locusId | genes[,gene_col_name]==locusId | genes[,gene_col_sysname]==locusId );
 	if (length(i) < 1) stop("No such gene: ", locusId);
@@ -70,6 +69,8 @@ load_nc_variables = function(nc){
   nc_lrn <<- ncvar_get(nc, "fit/lrn")
   pergene_locusId_axis <<- ncvar_get(nc, "pergene_locusId_axis") # for lrn
   gene_locusId_axis <<- ncvar_get(nc, "locusId_axis") # for genes
+  expsmeta_field_axis <<- ncvar_get(nc, "exps_metadata_fieldname_axis")
+  expsmeta <<- ncvar_get(nc, "fit/q")
   genes <<- ncvar_get(nc, "genes")
   s_lrn <<- ncvar_get(nc, "fit/strain_lrn")
   gene_col_name <<- which(gene_field_axis=="name")
@@ -78,20 +79,23 @@ load_nc_variables = function(nc){
   gene_col_begin <<- which(gene_field_axis == "begin")
   gene_col_end <<- which(gene_field_axis == "end")
   gene_col_strand <<- which(gene_field_axis == "strand")
+  expsmeta_col_u <<- which(expsmeta_field_axis == "u")
 }
 
 scatter_plot= function(begin, end, refGeneName, scaffoldId=NULL, file="scatter.pdf", showUnused=TRUE,
 	               width=7, height=5, pointsize=10, geneFrac=0.2) {
   refLocusId = gene_locusId_axis[gene_locusId_axis %in% refGeneName | genes[,gene_col_name]==refGeneName | genes[,gene_col_sysname]==refGeneName ];
   ref_gene_names = genes[which(gene_locusId_axis == refLocusId), c(gene_col_name, gene_col_sysname)]
-  pergene_vector = nc_lrn[which(pergene_locusId_axis == refLocusId),]
+  exp_u = type.convert(expsmeta[,expsmeta_col_u]);
+  pergene_vector = nc_lrn[which(pergene_locusId_axis == refLocusId), exp_u]
   if (is.null(scaffoldId)){
     scaffoldId = maxSc_netcdf(genes, gene_col_scaffold)
   }
 
   index = which(s$pos >= begin & s$pos<=end & s$scaffold==scaffoldId & (showUnused | s$used));
   strand = as.character(s$strand[index]);
-  r = apply(s_lrn[index,], 1, cor, pergene_vector);
+  r = apply(s_lrn[index, exp_u], 1, cor, pergene_vector);
+  cat("Computed correlations for ", refLocusId, " with strains using ", sum(exp_u), " experiments\n");
 
   if(!is.null(file)) pdf(file, width=width, height=height, pointsize=pointsize);
   oldpar = par(no.readonly=T);
@@ -100,6 +104,7 @@ scatter_plot= function(begin, end, refGeneName, scaffoldId=NULL, file="scatter.p
   par(xaxs="i", yaxs="i",bty="n"); 
 
   gene_header = if (as.character(ref_gene_names[1]) == "NA") ref_gene_names[2] else sprintf("%s (%s)", ref_gene_names[1], ref_gene_names[2]);
+  if (gene_header == "NA") gene_header = refLocusId;
   plot(s$pos[index]/1000, r,
 		ylim=c(-1,1), xlim=c(floor(begin/1000), ceiling(end/1000)),
 		ylab="Correlation",
