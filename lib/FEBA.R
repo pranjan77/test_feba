@@ -471,7 +471,7 @@ FEBA_Fit = function(expsUsed, all, genes,
 	    if(sum(status==s) > 0) cat(s, ":", q$name[status==s],"\n");
 	}
 
-	fit$version = "1.0.0";
+	fit$version = "1.0.1";
 	fit$q = q;
 	fit$genesUsed = genesUsed;
 	fit$strainsUsed = strainsUsed;
@@ -876,7 +876,9 @@ without = function(list,columns=list$without) {
 }
 
 AdjacentPairs = function(genes) {
+	genes = genes[order(genes$scaffold, genes$begin),];
 	adj = data.frame(Gene1 = genes$locusId, Gene2=c(genes$locusId[-1],genes$locusId[1]));
+	# add metadata and only keep pairs with same scaffold
 	adj = merge(merge(adj, genes, by.x="Gene1", by.y="locusId"), genes, by.x=c("Gene2","scaffoldId"), by.y=c("locusId","scaffoldId"), suffixes=1:2);
 	return(adj);
 }
