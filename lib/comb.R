@@ -173,15 +173,23 @@ get_exps = function(org, pattern, fixed=FALSE, ignore.case=!fixed, perl=!fixed) 
 	return(q$name[q$u & grepl(pattern, q$short, ignore.case=ignore.case, perl=perl, fixed=fixed)]);
 }
 
-gene_info = function(org, loci, n=5) {
+gene_info = function(org, loci, n=5, minStrong=2, minT=4) {
 	arg = loci;
 	loci = get_genes(org, loci);
 	loci = loci[!is.na(loci)];
 	genes = orgs[[org]]$genes;
 	info = genes[match(loci, genes$locusId),];
-	info$data = info$locusId %in% orgs[[org]]$g;
+	hasStrong = apply(abs(orgs[[org]]$lrn), 1, max) > minStrong;
+	hasSig = apply(abs(orgs[[org]]$t), 1, max) > minT;
+	# Uses orgs[[org]]$ess if available as a list of locusIds
+	# (LoadOrgs() does not set that up.)
+	info$class = ifelse(info$locusId %in% orgs[[org]]$ess, "Essential",
+			ifelse(!info$locusId %in% orgs[[org]]$g, "No data",
+			ifelse(info$locusId %in% orgs[[org]]$g[hasStrong & hasSig], "Strong",
+			ifelse(info$locusId %in% orgs[[org]]$g[hasSig], "Significant",
+			"No phenotype"))));
 	if(is.null(info) || nrow(info) == 0) stop("No such gene in ",org,": ",arg);
-	out = info[,words("locusId sysName name desc data")];
+	out = info[,words("locusId sysName name desc class")];
 	out$desc = sub("(NCBI ptt file)","", out$desc, fixed=T);
 	if(!is.null(info$VIMSS)) out$VIMSS = info$VIMSS;
 	row.names(out) = 1:nrow(out);
@@ -190,7 +198,7 @@ gene_info = function(org, loci, n=5) {
 	for(locusId in info$locusId) {
 	    locusShow = locusId;
 	    if (!is.null(info$VIMSS)) locusShow = paste(locusShow, "VIMSS", info$VIMSS[info$locusId %in% locusId]);
-	    if(locusId %in% info$locusId[info$data]) {
+	    if(locusId %in% info$locusId[info$class]) {
 		out = specsicks[specsicks$org %in% org & specsicks$locusId %in% locusId,words("name short lrn t")];
 		# need to go from specsicks$short to a Condition_1
 		out = merge(out, orgs[[org]]$exps[,words("Condition_1 name")]);
