@@ -34,6 +34,7 @@
 
 # Programmer Utilities:
 # Use LoadOrgs(list of organism nicknames) to create the data structures
+#     Then use SetupEssentials() as well to load essentiality information.
 # Use names(orgs) to list which FEBA nicknames are included
 # Use get_genes(), get_exps(), get_fit(), get_t(), all_cofitness() to get at data items
 
@@ -52,7 +53,6 @@
 # ccofit -- cofitness that is conserved for orthologous pairs (conserved cofit)
 # 	 only has pairs in the order locus1 < locus2
 
-# note hard-coding of paths, should be fixed
 LoadOrgs = function(orgnames, base="data/FEBA/", html=paste(base,"/html/",sep="")) {
 	orgs = list();
 	for(n in orgnames) {
@@ -153,6 +153,52 @@ LoadOrgs = function(orgnames, base="data/FEBA/", html=paste(base,"/html/",sep=""
 	tigrroles <<- tigrfams[!is.na(tigrfams$toprole),];
 }
 
+SetupEssentials = function(base="data/FEBA", debug=TRUE, ...) {
+    for (org in names(orgs)) {
+	if(debug) cat("Setting up essentials for ", org, "\n");
+	ess_genes_table = read.delim(paste(base,"/g/",org,"/essentiality.genes",sep=""), as.is=T);
+	orgs[[org]]$esstable <<- Essentials(orgs[[org]]$genes, ess_genes_table, orgs[[org]]$g, debug=debug, ...);
+	orgs[[org]]$ess <<- with(orgs[[org]]$esstable, locusId[ess]);
+	length(orgs[[org]]$ess);
+    }
+}
+
+# Given the genes information, including GC content (in genes), and
+# statistics on the uniqueness of the gene from Essentiality.pl, and
+# whether or not we estimated fitness values, returns a table with
+# ess=TRUE for likely essential protein-coding loci.  Strictly
+# speaking, these are loci that are probably very important for
+# fitness, but we don't know if they are truly essential.
+Essentials = function(genes, ess, g, max.fp=0.02, debug=TRUE) {
+	if (is.null(genes$type)) genes$type = 1; # workaround for PS
+	ess = merge(ess, genes[,words("type locusId GC nTA")]);
+	# ignore non-proteins, genes with parts that might not map uniquely, and very short genes
+	ess = ess[ess$type==1 & ess$dupScore == 0 & ess$ntLenNoOverlap >= 100,];
+
+	# Choose a minimum gene length such that there is just
+	# ~1% odds of no central insertions by bad luck
+	candLen = seq(100,1000,25);
+	d = ess[ess$ntLenNoOverlap >= 500,];
+	medCentral = median(d$nPosCentral);
+	medLen = median(d$ntLenNoOverlap);
+	p0 = sapply(candLen, function(minLen) ppois(0, medCentral * minLen/medLen));
+	if (all(p0 > max.fp)) stop("All probabilities too high in Essentials()");
+	minLen = candLen[ min(which(p0 < max.fp)) ];
+	if(debug) cat("Chose length ", minLen, "minimum fp rate", p0[candLen==minLen], "\n");
+
+	# density of insertion locations in central 10-90% of gene, normalized
+	ess$dens = ess$nPosCentral/ess$ntLenNoOverlap;
+	ess$dens = ess$dens / median(ess$dens);
+
+	# rate of reads, normalized for %GC
+	ess$reads = ess$nReads / ess$ntLenNoOverlap;
+	ess = ess[order(ess$GC),];
+	ess$normreads = ess$reads / runmed(ess$reads, 201, endrule="constant");
+
+	ess$ess = ess$ntLenNoOverlap >= minLen & ess$normreads < 0.2 & ess$dens < 0.2 & !ess$locusId %in% g;
+	return(ess);
+}
+
 # turn list (or space-delimited) systematic names or VIMSS ids or locusIds into a list of locusIds
 get_genes = function(org, specs) {
 	genes = orgs[[org]]$genes;
@@ -160,7 +206,8 @@ get_genes = function(org, specs) {
 	if(is.character(specs) && length(specs)==1 && grepl(" ",specs)) {
 		specs = words(specs);
 	}
-	ids = genes$locusId[match(specs,genes$locusId)]; # fetch locusId instead of reusing values to convert to right kind
+	# fetch locusId instead of reusing values to convert to right kind
+	ids = genes$locusId[match(specs,genes$locusId)];
 	if (!is.null(genes$sysName)) ids = ifelse(is.na(ids), genes$locusId[match(specs, genes$sysName)], ids);
 	if (!is.null(genes$name)) ids = ifelse(is.na(ids), genes$locusId[match(specs, genes$name)], ids);
 	if (!is.null(genes$VIMSS)) ids = ifelse(is.na(ids), genes$locusId[match(specs, genes$VIMSS)], ids);
