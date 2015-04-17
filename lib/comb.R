@@ -245,7 +245,7 @@ gene_info = function(org, loci, n=5, minStrong=2, minT=4) {
 	for(locusId in info$locusId) {
 	    locusShow = locusId;
 	    if (!is.null(info$VIMSS)) locusShow = paste(locusShow, "VIMSS", info$VIMSS[info$locusId %in% locusId]);
-	    if(locusId %in% info$locusId[info$class]) {
+	    if(locusId %in% info$locusId[!info$class %in% c("Essential","No data")]) {
 		out = specsicks[specsicks$org %in% org & specsicks$locusId %in% locusId,words("name short lrn t")];
 		# need to go from specsicks$short to a Condition_1
 		out = merge(out, orgs[[org]]$exps[,words("Condition_1 name")]);
