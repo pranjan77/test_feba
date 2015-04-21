@@ -40,7 +40,7 @@ print $cgi->start_html(
 
 # check user input
 
-Utils::fail("$gene is invalid. Please enter correct gene name!") unless ($gene =~ m/^[A-Za-z0-9_]*$/);
+Utils::fail($cgi, "$gene is invalid. Please enter correct gene name!") unless ($gene =~ m/^[A-Za-z0-9_]*$/);
 
 print $cgi->h2("Fitness Profile");
 
@@ -227,6 +227,7 @@ if ($fitCnt > 0) {
         my $showFewDest = qq(myFitShow.cgi?species=$nickname&gene=$locusId&showAll=0);
         print $cgi->h4(qq(<a href=$showFewDest>Show fewer fitness data</a>));
     }
+    print $cgi->h4($cgi->a({href => "cofit.cgi?species=$nickname&gene=$locusId"}, "Top cofit genes"));
 
     my $dest = qq(mySeqSearch.cgi?species=$nickname&gene=$locusId);
     print $cgi->h4(qq(<a href=$dest>Check homologs</a>));
