@@ -50,6 +50,7 @@ END
 	my @sorted = sort { $a->{begin} <=> $b->{begin} } @{ $genesSorted{$scaffold} };
 	$genesSorted{$scaffold} = \@sorted;
     }
+    CheckGeneLocations(\%genesSorted); # writes to STDERR
 
     my %locusToGene = ();
     # modify begin and end so that no genes overlap.

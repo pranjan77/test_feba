@@ -140,6 +140,7 @@ END
 	my @sorted = sort { $a->{begin} <=> $b->{begin} } @{ $genesSorted{$scaffold} };
 	$genesSorted{$scaffold} = \@sorted;
     }
+    CheckGeneLocations(\%genesSorted); # writes to STDERR
 
     # Next, can we find all set files?
     my %setpre = (); # set name to list of prefixes having a poolcount and ideally also a colsum file
