@@ -320,7 +320,20 @@ identify_exps = function(org, x, y) {
 	return(q[rows,words("name short x y")]);
 }
 
-compare_genes = function(org, locus1, locus2=NULL, xlab=NULL, ylab=NULL, eq=TRUE, locate=TRUE, ...) {
+# For a given organism, for each column in lrn or t, a table of metadata
+metadata_by_exp = function(org) with(orgs[[org]], {
+	d = merge(q[q$u,], exps, by=words("name short num"));
+	d = d[match(names(lrn), d$name),];
+	if (!identical(names(lrn), d$name)) stop("used experiments does not match lrn!");
+	return(d);
+});
+
+# By default, color codes C sources in blue, N sources in dark green, and stresses in red (and otherwise in black)
+compare_genes = function(org, locus1, locus2=NULL, xlab=NULL, ylab=NULL, eq=TRUE, locate=TRUE,
+	highlight = NULL, # list of experiments to highlight (will use red vs. darkgrey)
+	col = NULL,
+	pch = 20,
+	...) {
 	if (is.null(locus2)) {
 		if(length(locus1) != 2) stop("Invalid length");
 		locus2 = locus1[2];
@@ -333,7 +346,20 @@ compare_genes = function(org, locus1, locus2=NULL, xlab=NULL, ylab=NULL, eq=TRUE
 	if (is.na(locus1)) stop("No data for: ",locus1, " ", xlab);
 	if (is.na(locus2)) stop("No data for: ",locus2, " ", ylab);
 	mat = get_fit(org, c(locus1,locus2));
-	plot(mat[,1], mat[,2], xlab=xlab, ylab=ylab, ...);
+	if (is.null(col)) {
+	    if (!is.null(highlight)) {
+		col = ifelse(row.names(mat) %in% highlight, 2, 8);
+		cat("In red: ", row.names(mat)[row.names(mat) %in% highlight], "\n");
+	    } else {
+		col = sapply(tolower(metadata_by_exp(org)[["Group"]]), switch,
+	    	    "carbon source" = "blue",
+	    	    "nitrogen source" = "darkgreen",
+		    "stress" = "red",
+		    "black");
+		cat("C sources in blue, N sources in green, stresses in red\n");
+	    }
+	}
+	plot(mat[,1], mat[,2], xlab=xlab, ylab=ylab, col=col, pch=pch);
 	if(eq) eqline();
 	if(locate) {
 		cat("Click on points, or right click to exit\n");
@@ -444,7 +470,9 @@ show_fit = function(org, loci, labels=NULL, locate=TRUE, around=0, condspec=NULL
 	if (sort) {
 		o = order(rowMeans(mat,na.rm=T), decreasing=T);
 	} else {
-		o = order(q$short, decreasing=TRUE);
+		metadata = metadata_by_exp(org);
+		if (!identical(metadata$name, q$name)) stop("Metadata mismatch");
+		o = order(metadata$Group, metadata$short);
 	}
 	labRows = q$short[o];
 	labRows = sub("[0-9.]+ mM$","",labRows);
