@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #######################################################
-## Utils.pm
+## Utils.pm -- for cgi code
 ##
 ## Copyright (c) 2015 All Right Reserved by UC Berkeley
 ##
@@ -27,6 +27,7 @@ sub get_color($);
 sub get_dbh(); # open the sqlite db and return the resulting database handle
 sub blast_db();
 sub tmp_dir();
+sub orginfo($);
 
 #--------------------------------------------------------
 
@@ -130,6 +131,23 @@ sub blast_db() {
 
 sub tmp_dir() {
     return "../tmp";
+}
+
+sub gene_has_fitness($$$) {
+    my ($dbh,$orgId,$locusId) = @_;
+    die unless defined $dbh && $orgId && defined $locusId;
+    my @result = $dbh->selectrow_array("SELECT expName FROM GeneFitness WHERE species=? AND locusId=? LIMIT 1",
+				       undef, $orgId, $locusId);
+    return scalar(@result) > 0 ? 1 : 0;
+}
+
+sub orginfo($) {
+    my ($dbh) = @_;
+    my $orginfo = $dbh->selectall_hashref("SELECT * FROM Organism", "name");
+    while (my ($orgId,$row) = each %$orginfo) {
+	$row->{genome} = join(" ", $row->{genus}, $row->{species}, $row->{strain});
+    }
+    return $orginfo;
 }
 
 #END 
