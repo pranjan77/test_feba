@@ -1,9 +1,11 @@
 
 CREATE TABLE Organism(
    name             TEXT     NOT NULL, /* nickname or orgId in other tables */
+   division         TEXT     NOT NULL,
    genus            TEXT     NOT NULL,
-   species          TEXT     NOT NULL, /* includes strain identifier as well */
-   NCBI_taxonomyId  INT,
+   species          TEXT     NOT NULL,
+   strain           TEXT     NOT NULL,
+   taxonomyId       INT,     /* NCBI taxonomyId */
    PRIMARY KEY (name)
 );
 
@@ -32,7 +34,7 @@ CREATE TABLE Gene(
 CREATE TABLE QualityExperiment(
    nickname      TEXT       NOT NULL, /* orgId */
    expName       TEXT       NOT NULL,
-   expDesc       TEXT       NOT NULL,
+   expDesc       TEXT       NOT NULL, /* the short form */
    timeZeroSet   TEXT       NOT NULL, /* which set of Time0 samples were used as a control */
    num           INT        NOT NULL, /* a secondary identifier, unique within each organism */
    nMapped       INT        NOT NULL,
