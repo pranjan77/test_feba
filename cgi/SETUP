@@ -1,9 +1,12 @@
-Only the cgi scripts are in the code respository. These files need to
-be set up for the web site to work.  (All paths are within the main
-feba/ directory of the repository)
+Only the cgi scripts are in the code respository. These other files
+will need to be set up for the web site to work.  (All paths are
+within the main feba/ directory of the repository)
 
 A SQL database using mysqlite, which is in
 	cgi_data/feba.db
+Its schema is described in lib/db_setup_tables.sql
+It can built from the HTML directories that are created by BarSeqR.pl
+by using bin/db_setup.pl
 
 BLAST executables (blastall, fastacmd, formatdb), which should be in
 	bin/blast/
@@ -12,7 +15,7 @@ BLAST executables (blastall, fastacmd, formatdb), which should be in
 A BLAST database of amino acid sequences, which is in
 	cgi_data/aaseqs
 and must be formatted with
-	bin/formatdb -o T -p T -d cgi_data/aaseqs
+	bin/formatdb -o T -p T -i cgi_data/aaseqs
 
 Some of the scripts also write temporary files to
 	tmp/
@@ -26,5 +29,5 @@ The other dependencies are perl modules:
 	Time::HiRes (for making unique file names)
 	Bio::SeqIO (used to read FASTA files)
 
-P.S. the front page for the web site is:
+The front page for the web site is:
 	cgi/myFrontPage.cgi
