@@ -118,52 +118,32 @@ system('sort','-k1,1','-k12,12gr','-k11,11g','-k3,3gr',$blastOut,'-o',$blastSort
 # connect to database
 
 my $dbh = Utils::get_dbh();
-my ($stmt, $sth, $rv);
 
 # output blast result
 
 print $cgi->h2("Blast Result");
 
+my $orginfo = Utils::orginfo($dbh);
 open(RES,$blastSort) || die "Error reading $blastSort";
 my $cnt = 0;
 my @hits = ();
 while(<RES>) {
-    last if $cnt >= $numHit;
     chomp;
     my ($queryId,$subjectId,$percIdentity,$alnLength,$mmCnt,$gapCnt,$queryStart,$queryEnd,$subjectStart,$subjectEnd,$eVal,$bitScore) = split /\t/, $_;
     my ($nickname,$locusId) = split /:/, $subjectId;
     my $cov = sprintf("%.1f", 100*abs($queryEnd - $queryStart + 1)/length($seq));
     $percIdentity = sprintf("%.1f", $percIdentity);
 
-    # select gene information from the database
-    my $stmt = qq(SELECT genus, species FROM Organism WHERE name = ?;);
-    $sth = $dbh->prepare( $stmt );
-    $rv = $sth->execute( $nickname ) or die $DBI::errstr;
-    print $DBI::errstr if($rv < 0);
-
-    my ($genus,$species) = $sth->fetchrow_array();
-
-    $stmt = qq(SELECT sysName, gene, desc FROM Gene WHERE nickname = ? AND locusId = ?;);
-    $sth = $dbh->prepare( $stmt );
-    $rv = $sth->execute( $nickname, $locusId ) or die $DBI::errstr;
-    print $DBI::errstr if($rv < 0);
-
-    my ($sys,$gene,$desc) = $sth->fetchrow_array();
-
-    #check if any fitness data exists
-    $stmt = qq(SELECT expName, fit, t FROM GeneFitness WHERE species = ? AND locusId = ?;);
-    $sth = $dbh->prepare( $stmt );
-    $rv = $sth->execute( $nickname, $locusId ) or die $DBI::errstr;
-    print $DBI::errstr if($rv < 0);
+    my ($sys,$geneName,$desc) = $dbh->selectrow_array("SELECT sysName,gene,desc FROM Gene WHERE nickname = ? AND locusId = ?",
+						     undef, $nickname, $locusId);
+    die "Unknown gene $nickname:$locusId" unless defined $desc;
 
     my $fitness = "no data";
-    while(my @row = $sth->fetchrow_array()) {
+    if (Utils::gene_has_fitness($dbh,$nickname,$locusId)) {
         my $dest = "myFitShow.cgi?species=$nickname&gene=$locusId";
         $fitness = qq(<a href=$dest>check data</a>);
-        last;
     }
-
-    my @hit = ($locusId,$sys,$gene,$desc,$species,$percIdentity,$cov,$eVal,$bitScore,$fitness);
+    my @hit = ($locusId,$sys,$geneName,$desc,$orginfo->{$nickname}->{genome},$percIdentity,$cov,$eVal,$bitScore,$fitness);
     push @hits, @hit;
     $cnt++;
 }
