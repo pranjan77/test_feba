@@ -41,19 +41,25 @@ print "<P>Choose species: ";
 #print $cgi->h6("Note: all species with fitness data are listed here.");
 
 my $dbh = Utils::get_dbh();
-my $stmt = qq(SELECT species FROM Organism;);
-my $sth = Utils::execute_db($dbh, $stmt);
-my @species = ("All");
-while(my @row = $sth->fetchrow_array()) {
-    my ($species) = @row;
-    push @species, $species;
+
+# drop down list of species
+my %orgLabels = ();
+my @orgs = ();
+my $orgs = $dbh->selectall_arrayref(qq{SELECT name,genus,species,strain FROM Organism
+                                       ORDER BY genus,species,strain }) || die;
+foreach my $row (@$orgs) {
+    my ($name,$genus,$species,$strain) = @$row;
+    push @orgs, $name;
+    $orgLabels{$name} = "$genus $species $strain";
 }
-$species[0] = "All " . $#species . " genomes";
+unshift @orgs, "All";
+$orgLabels{"All"} = "All $#orgs genomes";
 
 print $cgi->popup_menu(
     -name    => 'species',
-    -values  => \@species,
-    -default => $species[0],
+    -values  => \@orgs,
+    -labels  => \%orgLabels,
+    -default => $orgs[0]
 );
 
 print q(<P>Enter gene name: );
