@@ -2,11 +2,18 @@
 #######################################################
 ## myFitShow.cgi
 ##
-## Copyright (c) 2015 All Right Reserved by UC Berkeley
+## Copyright (c) 2015 University of California
 ##
 ## Authors:
 ## Wenjun Shao (wjshao@berkeley.edu) and Morgan Price
 #######################################################
+#
+# Required CGI parameters:
+# gene -- a locusId, sysName, or gene name to match on
+#	(may show multiple hits)
+# Optional CGI parameters:
+# orgId -- which organism to search in
+# optionshowAll -- 1 if showing all fitness values instead of just the most extreme ones
 
 use strict;
 
@@ -23,12 +30,12 @@ my $style = Utils::get_style();
 
 # read the input information
 
-my $species = $cgi->param('species') || "";
-my $gene = $cgi->param('gene') || die "no gene name found\n";
+my $orgSpec = $cgi->param('orgId') || "";
+my $geneSpec = $cgi->param('gene') || die "no gene name found\n";
 my $showAll = $cgi->param('showAll') || 0;
 
-$gene =~ s/ *$//;
-$gene =~ s/^ *//;
+$geneSpec =~ s/ *$//;
+$geneSpec =~ s/^ *//;
 
 print $cgi->header;
 print $cgi->start_html(
@@ -40,174 +47,107 @@ print $cgi->start_html(
 
 # check user input
 
-Utils::fail($cgi, "$gene is invalid. Please enter correct gene name!") unless ($gene =~ m/^[A-Za-z0-9_]*$/);
-
-print $cgi->h2("Fitness Profile");
+Utils::fail($cgi, "$geneSpec is invalid. Please enter correct gene name!") unless ($geneSpec =~ m/^[A-Za-z0-9_]*$/);
 
 # connect to database
 
 my $dbh = Utils::get_dbh();
-my ($stmt, $sth, $rv, $nickname, $locusId, $sys, $desc, $genus, $strain, $g);
-
 my $orginfo = Utils::orginfo($dbh);
 
-# When no species has been specified, get the species name and gene locusId, which may not be unique
+my $query = qq{SELECT orgId, locusId, sysName, desc, gene FROM Gene
+		WHERE locusId = ? OR sysName = ? OR upper(gene) = upper(?)};
+my $hits;
+if ($orgSpec) {
+    $query .= " AND orgId = ?";
+    $hits = $dbh->selectall_arrayref($query, { Slice => {} }, $geneSpec, $geneSpec, $geneSpec, $orgSpec);
+} else {
+    $hits = $dbh->selectall_arrayref($query, { Slice => {} }, $geneSpec, $geneSpec, $geneSpec);
+}
 
-if ($species eq "All" || $species eq "") {
-    my $hits = $dbh->selectall_arrayref(qq{SELECT nickname, locusId, sysName, desc, gene FROM Gene
-                                           WHERE locusId = ? OR sysName = ? OR upper(gene) = upper(?)},
-	                                undef, $gene, $gene, $gene)
-	|| die;
+# and add another column for whether there is fitness data
+foreach my $gene (@$hits) {
+    $gene->{has_fitness} = Utils::gene_has_fitness($dbh,$gene->{orgId},$gene->{locusId});
+}
 
-    # and add another column for whether there is fitnes data
-    foreach my $row (@$hits) {
-    	my ($orgId, $locusId, $sysName, $desc, $geneName) = @$row;
-	push @$row, Utils::gene_has_fitness($dbh,$orgId,$locusId);
+if (@$hits == 0) {
+    print $cgi->p("No gene found for $geneSpec");
+} elsif (@$hits > 1) {
+    print $cgi->p("Genes found for $geneSpec:");
+    my @trows = ();
+    push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
+			  $cgi->th( [ 'geneId','sysName','geneName','description','genome','fitness' ] ) );
+    foreach my $gene (@$hits) {
+	my $dest = "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}";
+	my $fitString = $gene->{has_fitness} ? qq(<a href="$dest">check data</a>) : "no data";
+	my @trow = map $cgi->td($_), ($gene->{locusId}, $gene->{sysName}, $gene->{gene}, $gene->{desc},
+				      $orginfo->{$gene->{orgId}}->{genome}, $fitString );
+	push @trows, $cgi->Tr(@trow);
     }
+    
+    print $cgi->table( { -border=>1, cellpadding=>3 }, @trows);
+    
+} else {
+    # just 1 hit
+    my $gene = $hits->[0];
+    my $orgId = $gene->{orgId};
+    my $locusId = $gene->{locusId};
 
-    if (@$hits == 0) {
-        print $cgi->p("No gene found for $gene");
-        $dbh->disconnect();
-        Utils::endHtml($cgi);
-    } elsif (@$hits > 1) {
-        print $cgi->p("Genes found for $gene:");
-	my @trows = ();
-	push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
-			      $cgi->th( [ 'geneId','sysName','geneName','description','genome','fitness' ] ) );
-	foreach my $row (@$hits) {
-	    my ($orgId, $locusId, $sysName, $desc, $geneName, $hasData) = @$row;
-	    my $dest = "myFitShow.cgi?species=$orgId&gene=$locusId";
-	    my $fitString = $hasData ? qq(<a href="$dest">check data</a>) : "no data";
-	    my @trow = map $cgi->td($_), ($locusId, $sysName, $geneName, $desc,
-					$orginfo->{$orgId}->{genome}, $fitString );
-	    push @trows, $cgi->Tr(@trow);
+    if ($hits->[0]{has_fitness} == 0) {
+	print $cgi->p("Sorry, no fitness data for the gene $geneSpec in " . $orginfo->{$gene->{orgId}}{genome});
+    } else {
+	# show fitness data for gene
+	my @fit = @{ $dbh->selectall_arrayref("SELECT expName,fit,t from GeneFitness where orgId=? AND locusId=?",
+					      { Slice => {} },
+					      $orgId, $locusId) };
+	my $nTotValues = scalar(@fit);
+	die "Unreachable" if $nTotValues == 0;
+	my $limitRows = $showAll ? $nTotValues : 20;
+	my $minAbsFit;
+	if ($nTotValues > $limitRows) {
+	    # subset the rows
+	    @fit = sort { abs($b->{fit}) <=> abs($a->{fit}) } @fit;
+	    @fit = @fit[0..($limitRows-1)];
+	    $minAbsFit = abs($fit[$#fit]{fit});
+	}
+	@fit = sort { $a->{fit} <=> $b->{fit} } @fit;
+
+	# and get metadata about experiments
+	my $expinfo = Utils::expinfo($dbh,$orgId);
+
+	print $cgi->h2("Fitness Profile");
+	print $cgi->p("Fitness data for gene $geneSpec: $gene->{sysName} $locusId $gene->{desc} in $orginfo->{$orgId}{genome}");
+	if (@fit < $nTotValues) {
+	    $minAbsFit = sprintf("%.1f", $minAbsFit);
+	    print $cgi->h5("Note: only the top $limitRows experiments with the most significant phenotypes are shown (|fitness| &ge; $minAbsFit)");
 	}
 
-        print $cgi->table( { -border=>1, cellpadding=>3 }, @trows);
-
-        $dbh->disconnect();
-        Utils::endHtml($cgi);
-    }
-    # else fall through to 1-gene case
-    ($nickname, $locusId, $sys, $desc, $g, undef) = @{ $hits->[0] };
-    $species = $orginfo->{$nickname}->{genome}; # description of organism
-} else {
-    $nickname = $species;
-    $species = $orginfo->{$nickname}->{genome}; # description of organism
-
-    # get other information for the gene
-    $stmt = qq(SELECT locusId, sysName, gene, desc FROM Gene WHERE nickname = ? AND (locusId = ? OR sysName = ? OR upper(gene) = upper(?)););
-    $sth = $dbh->prepare( $stmt );
-    $rv = $sth->execute($nickname, $gene, $gene, $gene) or die $DBI::errstr;
-    print $DBI::errstr if($rv < 0);
-
-    ($locusId, $sys, $g, $desc) = $sth->fetchrow_array();
-    if (!defined $locusId) {
-	print $cgi->p("No gene found for $gene in $species");
-        $dbh->disconnect();
-        Utils::endHtml($cgi);
-    }
-}
-
-
-# get the fitness data from the database
-
-$stmt = qq(SELECT expName, fit, t FROM GeneFitness WHERE species = ? AND locusId = ?;);
-$sth = $dbh->prepare( $stmt );
-$rv = $sth->execute($nickname, $locusId) or die $DBI::errstr;
-print $DBI::errstr if($rv < 0);
-
-my @outRows = ();
-my $fitCnt = 0;
-while(my @row = $sth->fetchrow_array()) {
-    push @outRows, {exp => $row[0], fit => $row[1], t => $row[2]};
-    $fitCnt += 1;
-}
-
-if ($fitCnt > 0) {
-
-    print $cgi->p("Fitness data for gene $gene: $sys $locusId $desc in $genus $species $strain");
-
-    # sort by fitness value
-
-    my $limit = $#outRows > 19 ? 19 : $#outRows;
-    $limit = $showAll ? $#outRows : $limit;
-    @outRows = sort { abs($b->{ 'fit' }) <=> abs($a->{ 'fit' }) } @outRows;
-    @outRows = @outRows[0..$limit];
-    @outRows = sort { $a->{ 'fit' } <=> $b->{ 'fit' } } @outRows;
-
-    my @absfit = map { abs($_->{ 'fit' }) } @outRows;
-    my $sig = sprintf("%.1f",min(@absfit));
-
-    my $len = $limit + 1;
-
-    if (!$showAll) {
-        print $cgi->h5("Note: only the top $len experiments with the most significant phenotypes are shown (|fitness| > $sig).");
-    } else {
-        print $cgi->h5("All experiments are shown here.");
-    }
-
-    # get meta info for the experiments
-
-    my @out;
-    foreach my $i (0..$#outRows) {
-        $stmt = qq(SELECT expDesc FROM QualityExperiment WHERE nickname = ? AND expName = ?;);
-        $sth = $dbh->prepare( $stmt );
-        $rv = $sth->execute($nickname, $outRows[$i]->{ 'exp' }) or die $DBI::errstr;
-        print $DBI::errstr if($rv < 0);
-
-        my $desc;
-        while(my @row = $sth->fetchrow_array()) {
-            ($desc) = @row;
-        }
-
-        push @out, {exp => $desc, fit => sprintf("%.1f",$outRows[$i]->{ 'fit' }), t => sprintf("%.1f",$outRows[$i]->{ 't' })};
-    }
-    my @td = ();
-    foreach my $elem ( @out ) {
-
-        # color code fitness value in range (-3 .. 3)
-
-        my $fit = $elem->{ 'fit' };
-        my $perc = ($fit + 3)/6;
-        $perc = $perc > 1 ? 1 : $perc;
-        $perc = $perc < 0 ? 0 : $perc;
-
-        my ($color) = Utils::get_color($perc);
-
-        # color code only the fitness cell 
-
-        my $td = $cgi->td( [ $elem->{ 'exp' } ] ) . $cgi->td({-bgcolor => "$color" }, [ $elem->{ 'fit' } ] ) . $cgi->td( [ $elem->{ 't' } ] );
-        push @td, $td;
-    }
-    print $cgi->table(
-        { -border=>1, cellpadding=>3 },
-        $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
-            $cgi->th( [ 'experiment','fitness','t score' ] ) ),
-            $cgi->Tr( \@td )
-    );
-
-    if ($showAll == 0) {
-        my $showAllDest = qq(myFitShow.cgi?species=$nickname&gene=$locusId&showAll=1);
-        print $cgi->h4(qq(<a href=$showAllDest>Show all fitness data</a>));
-    } else {
-        my $showFewDest = qq(myFitShow.cgi?species=$nickname&gene=$locusId&showAll=0);
-        print $cgi->h4(qq(<a href=$showFewDest>Show fewer fitness data</a>));
-    }
-    print $cgi->h4($cgi->a({href => "cofit.cgi?species=$nickname&gene=$locusId"}, "Top cofit genes"));
-
-    my $dest = qq(mySeqSearch.cgi?species=$nickname&gene=$locusId);
+	my @out = (); # specifiers for HTML rows for each fitness value
+	foreach my $fitrow (@fit) {
+	    my $expName = $fitrow->{expName};
+	    push @out, join(" ",
+			    $cgi->td( $expinfo->{$expName}{expDesc} ),
+			    $cgi->td( { -bgcolor => Utils::fitcolor($fitrow->{fit}) },
+				      sprintf("%.1f", $fitrow->{fit}) ),
+			    $cgi->td( sprintf("%.1f", $fitrow->{t}) ));
+	}
+	print $cgi->table(
+	    { -border=>1, cellpadding=>3 },
+	    $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
+		     $cgi->th( [ 'experiment','fitness','t score' ] ) ),
+            $cgi->Tr( \@out ) );
+	# links
+	if ($showAll == 0) {
+	    my $showAllDest = qq(myFitShow.cgi?orgId=$orgId&gene=$locusId&showAll=1);
+	    print $cgi->h4(qq(<a href=$showAllDest>Show all fitness data</a>));
+	} else {
+	    my $showFewDest = qq(myFitShow.cgi?orgId=$orgId&gene=$locusId&showAll=0);
+	    print $cgi->h4(qq(<a href=$showFewDest>Show fewer fitness data</a>));
+	}
+	print $cgi->h4($cgi->a({href => "cofit.cgi?orgId=$orgId&locusId=$locusId"}, "Top cofit genes"));
+    } # end if gene has fitness data
+    # check homologs where or not gene has data
+    my $dest = qq(mySeqSearch.cgi?orgId=$orgId&locusId=$locusId);
     print $cgi->h4(qq(<a href=$dest>Check homologs</a>));
-
-} else {
-    print $cgi->p("Sorry, no fitness data for the gene $gene.");
 }
-
 $dbh->disconnect();
 Utils::endHtml($cgi);
-
-exit 0;
-
-# END
-
-#----------------------------------------

@@ -1,16 +1,16 @@
 
 CREATE TABLE Organism(
-   name             TEXT     NOT NULL, /* nickname or orgId in other tables */
+   orgId            TEXT     NOT NULL,
    division         TEXT     NOT NULL,
    genus            TEXT     NOT NULL,
    species          TEXT     NOT NULL,
    strain           TEXT     NOT NULL,
    taxonomyId       INT,     /* NCBI taxonomyId */
-   PRIMARY KEY (name)
+   PRIMARY KEY (orgId)
 );
 
 CREATE TABLE Gene(
-   nickname         TEXT     NOT NULL, /* orgId */
+   orgId            TEXT     NOT NULL,
    locusId          TEXT     NOT NULL, /* nickname x locusId is unique; locusId may not be */
    sysName          TEXT,    /* a locus tag like SO_1446 or b2338, sometimes identical to locusId */
    scaffoldId       TEXT     NOT NULL,
@@ -25,14 +25,14 @@ CREATE TABLE Gene(
    desc             TEXT,
    GC               REAL,    /* %GC of the gene's sequence */
    nTA              INT,     /* number of TA dinucleotides in the gene's sequence */
-   PRIMARY KEY (nickname, locusId)
+   PRIMARY KEY (orgId, locusId)
 );
 
 /* Only experiments that succeeded should be loaded into the database.
    Quality metrics are documented in lib/FEBA_template.html
  */
-CREATE TABLE QualityExperiment(
-   nickname      TEXT       NOT NULL, /* orgId */
+CREATE TABLE Experiment(
+   orgId         TEXT       NOT NULL,
    expName       TEXT       NOT NULL,
    expDesc       TEXT       NOT NULL, /* the short form */
    timeZeroSet   TEXT       NOT NULL, /* which set of Time0 samples were used as a control */
@@ -52,26 +52,26 @@ CREATE TABLE QualityExperiment(
    adjcor        REAL       NOT NULL,
    gccor         REAL       NOT NULL,
    maxFit        REAL       NOT NULL,
-   PRIMARY KEY (nickname, expName)
+   PRIMARY KEY (orgId, expName)
 );
 
 CREATE TABLE GeneFitness(
-   species          TEXT     NOT NULL,
+   orgId            TEXT     NOT NULL,
    locusId          TEXT     NOT NULL,
    expName          TEXT     NOT NULL,
    fit              REAL     NOT NULL,
    t                REAL     NOT NULL,
-   PRIMARY KEY (species,locusId,expName)
+   PRIMARY KEY (orgId,locusId,expName)
 );
 
 /* Most cofit genes for each gene.
    Genes in organisms that have relatively few experiments will not be included.
 */
 CREATE TABLE Cofit(
-	nickname TEXT NOT NULL,
+	orgId TEXT NOT NULL,
         locusId TEXT NOT NULL,
 	hitId TEXT NOT NULL,
         rank INT NOT NULL,
         cofit REAL NOT NULL,
-        PRIMARY KEY (nickname,locusId,hitId)
+        PRIMARY KEY (orgId,locusId,hitId)
 );

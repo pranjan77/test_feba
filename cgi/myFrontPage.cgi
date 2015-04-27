@@ -2,11 +2,13 @@
 #######################################################
 ## myFrontPage.cgi
 ##
-## Copyright (c) 2015 All Right Reserved by UC Berkeley
+## Copyright (c) 2015 University of California
 ##
 ## Authors:
 ## Wenjun Shao (wjshao@berkeley.edu) and Morgan Price
 #######################################################
+#
+# CGI parameters: none
 
 use strict;
 
@@ -43,23 +45,21 @@ print "<P>Choose species: ";
 my $dbh = Utils::get_dbh();
 
 # drop down list of species
-my %orgLabels = ();
-my @orgs = ();
-my $orgs = $dbh->selectall_arrayref(qq{SELECT name,genus,species,strain FROM Organism
-                                       ORDER BY genus,species,strain }) || die;
-foreach my $row (@$orgs) {
-    my ($name,$genus,$species,$strain) = @$row;
-    push @orgs, $name;
-    $orgLabels{$name} = "$genus $species $strain";
+my @orgOptions = ("");
+my $orginfo = Utils::orginfo($dbh);
+my @orginfo = sort { $a->{genome} <=> $b->{genome} } values(%$orginfo);
+my %orgLabels = ("" => join(" ", "All", scalar(@orginfo), "genomes"));
+foreach my $hash (@orginfo) {
+    my $orgId = $hash->{orgId};
+    push @orgOptions, $orgId;
+    $orgLabels{$orgId} = $hash->{genome};
 }
-unshift @orgs, "All";
-$orgLabels{"All"} = "All $#orgs genomes";
 
 print $cgi->popup_menu(
-    -name    => 'species',
-    -values  => \@orgs,
+    -name    => 'orgId',
+    -values  => \@orgOptions,
     -labels  => \%orgLabels,
-    -default => $orgs[0]
+    -default => $orgOptions[0]
 );
 
 print q(<P>Enter gene name: );

@@ -83,7 +83,9 @@ sub WorkPutHash($@); # hash and list of fields to use
     # Create db.Organism
     StartWorkFile("Organism", "db.Organism");
     foreach my $row (@orginfo) {
-	WorkPutHash($row, @orgfields) if exists $orgUse{$row->{name}};
+	$row->{orgId} = $row->{name};
+	WorkPutHash($row, qw{orgId division genus species strain taxonomyId})
+	    if exists $orgUse{$row->{orgId}};
     }
     EndWork();
 
@@ -94,15 +96,15 @@ sub WorkPutHash($@); # hash and list of fields to use
 	die "No genes for $org" unless @genes > 0;
 	StartWork("Gene", $org);
 	foreach my $row (@genes) {
-	    $row->{nickname} = $org;
+	    $row->{orgId} = $org;
 	    $row->{gene} = $row->{name};
 	    $row->{type} = 1 if !exists $row->{type};
-	    WorkPutHash($row, qw{nickname locusId sysName scaffoldId begin end type strand gene desc GC nTA});
+	    WorkPutHash($row, qw{orgId locusId sysName scaffoldId begin end type strand gene desc GC nTA});
 	}
 	EndWork();
     }
 
-    # Create db.QualityExperiment.*
+    # Create db.Experiment.*
     foreach my $org (@orgs) {
 	my @q = &ReadTable("$indir/$org/fit_quality.tab",
 			   qw{name short t0set num nMapped nPastEnd nGenic nUsed gMed gMedt0 gMean
@@ -113,13 +115,13 @@ sub WorkPutHash($@); # hash and list of fields to use
                                  gDNA.plate gDNA.well Index Media Growth.Method Group
                                  Condition_1 Units_1 Concentration_1
                                  Condition_2 Units_2 Concentration_2});
-	StartWork("QualityExperiment",$org);
+	StartWork("Experiment",$org);
 	foreach my $row (@q) {
-	    $row->{"nickname"} = $org;
+	    $row->{"orgId"} = $org;
 	    $row->{"expName"} = $row->{"name"};
 	    $row->{"expDesc"} = $row->{"short"};
 	    $row->{"timeZeroSet"} = $row->{"t0set"};
-	    WorkPutHash($row, qw{nickname expName expDesc timeZeroSet num nMapped nPastEnd nGenic
+	    WorkPutHash($row, qw{orgId expName expDesc timeZeroSet num nMapped nPastEnd nGenic
                                  nUsed gMed gMedt0 gMean cor12 mad12 mad12c mad12c_t0
                                  opcor adjcor gccor maxFit})
 		if $row->{u} eq "TRUE";
@@ -165,8 +167,8 @@ sub WorkPutHash($@); # hash and list of fields to use
 	my @cofit = &ReadTable($cofitFile, qw{locusId hitId rank cofit});
 	StartWork("Cofit",$org);
 	foreach my $row (@cofit) {
-	    $row->{nickname} = $org;
-	    WorkPutHash($row, qw{nickname locusId hitId rank cofit});
+	    $row->{orgId} = $org;
+	    WorkPutHash($row, qw{orgId locusId hitId rank cofit});
 	}
 	EndWork();
     }

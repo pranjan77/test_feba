@@ -96,7 +96,17 @@ sub formatFASTA($;$)
 
 #--------------------------------------------------------
 
-sub get_color($) {
+# color code fitness value in range (-3 .. 0 .. 3) to blue => white => yellow
+sub fitcolor($) {
+    my ($fit) = @_;
+    my $perc = ($fit + 3)/6;
+    $perc = $perc > 1 ? 1 : $perc;
+    $perc = $perc < 0 ? 0 : $perc;
+    return fractioncolor($perc);
+}
+
+# from a fraction 0:1 to a color
+sub fractioncolor($) {
 #RED (255, 0, 0)
 #YELLOW (255, 255, 0)
 #BLUE (0, 0, 255)
@@ -136,19 +146,27 @@ sub tmp_dir() {
 sub gene_has_fitness($$$) {
     my ($dbh,$orgId,$locusId) = @_;
     die unless defined $dbh && $orgId && defined $locusId;
-    my @result = $dbh->selectrow_array("SELECT expName FROM GeneFitness WHERE species=? AND locusId=? LIMIT 1",
+    my @result = $dbh->selectrow_array("SELECT expName FROM GeneFitness WHERE orgId=? AND locusId=? LIMIT 1",
 				       undef, $orgId, $locusId);
     return scalar(@result) > 0 ? 1 : 0;
 }
 
+# returns a hash of orgId => attribute => value, including "genome" for the display name
 sub orginfo($) {
     my ($dbh) = @_;
-    my $orginfo = $dbh->selectall_hashref("SELECT * FROM Organism", "name");
+    my $orginfo = $dbh->selectall_hashref("SELECT * FROM Organism", "orgId");
     while (my ($orgId,$row) = each %$orginfo) {
 	$row->{genome} = join(" ", $row->{genus}, $row->{species}, $row->{strain});
     }
     return $orginfo;
 }
+
+# returns a hash of expName => attribute => value
+sub expinfo($$) {
+    my ($dbh,$orgId) = @_;
+    return $dbh->selectall_hashref("SELECT * FROM Experiment WHERE orgId = ?", "expName", {}, $orgId);
+}
+
 
 #END 
 

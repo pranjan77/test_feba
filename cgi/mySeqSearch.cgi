@@ -2,11 +2,21 @@
 #######################################################
 ## mySeqSearch.cgi
 ##
-## Copyright (c) 2015 All Right Reserved by UC Berkeley
+## Copyright (c) 2015 University of California
 ##
 ## Authors:
 ## Wenjun Shao (wjshao@berkeley.edu) and Morgan Price
 #######################################################
+#
+# Required CGI parameters:
+# Either query (the sequence, a.a. by default)
+# or orgId and locusId (if coming from a page for that gene)
+#
+# Optional CGI parameters in query mode:
+# qtype -- protein or nucleotide (default is protein)
+#
+# Optional CGI parameters in either mode:
+# numHit -- how many hits to show (default is 20)
 
 use strict;
 
@@ -27,8 +37,8 @@ my $style = Utils::get_style();
 my $query = $cgi->param('query') || "";
 my $qtype = $cgi->param('qtype') || "protein";
 my $numHit = $cgi->param('numHit') || 20;
-my $gene = $cgi->param('gene') || "";
-my $species = $cgi->param('species') || "";
+my $locusSpec = $cgi->param('locusId') || "";
+my $orgId = $cgi->param('orgId') || "";
 
 print $cgi->header;
 print $cgi->start_html(
@@ -41,7 +51,7 @@ print $cgi->start_html(
 
 # check user input
 
-Utils::fail($cgi,qq($gene is invalid. Please enter correct gene name!)) unless ($gene =~ m/^[A-Za-z0-9_]*$/);
+Utils::fail($cgi,qq($locusSpec is invalid. Please enter correct gene name!)) unless ($locusSpec =~ m/^[A-Za-z0-9_]*$/);
 
 my $procId = $$;
 my $timestamp = int (gettimeofday * 1000);
@@ -93,11 +103,11 @@ if ($query =~ m/[A-Za-z]/) {
 
 # check homologs
 
-} elsif ($gene ne "") {
+} elsif ($locusSpec ne "") {
 
     # extract sequence for the given gene
 
-    my $id = join(":",$species,$gene);
+    my $id = join(":",$orgId,$locusSpec);
     my $fastacmd = '../bin/blast/fastacmd';
     system($fastacmd,'-d',$myDB,'-s',$id,'-o',$seqFile)==0 || die "Error running $fastacmd -d $myDB -s $id -o $seqFile -- $!";
 
@@ -130,20 +140,23 @@ my @hits = ();
 while(<RES>) {
     chomp;
     my ($queryId,$subjectId,$percIdentity,$alnLength,$mmCnt,$gapCnt,$queryStart,$queryEnd,$subjectStart,$subjectEnd,$eVal,$bitScore) = split /\t/, $_;
-    my ($nickname,$locusId) = split /:/, $subjectId;
+    my ($orgId,$locusId) = split /:/, $subjectId;
     my $cov = sprintf("%.1f", 100*abs($queryEnd - $queryStart + 1)/length($seq));
     $percIdentity = sprintf("%.1f", $percIdentity);
 
-    my ($sys,$geneName,$desc) = $dbh->selectrow_array("SELECT sysName,gene,desc FROM Gene WHERE nickname = ? AND locusId = ?",
-						     undef, $nickname, $locusId);
-    die "Unknown gene $nickname:$locusId" unless defined $desc;
+    my ($sys,$geneName,$desc) = $dbh->selectrow_array("SELECT sysName,gene,desc FROM Gene WHERE orgId = ? AND locusId = ?",
+						     undef, $orgId, $locusId);
+    if (!defined $desc) {
+	print "Warning! Unknown hit $orgId:$locusId<BR>";
+	next;
+    }
 
     my $fitness = "no data";
-    if (Utils::gene_has_fitness($dbh,$nickname,$locusId)) {
-        my $dest = "myFitShow.cgi?species=$nickname&gene=$locusId";
+    if (Utils::gene_has_fitness($dbh,$orgId,$locusId)) {
+        my $dest = "myFitShow.cgi?orgId=$orgId&gene=$locusId";
         $fitness = qq(<a href=$dest>check data</a>);
     }
-    my @hit = ($locusId,$sys,$geneName,$desc,$orginfo->{$nickname}->{genome},$percIdentity,$cov,$eVal,$bitScore,$fitness);
+    my @hit = ($locusId,$sys,$geneName,$desc,$orginfo->{$orgId}->{genome},$percIdentity,$cov,$eVal,$bitScore,$fitness);
     push @hits, @hit;
     $cnt++;
 }
