@@ -13,7 +13,7 @@
 #	(may show multiple hits)
 # Optional CGI parameters:
 # orgId -- which organism to search in
-# optionshowAll -- 1 if showing all fitness values instead of just the most extreme ones
+# showAll -- 1 if showing all fitness values instead of just the most extreme ones
 
 use strict;
 
@@ -109,10 +109,22 @@ if (@$hits == 0) {
 	    @fit = @fit[0..($limitRows-1)];
 	    $minAbsFit = abs($fit[$#fit]{fit});
 	}
-	@fit = sort { $a->{fit} <=> $b->{fit} } @fit;
 
 	# and get metadata about experiments
 	my $expinfo = Utils::expinfo($dbh,$orgId);
+
+	if ($showAll) {
+	    @fit = sort { my $expA = $expinfo->{$a->{expName}};
+			  my $expB = $expinfo->{$b->{expName}};
+			  my $out = $expA->{expGroup} cmp $expB->{expGroup};
+			  $out = $expA->{condition_1} cmp $expB->{condition_1} if $out == 0;
+			  $out = $expA->{concentration_1} cmp $expB->{concentration_1} if $out == 0;
+			  $out = $expA->{expDesc} cmp $expB->{expDesc} if $out == 0;
+			  return $out;
+	    } @fit;
+	} else {
+	    @fit = sort { $a->{fit} <=> $b->{fit} } @fit;
+	}
 
 	print $cgi->h2("Fitness Profile");
 	print $cgi->p("Fitness data for gene $geneSpec: $gene->{sysName} $locusId $gene->{desc} in $orginfo->{$orgId}{genome}");
@@ -122,18 +134,26 @@ if (@$hits == 0) {
 	}
 
 	my @out = (); # specifiers for HTML rows for each fitness value
+	my $lastGroup = ""; # only enter the first time
 	foreach my $fitrow (@fit) {
 	    my $expName = $fitrow->{expName};
+	    my $exp = $expinfo->{$expName};
+	    my $group = $exp->{expGroup};
 	    push @out, join(" ",
-			    $cgi->td( $expinfo->{$expName}{expDesc} ),
+			    $cgi->td($group eq $lastGroup ? "" : $group),
+			    $cgi->td($cgi->a({ style => "color:rgb(0,0,0)",
+					       title => "$expName: $exp->{expDescLong}",
+					       href => "exp.cgi?orgId=$orgId&expName=$expName" },
+					       $exp->{expDesc})),
 			    $cgi->td( { -bgcolor => Utils::fitcolor($fitrow->{fit}) },
 				      sprintf("%.1f", $fitrow->{fit}) ),
 			    $cgi->td( sprintf("%.1f", $fitrow->{t}) ));
+	    $lastGroup = $group;
 	}
 	print $cgi->table(
 	    { -border=>1, cellpadding=>3 },
 	    $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
-		     $cgi->th( [ 'experiment','fitness','t score' ] ) ),
+		     $cgi->th( [ 'group', 'condition','fitness','t score' ] ) ),
             $cgi->Tr( \@out ) );
 	# links
 	if ($showAll == 0) {

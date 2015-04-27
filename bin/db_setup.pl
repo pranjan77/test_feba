@@ -115,15 +115,32 @@ sub WorkPutHash($@); # hash and list of fields to use
                                  gDNA.plate gDNA.well Index Media Growth.Method Group
                                  Condition_1 Units_1 Concentration_1
                                  Condition_2 Units_2 Concentration_2});
+	my %exps = map {$_->{name} => $_} @exps;
 	StartWork("Experiment",$org);
 	foreach my $row (@q) {
 	    $row->{"orgId"} = $org;
 	    $row->{"expName"} = $row->{"name"};
 	    $row->{"expDesc"} = $row->{"short"};
 	    $row->{"timeZeroSet"} = $row->{"t0set"};
+
+	    my $id = $row->{name};
+	    my $exp = $exps{$id} || die "No matching metadata for experiment $org $id";
+	    $row->{expDescLong} = $exp->{Description};
+	    $row->{mutantLibrary} = $exp->{"Mutant.Library"};
+	    $row->{expGroup} = $exp->{Group};
+	    $row->{dateStarted} = $exp->{Date_pool_expt_started};
+	    $row->{setName} = $exp->{SetName};
+	    $row->{seqindex} = $exp->{Index};
+	    foreach my $field (qw{Person Media Condition_1 Units_1 Concentration_1
+                                 Condition_2 Units_2 Concentration_2}) {
+		$row->{lc($field)} = $exp->{$field} eq "NA" ? "" : $exp->{$field};
+	    }
 	    WorkPutHash($row, qw{orgId expName expDesc timeZeroSet num nMapped nPastEnd nGenic
                                  nUsed gMed gMedt0 gMean cor12 mad12 mad12c mad12c_t0
-                                 opcor adjcor gccor maxFit})
+                                 opcor adjcor gccor maxFit
+				 expGroup expDescLong mutantLibrary person dateStarted setName seqindex media
+				 condition_1 units_1 concentration_1
+				 condition_2 units_2 concentration_2})
 		if $row->{u} eq "TRUE";
 	}
 	EndWork();
@@ -236,6 +253,9 @@ sub WorkPutRow(@) {
 
 sub WorkPutHash($@) {
     my ($row,@fields) = @_;
+    foreach my $field (@fields) {
+	die "No such field $field" unless exists $row->{$field};
+    }
     WorkPutRow(map $row->{$_}, @fields);
 }
 

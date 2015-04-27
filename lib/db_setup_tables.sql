@@ -52,6 +52,21 @@ CREATE TABLE Experiment(
    adjcor        REAL       NOT NULL,
    gccor         REAL       NOT NULL,
    maxFit        REAL       NOT NULL,
+   expGroup      TEXT       NOT NULL,
+   expDescLong   TEXT       NOT NULL,
+   mutantLibrary TEXT       NOT NULL,
+   person        TEXT       NOT NULL,
+   dateStarted   TEXT       NOT NULL,
+   setName       TEXT       NOT NULL,
+   seqindex      TEXT       NOT NULL,
+   media         TEXT       NOT NULL,
+   /* These fields may be absent, but this should be represented as empty strings */
+   condition_1   TEXT       NOT NULL,
+   units_1       TEXT       NOT NULL,
+   concentration_1 TEXT     NOT NULL,
+   condition_2   TEXT       NOT NULL,
+   units_2       TEXT       NOT NULL,
+   concentration_2 TEXT     NOT NULL,
    PRIMARY KEY (orgId, expName)
 );
 
