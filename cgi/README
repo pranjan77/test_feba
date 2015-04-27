@@ -1,0 +1,22 @@
+
+See SETUP for instructions on the files and perl utilities that are
+required for this to work. The key directories are:
+cgi/ -- CGI scripts
+cgi_data/ -- sqlite3 database and BLAST database
+tmp/ -- temporary files
+lib/Utils.pm -- shared functions
+
+Site map:
+
+myFrontPage.cgi -- the front page
+	search by name => myFitShow.cgi
+	search by sequence => mySeqSearch.cgi
+myFitShow.cgi -- show list of matching genes, or fitness data for one
+	if a list, links to page for individual gene
+	show all => showAll=1 option
+	homologs => mySeqSearch.cgi
+	cofitness => cofit.cgi
+cofit.cgi -- top cofit hits for a gene
+	=> myFitShow.cgi or mySeqSearch.cgi
+
+And every page ends with a link to the front page
