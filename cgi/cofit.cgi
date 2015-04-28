@@ -41,8 +41,9 @@ print $cgi->start_html(
     -author=>'morgannprice@yahoo.com',
     -meta=>{'copyright'=>'copyright 2015 UC Berkeley'},
 );
-print $cgi->h2("Cofitness");
-print $cgi->h4("Top cofit genes for $geneName $locusId $sysName: $desc from $genus $species $strain");
+my $showId = $sysName || $locusId;
+print $cgi->h2("Top cofit genes for $showId from $genus $species $strain");
+print $cgi->h3("$showId $geneName : $desc");
 #print $cgi->p(qq{<A HREF="myFitShow.cgi?orgId=$orgId&gene=$locusId">$sysName: $desc</A>});
 
 my $cofitResults = $dbh->selectall_arrayref(qq{
@@ -74,7 +75,7 @@ if (@$cofitResults == 0) {
     }
     print $cgi->table( {cellpadding => 3, cellspacing => 0 }, @trows );
 }
-print $cgi->h4($cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, "Fitness data"));
-print $cgi->h4($cgi->a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Check homologs"));
+print $cgi->p($cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, "Fitness data"));
+print $cgi->p($cgi->a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Check homologs"));
 
 Utils::endHtml($cgi);

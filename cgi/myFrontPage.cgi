@@ -31,59 +31,66 @@ print $cgi->start_html(
 );
 
 print $cgi->h2("Fitness Web Site");
-print $cgi->h6(q(This web site contains <i>unpublished</i> fitness experiments from the Deutschbauer lab, the Arkin lab, and collaborators. Contact <A HREF="mailto:AMDeutschbauer.lbl.gov">Adam Deutschbauer</A> for more information.));
+print $cgi->h5(q(This web site contains <i>unpublished</i> fitness experiments from the Deutschbauer lab, the Arkin lab, and collaborators. Contact <A HREF="mailto:AMDeutschbauer.lbl.gov">Adam Deutschbauer</A> for more information.));
 
+my $dbh = Utils::get_dbh();
+
+# Gene search form
 print $cgi->h3("Search by Gene Name");
 print $cgi->start_form(
         -name    => 'input',
         -method  => 'GET',
         -action  => 'myFitShow.cgi',
 );
-print "<P>Choose species: ";
-#print $cgi->h6("Note: all species with fitness data are listed here.");
-
-my $dbh = Utils::get_dbh();
-
+print qq{<div style="padding-left: 25px;">};
 # drop down list of species
 my @orgOptions = ("");
 my $orginfo = Utils::orginfo($dbh);
-my @orginfo = sort { $a->{genome} <=> $b->{genome} } values(%$orginfo);
-my %orgLabels = ("" => join(" ", "All", scalar(@orginfo), "genomes"));
+my @orginfo = sort { $a->{genome} cmp $b->{genome} } values(%$orginfo);
+my %orgLabels = ("" => join(" ", "All", scalar(@orginfo), "organisms"));
 foreach my $hash (@orginfo) {
     my $orgId = $hash->{orgId};
     push @orgOptions, $orgId;
     $orgLabels{$orgId} = $hash->{genome};
 }
-
+print "<P>Choose organism: ";
 print $cgi->popup_menu(
     -name    => 'orgId',
     -values  => \@orgOptions,
     -labels  => \%orgLabels,
     -default => $orgOptions[0]
 );
-
-print q(<P>Enter gene name: );
+print q{<P>Enter gene name: };
 print $cgi->textfield(
     -name      => 'gene',
     -size      => 20,
     -maxlength => 100,
 );
-print $cgi->h6(q(Example: 7022746 (gene locusId) or Shewana3_0001 (gene sysName) or recA (gene name)));
-print <<EndOfSubmitOne;
-<INPUT TYPE="submit" VALUE="Start fitness lookup">
-<INPUT TYPE="reset" VALUE="Clear" onClick="input.gene.value=''">
-EndOfSubmitOne
-
+print q{<BR><small>examples: "7022746" or "Shewana3_0001" or "recA"</small>};
+print $cgi->p(qq{<INPUT TYPE="submit" VALUE="Find gene">});
 print $cgi->end_form;
-print "<BR>\n";
+print qq{</div>};
 
-print $cgi->h3(qq(Or Search by Gene Sequence));
+# Experiment search form
+print $cgi->h3("Search by Condition");
+print $cgi->start_form(-name => 'input', -method => 'GET', -action => 'exps.cgi');
+print qq{<div style="padding-left: 25px;">};
+print "<P>Choose organism: ";
+print $cgi->popup_menu(-name => 'orgId', -values => \@orgOptions, -labels => \%orgLabels, -default => $orgOptions[0]);
+print q{<P>Enter condition or experiment: };
+print $cgi->textfield(-name => 'query', -size => 20, -maxlength => 100);
+print $cgi->p(qq{<INPUT TYPE="submit" VALUE="Find experiments">});
+print $cgi->end_form;
+print qq{</div>};
+
+# Gene sequence search form
+print $cgi->h3(qq(Search by Gene Sequence));
+print qq{<div style="padding-left: 25px;">};
 print $cgi->start_form(
         -name    => 'input',
         -method  => 'POST',
         -action  => 'mySeqSearch.cgi',
 );
-
 print q(<P>Choose query type: );
 my @qtype = ("protein","nucleotide");
 print $cgi->popup_menu(
@@ -91,28 +98,23 @@ print $cgi->popup_menu(
     -values  => \@qtype,
     -default => $qtype[0],
 );
-print $cgi->p(q(Enter query sequence:));
+print "<P>Enter query sequence:<BR>";
 print $cgi->textarea(
     -name  => 'query',
     -value => '',
     -cols  => 70,
     -rows  => 10,
 );
-print qq(<P>Enter the number of hits to show: );
+print qq(<P>How many hits to show: );
 my @num = (5,10,25,50,100);
 print $cgi->popup_menu(
     -name    => 'numHit',
     -values  => \@num,
     -default => $num[2],
 );
-
-print <<EndOfSubmitTwo;
-<BR><BR>
-<INPUT TYPE="submit" VALUE="Start sequence search">
-<INPUT TYPE="reset" VALUE="Clear sequence" onClick="input.query.value=''">
-EndOfSubmitTwo
-
+print $cgi->p(qq{<INPUT TYPE="submit" VALUE="Search"> <INPUT TYPE="reset" VALUE="Clear sequence" onClick="input.query.value=''">});
 print $cgi->end_form;
+print qq{</div>};
 
 print $cgi->h6(q(Developed by Wenjun Shao and Morgan Price. Please report any bugs to <A HREF="mailto:funwithwords26@gmail.com">Morgan</A>.));
 print $cgi->end_html;

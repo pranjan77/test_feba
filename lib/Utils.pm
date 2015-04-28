@@ -45,15 +45,11 @@ sub get_style() {
     H4 {
         color: blue;
     }
-    p {
-        color: darkblue;
-        font-weight: bold;
-    }
     table {
-        border: darkblue 1pt solid;
+        border: black thin solid;
     }
     th,td {
-        border: blue 1pt dashed;
+        border: lightgrey thin solid;
     }
 EOT
     return $style;
@@ -77,7 +73,7 @@ sub fail($;$) {
 
 sub endHtml($) {
     my ($cgi) = @_;
-    print $cgi->h4(qq(<a href="myFrontPage.cgi">Go back to front page</a>));
+    print $cgi->p(qq(<a href="myFrontPage.cgi">Go back to front page</a>));
     print $cgi->end_html;
     exit 0;
 }

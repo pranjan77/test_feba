@@ -34,7 +34,7 @@ Utils::fail($cgi, "Unknown organism: $orgId") unless $orgId eq "" || exists $org
 my $expSpec = $cgi->param('query');
 $expSpec = "" if !defined $expSpec;
 
-Utils::fail($cgi, "Must specify organism or a query field") if $orgId eq "" && $expSpec eq "";
+Utils::fail($cgi, "Must specify organism or query by experiment") if $orgId eq "" && $expSpec eq "";
 # make the query safe to include in SQL
 $expSpec =~ s/ +$//;
 $expSpec =~ s/^ +$//;
@@ -63,7 +63,10 @@ print $cgi->start_html(
 if (@$exps == 0) {
    print $cgi->h3(qq{No experiment found matching "$expSpec"});
 } else {
-  print $cgi->h3(qq{Experiments found for "$expSpec":});
+  my $heading = "Experiments";
+  $heading .= " in $orginfo->{$orgId}{genome}" if $orgId ne "";
+  $heading .= qq{ matching "$expSpec"} if $expSpec ne "";
+  print $cgi->h3($heading);
   my @trows = ();
   push @trows, $cgi->Tr({-valign => "top"}, $cgi->th([ 'organism', 'name', 'group', 'condition', 'description' ]));
   foreach my $row (@$exps) {

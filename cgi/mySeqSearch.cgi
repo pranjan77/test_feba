@@ -42,7 +42,7 @@ my $orgId = $cgi->param('orgId') || "";
 
 print $cgi->header;
 print $cgi->start_html(
-    -title =>"Blast Result",
+    -title =>"Blast Results",
     -style => {-code => $style},
     -author=>'wjshaoATberkeley.edu',
     -meta=>{'copyright'=>'copyright 2015 UC Berkeley'},
@@ -164,15 +164,14 @@ close(RES) || die "Error reading $blastOut";
 
 if ($cnt > 0) {
 
-    print $cgi->p("Top $cnt hits:");
-    print $cgi->h5("Note: only significant hits (E-value < 0.01) are considered.");
+    print $cgi->p("Top $cnt hits (E < 0.01)");
 
     my @td = ();
     while ( my @elems = splice @hits, 0, 10 ) {
         push @td, $cgi->td( \@elems );
     }
     print $cgi->table(
-        { -border=>1, cellpadding=>3 },
+        { cellspacing=>0, cellpadding=>3 },
         $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
             $cgi->th( [ 'geneId','sysName','gene','description','species','identity%','coverage%','eValue','bitScore','fitness' ] ) ),
             $cgi->Tr( \@td )
@@ -188,7 +187,7 @@ unlink($blastOut) || die "Error deleting $blastOut: $!";
 unlink($blastSort) || die "Error deleting $blastSort: $!";
 
 
-print $cgi->h4(qq(<a href="myFrontPage.cgi">Go back to front page</a>));
+print $cgi->p(qq(<a href="myFrontPage.cgi">Go back to front page</a>));
 
 print $cgi->end_html;
 
