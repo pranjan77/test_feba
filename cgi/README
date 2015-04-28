@@ -16,8 +16,13 @@ myFitShow.cgi -- show list of matching genes, or fitness data for one
 	show all => showAll=1 option
 	homologs => mySeqSearch.cgi
 	cofitness => cofit.cgi
+	data cells link to exp.cgi
 cofit.cgi -- top cofit hits for a gene
 	=> myFitShow.cgi or mySeqSearch.cgi
 mySeqSearch.cgi -- a list of hits, linking to myFitShow.cgi for each (if it has data)
+exp.cgi -- for an experiment, show
+	description
+	quality metrics
+	specific phenotypes, or important genes, or detrimental genes (linking to myFitShow.cgi)
 
 And every page ends with a link to the front page
