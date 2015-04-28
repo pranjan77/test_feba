@@ -33,7 +33,7 @@ CREATE TABLE Gene(
  */
 CREATE TABLE Experiment(
    orgId         TEXT       NOT NULL,
-   expName       TEXT       NOT NULL,
+   expName       TEXT       NOT NULL, /* orgId x expName should be unique; expName may not be */
    expDesc       TEXT       NOT NULL, /* the short form */
    timeZeroSet   TEXT       NOT NULL, /* which set of Time0 samples were used as a control */
    num           INT        NOT NULL, /* a secondary identifier, unique within each organism */
@@ -61,6 +61,12 @@ CREATE TABLE Experiment(
    seqindex      TEXT       NOT NULL,
    media         TEXT       NOT NULL,
    /* These fields may be absent, but this should be represented as empty strings */
+   temperature   TEXT       NOT NULL, /* should be in celsius */
+   pH            TEXT       NOT NULL,
+   vessel        TEXT       NOT NULL, /* Growth.Method in R tables */
+   aerobic       TEXT       NOT NULL, /* Aerobic_v_Anaerobic */
+   liquid        TEXT       NOT NULL, /* Liquid.v..solid */
+   shaking       TEXT       NOT NULL,
    condition_1   TEXT       NOT NULL,
    units_1       TEXT       NOT NULL,
    concentration_1 TEXT     NOT NULL,
@@ -89,4 +95,12 @@ CREATE TABLE Cofit(
         rank INT NOT NULL,
         cofit REAL NOT NULL,
         PRIMARY KEY (orgId,locusId,hitId)
+);
+
+/* Specific phenotypes -- a very sparse subset of gene/experiment combinations */
+CREATE TABLE SpecificPhenotype(
+	orgId TEXT NOT NULL,
+	expName TEXT NOT NULL,
+	locusId TEXT NOT NULL,
+	PRIMARY KEY (orgId,expName,locusId)
 );

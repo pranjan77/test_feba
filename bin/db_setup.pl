@@ -109,13 +109,23 @@ sub WorkPutHash($@); # hash and list of fields to use
 	my @q = &ReadTable("$indir/$org/fit_quality.tab",
 			   qw{name short t0set num nMapped nPastEnd nGenic nUsed gMed gMedt0 gMean
 				cor12 mad12 mad12c mad12c_t0 opcor adjcor gccor maxFit u});
-	# exps has additional fields; not included in schema yet; they can be lined up by name
+	# exps has additional fields fields
 	my @exps = &ReadTable("$indir/$org/expsUsed",
 			      qw{name SetName Date_pool_expt_started Person Mutant.Library Description
-                                 gDNA.plate gDNA.well Index Media Growth.Method Group
+                                 Index Media Growth.Method Group
                                  Condition_1 Units_1 Concentration_1
                                  Condition_2 Units_2 Concentration_2});
 	my %exps = map {$_->{name} => $_} @exps;
+	# fields that are usually in exps but are not enforced
+	my @optional = qw{Temperature pH Shaking Growth.Method Liquid.v..solid Aerobic_v_Anaerobic};
+	foreach my $field (@optional) {
+	    if (!exists $exps[0]{$field}) {
+		print STDERR "Field $field is not in $indir/$org/expsUsed -- using blank values\n";
+		while (my ($name,$exp) = each %exps) {
+		    $exp->{$field} = "";
+		}
+	    }
+	}
 	StartWork("Experiment",$org);
 	foreach my $row (@q) {
 	    $row->{"orgId"} = $org;
@@ -125,20 +135,32 @@ sub WorkPutHash($@); # hash and list of fields to use
 
 	    my $id = $row->{name};
 	    my $exp = $exps{$id} || die "No matching metadata for experiment $org $id";
-	    $row->{expDescLong} = $exp->{Description};
-	    $row->{mutantLibrary} = $exp->{"Mutant.Library"};
-	    $row->{expGroup} = $exp->{Group};
-	    $row->{dateStarted} = $exp->{Date_pool_expt_started};
-	    $row->{setName} = $exp->{SetName};
-	    $row->{seqindex} = $exp->{Index};
+	    # put fields from exps into output with a new name (new name => new name)
+	    my %remap = ( "expDescLong" => "Description",
+			  "mutantLibrary" => "Mutant.Library",
+			  "expGroup" => "Group",
+			  "dateStarted" => "Date_pool_expt_started",
+			  "setName" => "SetName",
+			  "seqindex" => "Index",
+			  "temperature" => "Temperature",
+			  "shaking" => "Shaking",
+			  "vessel" => "Growth.Method",
+			  "aerobic" => "Aerobic_v_Anaerobic",
+			  "liquid" => "Liquid.v..solid",
+			  "pH" => "pH");
+	    # and lower case these fields
 	    foreach my $field (qw{Person Media Condition_1 Units_1 Concentration_1
                                  Condition_2 Units_2 Concentration_2}) {
-		$row->{lc($field)} = $exp->{$field} eq "NA" ? "" : $exp->{$field};
+		$remap{lc($field)} = $field;
+	    }
+	    while (my ($new,$old) = each %remap) {
+		$row->{$new} = $exp->{$old} eq "NA" ? "" : $exp->{$old};
 	    }
 	    WorkPutHash($row, qw{orgId expName expDesc timeZeroSet num nMapped nPastEnd nGenic
                                  nUsed gMed gMedt0 gMean cor12 mad12 mad12c mad12c_t0
                                  opcor adjcor gccor maxFit
 				 expGroup expDescLong mutantLibrary person dateStarted setName seqindex media
+                                 temperature pH vessel aerobic liquid shaking
 				 condition_1 units_1 concentration_1
 				 condition_2 units_2 concentration_2})
 		if $row->{u} eq "TRUE";
@@ -170,6 +192,23 @@ sub WorkPutHash($@); # hash and list of fields to use
 		WorkPutRow($org, $locusId, $colNames[$iCol],
 			   $fit_row->{$colFull}, $t_row->{$colFull});
 	    }
+	}
+	EndWork();
+    }
+
+    # Create db.SpecificPhenotype.*
+    foreach my $org (@orgs) {
+	my $specfile = "$indir/$org/specific_phenotypes";
+	if (! -e $specfile) {
+	    print STDERR "No specific_phenotypes files for $org (usually means too few experiments)\n";
+	    next;
+	}
+	my @spec = &ReadTable($specfile, qw{locusId name});
+	StartWork("SpecificPhenotype",$org);
+	foreach my $row (@spec) {
+	    $row->{orgId} = $org;
+	    $row->{expName} = $row->{name};
+	    WorkPutHash($row, qw{orgId expName locusId});
 	}
 	EndWork();
     }
@@ -255,6 +294,7 @@ sub WorkPutHash($@) {
     my ($row,@fields) = @_;
     foreach my $field (@fields) {
 	die "No such field $field" unless exists $row->{$field};
+	die "Undefined field $field" if !defined $row->{$field};
     }
     WorkPutRow(map $row->{$_}, @fields);
 }
