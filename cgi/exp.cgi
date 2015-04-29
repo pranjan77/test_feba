@@ -16,7 +16,7 @@
 # (by default, shows all of these optoins)
 
 use strict;
-use CGI qw(:standard Vars);
+use CGI qw(:standard Vars -nosticky);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
 
@@ -107,6 +107,8 @@ if (@fit > 0) { # show the table
     foreach my $row (@fit) {
 	my $geneId = $row->{sysName} || $row->{locusId};
 	push @trows, $cgi->Tr({align => 'left', valign => 'top'},
+			      $cgi->td(checkbox('locusId',0,$row->{locusId},'')),
+			      # $cgi->td(qq{<INPUT TYPE="CHECKBOX" name="locusId" value="$row->{locusId}" unchecked}),
 			      $cgi->td($cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$row->{locusId}",
 					       style => "color:rgb(0,0,0)"},
 						$geneId)),
@@ -116,11 +118,16 @@ if (@fit > 0) { # show the table
 			      $cgi->td( sprintf("%.1f", $row->{t}) ),
 			      $cgi->td($row->{desc}));
     }
-    print $cgi->table(
-	{ cellspacing => 0, cellpadding => 3},
-	$cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
-		 $cgi->th(['gene','name','fitness','t score','description']),
-		 @trows) );
+    print
+	start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
+	hidden('orgId', $orgId),
+	$cgi->table(
+	    { cellspacing => 0, cellpadding => 3},
+	    $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
+		     $cgi->th(['&nbsp;', 'gene','name','fitness','t score','description']),
+		     @trows) ),
+	submit(-name => 'Top fitness of selected genes'),
+	end_form;
 } elsif ($show eq "quality") {
     my @trows = ();
     push @trows, $cgi->Tr({align => 'left', valign => 'top' },

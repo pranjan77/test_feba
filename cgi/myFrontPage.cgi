@@ -27,7 +27,6 @@ print $cgi->start_html(
     -style => {-code => $style},
     -author=>'wjshaoATberkeley.edu',
     -meta=>{'copyright'=>'copyright 2015 UC Berkeley'},
-#    -BGCOLOR=>'#fffacd'
 );
 
 print $cgi->h2("Fitness Web Site");

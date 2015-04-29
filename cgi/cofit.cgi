@@ -54,7 +54,7 @@ my $cofitResults = $dbh->selectall_arrayref(qq{
 if (@$cofitResults == 0) {
     print $cgi->p(qq{Cofitness results are not available for this organism, sorry.});
 } else {
-    my @headRow = map { $cgi->td($cgi->b($_)) } qw{Rank Cofitness Hit Name Description};
+    my @headRow = map { $cgi->td($cgi->b($_)) } qw{&nbsp; Rank Cofitness Hit Name Description};
 
     my @trows = ( $cgi->Tr(@headRow) );
     my @colors = ('#FFFFDD', '#FFFFFF');
@@ -66,14 +66,22 @@ if (@$cofitResults == 0) {
 	my $rowcolor = $colors[ $iRow++ % scalar(@colors) ];
 	$cofit = sprintf("%.2f",$cofit);
 	push @trows, $cgi->Tr({bgcolor => $rowcolor, align => 'left', valign => 'top' },
+			      $cgi->td(checkbox('locusId',0,$hitId,'')),
 			      $cgi->td($rank),
 			      $cgi->td($cofit),
 			      $cgi->td($cgi->a( {href => "myFitShow.cgi?orgId=$orgId&gene=$hitId" },
 						$showId )),
 			      $cgi->td($hitName),
 			      $cgi->td($hitDesc));
+
     }
-    print $cgi->table( {cellpadding => 3, cellspacing => 0 }, @trows );
+    print
+	start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
+	hidden('orgId', $orgId),
+	hidden('locusId', $locusId),
+	table( {cellpadding => 3, cellspacing => 0 }, @trows ),
+	"Compare selected genes to $showId $geneName : " . submit(-name=>"heatmap"),
+	end_form;
 }
 print $cgi->p($cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, "Fitness data"));
 print $cgi->p($cgi->a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Check homologs"));

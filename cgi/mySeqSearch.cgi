@@ -153,13 +153,10 @@ while(<RES>) {
 	next;
     }
 
-    my $fitness = "no data";
-    if (Utils::gene_has_fitness($dbh,$orgId,$locusId)) {
-        my $dest = "myFitShow.cgi?orgId=$orgId&gene=$locusId";
-        $fitness = qq(<a href=$dest>check data</a>);
-    }
-    my @hit = ($locusId,$sys,$geneName,$desc,$orginfo->{$orgId}->{genome},$percIdentity,$cov,$eVal,$bitScore,$fitness);
-    push @hits, @hit;
+    my $fitness = $cgi->a( { href => "myFitShow.cgi?orgId=$orgId&gene=$locusId" },
+			   Utils::gene_has_fitness($dbh,$orgId,$locusId) ? "has data" : "no data" );
+    my @hit = ($sys || $locusId,$geneName,$desc,$orginfo->{$orgId}->{genome},$percIdentity,$cov,$eVal,$bitScore,$fitness);
+    push @hits, \@hit;
     $cnt++;
 }
 close(RES) || die "Error reading $blastOut";
@@ -169,14 +166,14 @@ if ($cnt > 0) {
     print $cgi->p("Top $cnt hits (E < 0.01)");
 
     my @td = ();
-    while ( my @elems = splice @hits, 0, 10 ) {
-        push @td, $cgi->td( \@elems );
+    foreach my $row (@hits) {
+        push @td, $cgi->td( $row );
     }
     print $cgi->table(
         { cellspacing=>0, cellpadding=>3 },
-        $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
-            $cgi->th( [ 'geneId','sysName','gene','description','species','identity%','coverage%','eValue','bitScore','fitness' ] ) ),
-            $cgi->Tr( \@td )
+        $cgi->Tr({-align=>'left',-valign=>'top'},
+		 $cgi->th( [ 'geneId','name','description','species','identity%','coverage%','eValue','bitScore','fitness' ] ) ),
+            $cgi->Tr({ -align => 'left', -valign => 'top' }, \@td )
     );
 
 } else {

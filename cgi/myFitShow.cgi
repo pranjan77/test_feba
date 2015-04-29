@@ -31,7 +31,7 @@ my $style = Utils::get_style();
 
 my $orgSpec = $cgi->param('orgId') || "";
 my $geneSpec = $cgi->param('gene') || die "no gene name found\n";
-my $showAll = $cgi->param('showAll') || 0;
+my $showAll = $cgi->param('showAll') ? 1 : 0;
 
 $geneSpec =~ s/ *$//;
 $geneSpec =~ s/^ *//;
@@ -46,7 +46,7 @@ print $cgi->start_html(
 
 # check user input
 
-Utils::fail($cgi, "$geneSpec is invalid. Please enter correct gene name!") unless ($geneSpec =~ m/^[A-Za-z0-9_]*$/);
+Utils::fail($cgi, "$geneSpec is invalid. Please enter correct gene name!") unless ($geneSpec =~ m/^[A-Za-z0-9_-]*$/);
 
 # connect to database
 
@@ -54,7 +54,7 @@ my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
 
 my $query = qq{SELECT orgId, locusId, sysName, desc, gene FROM Gene
-		WHERE locusId = ? OR sysName = ? OR upper(gene) = upper(?)};
+		WHERE ( locusId = ? OR sysName = ? OR upper(gene) = upper(?) )};
 my $hits;
 if ($orgSpec) {
     $query .= " AND orgId = ?";
@@ -76,8 +76,8 @@ if (@$hits == 0) {
     push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
 			  $cgi->th( [ 'geneId','sysName','geneName','description','genome','fitness' ] ) );
     foreach my $gene (@$hits) {
-	my $dest = "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}";
-	my $fitString = $gene->{has_fitness} ? qq(<a href="$dest">check data</a>) : "no data";
+	my $fitString = $cgi->a( { href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", },
+				   $gene->{has_fitness} ? "has data" : "no data" );
 	my @trow = map $cgi->td($_), ($gene->{locusId}, $gene->{sysName}, $gene->{gene}, $gene->{desc},
 				      $orginfo->{$gene->{orgId}}->{genome}, $fitString );
 	push @trows, $cgi->Tr(@trow);
@@ -92,7 +92,9 @@ if (@$hits == 0) {
     my $locusId = $gene->{locusId};
 
     if ($hits->[0]{has_fitness} == 0) {
-	print $cgi->h3("Sorry, no fitness data for the gene $geneSpec in " . $orginfo->{$gene->{orgId}}{genome});
+	my $idShow = $gene->{sysName} || $gene->{locusId};
+	print $cgi->h3("$idShow $gene->{gene}: $gene->{desc} in " . $orginfo->{$gene->{orgId}}{genome});
+	print $cgi->p("Sorry, no fitness data for $idShow");
     } else {
 	# show fitness data for gene
 	my @fit = @{ $dbh->selectall_arrayref("SELECT expName,fit,t from GeneFitness where orgId=? AND locusId=?",
@@ -124,11 +126,14 @@ if (@$hits == 0) {
 	if ($showAll) {
 	    print $cgi->p("All " . scalar(@fit) . " fitness values, sorted by group and condition");
 	} else {
-	    $minAbsFit = sprintf("%.1f", $minAbsFit);
-	    print $cgi->p("Top $limitRows experiments with the strongest phenotypes (|fitness| &ge; $minAbsFit)");
+	    if (defined $minAbsFit) {
+		$minAbsFit = sprintf("%.1f", $minAbsFit);
+		print $cgi->p("Top $limitRows experiments with the strongest phenotypes (|fitness| &ge; $minAbsFit)");
+	    } else {
+		print $cgi->p("All " . scalar(@fit) . " fitness values, sorted by value");
+	    }
 	}
 	    
-
 	my @out = (); # specifiers for HTML rows for each fitness value
 	my $lastGroup = ""; # only enter the first time
 	foreach my $fitrow (@fit) {
@@ -153,6 +158,15 @@ if (@$hits == 0) {
 		     $cgi->th( [ 'group', 'condition','fitness','t score' ] ) ),
             $cgi->Tr({-align=>'left',-valign=>'top',-style=>"font-size: $relsize"}, \@out ) );
 
+	# Option to add a gene (links to genesFit.cgi)
+	print $cgi->start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi');
+	print "<P>Add gene: ";
+	print $cgi->hidden( 'orgId', $orgId );
+	print $cgi->hidden( 'showAll', $showAll );
+	print qq{<input type="hidden" name="locusId" value="$locusId" />\n};
+	print $cgi->textfield( -name => 'addgene', -default => "", -override => 1, -size => 20, -maxLength => 100 );
+	print $cgi->end_form;
+
 	# links
 	if ($showAll == 0) {
 	    my $showAllDest = qq(myFitShow.cgi?orgId=$orgId&gene=$locusId&showAll=1);
@@ -161,20 +175,25 @@ if (@$hits == 0) {
 	    my $showFewDest = qq(myFitShow.cgi?orgId=$orgId&gene=$locusId&showAll=0);
 	    print $cgi->p(qq(<a href=$showFewDest>Strongest phenotypes</a>));
 	}
+	print $cgi->p($cgi->a( { href => "genesFit.cgi?orgId=$orgId&locusId=$locusId&around=2" }, "Fitness for nearby genes"));
 	print $cgi->p($cgi->a({href => "cofit.cgi?orgId=$orgId&locusId=$locusId"}, "Top cofit genes"));
-	my @links = ();
-	if ($gene->{locusId} =~ m/^\d+$/) {
-	    push @links, $cgi->a({href => "http://www.microbesonline.org/cgi-bin/fetchLocus.cgi?locus=$gene->{locusId}"},
-				 "MicrobesOnline");
-	}
-	if ($orgId eq "Keio" && $gene->{sysName} =~ m/^b\d+$/) {
-	    push @links, $cgi->a({href => "http://ecocyc.org/ECOLI/search-query?type=GENE&gname=$gene->{sysName}"}, "EcoCyc");
-	}
-	print $cgi->p("Links: " . join(", ", @links)) if (@links > 0);
-    } # end if gene has fitness data
+    } # end else unique hit has data
+
+    my @links = ();
+    if ($gene->{locusId} =~ m/^\d+$/) {
+	push @links, $cgi->a({href => "http://www.microbesonline.org/cgi-bin/fetchLocus.cgi?locus=$gene->{locusId}"},
+			     "MicrobesOnline");
+    }
+    if ($orgId eq "Keio" && $gene->{sysName} =~ m/^b\d+$/) {
+	push @links, $cgi->a({href => "http://ecocyc.org/ECOLI/search-query?type=GENE&gname=$gene->{sysName}"}, "EcoCyc");
+    }
+    print $cgi->p("Links: " . join(", ", @links)) if (@links > 0);
+
     # check homologs where or not gene has data
     my $dest = qq(mySeqSearch.cgi?orgId=$orgId&locusId=$locusId);
     print $cgi->p(qq(<a href=$dest>Check homologs</a>));
-}
+
+} #  end if just 1 hit
+
 $dbh->disconnect();
 Utils::endHtml($cgi);

@@ -11,18 +11,30 @@ Site map:
 myFrontPage.cgi -- the front page
 	search by name => myFitShow.cgi
 	search by sequence => mySeqSearch.cgi
-myFitShow.cgi -- show list of matching genes, or fitness data for one
+myFitShow.cgi -- show list of matching genes, or table of fitness data for one gene
 	if a list, links to page for individual gene
+	if showing table of fitness data:
+	each experiment => exp.cgi
+	add a gene => genesFit.cgi
 	show all => showAll=1 option
-	homologs => mySeqSearch.cgi
+	show nearby => genesFit.cgi with around
+	check homologs => mySeqSearch.cgi
 	cofitness => cofit.cgi
-	data cells link to exp.cgi
+genesFit.cgi -- show fitness of multiple genes
+	each individual gene => myFitShow.cgi
+	each experiment => exp.cgi
+	add or remove genes => locusId or addgene options
+	show all => showAll=1 option
 cofit.cgi -- top cofit hits for a gene
-	=> myFitShow.cgi or mySeqSearch.cgi
+	each hit => myFitShow.cgi
+	checkboxes => genesFit.cgi
+	fitness data (for query gene) => myFitShow.cgi
+	homologs => mySeqSearch.cgi
 mySeqSearch.cgi -- a list of hits, linking to myFitShow.cgi for each (if it has data)
 exp.cgi -- for an experiment, show
 	description
 	quality metrics
-	specific phenotypes, or important genes, or detrimental genes (linking to myFitShow.cgi)
+	if showing specific phenotypes, or important genes, or detrimental genes
+		each gene => myFitShow.cgi
 
 And every page ends with a link to the front page
