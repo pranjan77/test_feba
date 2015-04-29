@@ -49,6 +49,8 @@ print $cgi->start_html(
 #    -BGCOLOR=>'#fffacd'
 );
 
+my $dbh = Utils::get_dbh();
+
 # check user input
 
 Utils::fail($cgi,qq($locusSpec is invalid. Please enter correct gene name!)) unless ($locusSpec =~ m/^[A-Za-z0-9_]*$/);
@@ -107,6 +109,10 @@ if ($query =~ m/[A-Za-z]/) {
 
     # extract sequence for the given gene
 
+    my $gene = $dbh->selectrow_hashref("SELECT * from Gene where orgId=? AND locusId=?", {}, $orgId, $locusSpec);
+    Utils::fail($cgi, "No such gene: $locusSpec in $orgId") unless defined $gene->{locusId};
+    Utils::fail($cgi, "Sorry, homology search is only available for protein-coding genes") unless $gene->{type} == 1;
+
     my $id = join(":",$orgId,$locusSpec);
     my $fastacmd = '../bin/blast/fastacmd';
     system($fastacmd,'-d',$myDB,'-s',$id,'-o',$seqFile)==0 || die "Error running $fastacmd -d $myDB -s $id -o $seqFile -- $!";
@@ -124,10 +130,6 @@ if ($query =~ m/[A-Za-z]/) {
 # blast output fields: (1)queryId, (2)subjectId, (3)percIdentity, (4)alnLength, (5)mismatchCount, (6)gapOpenCount, (7)queryStart, (8)queryEnd, (9)subjectStart, (10)subjectEnd, (11)eVal, (12)bitScore
 # sort the blast result by bit score, E-value, and percent identity
 system('sort','-k1,1','-k12,12gr','-k11,11g','-k3,3gr',$blastOut,'-o',$blastSort)==0 || die "Error running sort: $!";
-
-# connect to database
-
-my $dbh = Utils::get_dbh();
 
 # output blast result
 
