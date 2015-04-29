@@ -65,7 +65,7 @@ sub execute_db($;$) {
 
 sub fail($;$) {
     my ($cgi, $notice) = @_;
-    print $cgi->h3(qq(<font color="red">WARNING</font> $notice));
+    print $cgi->h3(qq(Sorry: $notice));
     print $cgi->h4(qq(<a href="myFrontPage.cgi">Go back to front page</a>));
     print $cgi->end_html;
     exit;
@@ -95,6 +95,7 @@ sub formatFASTA($;$)
 # color code fitness value in range (-3 .. 0 .. 3) to blue => white => yellow
 sub fitcolor($) {
     my ($fit) = @_;
+    return " #BFBFBF" if !defined $fit;
     my $perc = ($fit + 3)/6;
     $perc = $perc > 1 ? 1 : $perc;
     $perc = $perc < 0 ? 0 : $perc;
@@ -163,9 +164,19 @@ sub expinfo($$) {
     return $dbh->selectall_hashref("SELECT * FROM Experiment WHERE orgId = ?", "expName", {}, $orgId);
 }
 
+# Like cmp but for experiments, for ordering by group and condition/concentration, with
+# expDesc as a fallback.
+# Each argument should be a hash corresponding to a row in the Experiment table
+sub CompareExperiments($$) {
+    my ($expA,$expB) = @_;
+    die unless defined $expA->{expGroup} && defined $expB->{expGroup};
+    return $expA->{expGroup} cmp $expB->{expGroup}
+           || lc($expA->{condition_1}) cmp lc($expB->{condition_1})
+           || $expA->{concentration_1} cmp $expB->{concentration_1}
+           || lc($expA->{expDesc}) cmp lc($expB->{expDesc});
+}
 
 #END 
-
 
 return 1;
 

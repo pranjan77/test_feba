@@ -20,7 +20,6 @@ use strict;
 use CGI qw(:standard Vars);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
-use List::Util 'min';
 
 use lib "../lib";
 use Utils;
@@ -114,14 +113,7 @@ if (@$hits == 0) {
 	my $expinfo = Utils::expinfo($dbh,$orgId);
 
 	if ($showAll) {
-	    @fit = sort { my $expA = $expinfo->{$a->{expName}};
-			  my $expB = $expinfo->{$b->{expName}};
-			  my $out = $expA->{expGroup} cmp $expB->{expGroup};
-			  $out = lc($expA->{condition_1}) cmp lc($expB->{condition_1}) if $out == 0;
-			  $out = $expA->{concentration_1} cmp $expB->{concentration_1} if $out == 0;
-			  $out = lc($expA->{expDesc}) cmp lc($expB->{expDesc}) if $out == 0;
-			  return $out;
-	    } @fit;
+	    @fit = sort { Utils::CompareExperiments($expinfo->{$a->{expName}}, $expinfo->{$b->{expName}}) } @fit;
 	} else {
 	    @fit = sort { $a->{fit} <=> $b->{fit} } @fit;
 	}
@@ -156,10 +148,11 @@ if (@$hits == 0) {
 	}
 	my $relsize = $showAll ? "70%" : "100%";
 	print $cgi->table(
-	    { cellspacing => 0, cellpadding => 3 },
+	    { cellspacing => 0, cellpadding => 3, },
 	    $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
 		     $cgi->th( [ 'group', 'condition','fitness','t score' ] ) ),
             $cgi->Tr({-align=>'left',-valign=>'top',-style=>"font-size: $relsize"}, \@out ) );
+
 	# links
 	if ($showAll == 0) {
 	    my $showAllDest = qq(myFitShow.cgi?orgId=$orgId&gene=$locusId&showAll=1);
