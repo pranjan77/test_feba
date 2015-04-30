@@ -35,7 +35,6 @@ sub get_style() {
     my $style = <<"EOT";
     body {
         font-family: verdana, arial, sans-serif;
-        bgcolor: "#fffacd";
         padding-left: 5%;
     }
     H2 {
@@ -51,6 +50,18 @@ sub get_style() {
     th,td {
         border: lightgrey thin solid;
     }
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.dot {
+  stroke: none;
+}
+
 EOT
     return $style;
 }
