@@ -35,23 +35,7 @@ my $expSpec = $cgi->param('query');
 $expSpec = "" if !defined $expSpec;
 
 Utils::fail($cgi, "Must specify organism or query by experiment") if $orgId eq "" && $expSpec eq "";
-# make the query safe to include in SQL
-$expSpec =~ s/ +$//;
-$expSpec =~ s/^ +$//;
-$expSpec =~ s/[\'\"\n\r]//g;
-# allow partial-word matches in Condition_1 or Condition_2, or full word matches to expDesc or expDescLong, or match to Group
-# note is not case sensitive
-my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
-my $sql = qq{SELECT * from Organism JOIN Experiment USING (orgId)
-             WHERE (expName = "$expSpec"
-	            OR Condition_1 LIKE "$expSpec%" OR Condition_1 LIKE "% $expSpec%"  OR Condition_1 LIKE "%-$expSpec%"
-		    OR Condition_2 LIKE "$expSpec%" OR Condition_2 LIKE "% $expSpec%"  OR Condition_2 LIKE "%-$expSpec%"
-	     	    OR expGroup = "$expSpec"
-	            OR expDesc = "$expSpec" OR expDesc LIKE "$expSpec %" OR expDesc LIKE "% $expSpec" OR expDesc LIKE "% $expSpec %"
-	            OR expDescLong = "$expSpec" OR expDescLong LIKE "$expSpec %" OR expDescLong LIKE "% $expSpec" OR expDescLong LIKE "% $expSpec %")
-	     $orgClause
-	     ORDER BY genus, species, strain, expGroup, condition_1, concentration_1, expDesc};
-my $exps = $dbh->selectall_arrayref($sql, { Slice => {} });
+my $exps = Utils::matching_exps($dbh, $orgId, $expSpec);
 
 print $cgi->start_html(
     -title =>"Experiments for $expSpec",

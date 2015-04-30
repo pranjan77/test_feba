@@ -8,11 +8,13 @@
 ## Morgan Price
 #######################################################
 #
-# Required parameters: orgId, expName1, expName2
+# Key parameeters: orgId, expName1 or query1, expName2 or query2
+#	If query1 is set, expName1 is ignored, and similarly for query2
+#	Cannot query on both simultaneously, however
 # Optional: tsv -- use tsv=1 to fetch the data instead
 
 use strict;
-use CGI qw(:standard Vars);
+use CGI qw(:standard Vars -nosticky);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
 
@@ -26,12 +28,84 @@ print $cgi->header;
 my $orgId = $cgi->param('orgId');
 my $expName1 = $cgi->param('expName1');
 my $expName2 = $cgi->param('expName2');
+my $query1 = $cgi->param('query1');
+my $query2 = $cgi->param('query2');
 my $tsv = $cgi->param('tsv') ? 1 : 0;
-die "Must specify orgId, expName1, expName2" unless defined $orgId && defined $expName1 && defined $expName2;
+die "Must specify orgId" unless defined $orgId && $orgId ne "";
+die "Must specify expName1 or query1"
+    unless (defined $expName1 || defined $query1)
+    && !($expName1 eq "" && $query1 eq "");
+die "Must specify expName2 or query2"
+    unless (defined $expName2 || defined $query2)
+    && !($expName2 eq "" && $query2 eq "");
+die "Cannot query both 1 and 2" if defined $query1 && defined $query2 && $query1 ne "" && $query2 ne "";
 
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
 Utils::fail($cgi, "Unknown organism: $orgId") unless exists $orginfo->{$orgId};
+
+my @expCand = ();
+my $choosing = undef;
+if (defined $query1 && $query1 ne "") {
+    my @exps = @{ Utils::matching_exps($dbh,$orgId,$query1) };
+    Utils::fail($cgi, qq{No experiment matching "$query1"}) if @exps == 0;
+    @exps = grep { $_->{expName} ne $expName2 } @exps if @exps > 1;
+    if (@exps == 1) {
+	$expName1 = $exps[0]{expName};
+    } else {
+	@expCand = @exps;
+	$choosing = 1;
+    }
+} elsif (defined $query2 && $query2 ne "") {
+    my @exps = @{ Utils::matching_exps($dbh,$orgId,$query2) };
+    Utils::fail($cgi, qq{No experiment matching "$query2"}) if @exps == 0;
+    @exps = grep { $_->{expName} ne $expName1 } @exps if @exps > 1;
+    if (@exps == 1) {
+	$expName2 = $exps[0]{expName};
+    } else {
+	@expCand = @exps;
+	$choosing = 2;
+    }
+}
+
+if (scalar(@expCand) > 0) {
+    die "Cannot use tsv mode with queries" if $tsv;
+    # show table of these experiments
+    my $expNameConst = $choosing == 1 ? $expName2 : $expName1;
+    my $expConst = $dbh->selectrow_hashref("SELECT * from Experiment WHERE orgId = ? AND expName = ?",
+					   {}, $orgId, $expNameConst);
+    die "Unknown experiment: $expNameConst" unless exists $expConst->{expName};
+    my $notChoosing = $choosing == 1 ? 2 : 1;
+
+    my @trows = ();
+    my @headings = qw{&nbsp; name group condition description};
+    push @trows, $cgi->Tr({-valign => 'top', -align => 'center'}, $cgi->th(\@headings));
+    my $isFirst = 1;
+    foreach my $exp (@expCand) {
+	my $checked = $isFirst ? "CHECKED" : "";
+	push @trows, $cgi->Tr({-valign => 'top', -align => 'left'},
+			      $cgi->td([ qq{<input type="radio" name="expName$choosing" value="$exp->{expName}" $checked >},
+					 $cgi->a({href => "exp.cgi?orgId=$orgId&$exp->{expName}"}, $exp->{expName}),
+					 $exp->{expGroup}, $exp->{condition_1}, $exp->{expDesc} ]));
+	$isFirst = 0;
+    }
+    print
+	start_html( -title => "Select experiment to compare to", -style => {-code => $style},
+		    -author => 'Morgan Price', -mata => {'copyright'=>'copyright 2015 UC Berkeley'} ),
+	h2("Select experiment in $orginfo->{$orgId}{genome}"),
+	p("Selected experiment will be compared to "
+	  . a( { href => "exp.cgi?orgId=$orgId&expName=$expNameConst" }, $expConst->{expName} )
+	  . " : $expConst->{expDescLong}"),
+	start_form(-name => 'input', -method => 'GET', -action => 'compareExps.cgi'),
+	hidden('orgId', $orgId),
+	hidden("expName$notChoosing", $expNameConst),
+	table( {cellpadding => 3, cellspacing => 0}, @trows),
+	submit('Go'),
+	end_form;
+    Utils::endHtml($cgi);
+}
+
+# else
 
 my $exp1 = $dbh->selectrow_hashref("SELECT * from Experiment WHERE orgId = ? AND expName = ?",
 				   {}, $orgId, $expName1);
@@ -47,26 +121,33 @@ if ($tsv) {
 					 { Slice => {} }, $orgId);
     die "No genes" unless @$genes > 0;
 
-    my $fit1 = $dbh->selectall_hashref("SELECT locusId,fit,t from GeneFitness WHERE orgId = ? AND expName = ?",
-				       "locusId", {}, $orgId, $expName1);
-    Utils::fail("No fitness values for $expName1 in $orgId") unless scalar(keys %$fit1) > 0;
-    my $fit2 = $dbh->selectall_hashref("SELECT locusId,fit,t from GeneFitness WHERE orgId = ? AND expName = ?",
-				       "locusId", {}, $orgId, $expName2);
-    Utils::fail("No fitness values for $expName2 in $orgId") unless scalar(keys %$fit2) > 0;
+    # Tried adding an index to GeneFitness so we could look up by orgId and expName but it did not really
+    # speed things up. Probably the rows are in gene order so the whole part of the table for that orgId has to
+    # be scanned anyway. Do one query for both experiments so that it is scanned once not twice.
+    my $fit = $dbh->selectall_arrayref("SELECT * FROM GeneFitness WHERE orgId = ? AND expName IN (?,?)",
+				       { Slice => {} }, $orgId, $expName1, $expName2);
+    my %fit1 = ();
+    my %fit2 = ();
+    foreach my $row (@$fit) {
+	$fit1{$row->{locusId}} = $row if $row->{expName} eq $expName1;
+	$fit2{$row->{locusId}} = $row if $row->{expName} eq $expName2;
+    }
+    Utils::fail($cgi, "No fitness values for $expName1 in $orgId") unless scalar(keys %fit1) > 0;
+    Utils::fail($cgi, "No fitness values for $expName2 in $orgId") unless scalar(keys %fit2) > 0;
+
     print join("\t", qw{locusId sysName gene desc x tx y ty});
     foreach my $gene (@$genes) {
 	my $locusId = $gene->{locusId};
-	next unless exists $fit1->{$locusId} && exists $fit2->{$locusId};
+	next unless exists $fit1{$locusId} && exists $fit2{$locusId};
 	print join("\t", $locusId, $gene->{sysName}, $gene->{gene}, $gene->{desc},
-		   $fit1->{$locusId}{fit}, $fit1->{$locusId}{t},
-		   $fit2->{$locusId}{fit}, $fit2->{$locusId}{t})."\n";
+		   $fit1{$locusId}{fit}, $fit1{$locusId}{t},
+		   $fit2{$locusId}{fit}, $fit2{$locusId}{t})."\n";
     }
     $dbh->disconnect();
     exit 0;
 }
 # else
 
-my $style = Utils::get_style();
 my $title = "Compare Experiments for $orginfo->{$orgId}{genome}";
 
 print <<END
@@ -84,8 +165,8 @@ $style
 
 <H2>$title</H2>
 
-<H4><A HREF="exp.cgi?orgId=$orgId&expName=$expName1">$expName1</A>: $exp1->{expDescLong}</H3>
-<H4><A HREF="exp.cgi?orgId=$orgId&expName=$expName2">$expName2</A>: $exp2->{expDescLong}</H3>
+<P><A HREF="exp.cgi?orgId=$orgId&expName=$expName2">$expName2</A>: $exp2->{expDescLong}<BR>
+vs. <A HREF="exp.cgi?orgId=$orgId&expName=$expName1">$expName1</A>: $exp1->{expDescLong}</H3>
 
 <div id="loading"></div>
 
@@ -120,11 +201,11 @@ var svg = d3.select("body").insert("svg")
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-d3.select("#loading").html("Loading...");
+d3.select("#loading").html("Fetching data...");
 var tsvUrl = "compareExps.cgi?tsv=1&orgId=" + org + "&expName1=" + xName + "&expName2=" + yName;
 d3.tsv(tsvUrl, function(error, data) {
-  if (error) {
-      d3.select("body").append("div").html("Cannot load data from " + tsvUrl + "<BR>Error: " + error);
+  if (error || data.length == 0) {
+      d3.select("#loading").html("Cannot load data from " + tsvUrl + "<BR>Error: " + error);
       return;
   }
   d3.select("#loading").html("Formatting " + data.length + " genes...");
@@ -231,13 +312,35 @@ function geneList() {
 
 </script>
 
-<H4>Selected genes:</H4>
+<p>
+<form method="get" action="compareExps.cgi" enctype="multipart/form-data" name="input">
+<input type="hidden" name="orgId" value="$orgId" />
+<input type="hidden" name="expName2" value="$expName2" />
+Change x axis: <input type="text" name="query1"  size="20" maxlength="100" />
+</form>
+
+<form method="get" action="compareExps.cgi" enctype="multipart/form-data" name="input">
+<input type="hidden" name="orgId" value="$orgId" />
+<input type="hidden" name="expName1" value="$expName1" />
+Change y axis: <input type="text" name="query2"  size="20" maxlength="100" />
+</form>
+
+<form method="get" action="compareExps.cgi" enctype="multipart/form-data" name="input">
+<input type="hidden" name="orgId" value="$orgId" />
+<input type="hidden" name="expName1" value="$expName2" />
+<input type="hidden" name="expName2" value="$expName1" />
+<input type="submit" name="flip" value="Flip axes" />
+</form>
+
+</p>
+
+<p>Click on genes to add them to the table:</p>
 
 <TABLE id="genesel" cellspacing=0 cellpadding=3 >
 <tr><th>gene</th><th>name</th><th>description</th><th>&nbsp;</th></tr>
 </TABLE>
 
-<P><A href="#" onclick="geneList()">Heatmap for selected genes</A>
+<P><A href="#" onclick="geneList()">View heatmap for selected genes</A>
 
 </body>
 </html>

@@ -18,10 +18,9 @@ use DBI;
 use Time::HiRes;
 use Carp;
 
-sub excute_db($;$);
 sub get_style();
-sub fail($;$);
-sub formatFASTA($;$);
+sub fail($$);
+sub formatFASTA($$);
 sub crc64($);
 sub get_color($);
 sub get_dbh(); # open the sqlite db and return the resulting database handle
@@ -66,15 +65,7 @@ EOT
     return $style;
 }
 
-sub execute_db($;$) {
-    my ($dbh, $stmt) = @_;
-    my $sth = $dbh->prepare( $stmt );
-    my $rv = $sth->execute() or die $DBI::errstr;
-    print $DBI::errstr if($rv < 0);
-    return $sth;
-}
-
-sub fail($;$) {
+sub fail($$) {
     my ($cgi, $notice) = @_;
     print $cgi->h3(qq(Sorry: $notice));
     print $cgi->h4(qq(<a href="myFrontPage.cgi">Go back to front page</a>));
@@ -91,7 +82,7 @@ sub endHtml($) {
 
 #--------------------------------------------------------
 
-sub formatFASTA($;$)
+sub formatFASTA($$)
 {
     my ($title, $sequence) = @_;
     return undef unless ($sequence);
@@ -186,6 +177,31 @@ sub CompareExperiments($$) {
            || $expA->{concentration_1} cmp $expB->{concentration_1}
            || lc($expA->{expDesc}) cmp lc($expB->{expDesc});
 }
+
+# Should check that orgId is valid (if it is not empty) before calling.
+# Allows partial-word matches in Condition_1 or Condition_2, or full word matches to expDesc or expDescLong, or exact match to Group.
+# Note is not case sensitive
+sub matching_exps($$$) {
+    my ($dbh,$orgId,$expSpec) = @_;
+    die if !defined $dbh || !defined $orgId || !defined $expSpec;
+    # make the query safe to include in SQL
+    $expSpec =~ s/ +$//;
+    $expSpec =~ s/^ +$//;
+    $expSpec =~ s/[\'\"\n\r]//g;
+
+    my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
+    my $sql = qq{SELECT * from Organism JOIN Experiment USING (orgId)
+             WHERE (expName = "$expSpec"
+	            OR Condition_1 LIKE "$expSpec%" OR Condition_1 LIKE "% $expSpec%"  OR Condition_1 LIKE "%-$expSpec%"
+		    OR Condition_2 LIKE "$expSpec%" OR Condition_2 LIKE "% $expSpec%"  OR Condition_2 LIKE "%-$expSpec%"
+	     	    OR expGroup = "$expSpec"
+	            OR expDesc = "$expSpec" OR expDesc LIKE "$expSpec %" OR expDesc LIKE "% $expSpec" OR expDesc LIKE "% $expSpec %"
+	            OR expDescLong = "$expSpec" OR expDescLong LIKE "$expSpec %" OR expDescLong LIKE "% $expSpec" OR expDescLong LIKE "% $expSpec %")
+	     $orgClause
+	     ORDER BY genus, species, strain, expGroup, condition_1, concentration_1, expDesc};
+    return $dbh->selectall_arrayref($sql, { Slice => {} });
+}
+
 
 #END 
 

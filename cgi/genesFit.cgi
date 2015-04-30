@@ -148,7 +148,7 @@ print $cgi->h3($addgene_error) if defined $addgene_error;
 if ($showAll) {
     print $cgi->p("All " . scalar(@exps) . " fitness values, sorted by group and condition");
 } else {
-    print $cgi->p("Top " . scalar(@exps) . " experiments, sorted by average fitness");
+    print $cgi->p("Top " . scalar(@exps) . " experiments (either direction), sorted by average fitness");
 }
 
 my @trows = ();

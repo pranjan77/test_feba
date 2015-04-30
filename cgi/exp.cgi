@@ -178,5 +178,13 @@ print $cgi->p($cgi->a({href => "exp.cgi?orgId=$orgId&expName=$expName&show=detri
 print $cgi->p($cgi->a({href => "exp.cgi?orgId=$orgId&expName=$expName&show=quality"}, "Show quality metrics"))
     if $show ne "quality";
 
+print
+    start_form(-name => 'input', -method => 'GET', -action => 'compareExps.cgi'),
+    hidden('orgId', $orgId),
+    hidden('expName2', $expName),
+    "Compare to another experiment: ",
+    textfield(-name => 'query1', -value => '', -size => 20, -maxlength => 100),
+    end_form;
+    
 $dbh->disconnect();
 Utils::endHtml($cgi);
