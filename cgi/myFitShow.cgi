@@ -141,21 +141,25 @@ if (@$hits == 0) {
 	    my $exp = $expinfo->{$expName};
 	    my $group = $exp->{expGroup};
 	    push @out, join(" ",
-			    $cgi->td($group eq $lastGroup ? "" : $group),
-			    $cgi->td($cgi->a({ style => "color:rgb(0,0,0)",
+			    td($group eq $lastGroup ? "" : $group),
+			    td(a({ style => "color:rgb(0,0,0)",
 					       title => "$expName: $exp->{expDescLong}",
 					       href => "exp.cgi?orgId=$orgId&expName=$expName" },
 					       $exp->{expDesc})),
-			    $cgi->td( { -bgcolor => Utils::fitcolor($fitrow->{fit}) },
+			    td( { -bgcolor => Utils::fitcolor($fitrow->{fit}) },
 				      sprintf("%.1f", $fitrow->{fit}) ),
-			    $cgi->td( sprintf("%.1f", $fitrow->{t}) ));
+			    td( sprintf("%.1f", $fitrow->{t}) ),
+			    td(a({ style => "color:rgb(0,0,0)",
+				   title => "Compare to data from similar experiments or orthologs",
+				   href => "orthFit.cgi?orgId=$orgId&locusId=$locusId&expGroup=$exp->{expGroup}&condition1=$exp->{condition_1}" }),
+				 "compare") );
 	    $lastGroup = $group if $showAll;
 	}
 	my $relsize = $showAll ? "70%" : "100%";
 	print $cgi->table(
 	    { cellspacing => 0, cellpadding => 3, },
 	    $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
-		     $cgi->th( [ 'group', 'condition','fitness','t score' ] ) ),
+		     $cgi->th( [ 'group', 'condition','fitness','t score', '&nbsp;' ] ) ),
             $cgi->Tr({-align=>'left',-valign=>'top',-style=>"font-size: $relsize"}, \@out ) );
 
 	# Option to add a gene (links to genesFit.cgi)

@@ -27,6 +27,7 @@ sub get_dbh(); # open the sqlite db and return the resulting database handle
 sub blast_db();
 sub tmp_dir();
 sub orginfo($);
+sub get_orths($$$);
 
 #--------------------------------------------------------
 
@@ -202,6 +203,16 @@ sub matching_exps($$$) {
     return $dbh->selectall_arrayref($sql, { Slice => {} });
 }
 
+# Returns a reference to a hash from ortholog's orgId => gene
+# Each gene is a hash that includes the fields in Gene and the ratio
+sub get_orths($$$) {
+    my ($dbh,$orgId,$locusId) = @_;
+    die unless defined $orgId && defined $locusId;
+    return $dbh->selectall_hashref(qq{ SELECT Gene.*, Ortholog.ratio FROM GENE JOIN ORTHOLOG
+					ON Ortholog.orgId2=Gene.orgId AND Ortholog.locusId2=Gene.locusId
+					AND orgId1=? AND locusId1=? },
+	                           "orgId", {}, $orgId, $locusId);
+}
 
 #END 
 

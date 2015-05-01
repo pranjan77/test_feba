@@ -15,11 +15,16 @@ myFitShow.cgi -- show list of matching genes, or table of fitness data for one g
 	if a list, links to page for individual gene
 	if showing table of fitness data:
 	each experiment => exp.cgi
+	each cell => orthFit.cgi
 	add a gene => genesFit.cgi
 	show all => showAll=1 option
 	show nearby => genesFit.cgi with around
 	check homologs => mySeqSearch.cgi
 	cofitness => cofit.cgi
+orthFit.cgi -- for a gene in a condition, show table of fitness across orthologs
+	each gene => showFit.cgi
+	each experiment => exp.cgi
+	show all homologs => mySeqSearch.cgi
 genesFit.cgi -- show fitness of multiple genes
 	each individual gene => myFitShow.cgi
 	each experiment => exp.cgi
@@ -33,7 +38,7 @@ cofit.cgi -- top cofit hits for a gene
 mySeqSearch.cgi -- a list of hits, linking to myFitShow.cgi for each (if it has data)
 exp.cgi -- for an experiment, show metrics, or top genes
 	if showing specific phenotypes, or important genes, or detrimental genes
-		each gene => myFitShow.cgi
+		each gene => myFitShow.cgi, each cell => orthFit.cgi
 	compare to => compareExps.cgi
 compareExps.cgi -- interactive scatterplot to compare two experiments
 	links to exp.cgi

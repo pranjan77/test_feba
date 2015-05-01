@@ -107,16 +107,20 @@ if (@fit > 0) { # show the table
     foreach my $row (@fit) {
 	my $geneId = $row->{sysName} || $row->{locusId};
 	push @trows, $cgi->Tr({align => 'left', valign => 'top'},
-			      $cgi->td(checkbox('locusId',0,$row->{locusId},'')),
-			      # $cgi->td(qq{<INPUT TYPE="CHECKBOX" name="locusId" value="$row->{locusId}" unchecked}),
-			      $cgi->td($cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$row->{locusId}",
+			      td(checkbox('locusId',0,$row->{locusId},'')),
+			      td(a({href => "myFitShow.cgi?orgId=$orgId&gene=$row->{locusId}",
 					       style => "color:rgb(0,0,0)"},
 						$geneId)),
-			      $cgi->td($row->{gene}),
-			      $cgi->td({ -bgcolor => Utils::fitcolor($row->{fit}) },
+			      td($row->{gene}),
+			      td({ -bgcolor => Utils::fitcolor($row->{fit}) },
 				       sprintf("%.1f", $row->{fit})),
-			      $cgi->td( sprintf("%.1f", $row->{t}) ),
-			      $cgi->td($row->{desc}));
+			      td( sprintf("%.1f", $row->{t}) ),
+			      td($row->{desc}),
+			      td(a({ style => "color:rgb(0,0,0)",
+				     title => "Compare to data from similar experiments or orthologs",
+				     href => "orthFit.cgi?orgId=$orgId&locusId=$row->{locusId}"
+					      . "&expGroup=$exp->{expGroup}&condition1=$exp->{condition_1}" },
+				 "compare")) );
     }
     print
 	start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
@@ -124,7 +128,7 @@ if (@fit > 0) { # show the table
 	$cgi->table(
 	    { cellspacing => 0, cellpadding => 3},
 	    $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
-		     $cgi->th(['&nbsp;', 'gene','name','fitness','t score','description']),
+		     $cgi->th(['&nbsp;', 'gene','name','fitness','t score','description', '&nbsp;']),
 		     @trows) ),
 	submit(-name => 'Top fitness of selected genes'),
 	end_form;
