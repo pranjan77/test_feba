@@ -176,7 +176,8 @@ if ($tsv) { # tab delimited values, not a page
     } else {
 	die "Unrecognized code for outlier";
     }
-    $outlierCode .= " and &vert;<i>x</i>-<i>y</i>&vert; &gt; 1.0" if $minabs < 2;
+    # &#124; is |
+    $outlierCode .= " and &#124;<i>x</i>-<i>y</i>&#124; &gt; 1.0" if $minabs < 2;
     $outlierCode =~ s!exp1!<i>x</i>!g;
     $outlierCode =~ s!exp2!<i>y</i>!g;
 
@@ -219,6 +220,12 @@ if ($tsv) { # tab delimited values, not a page
 	my @headings = qw{gene name description x y};
 	push @trows, $cgi->Tr({-align=>'center',-valign=>'top'}, $cgi->th(\@headings));
 	foreach my $gene (@genesShow) {
+	    my $colorX = Utils::fitcolor($gene->{x});
+	    my $colorY = Utils::fitcolor($gene->{y});
+	    my $x = sprintf("%.1f",$gene->{x});
+	    my $y = sprintf("%.1f",$gene->{y});
+	    my $tx = sprintf("%.1f",$gene->{tx});
+	    my $ty = sprintf("%.1f",$gene->{ty});
 	    push @trows, $cgi->Tr({-align=>'left',-valign=>'top'},
 		                  $cgi->td($cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$gene->{locusId}",
 						    style => "color:rgb(0,0,0)"},

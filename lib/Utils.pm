@@ -125,7 +125,7 @@ sub fractioncolor($) {
         $blue = 255;
     }
 
-    my $string=sprintf (" #%2.2X%2.2X%2.2X\n",$red,$green,$blue);
+    my $string=sprintf ("#%2.2X%2.2X%2.2X",$red,$green,$blue);
     return ($string);
 }
 
