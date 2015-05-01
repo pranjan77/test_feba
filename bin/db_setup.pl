@@ -8,7 +8,7 @@ use FEBA_Utils; # for ReadTable()
 use DBI;
 
 my $usage = <<END
-Usage: db_setup.pl [ -db db_file_name ] -orginfo orginfo -indir htmldir nickname1 ... nicknameN
+Usage: db_setup.pl [ -db db_file_name ] -orth orth_table -orginfo orginfo -indir htmldir nickname1 ... nicknameN
     Sets up a sqlite database suitable for the cgi scripts, reading from
     the html directories indir/nickname1 ... indir/nicknameN
     (created by BarSeqR.pl)
@@ -17,6 +17,9 @@ Usage: db_setup.pl [ -db db_file_name ] -orginfo orginfo -indir htmldir nickname
     The orginfo file should include all of the columns for the Orginfo
     table, but may contain organisms that are not included in the
     command line -- these will not be removed before loading.
+
+    The orth table should include the fields tax1, locus1, tax2, locus2,
+    ratio. The loci may be in taxId:locusId format.
 
     Creates intermediate files db.tablename.org in the working directory.
     If no db is specified, it just creates these and writes to stdout the
@@ -40,15 +43,17 @@ sub WorkPutRow(@); # list of fields to be written as a line
 sub WorkPutHash($@); # hash and list of fields to use
 
 {
-    my ($dbfile,$indir,$orgfile);
+    my ($dbfile,$indir,$orgfile,$orthfile);
     (GetOptions('db=s' => \$dbfile,
 		'orginfo=s' => \$orgfile,
+		'orth=s' => \$orthfile,
 		'indir=s' => \$indir)
-     && defined $indir && defined $orgfile)
+     && defined $indir && defined $orgfile && defined $orthfile)
 	|| die $usage;
     my @orgs = @ARGV;
     die "No such directory: $indir" unless -d $indir;
     die "No such file: $orgfile" unless -e $orgfile;
+    die "No such file: $orthfile" unless -e $orthfile;
     die "No organism nicknames specified\n" if scalar(@orgs) < 1;
 
     foreach my $org (@orgs) {
@@ -103,6 +108,38 @@ sub WorkPutHash($@); # hash and list of fields to use
 	}
 	EndWork();
     }
+
+    # Create db.Ortholog
+    # Do not use ReadTable as it may be quite large
+    open(ORTH, "<", $orthfile) || die "Cannot read $orthfile";
+    my $orthHeader = <ORTH>;
+    chomp $orthHeader;
+    my @orthHeaderSeen = split /\t/, $orthHeader;
+    my @orthHeader = qw{tax1 locus1 tax2 locus2 ratio};
+    die "Not enough fields in $orthfile" unless @orthHeaderSeen >= scalar(@orthHeader);
+    foreach my $i (0..$#orthHeader) {
+	die "Field $orthHeaderSeen[$i] is named $orthHeader[$i] instead"
+	    unless $orthHeader[$i] eq $orthHeaderSeen[$i];
+    }
+    my %orgHasOrth = ();
+    StartWorkFile("Ortholog", "db.Ortholog");
+    while(<ORTH>) {
+	chomp;
+	my ($tax1,$locus1,$tax2,$locus2,$ratio) = split /\t/, $_, -1;
+	die "Cannot parse ortholog file $_" unless defined $ratio && $ratio =~ m/^[0-9.]+$/;
+	next unless exists $orgUse{$tax1} && exists $orgUse{$tax2};
+	$orgHasOrth{$tax1} = 1;
+	# remove orgId: prefix at beginning of locusIds if necessary
+	$locus1 =~ s/^.*://;
+	$locus2 =~ s/^.*://;
+	WorkPutRow($tax1,$locus1,$tax2,$locus2,$ratio);
+    }
+    close(ORTH) || die "Error reading $orthfile";
+    foreach my $org (@orgs) {
+	print STDERR "Warning: No orthologs for $org\n"
+	    unless exists $orgHasOrth{$org};
+    }
+    EndWork();
 
     # Create db.Experiment.*
     foreach my $org (@orgs) {
@@ -248,10 +285,17 @@ sub WorkPutHash($@); # hash and list of fields to use
 	    die "Failed to load $table: expect $nRowsExpect rows but see $nRowsActual rows instead\n"
 		unless $nRowsActual == $nRowsExpect;
 	}
+
+	# Sanity check orthologs:
+	my ($nOrthRows) = $dbh->selectrow_array("SELECT COUNT(*) FROM Ortholog") || die;
+	my ($nOrthRows1) = $dbh->selectrow_array("SELECT COUNT(*) FROM Ortholog JOIN Gene ON orgId1=orgId AND locusId1=locusId") || die;
+	my ($nOrthRows2) = $dbh->selectrow_array("SELECT COUNT(*) FROM Ortholog JOIN Gene ON orgId2=orgId AND locusId2=locusId") || die;
+	die "Invalid values of locusId1 in Ortholog table: $nOrthRows != $nOrthRows1" unless $nOrthRows == $nOrthRows1;
+	die "Invalid values of locusId2 in Ortholog table: $nOrthRows != $nOrthRows1" unless $nOrthRows == $nOrthRows2;
+
 	$dbh->disconnect();
 	print STDERR "Successfully created $dbfile\n";
 	print STDERR "Cleaning up\n";
-
 	# Delete the files
 	foreach my $file (@workFiles) {
 	    unlink($file);

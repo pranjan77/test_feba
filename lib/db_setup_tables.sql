@@ -28,6 +28,15 @@ CREATE TABLE Gene(
    PRIMARY KEY (orgId, locusId)
 );
 
+CREATE TABLE Ortholog(
+   orgId1           TEXT     NOT NULL,
+   locusId1         TEXT     NOT NULL,
+   orgId2           TEXT     NOT NULL,
+   locusId2         TEXT     NOT NULL,
+   ratio            REAL     NOT NULL, /* BLAST_bit_score(alignment) / score(self_alignment) */
+   PRIMARY KEY (orgId1,locusId1,orgId2,locusId2)
+);
+
 /* Only experiments that succeeded should be loaded into the database.
    Quality metrics are documented in lib/FEBA_template.html
  */
