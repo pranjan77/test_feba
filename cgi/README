@@ -38,6 +38,7 @@ exp.cgi -- for an experiment, show metrics, or top genes
 compareExps.cgi -- interactive scatterplot to compare two experiments
 	links to exp.cgi
 	link to itself to change which experiments to show
-	can interactively build a gene table, link to myFitShow.cgi or genesFit.cgi
+	can interactively or programmatically build a gene table
+		link to myFitShow.cgi per gene or genesFit.cgi for multi-gene heatmap
 
 And every page ends with a link to the front page
