@@ -1,5 +1,8 @@
 # FEBA.R -- analysis scripts for barcode sequencing data
-
+#
+# Uses mclapply() from the R parallel package to analyze experiments in parallel --
+# set MC_CORES to control the #CPUs used (default is 2).
+#
 # The key routines are:
 #
 # FEBA_Fit() -- analyze many fitness experiments with AvgStrainFitness() and NormalizeByScaffold()
@@ -15,7 +18,6 @@
 #
 # Limitations:
 # High memory usage (~10GB to process 200K strains x 500 experiments)
-
 
 # GeneFitness():
 # genes -- must include locusId, scaffoldId, and begin
@@ -37,7 +39,9 @@
 # se (estimated standard error of measurement), and t (the test statistic),
 # as well as some other values from AvgStrainFitness(), notably sdNaive,
 # which is a different (best-case) estimate of the standard error.
-#
+
+library(parallel);
+
 GeneFitness = function(genes, strainInfo, countCond, countT0,
 	    	    strainsUsed, genesUsed, genesUsed12,
 		    use1 = strainInfo$f < 0.5,
@@ -392,10 +396,7 @@ FEBA_Fit = function(expsUsed, all, genes,
 
 	if(!all(expsUsed$t0set %in% names(t0tot))) stop("Illegal t0set ", setdiff(expsUsed$t0set, names(t0tot)));
 
-	all_fit = list();
-	strain_fit = list();
-	strain_se = list();
-	for(n in names(all)[-metacol]) {
+	results = mclapply(names(all)[-metacol], function(n) {
 		to_subtract = expsUsed$short[expsUsed$name==n] == "Time0";
 		if(debug) cat("GeneFitness() on", n,"t0set",expsUsed$t0set[expsUsed$name==n],
 			  			  if(to_subtract) "subtracted" else "", "\n");
@@ -406,33 +407,31 @@ FEBA_Fit = function(expsUsed, all, genes,
 		if(any(t0 < 0)) stop("Illegal counts under 0 for ",n);
 		if(all(t0 == 0)) {
 		    cat("Skipping log ratios for ",n," which has no control counts\n");
-		} else {
-		    all_fit[[n]] = GeneFitness(genes, all[has_gene2,words("locusId f")], x[has_gene2], t0[has_gene2],
+		    return(NULL);
+		}
+		gene_fit = GeneFitness(genes, all[has_gene2,words("locusId f")], x[has_gene2], t0[has_gene2],
 				    strainsUsed[has_gene2], genesUsed, genesUsed12, 
 				    minGenesPerScaffold=minGenesPerScaffold);
-                    cntrl = setdiff(expsT0[[ t0set ]], n);
-		    if(length(cntrl) < 1) stop("No Time0 experiments for ",n," should not be reachable");
-		    if(debug) cat("StrainFitness() on", n, "versus", cntrl,"\n");
-		    d = StrainFitness(all[[n]], rowSums(all[,cntrl,drop=F]));
-		    strain_fit[[n]] = d$fit;
-		    strain_se[[n]] = d$se;
-		}
-	}
-	strain_fit = data.frame(strain_fit);
-	strain_se = data.frame(strain_se);
-
-	if(length(all_fit) == 0) stop("All comparisons failed\n");
+                cntrl = setdiff(expsT0[[ t0set ]], n);
+		if(length(cntrl) < 1) stop("No Time0 experiments for ",n," should not be reachable");
+		if(debug) cat("StrainFitness() on", n, "versus", cntrl,"\n");
+		d = StrainFitness(all[[n]], rowSums(all[,cntrl,drop=F]));
+		return(list(gene_fit=gene_fit, strain_fit=d$fit, strain_se=d$se));
+	});
+	names(results) = names(all)[-metacol];
+	results = results[!sapply(results,is.null)];
+	if(length(results) == 0) stop("All comparisons failed\n");
 	if(debug) cat("GeneFitness() succeeded\n");
-	fit = list(g = all_fit[[1]]$locusId);
-	for(n in setdiff(names(all_fit[[1]]), "locusId"))
-	    fit[[n]] = data.frame(lapply(all_fit, function(x) x[[n]]));
+	fit = list(g = results[[1]]$gene_fit$locusId);
+	for(n in setdiff(names(results[[1]]$gene_fit), "locusId"))
+	    fit[[n]] = data.frame(lapply(results, function(x) x$gene_fit[[n]]));
 	names(fit) = sub("fitnorm","lrn",names(fit));
 	names(fit) = sub("fit","lr",names(fit));
 	if (debug) cat("Extracted fitness values\n");
 
 	q_names = words("name short t0set");
 	if(!is.null(expsUsed$num)) q_names = c(q_names, "num");
-	q = expsUsed[expsUsed$name %in% names(all_fit), q_names];
+	q = expsUsed[expsUsed$name %in% names(fit$lrn), q_names];
 	nUse = as.character(q$name);
 	if(!all(nUse == names(fit$lrn))) stop("Mismatched names in fit");
 	q$nMapped = colSums(all[,nUse,drop=F]);
@@ -482,8 +481,8 @@ FEBA_Fit = function(expsUsed, all, genes,
 
 	# These include all strains, not just those in genes
 	fit$strains = cbind(all[,metacol], used=fit$strainsUsed);
-	fit$strain_lr = strain_fit;
-	fit$strain_se = strain_se;
+	fit$strain_lr = data.frame(lapply(results, with, strain_fit));
+	fit$strain_se = data.frame(lapply(results, with, strain_se));
 
 	# Normalized per-strain values, based on the closest gene
 	strainToGene = StrainClosestGenes(fit$strains, genes[match(fit$g, genes$locusId),]);

@@ -45,6 +45,10 @@ requires metadata about the experiments (usually FEBA_BarSeq.tsv) and
 information about the GC content of each gene (genes.GC -- this can be
 produced from a normal genes table with RegionGC.pl).
 
+BarSeqTest.pl is a wrapper to analyze barseq reads and run
+BarSeqR.pl. It is intended for small test runs and does not require a
+metadata table.
+
 There are also helper scripts RunTnSeqLocal.pl and RunBarSeqLocal.pl
 for analyzing the reads in parallel. Both of these scripts use
 submitter.pl to issue jobs in parallel, and its behavior can be
