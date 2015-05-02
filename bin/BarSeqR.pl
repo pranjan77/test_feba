@@ -44,6 +44,10 @@ Usage: BarSeqR.pl -org organism [ -indir g/organism ]
     the output directory. These files are genes, pool, exps, and
     all.poolcount, which contains the barseq data for each strain in
     the pool, along with whether the strain is in a gene.
+
+    Note -- the R step is parallel, use the MC_CORES environment
+    variable to control it.
+
 END
     ;
 
@@ -52,17 +56,17 @@ END
     my $noR; # set if skip running FEBA.R
     my $test; # check for poolcount files, etc.
 
-    GetOptions('org=s' => \$org,
+    die $usage unless
+	GetOptions('org=s' => \$org,
 	       'indir=s' => \$indir,
 	       'exps=s' => \$expsfile,
 	       'genesfile=s' => \$genesfile,
 	       'poolfile=s' => \$poolfile,
 	       'outdir=s' => \$outdir,
 	       'noR' => \$noR,
-	       'test' => \$test) || die $usage;
+	       'test' => \$test )
+	&& defined $org;
     my @sets = @ARGV;
-
-    die "Must specify organism nickname with -org" unless defined $org;
 
     $indir = "g/$org" unless defined $indir;
     die "No such directory: $indir" unless -d $indir;
