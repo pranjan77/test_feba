@@ -35,7 +35,6 @@ sub get_style() {
     my $style = <<"EOT";
     body {
         font-family: verdana, arial, sans-serif;
-        padding-left: 5%;
     }
     H2 {
         color: red;
