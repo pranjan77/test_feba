@@ -102,11 +102,16 @@ END
     die "No such script file: $Rscript" if ! -e $Rscript && !defined $noR;
 
     my @exps = &ReadTable($expsfile, qw{SetName Index Description Date_pool_expt_started});
+    my $alpha = chr(206).chr(177);
     foreach my $exp (@exps) {
 	# extra spaces at end are common data entry errors
 	$exp->{Description} =~ s/ *$//;
 	$exp->{SetName} =~ s/ *$//;
 	$exp->{Index} =~ s/ *$//;
+	# replace the greek letter alpha (bytes 206 177) with "a"
+	$exp->{Description} =~ s/$alpha/a/g;
+	$exp->{Condition_1} =~ s/$alpha/a/g;
+	$exp->{Condition_2} =~ s/$alpha/a/g;
     }
     @exps = grep { $_->{Description} ne "" } @exps;
     if (scalar(@sets) == 0) { # no pre-specified set(s)
