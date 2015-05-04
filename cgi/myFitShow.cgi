@@ -25,24 +25,19 @@ use lib "../lib";
 use Utils;
 
 my $cgi=CGI->new;
+print $cgi->header;
 my $style = Utils::get_style();
 
-# read the input information
-
 my $orgSpec = $cgi->param('orgId') || "";
-my $geneSpec = $cgi->param('gene') || die "no gene name found\n";
+my $geneSpec = $cgi->param('gene');
 my $showAll = $cgi->param('showAll') ? 1 : 0;
 
 $geneSpec =~ s/ *$//;
 $geneSpec =~ s/^ *//;
 
-print $cgi->header;
-print $cgi->start_html(
-    -title =>"Fitness",
-    -style => {-code => $style},
-    -author=>'wjshaoATberkeley.edu',
-    -meta=>{'copyright'=>'copyright 2015 UC Berkeley'},
-);
+if (!defined $geneSpec || $geneSpec eq "") {
+    Utils::fail($cgi, "you must enter the gene name or locus tag");
+}
 
 # check user input
 
@@ -69,8 +64,19 @@ foreach my $gene (@$hits) {
 }
 
 if (@$hits == 0) {
-    print $cgi->h3("No gene found for $geneSpec");
+    print $cgi->start_html(
+	-title =>"Gene Search",
+	-style => {-code => $style},
+	-author=>'wjshaoATberkeley.edu',
+	-meta=>{'copyright'=>'copyright 2015 UC Berkeley'} );
+    print $cgi->h3("No gene found for $geneSpec",
+		   (exists $orginfo->{$orgSpec}{genome} ? " in " . $orginfo->{$orgSpec}{genome} : ""));
 } elsif (@$hits > 1) {
+    print $cgi->start_html(
+	-title =>"Gene Search",
+	-style => {-code => $style},
+	-author=>'wjshaoATberkeley.edu',
+	-meta=>{'copyright'=>'copyright 2015 UC Berkeley'} );
     print $cgi->h3("Genes found for $geneSpec:");
     my @trows = ();
     push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
@@ -121,8 +127,12 @@ if (@$hits == 0) {
 	}
 
 	my $idShow = $gene->{sysName} || $gene->{locusId};
-	print $cgi->h2("Fitness data for gene $idShow in $orginfo->{$orgId}{genome}");
-	print $cgi->h3("$idShow $gene->{gene}: $gene->{desc}");
+	my $title = "Fitness data for $idShow in $orginfo->{$orgId}{genome}";
+	print
+	    start_html( -title => $title, -style => {-code => $style}, -author=>'wjshaoATberkeley.edu',
+			 -meta=>{'copyright'=>'copyright 2015 UC Berkeley'} ),
+	    h2($title),
+	    h3("$idShow $gene->{gene}: $gene->{desc}");
 	if ($showAll) {
 	    print $cgi->p("All " . scalar(@fit) . " fitness values, sorted by group and condition");
 	} else {
@@ -170,7 +180,7 @@ if (@$hits == 0) {
 	    hidden( -name => 'showAll', -value => $showAll, -override => 1  ),
 	    hidden( -name => 'locusId', -value => $locusId, -override => 1 ),
 	    textfield( -name => 'addgene', -default => "", -override => 1, -size => 20, -maxLength => 100 ),
-	    >end_form;
+	    end_form;
 
 	# links
 	if ($showAll == 0) {

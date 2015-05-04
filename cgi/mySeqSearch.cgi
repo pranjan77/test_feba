@@ -160,10 +160,11 @@ while(<RES>) {
     $cnt++;
 }
 close(RES) || die "Error reading $blastOut";
+$#hits = $numHit-1 if defined $numHit && $numHit > 0 && @hits > $numHit;
 
 if ($cnt > 0) {
 
-    print $cgi->p("Top $cnt hits (E < 0.01)");
+    print $cgi->p("Top " . scalar(@hits) . " hits (E < 0.01)");
 
     my @td = ();
     foreach my $row (@hits) {
