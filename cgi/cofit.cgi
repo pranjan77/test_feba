@@ -81,7 +81,7 @@ if (@$cofitResults == 0) {
 			      $cgi->td($hitName),
 			      $cgi->td($hitDesc),
 	                      $cgi->td( $cgi->a({href => "cofitCons.cgi?orgId=$orgId&locusId=$locusId&hitId=$hitId"},
-						defined $cofitCons ? sprintf("%.1f", $cofitCons) : "no") ));
+						defined $cofitCons ? sprintf("%.2f", $cofitCons) : "no") ));
 
     }
     print
