@@ -54,7 +54,7 @@ my $cofitResults = $dbh->selectall_arrayref(qq{
 if (@$cofitResults == 0) {
     print $cgi->p(qq{Cofitness results are not available for this organism, sorry.});
 } else {
-    my @headRow = map { $cgi->td($cgi->b($_)) } qw{&nbsp; Rank Cofitness Hit Name Description};
+    my @headRow = map { $cgi->td($cgi->b($_)) } qw{&nbsp; Rank Cofitness Hit Name Description Conserved?};
 
     my @trows = ( $cgi->Tr(@headRow) );
     my @colors = ('#FFFFDD', '#FFFFFF');
@@ -65,6 +65,13 @@ if (@$cofitResults == 0) {
 	my $showId = $hitSysName || $hitId;
 	my $rowcolor = $colors[ $iRow++ % scalar(@colors) ];
 	$cofit = sprintf("%.2f",$cofit);
+	my ( $cofitCons ) = $dbh->selectrow_array(qq{ SELECT max(cofit) FROM Ortholog o1, Ortholog o2, Cofit c
+                                 	WHERE o1.orgId1 = ? AND o1.locusId1 = ?
+	                                 AND o1.orgId2 = c.orgId AND o1.locusId2 = c.locusId
+	                                 AND o2.orgId1 = o1.orgId1 AND o2.orgId2=o1.orgId2
+	                                 AND o2.locusId1 = ?
+                                         AND o2.locusId2 = c.hitId; },
+				    {}, $orgId, $locusId, $hitId);
 	push @trows, $cgi->Tr({bgcolor => $rowcolor, align => 'left', valign => 'top' },
 			      $cgi->td(checkbox('locusId',0,$hitId,'')),
 			      $cgi->td($rank),
@@ -72,7 +79,9 @@ if (@$cofitResults == 0) {
 			      $cgi->td($cgi->a( {href => "myFitShow.cgi?orgId=$orgId&gene=$hitId" },
 						$showId )),
 			      $cgi->td($hitName),
-			      $cgi->td($hitDesc));
+			      $cgi->td($hitDesc),
+	                      $cgi->td( $cgi->a({href => "cofitCons.cgi?orgId=$orgId&locusId=$locusId&hitId=$hitId"},
+						defined $cofitCons ? sprintf("%.1f", $cofitCons) : "no") ));
 
     }
     print
