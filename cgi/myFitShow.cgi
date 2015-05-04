@@ -17,7 +17,7 @@
 
 use strict;
 
-use CGI qw(:standard Vars);
+use CGI qw(:standard Vars -nosticky);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
 
@@ -163,13 +163,14 @@ if (@$hits == 0) {
             $cgi->Tr({-align=>'left',-valign=>'top',-style=>"font-size: $relsize"}, \@out ) );
 
 	# Option to add a gene (links to genesFit.cgi)
-	print $cgi->start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi');
-	print "<P>Add gene: ";
-	print $cgi->hidden( 'orgId', $orgId );
-	print $cgi->hidden( 'showAll', $showAll );
-	print qq{<input type="hidden" name="locusId" value="$locusId" />\n};
-	print $cgi->textfield( -name => 'addgene', -default => "", -override => 1, -size => 20, -maxLength => 100 );
-	print $cgi->end_form;
+	print
+	    start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
+	    "<P>Add gene: ",
+	    hidden( -name => 'orgId', -value => $orgId, -override => 1 ),
+	    hidden( -name => 'showAll', -value => $showAll, -override => 1  ),
+	    hidden( -name => 'locusId', -value => $locusId, -override => 1 ),
+	    textfield( -name => 'addgene', -default => "", -override => 1, -size => 20, -maxLength => 100 ),
+	    >end_form;
 
 	# links
 	if ($showAll == 0) {
