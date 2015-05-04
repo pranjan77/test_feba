@@ -111,10 +111,22 @@ sub cofitStrings($$$$) {
     return (a({href => $URL}, sprintf("%.2f", $cofit)), $rank) if defined $cofit;
     # else !defined cofit
     # get min cofit and max rank
-    ($cofit,$rank) = $dbh->selectrow_array("SELECT min(cofit), max(rank) FROM Cofit where orgId=? AND locusId=? GROUP BY orgId,locusId;",
-					   {}, $orgId, $locus1);
-    return (a({href => $URL, title => sprintf("under %.2f",$cofit)}, "low"), "&gt; $rank") if defined $cofit;
-    #else
-    return (a({title => "no data"}, "&mdash;"), a({title => "no data"}, "&mdash;"));
+    my $hasData1 = Utils::gene_has_fitness($dbh,$orgId,$locus1);
+    my $hasData2 = Utils::gene_has_fitness($dbh,$orgId,$locus2);
+    if ($hasData1 && $hasData2 ) {
+	($cofit,$rank) = $dbh->selectrow_array("SELECT min(cofit), max(rank) FROM Cofit where orgId=? AND locusId=? GROUP BY orgId,locusId;",
+					       {}, $orgId, $locus1);
+	return (a({href => $URL, title => sprintf("under %.2f",$cofit)}, "low"), "&gt; $rank") if defined $cofit;
+	# else
+	return (a({title => "no cofitness for this organism"}, "&mdash;"), a({title => "no cofitness for this organism"}, "&mdash;"));
+    }
+    # else
+    return (a({title => "no data for either"}, "&mdash;"), a({title => "no data for either"}, "&mdash;"))
+	if (!$hasData1 && !$hasData2);
+    return (a({title => "no data for gene 1"}, "&mdash;"), a({title => "no data for gene 1"}, "&mdash;"))
+	if !$hasData1 && $hasData2;
+    return (a({title => "no data for gene 2"}, "&mdash;"), a({title => "no data for gene 2"}, "&mdash;"))
+	if $hasData1 && !$hasData2;
+    die "Unreachable";
 }
 
