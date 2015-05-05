@@ -53,7 +53,7 @@ my ($cnt) = $dbh->selectrow_array(qq{SELECT count(*) from Experiment WHERE orgId
 				  {}, $orgId, $expGroup, $condition1);
 die "No experiments for specified expGroup and condition1\n" unless $cnt > 0;
 
-my $showId = $gene->{sysName} || $gene->{locusIdId};
+my $showId = $gene->{sysName} || $gene->{locusId};
 my $title = "$showId and its orthologs: fitness in $expGroup $condition1";
 print header,
     start_html(
