@@ -37,6 +37,7 @@ cofit.cgi -- top cofit hits for a gene
 	fitness data (for query gene) => myFitShow.cgi
 	homologs => mySeqSearch.cgi
 mySeqSearch.cgi -- a list of hits, linking to myFitShow.cgi for each (if it has data)
+getSeq.cgi -- sequence of gene (if it is a protein)
 exp.cgi -- for an experiment, show metrics, or top genes
 	if showing specific phenotypes, or important genes, or detrimental genes
 		each gene => myFitShow.cgi, each cell => orthFit.cgi
