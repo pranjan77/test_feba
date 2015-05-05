@@ -29,7 +29,7 @@ Utils::fail($cgi, "$orgId is invalid. Please enter correct species name!") unles
 Utils::fail($cgi, "$locusId is invalid. Please enter correct locusId!") unless ($locusId =~ m/^[A-Za-z0-9_]*$/);
 
 my $dbh = Utils::get_dbh();
-my ($sysName,$geneName,$desc) = $dbh->selectrow_array("SELECT sysName,gene,desc FROM Gene WHERE orgId=? AND locusId=?", undef,
+my ($sysName,$geneName,$desc,$type) = $dbh->selectrow_array("SELECT sysName,gene,desc,type FROM Gene WHERE orgId=? AND locusId=?", undef,
 					    $orgId, $locusId);
 Utils::fail($cgi, "No locus $locusId in species $orgId") unless defined $sysName;
 my ($genus,$species,$strain) = $dbh->selectrow_array("SELECT genus,species,strain FROM Organism WHERE orgId=?", undef, $orgId);
@@ -93,6 +93,11 @@ if (@$cofitResults == 0) {
 	end_form;
 }
 print $cgi->p($cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, "Fitness data"));
-print $cgi->p($cgi->a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Check homologs"));
+
+    print
+	p(a({href => "getSeq.cgi?orgId=$orgId&locusId=$locusId"}, "Show sequence"),
+	  "or",
+	  a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Check homologs"))
+	if $type == 1;
 
 Utils::endHtml($cgi);

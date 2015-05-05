@@ -110,8 +110,8 @@ if ($query =~ m/[A-Za-z]/) {
     # extract sequence for the given gene
 
     my $gene = $dbh->selectrow_hashref("SELECT * from Gene where orgId=? AND locusId=?", {}, $orgId, $locusSpec);
-    Utils::fail($cgi, "No such gene: $locusSpec in $orgId") unless defined $gene->{locusId};
-    Utils::fail($cgi, "Sorry, homology search is only available for protein-coding genes") unless $gene->{type} == 1;
+    Utils::fail($cgi, "no such gene: $locusSpec in $orgId") unless defined $gene->{locusId};
+    Utils::fail($cgi, "homology search is only available for protein-coding genes") unless $gene->{type} == 1;
 
     my $id = join(":",$orgId,$locusSpec);
     my $fastacmd = '../bin/blast/fastacmd';
@@ -186,10 +186,7 @@ unlink($seqFile) || die "Error deleting $seqFile: $!";
 unlink($blastOut) || die "Error deleting $blastOut: $!";
 unlink($blastSort) || die "Error deleting $blastSort: $!";
 
-
-print $cgi->p(qq(<a href="myFrontPage.cgi">Go back to front page</a>));
-
-print $cgi->end_html;
+Utils::endHtml($cgi);
 
 exit 0;
 

@@ -34,7 +34,9 @@ Utils::fail($cgi, "Unknown organism: $orgId") unless $orgId eq "" || exists $org
 my $expSpec = $cgi->param('query');
 $expSpec = "" if !defined $expSpec;
 
-Utils::fail($cgi, "Must specify organism or query by experiment") if $orgId eq "" && $expSpec eq "";
+$expSpec = "" if $cgi->param("All experiments");
+
+Utils::fail($cgi, "cannot show all experiments: please specify organism and/or condition") if $orgId eq "" && $expSpec eq "";
 my $exps = Utils::matching_exps($dbh, $orgId, $expSpec);
 
 print $cgi->start_html(

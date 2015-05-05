@@ -48,7 +48,7 @@ Utils::fail($cgi, "$geneSpec is invalid. Please enter correct gene name!") unles
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
 
-my $query = qq{SELECT orgId, locusId, sysName, desc, gene FROM Gene
+my $query = qq{SELECT orgId, locusId, sysName, desc, gene, type FROM Gene
 		WHERE ( locusId = ? OR sysName = ? OR upper(gene) = upper(?) )};
 my $hits;
 if ($orgSpec) {
@@ -194,6 +194,12 @@ if (@$hits == 0) {
 	print $cgi->p($cgi->a({href => "cofit.cgi?orgId=$orgId&locusId=$locusId"}, "Top cofit genes"));
     } # end else unique hit has data
 
+    print
+	p(a({href => "getSeq.cgi?orgId=$orgId&locusId=$locusId"}, "Show sequence"),
+	  "or",
+	  a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Check homologs"))
+	if $gene->{type} == 1;
+
     my @links = ();
     if ($gene->{locusId} =~ m/^\d+$/) {
 	push @links, $cgi->a({href => "http://www.microbesonline.org/cgi-bin/fetchLocus.cgi?locus=$gene->{locusId}"},
@@ -203,11 +209,6 @@ if (@$hits == 0) {
 	push @links, $cgi->a({href => "http://ecocyc.org/ECOLI/search-query?type=GENE&gname=$gene->{sysName}"}, "EcoCyc");
     }
     print $cgi->p("Links: " . join(", ", @links)) if (@links > 0);
-
-    # check homologs where or not gene has data
-    my $dest = qq(mySeqSearch.cgi?orgId=$orgId&locusId=$locusId);
-    print $cgi->p(qq(<a href=$dest>Check homologs</a>));
-
 } #  end if just 1 hit
 
 $dbh->disconnect();
