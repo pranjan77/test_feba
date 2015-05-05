@@ -98,7 +98,7 @@ foreach my $o (@genes) {
 }
 print
     table({ cellpadding => 3, cellspacing =>0}, @trows),
-    $nSkipOrth ? p("$nSkipOrth orthologs are not shown because they lack relevant fitness data") : "",
+    $nSkipOrth ? p("$nSkipOrth orthologs are not shown because they lack fitness data for this condition (or they lack data entirely)") : "",
     p(a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Show all homologs"));
 
 
