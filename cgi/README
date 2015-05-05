@@ -19,6 +19,7 @@ myFitShow.cgi -- show list of matching genes, or table of fitness data for one g
 	add a gene => genesFit.cgi
 	show all => showAll=1 option
 	show nearby => genesFit.cgi with around
+	sequence  => getSeq.cgi
 	check homologs => mySeqSearch.cgi
 	cofitness => cofit.cgi
 orthFit.cgi -- for a gene in a condition, show table of fitness across orthologs
