@@ -194,9 +194,9 @@ sub matching_exps($$$) {
              WHERE (expName = "$expSpec"
 	            OR Condition_1 LIKE "$expSpec%" OR Condition_1 LIKE "% $expSpec%"  OR Condition_1 LIKE "%-$expSpec%"
 		    OR Condition_2 LIKE "$expSpec%" OR Condition_2 LIKE "% $expSpec%"  OR Condition_2 LIKE "%-$expSpec%"
-	     	    OR expGroup = "$expSpec"
-	            OR expDesc = "$expSpec" OR expDesc LIKE "$expSpec %" OR expDesc LIKE "% $expSpec" OR expDesc LIKE "% $expSpec %"
-	            OR expDescLong = "$expSpec" OR expDescLong LIKE "$expSpec %" OR expDescLong LIKE "% $expSpec" OR expDescLong LIKE "% $expSpec %")
+	     	    OR expGroup = '$expSpec'
+	            OR expDesc = '$expSpec' OR expDesc LIKE "$expSpec %" OR expDesc LIKE "% $expSpec" OR expDesc LIKE "% $expSpec %"
+	            OR expDescLong = '$expSpec' OR expDescLong LIKE "$expSpec %" OR expDescLong LIKE "% $expSpec" OR expDescLong LIKE "% $expSpec %")
 	     $orgClause
 	     ORDER BY genus, species, strain, expGroup, condition_1, concentration_1, expDesc};
     return $dbh->selectall_arrayref($sql, { Slice => {} });
