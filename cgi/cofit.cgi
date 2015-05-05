@@ -35,15 +35,16 @@ Utils::fail($cgi, "No locus $locusId in species $orgId") unless defined $sysName
 my ($genus,$species,$strain) = $dbh->selectrow_array("SELECT genus,species,strain FROM Organism WHERE orgId=?", undef, $orgId);
 Utils::fail($cgi, "No species information for $orgId") unless defined $species;
 
-print $cgi->start_html(
-    -title =>"Cofitness for $sysName ($genus $species $strain)",
-    -style => {-code => $style},
-    -author=>'morgannprice@yahoo.com',
-    -meta=>{'copyright'=>'copyright 2015 UC Berkeley'},
-);
 my $showId = $sysName || $locusId;
-print $cgi->h2("Top cofit genes for $showId from $genus $species $strain");
-print $cgi->h3("$showId $geneName : $desc");
+print
+    start_html( -title =>"Cofitness for $sysName ($genus $species $strain)",
+		-style => {-code => $style},
+		-author=>'morgannprice@yahoo.com',
+		-meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
+    h2("Top cofit genes for $showId from $genus $species $strain"),
+    div({-style => "float: right; vertical-align: top;"},
+	a({href => "help.cgi#cofitness"}, "Help")),
+    h3("$showId $geneName : $desc");
 #print $cgi->p(qq{<A HREF="myFitShow.cgi?orgId=$orgId&gene=$locusId">$sysName: $desc</A>});
 
 my $cofitResults = $dbh->selectall_arrayref(qq{

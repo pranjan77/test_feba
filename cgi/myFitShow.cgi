@@ -76,8 +76,10 @@ if (@$hits == 0) {
 	-title =>"Gene Search",
 	-style => {-code => $style},
 	-author=>'wjshaoATberkeley.edu',
-	-meta=>{'copyright'=>'copyright 2015 UC Berkeley'} );
-    print $cgi->h3("Genes found for $geneSpec:");
+	-meta=>{'copyright'=>'copyright 2015 UC Berkeley'} ),
+	div({-style => "float: right; vertical-align: top;"},
+	    a({href => "help.cgi"}, "Help")),
+	h3("Genes found for $geneSpec:");
     my @trows = ();
     push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
 			  $cgi->th( [ 'geneId','sysName','geneName','description','genome','fitness' ] ) );
@@ -132,6 +134,8 @@ if (@$hits == 0) {
 	    start_html( -title => $title, -style => {-code => $style}, -author=>'wjshaoATberkeley.edu',
 			 -meta=>{'copyright'=>'copyright 2015 UC Berkeley'} ),
 	    h2($title),
+	    div({-style => "float: right; vertical-align: top;"},
+		a({href => "help.cgi#fitness"}, "Help")),
 	    h3("$idShow $gene->{gene}: $gene->{desc}");
 	if ($showAll) {
 	    print $cgi->p("All " . scalar(@fit) . " fitness values, sorted by group and condition");

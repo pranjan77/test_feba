@@ -143,7 +143,10 @@ if ($showAll) {
     @exps = sort { $a->{avg} <=> $b->{avg} } @exps;
 }
 
-print $cgi->h2($pageTitle);
+print h2($pageTitle),
+    div({-style => "float: right; vertical-align: top;"},
+	a({href => "help.cgi#fitness"}, "Help"));
+
 print $cgi->h3($addgene_error) if defined $addgene_error;
 if ($showAll) {
     print $cgi->p("All " . scalar(@exps) . " fitness values, sorted by group and condition");

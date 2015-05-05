@@ -46,15 +46,14 @@ my $spec = $dbh->selectall_arrayref(qq{SELECT * from SpecificPhenotype JOIN Gene
 				    { Slice => {} },
 				    $orgId, $expName);
 
-print $cgi->start_html(
-    -title =>"Experiment $expName for $orginfo->{$orgId}{genome}",
-    -style => {-code => $style},
-    -author=>'morgannprice@yahoo.com',
-    -meta=>{'copyright'=>'copyright 2015 UC Berkeley'},
-);
-
-print $cgi->h2("Experiment $expName for $orginfo->{$orgId}{genome}");
-print $cgi->h3($exp->{expDescLong});
+print start_html( -title =>"Experiment $expName for $orginfo->{$orgId}{genome}",
+		  -style => {-code => $style},
+		  -author=>'morgannprice@yahoo.com',
+		  -meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
+    h2("Experiment $expName for $orginfo->{$orgId}{genome}"),
+    div({-style => "float: right; vertical-align: top;"},
+	a({href => "help.cgi#fitness"}, "Help")),
+    h3($exp->{expDescLong});
 my $cond1 = $exp->{condition_1} ? join(" ", $exp->{condition_1}, $exp->{concentration_1}, $exp->{units_1}) : "";
 my $cond2 = $exp->{condition_2} ? join(" ", $exp->{condition_2}, $exp->{concentration_2}, $exp->{units_2}) : "";
 my $media = $exp->{media};
@@ -76,7 +75,7 @@ print $cgi->p(join("<BR>", "Media: $media", join(", ",@culture), "By: $exp->{per
 my @fit = (); # sorted list of fitness values to show
 my $header = undef;
 if ($show eq "specific") {
-    $header = "Genes with specific phenotypes:";
+    $header = "Genes with " . a({href => "help.cgi#specific"}, "specific") . " phenotypes:";
     @fit = @{ $dbh->selectall_arrayref(qq{SELECT * FROM SpecificPhenotype JOIN GeneFitness USING (orgId,expName,locusId)
                                           JOIN Gene USING (orgId,locusId)
 					  WHERE orgId=? AND expName=? ORDER BY fit},

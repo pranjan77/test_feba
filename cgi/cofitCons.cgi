@@ -92,6 +92,8 @@ print
 	-author=>'morgannprice@yahoo.com',
 	-meta=>{'copyright'=>'copyright 2015 UC Berkeley'} ),
     h2($title),
+    div({-style => "float: right; vertical-align: top;"},
+	a({href => "help.cgi#ortholog"}, "Help")),
     h3("$nBoth genomes with putative orthologs of both genes"),
     table({-cellspacing => 0, cellpadding => 3}, @trows);
 print p("Not shown: $n1only genomes with orthologs for $show1 only; $n2only genomes with orthologs for $show2 only");

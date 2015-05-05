@@ -210,10 +210,12 @@ if ($tsv) { # tab delimited values, not a page
 	start_html( -title => "Outlier genes from $orginfo->{$orgId}{genome}", -style => {-code => $style},
 		    -author => 'Morgan Price', -mata => {'copyright'=>'copyright 2015 UC Berkeley'} ),
 	h2("Outlier genes from $orginfo->{$orgId}{genome}"),
+	div({-style => "float: right; vertical-align: top;"},
+	    a({href => "help.cgi#fitness"}, "Help")),
 	h3($outlierCode),
-	p(qq{<i>x</i> is <A HREF="exp.cgi?orgId=$orgId&expName=$expName1">$expName1</A>: $exp1->{expDescLong} }
+	p(qq{<i>x</i> is fitness in <A HREF="exp.cgi?orgId=$orgId&expName=$expName1">$expName1</A>: $exp1->{expDescLong} }
 	  . "<BR>"
-	  . qq{<i>y</i> is <A HREF="exp.cgi?orgId=$orgId&expName=$expName2">$expName2</A>: $exp2->{expDescLong} }),
+	  . qq{<i>y</i> is fitness in <A HREF="exp.cgi?orgId=$orgId&expName=$expName2">$expName2</A>: $exp2->{expDescLong} }),
 	p(scalar(@genesShow) . " genes found");
     if (@genesShow > 0) {
 	my @trows = ();
@@ -273,7 +275,7 @@ $style
 <body style="padding-left: 1%">
 
 <H2>$title</H2>
-
+<DIV style="float: right; vertical-align: top;"><A HREF="help.cgi#fitness">Help</A></DIV>
 <P>
 <i>x</i> axis <A HREF="exp.cgi?orgId=$orgId&expName=$expName1">$expName1</A>: $exp1->{expDescLong}</H3>
 <BR>

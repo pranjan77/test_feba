@@ -61,7 +61,10 @@ print header,
 	-style => {-code => $style},
 	-author=>'Morgan Price',
 	-meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
-    h2($title);
+    h2($title),
+    div({-style => "float: right; vertical-align: top;"},
+	a({href => "help.cgi#ortholog"}, "Help")),
+    div({-style => "clear: right"});
 
 my @headings = ( a({title=>"score ratio for ortholog: blast_score_of_alignment / self_score"},'ratio'),
 		 qw{organism gene name description experiment fitness t} );

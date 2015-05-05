@@ -33,12 +33,16 @@ foreach my $hash (@orginfo) {
 
 print header,
     start_html(
-	-title =>"Fitness Web Site",
+	-title =>"Fitness Browser",
 	-style => {-code => $style},
 	-author=>'wjshaoATberkeley.edu',
 	-meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
-    h2("Fitness Web Site"),
-    h5(q{This web site contains <i>unpublished</i> fitness experiments from the Deutschbauer lab, the Arkin lab,
+    h2("Fitness Browser"),
+    div({-style => "float: right; vertical-align: top;"},
+	a({href => "help.cgi"}, "Help")),
+    h5(q{Browse <i>unpublished</i> fitness experiments from the
+         <A HREF="http://pbd.lbl.gov/scientists/adam-deutschbauer/">Deutschbauer lab</A>,
+         the <A HREF="http://genomics.lbl.gov/">Arkin lab</A>,
          and collaborators. Contact <A HREF="mailto:AMDeutschbauer.lbl.gov">Adam Deutschbauer</A> for more information.}),
     # Gene search form
     div({-style => "float:left; vertical-align: top;"},
@@ -77,7 +81,9 @@ print header,
     p(submit("Search"),
       reset() ),
     end_form,
-    h6(q(Developed by Wenjun Shao and Morgan Price. Please report any bugs to <A HREF="mailto:funwithwords26@gmail.com">Morgan</A>.));
+    h6(q(Developed by Wenjun Shao and
+         <A HREF="http://morgannprice.org/">Morgan Price</A>.
+         Please report any bugs to <A HREF="mailto:funwithwords26@gmail.com">Morgan</A>.));
     end_html;
 
 $dbh->disconnect();
