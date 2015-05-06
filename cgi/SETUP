@@ -30,7 +30,7 @@ The other dependencies are perl modules:
 	DBI
 	List::Util;
 	Time::HiRes (for making unique file names)
-	Bio::SeqIO (used to read FASTA files)
+	Bio::SeqIO (used to read FASTA files; could be replaced)
 
 The front page for the web site is:
 	cgi/myFrontPage.cgi
