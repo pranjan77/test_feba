@@ -30,7 +30,10 @@ my $cgi=CGI->new;
 my $style = Utils::get_style();
 my $orgId = $cgi->param('orgId') || die "No orgId found";
 my @locusIds = $cgi->param('locusId');
-die "No locusId found" if @locusIds == 0;
+if (@locusIds == 0) {
+    print $cgi->header;
+    Utils::fail($cgi,"no genes to show");
+}
 my $showAll = $cgi->param('showAll') ? 1 : 0;
 my $around = $cgi->param('around') || 0;
 my $addgene = $cgi->param('addgene');

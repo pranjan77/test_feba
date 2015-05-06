@@ -153,9 +153,11 @@ while(<RES>) {
 	next;
     }
 
-    my $fitness = $cgi->a( { href => "myFitShow.cgi?orgId=$orgId&gene=$locusId" },
-			   Utils::gene_has_fitness($dbh,$orgId,$locusId) ? "has data" : "no data" );
-    my @hit = ($sys || $locusId,$geneName,$desc,$orginfo->{$orgId}->{genome},$percIdentity,$cov,$eVal,$bitScore,$fitness);
+    my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $orgId, $locusId);
+    my @hit = ($sys || $locusId,$geneName,$desc,$orginfo->{$orgId}->{genome},
+	       a( { href => "myFitShow.cgi?orgId=$orgId&gene=$locusId", title => $fittitle },
+		  $fitstring ),
+	       $percIdentity,$cov,$eVal,$bitScore);
     push @hits, \@hit;
     $cnt++;
 }
@@ -173,7 +175,7 @@ if ($cnt > 0) {
     print $cgi->table(
         { cellspacing=>0, cellpadding=>3 },
         $cgi->Tr({-align=>'left',-valign=>'top'},
-		 $cgi->th( [ 'geneId','name','description','species','identity%','coverage%','eValue','bitScore','fitness' ] ) ),
+		 $cgi->th( [ 'geneId','name','description','species','fitness','identity%','coverage%','eValue','bitScore' ] ) ),
             $cgi->Tr({ -align => 'left', -valign => 'top' }, \@td )
     );
 

@@ -130,7 +130,14 @@ that the BLAST alignment cover 80% of each protein.</P>
 
 <P>Many of these "orthologs" actually have different functions. If either gene has a strong fitness pattern, you may be able to use conserved phenotypes or conserved cofitness to confirm that the genes have conserved functions and are truly functional orthologs.</P>
 
-<div style="height:100px">&nbsp;</div>
+<div style="height:50px">&nbsp;</div>
+
+<P><center><small>Page by <A HREF="http://morgannprice.org/">Morgan Price</A>.
+Please email questions to <A HREF="mailto:funwithwords26\@gmail.com">Morgan</A>.
+The code for this web site is available <A HREF="https://bitbucket.org/berkeleylab/feba/src">here</A>.
+</small></center>
+
+<div style="height:50px">&nbsp;</div>
 
 END
     ;

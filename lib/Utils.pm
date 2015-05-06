@@ -213,6 +213,24 @@ sub get_orths($$$) {
 	                           "orgId", {}, $orgId, $locusId);
 }
 
+# returns a simple summary of the gene's fitness pattern, like "no data", "weak", "strong", or "cofit",
+# and a longer piece of text that can be used as a tooltip
+sub gene_fit_string($$$) {
+    my ($dbh,$orgId,$locusId) = @_;
+    die unless defined $orgId && defined $locusId;
+    my ($minFit,$maxFit,$minT,$maxT) = $dbh->selectrow_array(qq{ SELECT min(fit), max(fit), min(t), max(t)
+                                                                 FROM GeneFitness WHERE orgId = ? AND locusId = ? ; },
+							     {}, $orgId, $locusId);
+    return ("no data", "no fitness data for this gene ") if !defined $minFit;
+    my $tip = sprintf("fit %.1f to %.1f, t %.1f to %.1f", $minFit, $maxFit, $minT, $maxT);
+    my ($maxCofit) = $dbh->selectrow_array(qq{ SELECT cofit FROM Cofit WHERE orgId = ? AND locusId = ? AND rank = 1 LIMIT 1; },
+					   {}, $orgId, $locusId);
+    $tip .= sprintf(", max(cofit) = %.2f", $maxCofit) if defined $maxCofit;
+    return ("strong",$tip) if ($minT < -5 && $minFit < -2) || ($minT > 5 && $minFit > 2);
+    return ("cofit",$tip) if defined $maxCofit && $maxCofit > 0.75;
+    return ("sig.",$tip) if ($minT < -4 && $minFit < -1) || ($minT > 4 && $minFit > 1);
+    return ("weak", $tip);
+}
 #END 
 
 return 1;

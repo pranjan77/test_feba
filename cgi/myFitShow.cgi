@@ -84,10 +84,11 @@ if (@$hits == 0) {
     push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
 			  $cgi->th( [ 'geneId','sysName','geneName','description','genome','fitness' ] ) );
     foreach my $gene (@$hits) {
-	my $fitString = $cgi->a( { href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", },
-				   $gene->{has_fitness} ? "has data" : "no data" );
+	my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
 	my @trow = map $cgi->td($_), ($gene->{locusId}, $gene->{sysName}, $gene->{gene}, $gene->{desc},
-				      $orginfo->{$gene->{orgId}}->{genome}, $fitString );
+				      $orginfo->{$gene->{orgId}}->{genome},
+				      a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
+					 $fitstring));
 	push @trows, $cgi->Tr(@trow);
     }
     
@@ -195,7 +196,10 @@ if (@$hits == 0) {
 	    print $cgi->p(qq(<a href=$showFewDest>Strongest phenotypes</a>));
 	}
 	print $cgi->p($cgi->a( { href => "genesFit.cgi?orgId=$orgId&locusId=$locusId&around=2" }, "Fitness for nearby genes"));
-	print $cgi->p($cgi->a({href => "cofit.cgi?orgId=$orgId&locusId=$locusId"}, "Top cofit genes"));
+	my ($maxCofit) = $dbh->selectrow_array(qq{ SELECT cofit FROM Cofit WHERE orgId = ? AND locusId = ? AND rank = 1 LIMIT 1; },
+					       {}, $orgId, $locusId);
+	print $cgi->p($cgi->a({href => "cofit.cgi?orgId=$orgId&locusId=$locusId"}, "Top cofit genes"),
+		      sprintf("(max cofit %.2f)", $maxCofit)) if defined $maxCofit;
     } # end else unique hit has data
 
     print
