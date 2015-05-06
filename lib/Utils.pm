@@ -222,13 +222,13 @@ sub gene_fit_string($$$) {
                                                                  FROM GeneFitness WHERE orgId = ? AND locusId = ? ; },
 							     {}, $orgId, $locusId);
     return ("no data", "no fitness data for this gene ") if !defined $minFit;
-    my $tip = sprintf("fit %.1f to %.1f, t %.1f to %.1f", $minFit, $maxFit, $minT, $maxT);
+    my $tip = sprintf("fit = %.1f to +%.1f (t = %.1f to +%.1f)", $minFit, $maxFit, $minT, $maxT);
     my ($maxCofit) = $dbh->selectrow_array(qq{ SELECT cofit FROM Cofit WHERE orgId = ? AND locusId = ? AND rank = 1 LIMIT 1; },
 					   {}, $orgId, $locusId);
     $tip .= sprintf(", max(cofit) = %.2f", $maxCofit) if defined $maxCofit;
-    return ("strong",$tip) if ($minT < -5 && $minFit < -2) || ($minT > 5 && $minFit > 2);
+    return ("strong",$tip) if ($minT < -5 && $minFit < -2) || ($maxT > 5 && $maxFit > 2);
     return ("cofit",$tip) if defined $maxCofit && $maxCofit > 0.75;
-    return ("sig.",$tip) if ($minT < -4 && $minFit < -1) || ($minT > 4 && $minFit > 1);
+    return ("sig.",$tip) if ($minT < -4 && $minFit < -1) || ($maxT > 4 && $maxFit > 1);
     return ("weak", $tip);
 }
 #END 
