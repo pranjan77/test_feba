@@ -49,6 +49,7 @@ my $nPreExpected = 0; # nt between prefix and preseq
 my $debug = 0;
 my $dntag = 0;
 my $iname = undef;
+my $doOff1 = undef;
 
 {
     my ($indexfile,$out,$nLimit);
@@ -61,10 +62,12 @@ my $iname = undef;
 		'preseq=s' => \$preseq,
 		'postseq=s' => \$postseq,
                 'dntag' => \$dntag,
-                'debug' => \$debug)
+                'debug' => \$debug,
+                'off1=i' => \$doOff1)
      && defined $out)
         || die $usage;
     die $usage unless (defined $indexfile xor defined $iname);
+    $doOff1 = $minQuality > 0 unless defined $doOff1;
 
     if (defined $preseq) {
 	die "Missing -postseq: $usage" unless defined $postseq;
@@ -174,23 +177,40 @@ my $iname = undef;
     print STDERR "; nOnce = $nPerCount{1}" if (exists $nPerCount{1});
     print STDERR "\n";
 
-    # and look for off-by-1 cases, unless minQuality is off
-    if ($minQuality != 0) {
+    # and look for off-by-1 cases
+    if ($doOff1) {
         open(CLOSE, ">", "$out.close") || die "Cannot write to $out.close";
         print CLOSE join("\t",qw{code1 count1 code2 count2})."\n";
         my $nCases = 0;
+	my $nOff1Reads = 0;
 
         while (my ($code,$count) = each %codes) {
             my @variants = Variants($code);
             foreach my $variant (@variants) {
                 if (($code cmp $variant) > 0 && exists $codes{$variant}) {
-                    print CLOSE join("\t",$code,sum(@$count),$variant,sum(@{$codes{$variant}}))."\n";
+		    my $n1 = sum(@$count);
+		    my $n2 = sum(@{$codes{$variant}});
+                    print CLOSE join("\t",$code,$n1,$variant,$n2)."\n";
                     $nCases++;
+		    $nOff1Reads += $n1 < $n2 ? $n1 : $n2;
                 }
             }
         }
         close(CLOSE) || die "Error writing to $out.close";
-        print STDERR "Wrote $nCases off-by-1 pairs to $out.close\n";
+	my $fOff1 = sprintf("%.3f", $nOff1Reads / ($nOff{20} || 1));
+        print STDERR "Wrote $nCases off-by-1 pairs ($nOff1Reads reads, fraction $fOff1) to $out.close\n";
+    }
+
+    # and estimate diversity
+    if ($minQuality > 0 && $nOff{20} >= 1000 && $nPerCount{2} >= 10) {
+	foreach my $fNoise (0, 0.005, 0.01, 0.02) {
+	    my $nNoise = int(0.5 + $nOff{20} * $fNoise);
+	    next if $nNoise >= $nPerCount{1};
+	    print STDERR sprintf("If %.1f%% of reads are noise: diversity %.0f from total barcodes %d seen once %d seen twice %d \n",
+				 $fNoise*100,
+				 $nUniq - $nNoise + ($nPerCount{1} - $nNoise)**2 / (2 * $nPerCount{2}),
+				 $nUniq-$nNoise, $nPerCount{1} - $nNoise, $nPerCount{2});
+	}
     }
 }
 
