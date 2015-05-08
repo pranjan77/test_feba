@@ -206,10 +206,10 @@ my $doOff1 = undef;
 	foreach my $fNoise (0, 0.005, 0.01, 0.02) {
 	    my $nNoise = int(0.5 + $nOff{20} * $fNoise);
 	    next if $nNoise >= $nPerCount{1};
-	    print STDERR sprintf("If %.1f%% of reads are noise: diversity %.0f from total barcodes %d seen once %d seen twice %d \n",
+	    print STDERR sprintf("If %.1f%% of reads are noise: diversity %.1f K from total barcodes %.1f K seen once %.1f K seen twice %.1f K\n",
 				 $fNoise*100,
-				 $nUniq - $nNoise + ($nPerCount{1} - $nNoise)**2 / (2 * $nPerCount{2}),
-				 $nUniq-$nNoise, $nPerCount{1} - $nNoise, $nPerCount{2});
+				 ( $nUniq - $nNoise + ($nPerCount{1} - $nNoise)**2 / (2 * $nPerCount{2}) )/1000.0,
+				 ($nUniq-$nNoise)/1000.0, ($nPerCount{1} - $nNoise)/1000.0, $nPerCount{2}/1000.0);
 	}
     }
 }
