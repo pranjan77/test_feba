@@ -67,6 +67,7 @@ my ($SUBJECT,$SCORE,$QBEGIN,$QEND,$SBEGIN,$SEND) = 0..5;
     close(SCORES) || die "Error writing to $prefix.scores";
 }
 
+# could get memory intensive as #genomes increases
 sub ReadBlastp($$) {
     my ($file,$taxa,$orth) = @_;
     my %hits = (); # locusId => list of [subject,score,qBeg,qEnd,sBeg,sEnd]
@@ -127,6 +128,14 @@ sub BBH($$) {
 	while (my ($stax,$row) = each %$bhits) {
 	    my ($subject,$score,$qBeg,$qEnd,$sBeg,$sEnd) = @$row;
 	    die unless defined $qEnd;
+	    if (!defined $len{$query}) {
+		print STDERR "No self-hit for $query\n";
+		next;
+	    }
+	    if (!defined $len{$subject}) {
+		print STDERR "No self-hit for $subject\n";
+		next;
+	    }
 	    if ($qEnd-$qBeg+1 >= $coverage * $len{$query}
 		&& $sEnd-$sBeg+1 >= $coverage * $len{$subject}
 		&& exists $besthits{$subject}{$qtax}
