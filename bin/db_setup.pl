@@ -193,6 +193,13 @@ sub WorkPutHash($@); # hash and list of fields to use
 	    while (my ($new,$old) = each %remap) {
 		$row->{$new} = $exp->{$old} eq "NA" ? "" : $exp->{$old};
 	    }
+	    # ad-hoc fixes for issues in the spreadsheets that the metadata was entered in:
+	    # hidden spaces at end, expGroup not lowercase, or condition_1 = "None" instead of empty
+	    $row->{condition_1} =~ s/ +$//;
+	    $row->{condition_2} =~ s/ +$//;
+	    $row->{expGroup} = lc($row->{expGroup}) unless $row->{expGroup} eq "pH";
+	    $row->{condition_1} = "" if $row->{condition_1} eq "None";
+
 	    WorkPutHash($row, qw{orgId expName expDesc timeZeroSet num nMapped nPastEnd nGenic
                                  nUsed gMed gMedt0 gMean cor12 mad12 mad12c mad12c_t0
                                  opcor adjcor gccor maxFit
