@@ -8,7 +8,7 @@ use FindGene; # for LocationToGene()
 use FEBA_Utils; # for ReadTable(), ReadColumnNames(), ReadFasta()
 
 my $minReads = 2; # minimum #reads at each location to consider reliable
-my $minRegion = 100; # minimums size of region with no isnertions to consider
+my $minRegion = 100; # minimum size of region with no insertions to consider
 
 my $usage = <<END
 Usage: Essentiality.pl [ -minReads $minReads ]
