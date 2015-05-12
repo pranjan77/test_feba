@@ -3,7 +3,12 @@ Transposons (RB-TnSeq)
 
 This code repository (bitbucket.org/berkeleylab/feba/) includes
 scripts for estimating mutant fitness by sequencing randomly barcoded
-transposons (RB-TnSeq). The stages in creating fitness estimates are:
+transposons (RB-TnSeq). For an overview of the technology see
+Figure 1 of Deutschbauer et al., doi: 10.1128/mBio.00306-15
+
+http://mbio.asm.org/content/6/3/e00306-15.full
+
+The stages in creating fitness estimates are:
 
 Processing TnSeq data with MapTnSeq.pl and DesignRandomPool.pl
 
