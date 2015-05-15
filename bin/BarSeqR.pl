@@ -219,9 +219,8 @@ END
 		my %index = map { $_ => 1 } @index;
 		foreach my $exp (@exps) {
 		    next unless $exp->{SetName} eq $set;
-		    my $indexThis = $exp->{Index};
-		    die "No field for index $indexThis in $indir/$file.poolcount"
-			unless exists $index{$indexThis};
+		    print STDERR "WARNING! No field for index $exp->{Index} in $indir/$file.poolcount!\n"
+			unless exists $index{ $exp->{Index} };
 		}
 	    } else {
 		# additional file for this set
@@ -303,8 +302,7 @@ END
 	    my @countsUsed = ();
 	    foreach my $exp (@exps) {
 		my $key = $exp->{SetName} . "." . $exp->{Index};
-		die "Missing count for $key" unless defined $counts{$key};
-		push @countsUsed, $counts{$key};
+		push @countsUsed, $counts{$key} || 0;
 	    }
 	    my ($locusId, $f) = &LocationToGene($metavalues[$SCAFFOLD], $metavalues[$POS], \%genesSorted);
 	    $nInGene++ if $locusId ne "";
