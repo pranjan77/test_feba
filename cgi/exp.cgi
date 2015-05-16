@@ -187,7 +187,9 @@ print
     hidden('expName2', $expName),
     "Compare to another experiment: ",
     textfield(-name => 'query1', -value => '', -size => 20, -maxlength => 100),
-    end_form;
+    end_form,
+    p(a({href => "orthCond.cgi?expGroup=$exp->{expGroup}&condition1=$exp->{condition_1}"},
+	"Specific phenotypes for $exp->{expGroup} $exp->{condition_1} across organisms"));
     
 $dbh->disconnect();
 Utils::endHtml($cgi);

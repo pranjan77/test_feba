@@ -26,6 +26,7 @@ orthFit.cgi -- for a gene in a condition, show table of fitness across orthologs
 	each gene => showFit.cgi
 	each experiment => exp.cgi
 	show all homologs => mySeqSearch.cgi
+	across all organisms => orthCond.cgi
 genesFit.cgi -- show fitness of multiple genes
 	each individual gene => myFitShow.cgi
 	each experiment => exp.cgi
@@ -42,10 +43,14 @@ exp.cgi -- for an experiment, show metrics, or top genes
 	if showing specific phenotypes, or important genes, or detrimental genes
 		each gene => myFitShow.cgi, each cell => orthFit.cgi
 	compare to => compareExps.cgi
+	across all organisms => orthCond.cgi
 compareExps.cgi -- interactive scatterplot to compare two experiments
 	links to exp.cgi
 	link to itself to change which experiments to show
 	can interactively or programmatically build a gene table
 		link to myFitShow.cgi per gene or genesFit.cgi for multi-gene heatmap
+orthCond.cgi -- specific sick genes for a condition across all organisms
+	link to myFitShow.cgi per gene or exp.cgi per experiment
+	link to orthFit.cgi to compare a cell
 
 And every page ends with a link to the front page

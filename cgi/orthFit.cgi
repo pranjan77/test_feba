@@ -17,7 +17,7 @@
 # orgId, locusId -- these specify the anchor gene
 # expGroup and condition1 -- these specify the condition.
 #	Note that condition1 may be empty but it must still be present
-#	(and is used to choose which to show).
+#	(and is used to choose which to show, i.e. matchingon empty condition1).
 
 use strict;
 
@@ -102,6 +102,7 @@ foreach my $o (@genes) {
 print
     table({ cellpadding => 3, cellspacing =>0}, @trows),
     $nSkipOrth ? p("$nSkipOrth orthologs are not shown because they lack fitness data for this condition (or they lack data entirely)") : "",
+    p(a({href => "orthCond.cgi?expGroup=$expGroup&condition1=$condition1"}, "Specific phenotypes for $expGroup $condition1 across organisms")),
     p(a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Show all homologs"));
 
 
