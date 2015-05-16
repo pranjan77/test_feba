@@ -38,6 +38,8 @@ print <<END
 
 <P>For each fitness experiment, we compare the abundance of each strain at the end of the experiment to its abundance at the beginning. The beginning sample is also referred to as the "Time0" sample. Typically, we recover the pool of mutants from the freezer in rich media, wash the cells and take Time0 sample(s), and transfer the washed cells into many different tubes or wells. Thus, many different conditions may be compared to the same Time0 sample(s).
 
+<P>For details, see our <A HREF="http://mbio.asm.org/content/6/3/e00306-15.full">methods paper</A> (Wetmore et al, mBio 2015).
+
 <H3><A NAME="fitness">Fitness</A></H3>
 
 <P>Fitness values are log<sub>2</sub> ratios that describe the change
