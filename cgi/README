@@ -11,6 +11,9 @@ Site map:
 myFrontPage.cgi -- the front page
 	search by name => myFitShow.cgi
 	search by sequence => mySeqSearch.cgi
+	search by condition, or all for 1 organism => exps.cgi
+	list conditions by group => cond.cgi
+# gene-wise pages
 myFitShow.cgi -- show list of matching genes, or table of fitness data for one gene
 	if a list, links to page for individual gene
 	if showing table of fitness data:
@@ -39,6 +42,9 @@ cofit.cgi -- top cofit hits for a gene
 	homologs => mySeqSearch.cgi
 mySeqSearch.cgi -- a list of hits, linking to myFitShow.cgi for each (if it has data)
 getSeq.cgi -- sequence of gene (if it is a protein)
+# experiment-wise pages
+exps.cgi -- matching experiments => exp.cgi
+	across all organisms => orthCond.cgi (if a condition query was made)
 exp.cgi -- for an experiment, show metrics, or top genes
 	if showing specific phenotypes, or important genes, or detrimental genes
 		each gene => myFitShow.cgi, each cell => orthFit.cgi
@@ -49,6 +55,9 @@ compareExps.cgi -- interactive scatterplot to compare two experiments
 	link to itself to change which experiments to show
 	can interactively or programmatically build a gene table
 		link to myFitShow.cgi per gene or genesFit.cgi for multi-gene heatmap
+# condition-wise pages
+cond.cgi -- list all conditions in a group
+	links to exps.cgi and orthCond.cgi for each condition
 orthCond.cgi -- specific sick genes for a condition across all organisms
 	link to myFitShow.cgi per gene or exp.cgi per experiment
 	link to orthFit.cgi to compare a cell
