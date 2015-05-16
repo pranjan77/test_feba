@@ -9,7 +9,9 @@
 #######################################################
 #
 # Key parameters: orgId and query, for which organism and to look up experiments
-# At least one must be meaningful (present and not empty)
+#	At least one must be meaningful (present and not empty)
+# OR, specify expGroup AND condition1. In this set up, condition1 may be empty,
+#	but it must still be specified (and is used to restrict the results).
 
 use strict;
 use CGI qw(:standard Vars);
@@ -25,19 +27,30 @@ print $cgi->header;
 
 my $orgId = $cgi->param('orgId');
 $orgId = "" if !defined $orgId;
+my $expSpec = $cgi->param('query');
+$expSpec = "" if !defined $expSpec;
+my $expGroup = $cgi->param('expGroup');
+my $condition1 = $cgi->param('condition1');
 
 my $dbh = Utils::get_dbh();
 
 # Make sure both parameters are safe
 my $orginfo = Utils::orginfo($dbh);
 Utils::fail($cgi, "Unknown organism: $orgId") unless $orgId eq "" || exists $orginfo->{$orgId};
-my $expSpec = $cgi->param('query');
-$expSpec = "" if !defined $expSpec;
 
 $expSpec = "" if $cgi->param("All experiments");
 
-Utils::fail($cgi, "cannot show all experiments: please specify organism and/or condition") if $orgId eq "" && $expSpec eq "";
-my $exps = Utils::matching_exps($dbh, $orgId, $expSpec);
+my $exps;
+if (defined $expGroup && defined $condition1) {
+    $exps = $dbh->selectall_arrayref(qq{SELECT * from Experiment WHERE expGroup = ? AND condition_1 = ?},
+				    { Slice => {} },
+				    $expGroup, $condition1);
+    Utils::fail($cgi, "No experiments for specified group and condition") if scalar(@$exps) == 0;
+} elsif ($orgId eq "" && $expSpec eq "") {
+    Utils::fail($cgi, "cannot show all experiments: please specify organism and/or condition");
+} else {
+    $exps = Utils::matching_exps($dbh, $orgId, $expSpec);
+}
 
 print $cgi->start_html(
     -title =>"Experiments for $expSpec",
@@ -61,7 +74,13 @@ if (@$exps == 0) {
 	              $cgi->a({href => "exp.cgi?orgId=$row->{orgId}&expName=$row->{expName}"}, $row->{expName}),
 		      $row->{expGroup}, $row->{condition_1}, $row->{expDesc} ]));
   }
-  print $cgi->table({cellspacing => 0, cellpadding => 3}, @trows);
+  print table({cellspacing => 0, cellpadding => 3}, @trows);
+  my $exp1 = $exps->[0];
+  if ($exp1->{expGroup} ne ""
+      && ($expSpec ne "" || (defined $expGroup && defined $condition1))) {
+      print p(a( { -href => "orthCond.cgi?expGroup=$exp1->{expGroup}&condition1=$exp1->{condition_1}" },
+		 "Specific phenotypes for $exp1->{expGroup} $exp1->{condition_1} across organisms"));
+  }
 }
 
 $dbh->disconnect();
