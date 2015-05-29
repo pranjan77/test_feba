@@ -15,7 +15,7 @@ BLAST executables (blastall, fastacmd, formatdb), which should be in
 A BLAST database of amino acid sequences, with identifiers of the form orgId:locusId (i.e., "Keio:14146"), in
 	cgi_data/aaseqs
 It must be formatted with
-	bin/formatdb -o T -p T -i cgi_data/aaseqs
+	bin/blast/formatdb -o T -p T -i cgi_data/aaseqs
 
 Some of the scripts also write temporary files to
 	tmp/
