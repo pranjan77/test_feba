@@ -212,6 +212,24 @@ my $doOff1 = undef;
 				 ($nUniq-$nNoise)/1000.0, ($nPerCount{1} - $nNoise)/1000.0, $nPerCount{2}/1000.0);
 	}
     }
+    # and estimate bias
+    if ($minQuality > 0 && $nUniq >= 5000) {
+	# What fraction of reads are accounted for by the top 1% of strains?
+	my $f = 0.01;
+	my $nReadsSofar = 0;
+	my $nCodesSofar = 0;
+	my $countSofar = -1;
+	foreach my $count (sort {$b <=> $a} keys(%nPerCount)) {
+	    $nReadsSofar += $count * $nPerCount{$count};
+	    $nCodesSofar += $nPerCount{$count};
+	    $countSofar = $count;
+	    last if $nCodesSofar >= $f * $nUniq;
+	}
+	print sprintf("Barcodes with >= %d reads each: %.2f%% of codes (%.2f K), %.2f%% of reads (%.1f K)\n",
+		      $countSofar,
+		      (100 * $nCodesSofar)/$nUniq, $nCodesSofar/1000,
+		      (100.0 * $nReadsSofar)/$nOff{20}, $nReadsSofar/1000);
+    }
 }
 
 sub FindPrefix($$) {
