@@ -53,21 +53,22 @@
 # ccofit -- cofitness that is conserved for orthologous pairs (conserved cofit)
 # 	 only has pairs in the order locus1 < locus2
 
-LoadOrgs = function(orgnames, base="data/FEBA/", html=paste(base,"/html/",sep="")) {
+LoadOrgs = function(orgnames, base="data/FEBA/", html=paste(base,"/html/",sep=""), debug=F) {
 	orgs = list();
 	for(n in orgnames) {
 	       cat("Loading ",n,"\n",sep="");
-		exps = read.delim(paste(html,n,"/expsUsed",sep=""),as.is=T);
+		exps = read.delim(paste(html,n,"/expsUsed",sep=""),as.is=T, quote="");
 		genes = read.delim(paste(html,n,"/genes",sep=""), as.is=T, quote="");
-		q = read.delim(paste(html,n,"/fit_quality.tab",sep=""), as.is=T);
+		q = read.delim(paste(html,n,"/fit_quality.tab",sep=""), as.is=T, quote="");
 		if(!all(q$name %in% exps$name)) stop(n, ": Unmatched names in q: ", setdiff(q$name,exps$name));
-		lrn = read.delim(paste(html,n,"/fit_logratios.tab",sep=""),check.names=F,as.is=T);
+		lrn = read.delim(paste(html,n,"/fit_logratios.tab",sep=""),check.names=F,as.is=T,quote="");
+		if(debug) cat("Read ", nrow(lrn)," rows from fit_logratios.tab\n");
 		names(lrn) = sub(" .*","",names(lrn));
 		if(is.null(q$u)) stop("Missing u column in experiment quality table is no longer supported");
 		g = lrn$locusId;
 		if(!all(q$name %in% names(lrn))) stop(n, ": in q but not in lrn: ", setdiff(q$name, names(lrn)));
 
-		tval = read.delim(paste(html,n,"/fit_t.tab",sep=""),as.is=T,check.names=F);
+		tval = read.delim(paste(html,n,"/fit_t.tab",sep=""),as.is=T,check.names=F,quote="");
 		names(tval) = sub(" .*","",names(tval));
 		if(!all(q$name %in% names(tval))) stop(n, ": in q but not in t: ", setdiff(q$name, names(tval)));
 
@@ -82,12 +83,13 @@ LoadOrgs = function(orgnames, base="data/FEBA/", html=paste(base,"/html/",sep=""
 			cat("Warning: cannot read cofitness file for ",n,"\n",sep="");
 			cofit = NULL;
 		} else {
-			cofit = read.delim(file, as.is=T);
+			cofit = read.delim(file, as.is=T, quote="");
+			if (nrow(cofit) > 0 && all(is.na(cofit$locusId))) cofit=data.frame();
 		}
 
 		file = paste(html,n,"/gffmo",sep="");
 		if (file.access(file,mode=4) == 0) {# readable
-		    gffmo = read.delim(file,as.is=T);
+		    gffmo = read.delim(file, as.is=T, quote="");
 		    genes = merge(genes, gffmo[,words("locusId VIMSS")], all.x=T);
 		}
 
@@ -107,8 +109,11 @@ LoadOrgs = function(orgnames, base="data/FEBA/", html=paste(base,"/html/",sep=""
 		    tigrfam = data.frame(locusId=genes$locusId[1], domainId="TIGR00000", domainName="undef")[0,];
 		}
 
-		specsick = read.delim(paste(html,n,"/specific_phenotypes",sep=""),as.is=T);
+		specsick = read.delim(paste(html,n,"/specific_phenotypes",sep=""), as.is=T, quote="");
 
+		if (nrow(specsick) > 0 && !all(specsick$locusId %in% g)) stop("Unknown genes in specsick");
+		if (nrow(cofit) > 0 && !all(cofit$locusId %in% g)) stop("Unknown genes in cofit");
+		if (nrow(cofit) > 0 && !all(g %in% cofit$locusId)) stop("Not all genes with data are in cofit");
 		orgs[[n]] = list(org=n, genes=genes, exps=exps, g=g, q=q, lrn=lrn, t=tval, lrn_t0=lrn_t0, t_t0=t_t0,
 			         specsick=specsick, cofit=cofit,
 				 pfam=pfam, tigrfam=tigrfam);
