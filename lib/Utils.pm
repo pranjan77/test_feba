@@ -38,7 +38,6 @@ sub get_style() {
     }
     H2 {
         color: red;
-        border-bottom: 1pt solid;
     }
     H4 {
         color: blue;

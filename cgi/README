@@ -15,8 +15,9 @@ myFrontPage.cgi -- the front page
 	list conditions by group => cond.cgi
 # gene-wise pages
 myFitShow.cgi -- show list of matching genes, or table of fitness data for one gene
-	if a list, links to page for individual gene
+	if a list, links to page for individual gene and genome
 	if showing table of fitness data:
+	title => org.cgi
 	each experiment => exp.cgi
 	each cell => orthFit.cgi
 	add a gene => genesFit.cgi
@@ -42,9 +43,11 @@ cofit.cgi -- top cofit hits for a gene
 	homologs => mySeqSearch.cgi
 mySeqSearch.cgi -- a list of hits, linking to myFitShow.cgi for each (if it has data)
 getSeq.cgi -- sequence of gene (if it is a protein)
+org.cgi -- overview page for an organism with #experiments of each type and data download.
 # experiment-wise pages
 exps.cgi -- matching experiments => exp.cgi
 	across all organisms => orthCond.cgi (if a condition query was made)
+	If showing all experiments for an organism, uses org.cgi to show the organism instead
 exp.cgi -- for an experiment, show metrics, or top genes
 	if showing specific phenotypes, or important genes, or detrimental genes
 		each gene => myFitShow.cgi, each cell => orthFit.cgi
