@@ -86,7 +86,7 @@ if (@$exps == 0) {
   push @trows, $cgi->Tr({-valign => "top"}, $cgi->th([ 'Organism', 'Name', 'Group', 'Condition', 'Description' ]));
   foreach my $row (@$exps) {
       push @trows, $cgi->Tr({-valign => "top"},
-             $cgi->td([ $orginfo->{$row->{orgId}}{genome},
+             $cgi->td([ $cgi->a({href => "org.cgi?orgId=". $orginfo->{$row->{orgId}}->{orgId}}, "$orginfo->{$row->{orgId}}{genome}"),
 	              $cgi->a({href => "exp.cgi?orgId=$row->{orgId}&expName=$row->{expName}"}, $row->{expName}),
 		      $row->{expGroup}, $row->{condition_1}, $row->{expDesc} ]));
   }

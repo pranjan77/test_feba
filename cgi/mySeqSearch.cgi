@@ -154,7 +154,8 @@ while(<RES>) {
     }
 
     my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $orgId, $locusId);
-    my @hit = ($sys || $locusId,$geneName,$desc,$orginfo->{$orgId}->{genome},
+    my @hit = ($sys || $locusId,$geneName,$desc,
+        $cgi->a({href => "org.cgi?orgId=$orgId"},$orginfo->{$orgId}->{genome}),
 	       a( { href => "myFitShow.cgi?orgId=$orgId&gene=$locusId", title => $fittitle },
 		  $fitstring ),
 	       $percIdentity,$cov,$eVal,$bitScore);

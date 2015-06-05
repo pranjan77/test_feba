@@ -67,7 +67,7 @@ print header,
     div({-style => "clear: right"});
 
 my @headings = ( a({title=>"score ratio for ortholog: blast_score_of_alignment / self_score"},'ratio'),
-		 qw{organism gene name description experiment fitness t} );
+		 qw{Organism Gene Name Description Experiment Fitness t} );
 my @trows = ( $cgi->Tr({ -valign=> 'top', -align => 'center'},
 		       map { th($_) } @headings) );
 my $nSkipOrth = 0;
@@ -83,7 +83,7 @@ foreach my $o (@genes) {
 	if ($first) {
 	    my $d = $orginfo->{$o->{orgId}};
 	    my $short = $d->{genome}; $short =~ s/^(.)[^ ]+/\1./;
-	    $orgShort = a({title => $d->{genome}}, $short);
+	    $orgShort = a({href => "org.cgi?orgId=$o->{orgId}", title => $d->{genome}}, $short);
 	}
 	push @trows, $cgi->Tr({ -valign => 'top', -align => 'left'},
 			      td($first ?  $ratio : ""),

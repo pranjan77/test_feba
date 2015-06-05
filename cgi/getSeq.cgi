@@ -68,7 +68,7 @@ print
 		-style => {-code => $style},
 		-author=>'jj326ATberkeley.edu',
 		-meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
-    h2($title),
+    h2("Sequence of $showId in " . $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),),
     pre(">$showId $gene->{desc} ($orginfo->{$orgId}{genome})\n$seq"),
     p(a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, "Show fitness")),
     p(a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Check homologs"));

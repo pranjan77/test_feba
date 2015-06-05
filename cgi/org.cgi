@@ -85,7 +85,7 @@ print $cgi->p("Fitness data for $numData genes of $numGenes genes.");
 
 
 #display taxonomic information and link
-if (defined $orginfo->{$orgId}{taxonomyId}) {
+if ((defined $orginfo->{$orgId}{taxonomyId}) && ($orginfo->{$orgId}{taxonomyId} ne "")) {
 	print $cgi->p($cgi->a({href => "http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=$orginfo->{$orgId}{taxonomyId}"}, "NCBI Taxonomy"));
 }
 

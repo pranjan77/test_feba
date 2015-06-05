@@ -123,7 +123,7 @@ foreach my $gene (@genes) {
     $og{$gene->{orgId}}{$gene->{locusId}} = $iOG;
 }
 
-my @headings = qw{organism gene name description experiment fitness};
+my @headings = qw{Organism Gene Name Description Experiment Fitness};
 my @trows = ( $cgi->Tr({ -valign => 'top', -align => 'center' }, map { th($_) } @headings ) );
 
 my $shade = 0;
@@ -163,7 +163,7 @@ sub RowsForGene($$) {
 	my $fit = $gene->{fit}{$expName}{fit};
 	my $t = $gene->{fit}{$expName}{t};
 	push @trows, $cgi->Tr({ -valign => 'top', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF" },
-			      td( $firstForGene ? a({ -title => $genome }, $genomeShort) : "&nbsp;" ),
+			      td( $firstForGene ? a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId},  -title => $genome },  $genomeShort) : "&nbsp;" ),
 			      td( $firstForGene ? a({ -href => "myFitShow.cgi?orgId=$orgId&gene=$locusId" }, $showId)
 				  : "&nbsp"),
 			      td( $firstForGene ? $gene->{name} : "&nbsp;" ),

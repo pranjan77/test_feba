@@ -50,7 +50,7 @@ print start_html( -title =>"Experiment $expName for $orginfo->{$orgId}{genome}",
 		  -style => {-code => $style},
 		  -author=>'morgannprice@yahoo.com',
 		  -meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
-    h2("Experiment $expName for $orginfo->{$orgId}{genome}"),
+    h2("Experiment $expName for ". $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
     div({-style => "float: right; vertical-align: top;"},
 	a({href => "help.cgi#fitness"}, "Help")),
     h3($exp->{expDescLong});

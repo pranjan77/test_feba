@@ -86,7 +86,7 @@ if (@$hits == 0) {
     foreach my $gene (@$hits) {
 	my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
 	my @trow = map $cgi->td($_), ($gene->{locusId}, $gene->{sysName}, $gene->{gene}, $gene->{desc},
-				      $orginfo->{$gene->{orgId}}->{genome},
+				      $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
 				      a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
 					 $fitstring));
 	push @trows, $cgi->Tr(@trow);
@@ -134,7 +134,7 @@ if (@$hits == 0) {
 	print
 	    start_html( -title => $title, -style => {-code => $style}, -author=>'wjshaoATberkeley.edu',
 			 -meta=>{'copyright'=>'copyright 2015 UC Berkeley'} ),
-	    h2($title),
+	    h2("Fitness data for $idShow in " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
 	    div({-style => "float: right; vertical-align: top;"},
 		a({href => "help.cgi#fitness"}, "Help")),
 	    h3("$idShow $gene->{gene}: $gene->{desc}");

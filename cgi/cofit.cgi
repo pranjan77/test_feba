@@ -41,7 +41,7 @@ print
 		-style => {-code => $style},
 		-author=>'morgannprice@yahoo.com',
 		-meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
-    h2("Top cofit genes for $showId from $genus $species $strain"),
+    h2("Top cofit genes for $showId from " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$genus $species $strain")),
     div({-style => "float: right; vertical-align: top;"},
 	a({href => "help.cgi#cofitness"}, "Help")),
     h3("$showId $geneName : $desc");

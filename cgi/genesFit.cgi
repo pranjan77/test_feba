@@ -146,7 +146,7 @@ if ($showAll) {
     @exps = sort { $a->{avg} <=> $b->{avg} } @exps;
 }
 
-print h2($pageTitle),
+print h2("Fitness for " . scalar(@genes) . " genes in " . $cgi->a({href => "org.cgi?orgId=". $orginfo->{$orgId}->{orgId}}, "$genome"),),
     div({-style => "float: right; vertical-align: top;"},
 	a({href => "help.cgi#fitness"}, "Help"));
 
