@@ -51,7 +51,8 @@ if ($orgId ne "" && !defined $expGroup && ($cgi->param("All experiments") || $cg
     print redirect(-url=>"org.cgi?orgId=$orgId");
 } elsif (defined $expGroup && defined $orgId && !defined $condition1){
     # $exps = Utils::matching_exps_strict($dbh, $orgId, $expSpec, $expGroup);
-    $exps = $dbh->selectall_arrayref(qq{SELECT * from Experiment WHERE expGroup = ? AND orgId = ?},
+    $exps = $dbh->selectall_arrayref(qq{SELECT * from Experiment WHERE expGroup = ? AND orgId = ?
+                                        ORDER BY condition_1, condition_2, expDesc, expDescLong, expName },
             { Slice => {} },
             $expGroup, $orgId);
 } elsif (defined $expGroup && defined $condition1) {
