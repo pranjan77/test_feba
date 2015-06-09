@@ -38,16 +38,18 @@ my $dbh = Utils::get_dbh();
 # gather all of the data needed
 print STDERR "getting data...\n";
 
-my $gene = $dbh->selectall_arrayref("SELECT * FROM Gene WHERE orgId = ?", {Slice => {}}, $orgId);
+my $gene = $dbh->selectall_arrayref("SELECT orgId, locusId, sysName, gene FROM Gene WHERE orgId = ?", {Slice => {}}, $orgId);
 die "Illegal orgId" if scalar(@$gene) == 0;
 
 my $exp = $dbh->selectall_arrayref("SELECT expName, expDesc FROM Experiment WHERE orgId = ?", {Slice => {}}, $orgId);
-my $fitness = $dbh->selectall_arrayref("SELECT * FROM GeneFitness WHERE orgId = ?", {Slice => {}}, $orgId);
+my $fitness = $dbh->selectall_arrayref("SELECT locusId, expName, fit FROM GeneFitness WHERE orgId = ?", {}, $orgId);
+
 my %fit=();
 foreach my $frow(@$fitness) {
-	my $expName = $frow->{expName};
-	my $locusId = $frow->{locusId};
-	$fit{$locusId}{$expName} = $frow->{fit};
+	my ($locusId, $expName, $fit) = @$frow;
+	# my $expName = $frow->{expName};
+	# my $locusId = $frow->{locusId};
+	$fit{$locusId}{$expName} = $fit;
 }
 
 print ("Content-Type:application/x-download\n");
@@ -68,7 +70,7 @@ print STDERR "writing data...\n";
 foreach my $row (@$gene) {
 	my $locus = $row->{locusId};
 	next if !exists $fit{$locus};
-	print $row->{orgId} ."\t" . $row->{gene} . "\t". $row->{locusId} ."\t". $row->{sysName};
+	print $row->{orgId} ."\t" . $row->{gene} . "\t". $locus ."\t". $row->{sysName};
 	foreach my $subrow(@$exp) {
 		my $expr = $subrow->{expName};
 		my $rounded = "";

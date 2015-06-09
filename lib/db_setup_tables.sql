@@ -113,3 +113,23 @@ CREATE TABLE SpecificPhenotype(
 	locusId TEXT NOT NULL,
 	PRIMARY KEY (orgId,expName,locusId)
 );
+
+CREATE TABLE GeneDomain(
+   domainDb TEXT NOT NULL,
+   orgId TEXT NOT NULL,
+   locusId TEXT NOT NULL,
+   domainId TEXT NOT NULL,
+   domainName TEXT NOT NULL,
+   begin INT NOT NULL,
+   end INT NOT NULL,
+   score REAL NOT NULL,
+   evalue REAL NOT NULL,
+   type TEXT,
+   roleId INT,
+   geneSymbol TEXT,
+   ec TEXT,
+   definition TEXT,
+   PRIMARY KEY (orgId,locusId,domainId,begin)
+);
+CREATE INDEX 'orgLocus' on GeneDomain ('orgId' ASC, 'locusId' ASC);
+CREATE INDEX 'domainDbId' on GeneDomain ('domainDb' ASC, 'domainId' ASC);

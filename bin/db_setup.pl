@@ -273,6 +273,70 @@ sub WorkPutHash($@); # hash and list of fields to use
 	EndWork();
     }
 
+
+
+
+    # Create db.GeneDomain.*
+    foreach my $org (@orgs) {
+	# my @pFam = &ReadTable("$indir/g/$org/pfam.tab",
+	my @pFam = &ReadTable("g/$org/pfam.tab",
+			   qw{locusId domainId domainName begin end score evalue});
+	# my @tigrFam = &ReadTable("$indir/g/$org/tigrfam.tab",
+	my @tigrFam = &ReadTable("g/$org/tigrfam.tab",
+			   qw{locusId domainId domainName begin end score evalue});
+
+	die "No Fam data for $org" unless @pFam > 0 or @tigrFam > 0;
+
+	
+	# fields that are usually in tigrfam but are not enforced
+	# my @tigrInfo = &ReadTable("$indir/tigrinfo", qw{id tigrId type roleId geneSymbol ec definition});
+	my @tigrInfo = &ReadTable("tigrinfo", qw{id tigrId type roleId geneSymbol ec definition});
+	my %tigrInfo = map {$_->{tigrId} => $_} @tigrInfo;
+
+	StartWork("GeneDomain",$org);
+	foreach my $row (@pFam) {
+	    $row->{"domainDb"} = 'PFam';
+	    $row->{"orgId"} = $org;
+	    $row->{"domainId"} =~ s/\.\d+//; # remove the suffix to allow easier searches
+	    $row->{"type"} = "";
+	    $row->{"roleId"} = "";
+	    $row->{"geneSymbol"} = "";
+	    $row->{"ec"} = "";
+	    $row->{"definition"} = "";
+	    WorkPutHash($row, qw{domainDb orgId locusId domainId domainName begin end score evalue type roleId geneSymbol ec definition});
+	};
+
+	foreach my $row (@tigrFam) {
+		$row->{"domainDb"} = 'TIGRFam';
+	    $row->{"orgId"} = $org;
+
+	    my $id = $row->{domainId};
+	    my $info = $tigrInfo{$id};
+	    print "No matching metadata for tigrFam $org $id $row->{locusId}\n" if !defined $info;
+	    # put fields from exps into output with a new name (new name => new name)
+
+	    if (defined $info) {
+		    # $row->{"locusId"} = $info->{"id"};
+		    # $row->{"domainId"} = $info->{"tigrId"};
+		    $row->{"type"} = $info->{"type"};
+		    $row->{"roleId"} = $info->{"roleId"};
+		    $row->{"geneSymbol"} = $info->{"geneSymbol"};
+		    $row->{"ec"} = $info->{"ec"};
+		    $row->{"definition"} = $info->{"definition"};
+		} else {
+			$row->{"type"} = "";
+		    $row->{"roleId"} = "";
+		    $row->{"geneSymbol"} = "";
+		    $row->{"ec"} = "";
+		    $row->{"definition"} = "";
+		}
+
+	    WorkPutHash($row, qw{domainDb orgId locusId domainId domainName begin end score evalue type roleId geneSymbol ec definition});
+	}
+	EndWork();
+    }
+
+
     if (defined $dbfile) {
 	# Run the commands
 	open(SQLITE, "|-", "sqlite3", "$dbfile") || die "Cannot run sqlite3 on $dbfile";
