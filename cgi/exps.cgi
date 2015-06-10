@@ -32,27 +32,38 @@ $expSpec = "" if !defined $expSpec;
 my $expGroup = $cgi->param('expGroup');
 my $condition1 = $cgi->param('condition1');
 
+my $dbh = Utils::get_dbh();
+
 # Sanitize all input
 $orgId, $expSpec, $expGroup, $condition1 =~ s/ +$//;
 $orgId, $expSpec, $expGroup, $condition1 =~ s/^ +$//;
 $orgId, $expSpec, $expGroup, $condition1 =~ s/[\'\"\n\r\;\\]//g; #'
 
-my $dbh = Utils::get_dbh();
+# Redirect to orgGroup.cgi if displaying all exp from one organism
+if ($orgId ne "" && !defined $expGroup && ($cgi->param("All experiments") || $expSpec eq "")) {
+    print redirect(-url=>"org.cgi?orgId=$orgId");
+} #elsif ($orgId eq "" && $expSpec ne "") {
+  # print redirect(-url=>"cond.cgi?expGroup=$expSpec");
+# }
 
-# Make sure both parameters are safe
-my $orginfo = Utils::orginfo($dbh);
-Utils::fail($cgi, "Unknown organism: $orgId") unless $orgId eq "" || exists $orginfo->{$orgId};
+my $style = Utils::get_style();
+print $cgi->header;
+
+print $cgi->start_html(
+    -title =>"Experiments for $expSpec",
+    -style => {-code => $style},
+    -author=>'Morgan Price',
+    -meta=>{'copyright'=>'copyright 2015 UC Berkeley'},
+);
+
 
 $expSpec = "" if $cgi->param("All experiments");
 
 my $exps;
-# Redirect to orgGroup.cgi if displaying all exp from one organism
-if ($orgId ne "" && !defined $expGroup && ($cgi->param("All experiments") || $cgi->param("query") == "")) {
-    print redirect(-url=>"org.cgi?orgId=$orgId");
-} elsif (defined $expGroup && defined $orgId && !defined $condition1){
+
+if (defined $expGroup && defined $orgId && !defined $condition1){
     # $exps = Utils::matching_exps_strict($dbh, $orgId, $expSpec, $expGroup);
-    $exps = $dbh->selectall_arrayref(qq{SELECT * from Experiment WHERE expGroup = ? AND orgId = ?
-                                        ORDER BY condition_1, condition_2, expDesc, expDescLong, expName },
+    $exps = $dbh->selectall_arrayref(qq{SELECT * from Experiment WHERE expGroup = ? AND orgId = ?},
             { Slice => {} },
             $expGroup, $orgId);
 } elsif (defined $expGroup && defined $condition1) {
@@ -66,15 +77,9 @@ if ($orgId ne "" && !defined $expGroup && ($cgi->param("All experiments") || $cg
     $exps = Utils::matching_exps($dbh, $orgId, $expSpec);
 }
 
-my $style = Utils::get_style();
-print $cgi->header;
-
-print $cgi->start_html(
-    -title =>"Experiments for $expSpec",
-    -style => {-code => $style},
-    -author=>'Morgan Price',
-    -meta=>{'copyright'=>'copyright 2015 UC Berkeley'},
-);
+# Make sure both parameters are safe
+my $orginfo = Utils::orginfo($dbh);
+Utils::fail($cgi, "Unknown organism: $orgId") unless $orgId eq "" || exists $orginfo->{$orgId};
 
 if (@$exps == 0) {
    print $cgi->h3(qq{No experiment found matching "$expSpec"});

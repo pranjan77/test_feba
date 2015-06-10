@@ -38,6 +38,7 @@ sub get_style() {
     }
     H2 {
         color: red;
+        /*border-bottom: 1pt solid;*/
     }
     H4 {
         color: blue;
@@ -58,6 +59,24 @@ sub get_style() {
 
 .dot {
   stroke: none;
+}
+
+.line {
+  position: relative;
+  margin: 0 auto;
+  height: 7px;
+  z-index: 0;
+  margin-top: 5px;
+  margin-bottom: 0 auto;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.line2 {
+  position: absolute;
+  top: 0px;
+  height: 7px;
+  z-index: 2;
 }
 
 EOT

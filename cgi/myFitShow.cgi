@@ -202,11 +202,15 @@ if (@$hits == 0) {
 		      sprintf("(max cofit %.2f)", $maxCofit)) if defined $maxCofit;
     } # end else unique hit has data
 
-    print
-	p(a({href => "getSeq.cgi?orgId=$orgId&locusId=$locusId"}, "Show sequence"),
-	  "or",
-	  a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Check homologs"))
-	if $gene->{type} == 1;
+    if ($gene->{type} == 1) {
+    	print
+			p(a({href => "getSeq.cgi?orgId=$orgId&locusId=$locusId"}, "Show sequence"),
+	  		"or",
+	  		a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Check homologs")
+	  	);
+		print p(a({href => "domains.cgi?orgId=$orgId&locusId=$locusId"}, "See Domains"));
+    }
+    
 
     my @links = ();
     if ($gene->{locusId} =~ m/^\d+$/) {

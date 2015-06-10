@@ -23,6 +23,7 @@ use strict;
 use CGI qw(:standard Vars);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
+use Bio::SeqIO;
 
 use lib "../lib";
 use Utils;
@@ -45,54 +46,78 @@ my $cond = $dbh->selectall_arrayref(qq{SELECT domainDb, orgId, locusId, domainId
     $orgId, $locusId);
 # Utils::fail($cgi, "Unknown locus: $locusId") unless $locusId eq ""; #|| exists $locusId;
 
-
 # gather number of genes and data
 # my $numGenes = $dbh->selectrow_array(qq{SELECT COUNT (DISTINCT locusId) FROM Gene WHERE orgId = ?;}, undef, $orgId);
 
 # my $numData = $dbh->selectrow_array(qq{SELECT COUNT (DISTINCT locusId) FROM GeneFitness WHERE orgId = ?;}, undef, $orgId);
 
+#find length of sequence
+my $tmpDir = Utils::tmp_dir();
+my $seqFile = "$tmpDir/$orgId+$locusId.fasta";
+my $myDB = Utils::blast_db();
+my $id = join(":",$orgId,$locusId);
+my $fastacmd = '../bin/blast/fastacmd';
+system($fastacmd,'-d',$myDB,'-s',$id,'-o',$seqFile)==0 || die "Error running $fastacmd -d $myDB -s $id -o $seqFile -- $!";
+my $in = Bio::SeqIO->new(-file => $seqFile,-format => 'fasta');
+my $seq = $in->next_seq()->seq;
+my $seqLen = length($seq);
+
 
 # write the title
 my $title = scalar(@$cond) > 0 ? "Gene Domains for $orginfo->{$orgId}{genome} at Locus $locusId" : "No experiments for this organism and/or locus.";
-
 
 print
     header,
     start_html( -title => $title, -style => { -code => $style }, -author => 'Morgan Price, Victoria Lo',
 		-meta => { 'copyright' => 'copyright 2015 UC Berkeley' }),
-    h2($title),
+    h2("Gene Domains for ". $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")." at Locus $locusId"); #$title),
     div({-style => "float: right; vertical-align: top;"}, a({href => "help.cgi#specific"}, "Help"));
 
 #exit if no results
 Utils::fail($cgi, "No experiments for this organism and/or locus.") if @$cond == 0;
 
+# sysname/locusId (gene): desc => myFitShow.cgi
+my $gene = $dbh->selectall_arrayref(qq(SELECT sysName,locusId,gene,desc FROM Gene where orgid = ? and locusId = ?;),
+	{ },
+    $orgId, $locusId);
+foreach my $grow(@$gene) {
+	my ($sysName, $locusId, $geneName, $desc) = @$grow;
+	my $sys = $sysName || $locusId;
+	my $name = $geneName || "";
+	my $d = $cgi->a({href=>"myFitShow.cgi?orgId=$orgId&gene=$locusId"}, $desc);
+	print $cgi->p($cgi->b("$sys $name: $d"));
+}
+
+
 #create table
-my @headings = qw{Domain ID Length Score EValue Begin End};
+my @headings = qw{Gene ID Domain EValue}; # Begin End};
 my @trows = ( Tr({ -valign => 'top', -align => 'center' }, map { th($_) } \@headings) );
 foreach my $row (@$cond) {
 	# display result row by row
-	my $len = $row->{end}-$row->{begin};
+	my $len = $row->{end}-$row->{begin}; 
+	my $begin = $row->{begin};
 	if ($row->{domainDb} eq 'PFam') {
     	push @trows, Tr({ -valign => 'top', -align => 'left' },
     	td([ $row->{domainName}, #name/description
-		 	a( { href => "http://pfam.xfam.org/family/$row->{domainId}"},
+		 	a({href => "http://pfam.xfam.org/family/$row->{domainId}"},
 		 	$row->{domainId}), #ID
-		 	$len, # $row->{}, #length diagram: end-begin
-		 	$row->{score}, #score
-		 	$row->{evalue}, #evalue
-		 	$row->{begin}, #begin
-		 	$row->{end}, #end
+		 	# img({src=>"../images/grayHorizLine.png", height=>'7', width='200'})
+		 	a({title=>"Amino acids $begin to $row->{end} ($len) of $seqLen"}, div({class=>"line"}, img({src=>"../images/grayHorizLine.png", width=>"$seqLen", height=>"7"}), div({class=>"line2", style=>"left:$begin".'px'}, img({src=>"../images/darkcyan.png", height=>'7', width=>"$len"})))),#$len, # $row->{}, #length diagram: end-begin
+		 	# $row->{score}, #score
+		 	a({title=>"Score: $row->{score}"},$row->{evalue}), #evalue with hover score
+		 	# $row->{begin}, #begin
+		 	# $row->{end}, #end
 	 	]))
 	} elsif ($row->{domainDb} eq 'TIGRFam') {
 		push @trows, Tr({ -valign => 'top', -align => 'left' },
 		td([ $row->{definition} || $row->{domainName}, #name/description
-		 	a( { href => "http://www.jcvi.org/cgi-bin/tigrfams/HmmReportPage.cgi?acc=$row->{domainId}"},
+		 	a({href => "http://www.jcvi.org/cgi-bin/tigrfams/HmmReportPage.cgi?acc=$row->{domainId}"},
 		 	$row->{domainId}), #ID
-		 	$len, # $row->{}, #length diagram: end-begin
-		 	$row->{score}, #score
-		 	$row->{evalue}, #evalue
-		 	$row->{begin}, #begin
-		 	$row->{end}, #end
+		 	a({title=>"Amino acids $begin to $row->{end} ($len) of $seqLen"}, div({class=>"line"}, img({src=>"../images/grayHorizLine.png", width=>"$seqLen", height=>"7"}), div({class=>"line2", style=>"left:$begin".'px'}, img({src=>"../images/chocolate.png", height=>'7', width=>"$len"})))), # $len, # $row->{}, #length diagram: end-begin
+		 	# $row->{score}, #score
+		 	a({title=>"Score: $row->{score}"},$row->{evalue}), #evalue with hover score
+		 	# $row->{begin}, #begin
+		 	# $row->{end}, #end
 		 ])),
 	}
 }
@@ -113,6 +138,6 @@ print table({cellspacing => 0, cellpadding => 3}, @trows);
 # print $cgi->p($cgi->a({href => "download.cgi?orgId=$orgId"}, "Download experimental data"), " - Note: May take a minute or so to load once clicked.");
 # print $cgi->p($cgi->a({href => "createExpData.cgi?orgId=$orgId"}, "Download experimental data"), " - Note: May take a few seconds to load once clicked.");
 
-
+unlink($seqFile) || die "Error deleting $seqFile: $!";
 $dbh->disconnect();
 Utils::endHtml($cgi);
