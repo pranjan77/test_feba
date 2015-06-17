@@ -153,7 +153,7 @@ my $debug = undef;
 		$index = $indexes2[0];
 		$index =~ s/ITO/IT0/;
 	    } elsif ($name =~ m/_(\d+)_[ACGT][ACGT][ACGT][ACGT][ACGT][ACGT]_/
-		     || $name =~ m/_Index(\d+)_[ACGT][ACGT][ACGT][ACGT][ACGT][ACGT]_/) {
+		     || $name =~ m/_Index(\d+)_[ACGT][ACGT][ACGT][ACGT][ACGT][ACGT]_/i) {
 		# e.g. FEBA_BS_60_10_TAGCTT_L001_R1_001.fastq.gz
 		$index = sprintf("IT%03d", $1);
 	    } elsif ($name =~ m/undetermined/i) {
