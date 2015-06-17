@@ -41,7 +41,7 @@ Utils::fail($cgi, "Unknown organism: $orgId") unless $orgId eq "" || exists $org
 
 # main table
 # gather data and slice it into an array of hashes
-my $cond = $dbh->selectall_arrayref(qq{SELECT domainDb, orgId, locusId, domainId, domainName, begin, end, score, evalue, definition, COUNT(DISTINCT domainId) AS nDom FROM GeneDomain WHERE orgId=? AND locusId=? GROUP BY domainDb; },
+my $cond = $dbh->selectall_arrayref(qq{SELECT domainDb, orgId, locusId, domainId, domainName, begin, end, score, evalue, definition FROM GeneDomain WHERE orgId=? AND locusId=? ORDER BY begin;},
     { Slice => {} },
     $orgId, $locusId);
 # Utils::fail($cgi, "Unknown locus: $locusId") unless $locusId eq ""; #|| exists $locusId;
@@ -96,13 +96,21 @@ foreach my $row (@$cond) {
 	# display result row by row
 	my $len = $row->{end}-$row->{begin}; 
 	my $begin = $row->{begin};
+	my $newBegin = $begin;
+	my $newLen = $len;
+	my $newSeqLen = $seqLen;
+	if ($seqLen > 600) {
+		$newBegin = 600*$begin/$seqLen;
+		$newLen = 600*$len/$seqLen;
+		$newSeqLen = 600;
+	}
 	if ($row->{domainDb} eq 'PFam') {
     	push @trows, Tr({ -valign => 'top', -align => 'left' },
     	td([ $row->{domainName}, #name/description
 		 	a({href => "http://pfam.xfam.org/family/$row->{domainId}"},
 		 	$row->{domainId}), #ID
 		 	# img({src=>"../images/grayHorizLine.png", height=>'7', width='200'})
-		 	a({title=>"Amino acids $begin to $row->{end} ($len) of $seqLen"}, div({class=>"line"}, img({src=>"../images/grayHorizLine.png", width=>"$seqLen", height=>"7"}), div({class=>"line2", style=>"left:$begin".'px'}, img({src=>"../images/darkcyan.png", height=>'7', width=>"$len"})))),#$len, # $row->{}, #length diagram: end-begin
+		 	a({title=>"Amino acids $begin to $row->{end} ($len) of $seqLen"}, div({class=>"line"}, img({src=>"../images/grayHorizLine.png", width=>"$newSeqLen", height=>'7'}), div({class=>"line2", style=>"left:$newBegin".'px'}, img({src=>"../images/darkcyan.png", height=>'7', width=>"$newLen"})))),#$len, # $row->{}, #length diagram: end-begin
 		 	# $row->{score}, #score
 		 	a({title=>"Score: $row->{score}"},$row->{evalue}), #evalue with hover score
 		 	# $row->{begin}, #begin
@@ -113,7 +121,7 @@ foreach my $row (@$cond) {
 		td([ $row->{definition} || $row->{domainName}, #name/description
 		 	a({href => "http://www.jcvi.org/cgi-bin/tigrfams/HmmReportPage.cgi?acc=$row->{domainId}"},
 		 	$row->{domainId}), #ID
-		 	a({title=>"Amino acids $begin to $row->{end} ($len) of $seqLen"}, div({class=>"line"}, img({src=>"../images/grayHorizLine.png", width=>"$seqLen", height=>"7"}), div({class=>"line2", style=>"left:$begin".'px'}, img({src=>"../images/chocolate.png", height=>'7', width=>"$len"})))), # $len, # $row->{}, #length diagram: end-begin
+		 	a({title=>"Amino acids $begin to $row->{end} ($len) of $seqLen"}, div({class=>"line"}, img({src=>"../images/grayHorizLine.png", width=>"$newSeqLen", height=>'7'}), div({class=>"line2", style=>"left:$newBegin".'px'}, img({src=>"../images/chocolate.png", height=>'7', width=>"$newLen"})))), # $len, # $row->{}, #length diagram: end-begin
 		 	# $row->{score}, #score
 		 	a({title=>"Score: $row->{score}"},$row->{evalue}), #evalue with hover score
 		 	# $row->{begin}, #begin
