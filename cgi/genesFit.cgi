@@ -5,7 +5,8 @@
 ## Copyright (c) 2015 University of California
 ##
 ## Authors:
-## Wenjun Shao (wjshao@berkeley.edu) and Morgan Price
+## Victoria Lo, Wenjun Shao (wjshao@berkeley.edu), and 
+## Morgan Price
 #######################################################
 #
 # Required CGI parameters:
@@ -64,9 +65,11 @@ if ($addgene) {
     }
 }
 
+#####
 my $centralId; # the focal gene
 my $centralShow; # how to show its id
 my %spacingDesc = (); # locusId => spacing description
+my $type;
 if ($around) {
     die "Cannot specify around with multiple locusIds or with addgene" unless @locusIds == 1;
     die "Invalid around = $around" unless $around =~ m/^\d+$/;
@@ -89,7 +92,8 @@ if ($around) {
 	my $rightsep = $i == scalar(@$scgenes)-1 ? "" : $scgenes->[$i+1]{begin} - $scgenes->[$i]{end};
 	my $arrow = $scgenes->[$i]{strand} eq "+" ? "&#8594;" : "&#8592;"; # rightarrow or leftarrow
 	$spacingDesc{ $scgenes->[$i]{locusId} } = join(" ",$leftsep,$arrow,$rightsep);
-    }
+    };
+    $type = $gene->{type};
 }
 
 my @genes = ();
@@ -110,13 +114,23 @@ foreach my $locusId (@locusIds) {
 
 my $pageTitle = $around ? "Fitness for $centralShow and surrounding genes in $genome"
     : "Fitness for " . scalar(@genes) . " genes in $genome";
+my $start = Utils::start_page("$pageTitle");
+my $tabs;
+if ($around or !$addgene) {
+    $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$centralId,0,$type,"nearby");
+} else {
+    $tabs = qq[<div id="ntcontent">];
+}
+
+
 print $cgi->header;
-print $cgi->start_html(
-    -title => $pageTitle,
-    -style => {-code => $style},
-    -author=>'Morgan Price',
-    -meta=>{'copyright'=>'copyright 2015 UC Berkeley'},
-);
+# print $cgi->start_html(
+#     -title => $pageTitle,
+#     -style => {-code => $style},
+#     -author=>'Morgan Price',
+#     -meta=>{'copyright'=>'copyright 2015 UC Berkeley'},
+# );
+print $start, $tabs;
 
 Utils::fail($cgi,"None of the genes has fitness data")
     if (sum(map { $_->{nExps} > 0 ? 1 : 0} @genes) == 0);
@@ -146,9 +160,38 @@ if ($showAll) {
     @exps = sort { $a->{avg} <=> $b->{avg} } @exps;
 }
 
-print h2("Fitness for " . scalar(@genes) . " genes in " . $cgi->a({href => "org.cgi?orgId=". $orginfo->{$orgId}->{orgId}}, "$genome"),),
-    div({-style => "float: right; vertical-align: top;"},
-	a({href => "help.cgi#fitness"}, "Help"));
+print h2("Fitness for " . scalar(@genes) . " genes in " . $cgi->a({href => "org.cgi?orgId=". $orginfo->{$orgId}->{orgId}}, "$genome"),);
+    # div({-style => "float: right; vertical-align: top;"},
+	# a({href => "help.cgi#fitness"}, "Help"));
+
+# corner box
+print
+    qq[<div style="position: relative;"><div class="floatbox">],
+    
+    start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
+    "<P>Add gene: ",
+    hidden( 'orgId', $orgId ),
+    hidden( 'showAll', $showAll );
+foreach my $locusId (@locusIds) { # avoid CGI sticky oddities
+    print qq{<input type="hidden" name="locusId" value="$locusId" />\n};
+}
+print
+    textfield( -name => 'addgene', -default => "", -override => 1, -size => 20, -maxLength => 100 ),
+    end_form;
+
+print p,
+    start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
+    "How many surrounding genes: ",
+    hidden('orgId', $orgId),
+    hidden('locusId', $centralId),
+    hidden('showAll', $showAll),
+    popup_menu(-name => 'around', -values => [ 1,2,3,4,5 ], -default => $around, -style => "min-width: 45pt"),
+    "&nbsp;",
+    submit('Go'),
+    end_form
+       if $around;
+print "</P></div></div><BR><BR>";
+
 
 print $cgi->h3($addgene_error) if defined $addgene_error;
 if ($showAll) {
@@ -156,6 +199,15 @@ if ($showAll) {
 } else {
     print $cgi->p("Top " . scalar(@exps) . " experiments (either direction), sorted by average fitness");
 }
+print "or view ";
+
+my $locusSpec = $around ? "locusId=$centralId" : join("&", map {"locusId=$_"} @locusIds);
+if ($showAll) {
+    print $cgi->a( { href => "genesFit.cgi?orgId=$orgId&$locusSpec&around=$around" }, "strongest phenotypes" );
+} else {
+    print $cgi->a( { href => "genesFit.cgi?orgId=$orgId&$locusSpec&showAll=1&around=$around" }, "all fitness data" );
+}
+print "<br><br>";
 
 my @trows = ();
 my @headings = qw{group condition};
@@ -184,7 +236,7 @@ foreach my $exp (@exps) {
     my @values = ();
     my $expName = $exp->{expName};
     push @values, $cgi->td($exp->{expGroup});
-    push @values, $cgi->td($cgi->a({ style => "color:rgb(0,0,0)",
+    push @values, $cgi->td($cgi->a({ 
 				     title => "$expName: $exp->{expDescLong}",
 				     href => "exp.cgi?orgId=$orgId&expName=$expName" },
 				   $exp->{expDesc}));
@@ -208,42 +260,16 @@ if (@genes > 0) {
     foreach my $gene (@genes) {
 	my @others = grep { $_->{locusId} ne $gene->{locusId} } @genes;
 	my $url = "genesFit.cgi?orgId=$orgId&" . join("&", map { "locusId=$_->{locusId}" } @others);
-	push @footer, $cgi->a( { href => $url, style => "color:rgb(0,0,0)", title => $gene->{desc} }, "remove")
+	push @footer, $cgi->a( { href => $url, style => "", title => $gene->{desc} }, "remove")
 			       . "<BR>" . ($gene->{sysName} || $gene->{locusId});
     }
     push @trows, $cgi->Tr( { -align=>'center', -valign=>'top' }, $cgi->td(\@footer));
 }
-print
-    table( { cellspacing => 0, cellpadding => 3 }, @trows),
-    start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
-    "<P>Add gene: ",
-    hidden( 'orgId', $orgId ),
-    hidden( 'showAll', $showAll );
-foreach my $locusId (@locusIds) { # avoid CGI sticky oddities
-    print qq{<input type="hidden" name="locusId" value="$locusId" />\n};
-}
-print
-    textfield( -name => 'addgene', -default => "", -override => 1, -size => 20, -maxLength => 100 ),
-    end_form;
 
-print p,
-    start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
-    "How many surrounding genes: ",
-    hidden('orgId', $orgId),
-    hidden('locusId', $centralId),
-    hidden('showAll', $showAll),
-    popup_menu(-name => 'around', -values => [ 1,2,3,4,5 ], -default => $around, -style => "min-width: 45pt"),
-    "&nbsp;",
-    submit('Go'),
-    end_form
-	   if $around;
+print table( { cellspacing => 0, cellpadding => 3 }, @trows);
 
-my $locusSpec = $around ? "locusId=$centralId" : join("&", map {"locusId=$_"} @locusIds);
-if ($showAll) {
-    print p, $cgi->a( { href => "genesFit.cgi?orgId=$orgId&$locusSpec&around=$around" }, "Strongest phenotypes" );
-} else {
-    print p, $cgi->a( { href => "genesFit.cgi?orgId=$orgId&$locusSpec&showAll=1&around=$around" }, "All fitness data" );
-}
+print qq[<br><BR>];
+
 
 $dbh->disconnect();
 Utils::endHtml($cgi);

@@ -19,7 +19,7 @@ use lib "../lib";
 use Utils;
 
 my $cgi=CGI->new;
-my $style = Utils::get_style();
+# my $style = Utils::get_style();
 print $cgi->header;
 
 my $orgId = $cgi->param('orgId') || die "no species identifier\n";
@@ -36,14 +36,20 @@ my ($genus,$species,$strain) = $dbh->selectrow_array("SELECT genus,species,strai
 Utils::fail($cgi, "No species information for $orgId") unless defined $species;
 
 my $showId = $sysName || $locusId;
+my $start = Utils::start_page("Cofitness for $sysName ($genus $species $strain");
+my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusId,0,$type,"cofit");
+
 print
-    start_html( -title =>"Cofitness for $sysName ($genus $species $strain)",
-		-style => {-code => $style},
-		-author=>'morgannprice@yahoo.com',
-		-meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
+	$start, $tabs,
+#     start_html( -title =>"Cofitness for $sysName ($genus $species $strain)",
+# 		-style => {-code => $style},
+# 		-author=>'morgannprice@yahoo.com',
+# 		-meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
     h2("Top cofit genes for $showId from " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$genus $species $strain")),
-    div({-style => "float: right; vertical-align: top;"},
-	a({href => "help.cgi#cofitness"}, "Help")),
+ #    div({-style => "float: right; vertical-align: top;"},
+	# a({href => "help.cgi#cofitness"}, "Help")),
+
+
     h3("$showId $geneName : $desc");
 #print $cgi->p(qq{<A HREF="myFitShow.cgi?orgId=$orgId&gene=$locusId">$sysName: $desc</A>});
 
@@ -53,7 +59,7 @@ my $cofitResults = $dbh->selectall_arrayref(qq{
 		WHERE Cofit.orgId=? AND Cofit.locusId=?
 		ORDER BY rank LIMIT 20}, undef, $orgId, $locusId) || die;
 if (@$cofitResults == 0) {
-    print $cgi->p(qq{Cofitness results are not available for this organism, sorry.});
+    print $cgi->p(qq{Cofitness results are not available for this gene, sorry.});
 } else {
     my @headRow = map { $cgi->td($cgi->b($_)) } qw{&nbsp; Rank Cofitness Hit Name Description},
                                                 a({title => "Maximum cofitness of orthologs"}, "Conserved?");
@@ -91,15 +97,16 @@ if (@$cofitResults == 0) {
 	hidden('orgId', $orgId),
 	hidden('locusId', $locusId),
 	table( {cellpadding => 3, cellspacing => 0 }, @trows ),
-	"Compare selected genes to $showId $geneName : " . submit(-name=>"heatmap"),
+	"<BR>Compare selected genes to $showId $geneName: " . submit(-name=>"heatmap"),
 	end_form;
+	print "<BR><BR>";
 }
-print $cgi->p($cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, "Fitness data"));
+# print $cgi->p($cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, "Fitness data"));
 
-    print
-	p(a({href => "getSeq.cgi?orgId=$orgId&locusId=$locusId"}, "Show sequence"),
-	  "or",
-	  a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Check homologs"))
-	if $type == 1;
+ #    print
+	# p(a({href => "getSeq.cgi?orgId=$orgId&locusId=$locusId"}, "Show sequence"),
+	#   "or",
+	#   a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Check homologs"))
+	# if $type == 1;
 
 Utils::endHtml($cgi);

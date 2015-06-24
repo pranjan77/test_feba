@@ -21,16 +21,19 @@ use Utils;
 my $cgi=CGI->new;
 my $style = Utils::get_style();
 my $dbh = Utils::get_dbh();
+my $start = Utils::start_page("Help for Fitness Browser");
 
-print header, 
-    start_html(-title =>"Help for Fitness Browser", -style => {-code => $style},
-	       -author=>'Morgan Price',
-	       -meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
-    h2("Help for Fitness Browser"),
-    div({-style => "float: right; vertical-align: top;"},
-	a({href => "myFrontPage.cgi"}, "Go back to front page"));
+print header,
+	$start, 
+    # start_html(-title =>"Help for Fitness Browser", -style => {-code => $style},
+	   #     -author=>'Morgan Price',
+	   #     -meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
+    h2("Help for Fitness Browser");
+ #    div({-style => "float: right; vertical-align: top;"},
+	# a({href => "myFrontPage.cgi"}, "Go back to front page"));
+	
 
-print <<END
+my $helpcontent = <<END
 
 <H3><A NAME="technology">How it works</A></H3>
 
@@ -144,6 +147,8 @@ The code for this web site is available <A HREF="https://bitbucket.org/berkeleyl
 END
     ;
 
+
+print div({-id=>"ntcontent"}, $helpcontent);
 
 
 Utils::endHtml($cgi);

@@ -24,7 +24,7 @@ use lib "../lib";
 use Utils;
 
 my $cgi=CGI->new;
-my $style = Utils::get_style();
+# my $style = Utils::get_style();
 print $cgi->header;
 
 my $orgId = $cgi->param('orgId');
@@ -92,9 +92,11 @@ if (scalar(@expCand) > 0) {
 					 $exp->{expGroup}, $exp->{condition_1}, $exp->{expDesc} ]));
 	$isFirst = 0;
     }
-    print
-	start_html( -title => "Select experiment to compare to", -style => {-code => $style},
-		    -author => 'Morgan Price', -mata => {'copyright'=>'copyright 2015 UC Berkeley'} ),
+
+  my $start = Utils::start_page("Select experiment to compare to");
+    print $start, '<div id="ntcontent">',
+	# start_html( -title => "Select experiment to compare to", -style => {-code => $style},
+	# 	    -author => 'Morgan Price', -mata => {'copyright'=>'copyright 2015 UC Berkeley'} ),
 	h2("Select experiment in $orginfo->{$orgId}{genome}"),
 	p("Selected experiment will be compared to "
 	  . a( { href => "exp.cgi?orgId=$orgId&expName=$expNameConst" }, $expConst->{expName} )
@@ -206,12 +208,14 @@ if ($tsv) { # tab delimited values, not a page
 	@genesShow = sort { $b->{y} <=> $a->{y} } @genesShow;
     }
 
-    print
-	start_html( -title => "Outlier genes from $orginfo->{$orgId}{genome}", -style => {-code => $style},
-		    -author => 'Morgan Price', -mata => {'copyright'=>'copyright 2015 UC Berkeley'} ),
+my $start = Utils::start_page("Outlier genes from $orginfo->{$orgId}{genome}");
+    
+    print $start, '<div id="ntcontent">',
+	# start_html( -title => "Outlier genes from $orginfo->{$orgId}{genome}", -style => {-code => $style},
+		    # -author => 'Morgan Price', -mata => {'copyright'=>'copyright 2015 UC Berkeley'} ),
 	h2("Outlier genes from $orginfo->{$orgId}{genome}"),
-	div({-style => "float: right; vertical-align: top;"},
-	    a({href => "help.cgi#fitness"}, "Help")),
+	# div({-style => "float: right; vertical-align: top;"},
+	    # a({href => "help.cgi#fitness"}, "Help")),
 	h3($outlierCode),
 	p(qq{<i>x</i> is fitness in <A HREF="exp.cgi?orgId=$orgId&expName=$expName1">$expName1</A>: $exp1->{expDescLong} }
 	  . "<BR>"
@@ -260,22 +264,24 @@ if ($tsv) { # tab delimited values, not a page
 # else interactive scatterplot
 
 my $title = "Compare Experiments for $orginfo->{$orgId}{genome}";
+my $start = Utils::start_page("$title");
+# <!DOCTYPE html>
+# <head>
+# <title>$title</title>
+# <meta name="copyright" content="copyright 2015 UC Berkeley" />
+
+# <style>
+# $style
+# </style>
 
 print <<END
-<!DOCTYPE html>
-<head>
-<title>$title</title>
-<meta name="copyright" content="copyright 2015 UC Berkeley" />
-
-<style>
-$style
-</style>
-
+$start
 <script src="../d3js/d3.min.js"></script>
 <body style="padding-left: 1%">
+<div id="ntcontent">
 
 <H2>$title</H2>
-<DIV style="float: right; vertical-align: top;"><A HREF="help.cgi#fitness">Help</A></DIV>
+
 <P>
 <i>x</i> axis <A HREF="exp.cgi?orgId=$orgId&expName=$expName1">$expName1</A>: $exp1->{expDescLong}</H3>
 <BR>
@@ -516,7 +522,7 @@ function geneList() {
 
 </script>
 
-<P><A HREF="myFrontPage.cgi">Go back to front page</A>
+</div>
 </body>
 </html>
 END

@@ -33,7 +33,7 @@ my $cgi=CGI->new;
 my $orgId = $cgi->param('orgId') || die "No orgId parameter";
 my $locusId = $cgi->param('locusId') || die "No locusId parameter";
 
-my $style = Utils::get_style();
+# my $style = Utils::get_style();
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
 Utils::fail($cgi, "Unknown organism: $orgId") unless $orgId eq "" || exists $orginfo->{$orgId};
@@ -65,13 +65,17 @@ my $seqLen = length($seq);
 
 # write the title
 my $title = scalar(@$cond) > 0 ? "Gene Domains for $orginfo->{$orgId}{genome} at Locus $locusId" : "No experiments for this organism and/or locus.";
+my $start = Utils::start_page("$title");
+my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusId,0,1,"protein");
+# my $proName = $gene->{sysName} || $gene->{locusId};
 
 print
-    header,
-    start_html( -title => $title, -style => { -code => $style }, -author => 'Morgan Price, Victoria Lo',
-		-meta => { 'copyright' => 'copyright 2015 UC Berkeley' }),
-    h2("Gene Domains for ". $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")." at Locus $locusId"); #$title),
-    div({-style => "float: right; vertical-align: top;"}, a({href => "help.cgi#specific"}, "Help"));
+    header, $start, $tabs, '<div id="tabcontent">',
+    # start_html( -title => $title, -style => { -code => $style }, -author => 'Morgan Price, Victoria Lo',
+		# -meta => { 'copyright' => 'copyright 2015 UC Berkeley' }),
+	h2("Protein Info for $orginfo->{$orgId}{genome} at Locus $locusId"),
+    h3("Gene Domains for ". $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")." at Locus $locusId"); #$title),
+    # div({-style => "float: right; vertical-align: top;"}, a({href => "help.cgi#specific"}, "Help"));
 
 #exit if no results
 Utils::fail($cgi, "No experiments for this organism and/or locus.") if @$cond == 0;
@@ -132,6 +136,47 @@ foreach my $row (@$cond) {
 
 print table({cellspacing => 0, cellpadding => 3}, @trows);
 
+unlink($seqFile) || die "Error deleting $seqFile: $!";
+
+print "<br><br>";
+
+
+# print sequence
+my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId=? AND locusId=?",
+				   {}, $orgId, $locusId);
+Utils::fail($cgi,"unknown gene") unless defined $gene->{locusId};
+Utils::fail($cgi,"sequence information is only available for protein-coding genes.") unless $gene->{type} == 1;
+
+my $fastacmd = '../bin/blast/fastacmd';
+my $id = join(":",$orgId,$locusId);
+system($fastacmd,'-d',$myDB,'-s',$id,'-o',$seqFile)==0 || die "Error running $fastacmd -d $myDB -s $id -o $seqFile -- $!"; #error
+
+my $in = Bio::SeqIO->new(-file => $seqFile,-format => 'fasta');
+$seq = $in->next_seq()->seq;
+$seq =~ s/(.{60})/$1\n/gs;
+
+unlink($seqFile) || die "Error deleting $seqFile: $!";
+
+my $showId = $gene->{sysName} || $gene->{locusId};
+my $orginfo = Utils::orginfo($dbh);
+my $title = "Sequence of $showId in $orginfo->{$orgId}{genome}",;
+print
+  #   start_html( -title => $title,
+		# -style => {-code => $style},
+		# -author=>'jj326ATberkeley.edu',
+		# -meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
+    h3("Sequence of $showId in " . $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),),
+    "<center>",
+    pre(">$showId $gene->{desc} ($orginfo->{$orgId}{genome})\n$seq"),
+    "</center>";
+    # p(a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, "Show fitness")),
+    # p(a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Check homologs"));
+
+
+
+
+	print '</div>';
+
 #display number of genes that have data out of total genes
 # print $cgi->p("Fitness data for $numData genes of $numGenes genes.");
 
@@ -146,6 +191,6 @@ print table({cellspacing => 0, cellpadding => 3}, @trows);
 # print $cgi->p($cgi->a({href => "download.cgi?orgId=$orgId"}, "Download experimental data"), " - Note: May take a minute or so to load once clicked.");
 # print $cgi->p($cgi->a({href => "createExpData.cgi?orgId=$orgId"}, "Download experimental data"), " - Note: May take a few seconds to load once clicked.");
 
-unlink($seqFile) || die "Error deleting $seqFile: $!";
+
 $dbh->disconnect();
 Utils::endHtml($cgi);

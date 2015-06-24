@@ -40,12 +40,15 @@ my $speclist = $dbh->selectall_arrayref(qq{SELECT DISTINCT orgId, locusId, expNa
 
 my $title = "Specific Genes for $expGroup $condition1 Across Organisms";
 $title = "No Specific Genes" if (@$speclist == 0);
+my $start = Utils::start_page("$title");
+# my $tabs = Utils::tabsExp($dbh,$cgi,$orgId,$expName,$expGroup,$condition1,"specific");
+
 print
-    header,
-    start_html( -title => $title, -style => { -code => $style }, -author => 'Morgan Price',
-		-meta => { 'copyright' => 'copyright 2015 UC Berkeley' }),
-    h2($title),
-    div({-style => "float: right; vertical-align: top;"}, a({href => "help.cgi#specific"}, "Help"));
+    header, $start, '<div id="ntcontent">',#$tabs,
+  #   start_html( -title => $title, -style => { -code => $style }, -author => 'Morgan Price',
+		# -meta => { 'copyright' => 'copyright 2015 UC Berkeley' }),
+    h2($title);
+    # div({-style => "float: right; vertical-align: top;"}, a({href => "help.cgi#specific"}, "Help"));
 
 Utils::fail($cgi,"no genes with specific phenotypes were found for this condition") if (@$speclist == 0);
 
@@ -143,6 +146,8 @@ print
       "by",
       a({ -href => "help.cgi#ortholog"}, "orthology")),
     table({cellpadding => 3, cellspacing => 0}, @trows);
+
+    print "<BR>";
 
 $dbh->disconnect();
 Utils::endHtml($cgi);

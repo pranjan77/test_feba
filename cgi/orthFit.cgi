@@ -29,7 +29,7 @@ use lib "../lib";
 use Utils;
 
 my $cgi=CGI->new;
-my $style = Utils::get_style();
+# my $style = Utils::get_style();
 
 my $orgId = $cgi->param('orgId') || die "no orgId parameter";
 my $locusId = $cgi->param('locusId') || die "no locusId parameter";
@@ -55,15 +55,18 @@ die "No experiments for specified expGroup and condition1\n" unless $cnt > 0;
 
 my $showId = $gene->{sysName} || $gene->{locusId};
 my $title = "$showId and its orthologs: fitness in $expGroup $condition1";
+my $start = Utils::start_page("$title");
+
 print header,
-    start_html(
-	-title =>$title,
-	-style => {-code => $style},
-	-author=>'Morgan Price',
-	-meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
+	$start, '<div id="ntcontent">',
+ #    start_html(
+	# -title =>$title,
+	# -style => {-code => $style},
+	# -author=>'Morgan Price',
+	# -meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
     h2($title),
-    div({-style => "float: right; vertical-align: top;"},
-	a({href => "help.cgi#ortholog"}, "Help")),
+    # div({-style => "float: right; vertical-align: top;"},
+	# a({href => "help.cgi#ortholog"}, "Help")),
     div({-style => "clear: right"});
 
 my @headings = ( a({title=>"score ratio for ortholog: blast_score_of_alignment / self_score"},'ratio'),

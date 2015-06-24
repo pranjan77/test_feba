@@ -84,9 +84,9 @@ if (@$hits == 0) {
 	#     a({href => "help.cgi"}, "Help")),
 	
 
-	print $start, qq[<div id="ntcontent">],
+	print $start,
 
-	h3(b("Genes found for $geneSpec:"));
+	h3("Genes found for $geneSpec:");
     my @trows = ();
     push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
 			  $cgi->th( [ 'geneId','sysName','geneName','description','genome','fitness' ] ) );
@@ -100,7 +100,6 @@ if (@$hits == 0) {
     }
     
     print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
-    print qq[<br><br>];
     # PRINT TABLE
 
 } else {
@@ -112,13 +111,13 @@ if (@$hits == 0) {
     if ($hits->[0]{has_fitness} == 0) {
 		my $idShow = $gene->{sysName} || $gene->{locusId};
 		my $start = Utils::start_page("Fitness data for $idShow in $orginfo->{$orgId}{genome}");
-		my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusId,0,$gene->{type},"fitness");
+		my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusId,0,$gene->{type},"gene");
 		
 		print 
 			# $cgi->div({-id=>"ntcontent"},
 			$start, $tabs, 
-			$cgi->h3("$idShow $gene->{gene}: $gene->{desc} in " . $orginfo->{$gene->{orgId}}{genome}), 
-			$cgi->p("Sorry, no fitness data for $idShow");
+			$cgi->h3("$idShow $gene->{gene}: $gene->{desc} in " . $orginfo->{$gene->{orgId}}{genome});
+			# $cgi->p("Sorry, no fitness data for $idShow");
     } else {
 	# show fitness data for gene
 		my @fit = @{ $dbh->selectall_arrayref("SELECT expName,fit,t from GeneFitness where orgId=? AND locusId=?",
@@ -146,7 +145,7 @@ if (@$hits == 0) {
 
 	my $idShow = $gene->{sysName} || $gene->{locusId};
 	my $title = "Fitness data for $idShow in $orginfo->{$orgId}{genome}";
-	my $tabs = Utils::tabsGene($dbh,$cgi,$orgSpec,$geneSpec,$showAll,$gene->{type},"fit");
+	my $tabs = Utils::tabsGene($dbh,$cgi,$orgSpec,$geneSpec,$showAll,$gene->{type},"gene");
 
 	print
 	   #  start_html( -title => $title, -style => {-code => $style}, -author=>'wjshaoATberkeley.edu',
@@ -158,73 +157,7 @@ if (@$hits == 0) {
 		# a({href => "help.cgi#fitness"}, "Help")),
 	    h3("$idShow $gene->{gene}: $gene->{desc}");
 
-	    # Option to add a gene (links to genesFit.cgi)
-	print
-	    qq[<div style="position: relative;"><div class="floatbox">],
-	    start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
-	    "<P><center><b>Compare</b></center> <br>Add gene: ",
-	    hidden( -name => 'orgId', -value => $orgId, -override => 1 ),
-	    hidden( -name => 'showAll', -value => $showAll, -override => 1  ),
-	    hidden( -name => 'locusId', -value => $locusId, -override => 1 ),
-	    textfield( -name => 'addgene', -default => "", -override => 1, -size => 20, -maxLength => 100 ),
-	    end_form,
-	    qq[</P></div></div>];
-
-
-
-	if ($showAll) {
-	    print $cgi->p("All " . scalar(@fit) . " fitness values, sorted by group and condition");
-	} else {
-	    if (defined $minAbsFit) {
-		$minAbsFit = sprintf("%.1f", $minAbsFit);
-		print $cgi->p("Top $limitRows experiments with the strongest phenotypes (|fitness| &ge; $minAbsFit)");
-	    } else {
-		print $cgi->p("All " . scalar(@fit) . " fitness values, sorted by value");
-	    }
-	}
-
-	my $option = "or see ";
-	if ($showAll == 0) {
-        my $showAllDest = qq(myFitShow.cgi?orgId=$orgId&gene=$locusId&showAll=1);
-        $option .= qq[<a href="$showAllDest">All Fitness Data</a>];
-        # print $cgi->p(qq(<a href=$showAllDest>All fitness data</a>));
-    } else {
-        my $showFewDest = qq(myFitShow.cgi?orgId=$orgId&gene=$locusId&showAll=0);
-        $option .= qq[<a href="$showFewDest">Strongest Phenotypes</a>];
-    }
-    print $option;
-	    
-	my @out = (); # specifiers for HTML rows for each fitness value
-	my $lastGroup = ""; # only enter the first time
-	foreach my $fitrow (@fit) {
-	    my $expName = $fitrow->{expName};
-	    my $exp = $expinfo->{$expName};
-	    my $group = $exp->{expGroup};
-	    push @out, join(" ",
-			    td($group eq $lastGroup ? "" : $group),
-			    td(a({ 
-			    	# style => "color:rgb(0,0,0)",
-					       title => "$expName: $exp->{expDescLong}",
-					       href => "exp.cgi?orgId=$orgId&expName=$expName" },
-					       $exp->{expDesc})),
-			    td( { -bgcolor => Utils::fitcolor($fitrow->{fit}) },
-				      sprintf("%.1f", $fitrow->{fit}) ),
-			    td( sprintf("%.1f", $fitrow->{t}) ),
-			    td(a({ 
-			    	# style => "color:rgb(0,0,0)",
-				   title => "Compare to data from similar experiments or orthologs",
-				   href => "orthFit.cgi?orgId=$orgId&locusId=$locusId&expGroup=$exp->{expGroup}&condition1=$exp->{condition_1}" }),
-				 "compare") );
-	    $lastGroup = $group if $showAll;
-	}
-	my $relsize = $showAll ? "70%" : "100%";
-	print $cgi->table(
-	    { cellspacing => 0, cellpadding => 3, },
-	    $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
-		     $cgi->th( [ 'group', 'condition','fitness','t score', '&nbsp;' ] ) ),
-            $cgi->Tr({-align=>'left',-valign=>'top',-style=>"font-size: $relsize"}, \@out ) );
-
-	
+	   
 
 	# links
 # 	if ($showAll == 0) {
@@ -260,7 +193,6 @@ if (@$hits == 0) {
 	push @links, $cgi->a({href => "http://ecocyc.org/ECOLI/search-query?type=GENE&gname=$gene->{sysName}"}, "EcoCyc");
     }
     print $cgi->p("Links: " . join(", ", @links)) if (@links > 0);
-    print "<br><br>";
 } #  end if just 1 hit
 
 }

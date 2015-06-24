@@ -39,17 +39,19 @@ my $qtype = $cgi->param('qtype') || "protein";
 my $numHit = $cgi->param('numHit') || 20;
 my $locusSpec = $cgi->param('locusId') || "";
 my $orgId = $cgi->param('orgId') || "";
-
-print $cgi->header;
-print $cgi->start_html(
-    -title =>"Blast Results",
-    -style => {-code => $style},
-    -author=>'wjshaoATberkeley.edu',
-    -meta=>{'copyright'=>'copyright 2015 UC Berkeley'},
-#    -BGCOLOR=>'#fffacd'
-);
-
 my $dbh = Utils::get_dbh();
+
+my $start = Utils::start_page("Blast Results");
+my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusSpec,0,1,"homo");
+
+print $cgi->header, $start, $tabs;
+# print $cgi->start_html(
+#     -title =>"Blast Results",
+#     -style => {-code => $style},
+#     -author=>'wjshaoATberkeley.edu',
+#     -meta=>{'copyright'=>'copyright 2015 UC Berkeley'},
+# #    -BGCOLOR=>'#fffacd'
+# );
 
 # check user input
 
@@ -184,6 +186,7 @@ if ($cnt > 0) {
     print $cgi->p("No hit found!");
 }
 
+print "<BR><BR>";
 $dbh->disconnect();
 unlink($seqFile) || die "Error deleting $seqFile: $!";
 unlink($blastOut) || die "Error deleting $blastOut: $!";

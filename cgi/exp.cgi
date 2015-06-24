@@ -24,7 +24,7 @@ use lib "../lib";
 use Utils;
 
 my $cgi=CGI->new;
-my $style = Utils::get_style();
+# my $style = Utils::get_style();
 print $cgi->header;
 
 my $orgId = $cgi->param('orgId') || die "no species identifier\n";
@@ -45,15 +45,40 @@ my $spec = $dbh->selectall_arrayref(qq{SELECT * from SpecificPhenotype JOIN Gene
                                        WHERE orgId = ? AND expName = ?},
 				    { Slice => {} },
 				    $orgId, $expName);
+my $start = Utils::start_page("Experiment $expName for $orginfo->{$orgId}{genome}");
+my $tabs;
+# print "show=".$show;
+if ($show eq "") {
+	$tabs = Utils::tabsExp($dbh,$cgi,$orgId,$expName,$exp->{expGroup},$exp->{condition_1},"overview");
+} elsif ($show eq "specific") {
+	$tabs = Utils::tabsExp($dbh,$cgi,$orgId,$expName,$exp->{expGroup},$exp->{condition_1},"specific");
+} elsif ($show eq "important"){
+	$tabs = Utils::tabsExp($dbh,$cgi,$orgId,$expName,$exp->{expGroup},$exp->{condition_1},"-gene");
+} elsif ($show eq "detrimental") {
+	$tabs = Utils::tabsExp($dbh,$cgi,$orgId,$expName,$exp->{expGroup},$exp->{condition_1},"+gene");
+} elsif ($show eq "quality") {
+	$tabs = Utils::tabsExp($dbh,$cgi,$orgId,$expName,$exp->{expGroup},$exp->{condition_1},"metrics");
+}
 
-print start_html( -title =>"Experiment $expName for $orginfo->{$orgId}{genome}",
-		  -style => {-code => $style},
-		  -author=>'morgannprice@yahoo.com',
-		  -meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
+# print start_html( -title =>"Experiment $expName for $orginfo->{$orgId}{genome}",
+# 		  -style => {-code => $style},
+# 		  -author=>'morgannprice@yahoo.com',
+# 		  -meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
+print $start, $tabs,
     h2("Experiment $expName for ". $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
-    div({-style => "float: right; vertical-align: top;"},
-	a({href => "help.cgi#fitness"}, "Help")),
+ #    div({-style => "float: right; vertical-align: top;"},
+	# a({href => "help.cgi#fitness"}, "Help")),
     h3($exp->{expDescLong});
+
+print qq[<div style="position: relative;"><div class="floatbox">],
+    start_form(-name => 'input', -method => 'GET', -action => 'compareExps.cgi'),
+    hidden('orgId', $orgId),
+    hidden('expName2', $expName),
+    "Compare to another experiment: ",
+    textfield(-name => 'query1', -value => '', -size => 20, -maxlength => 100),
+    end_form,
+    qq[</P></div></div>],
+
 my $cond1 = $exp->{condition_1} ? join(" ", $exp->{condition_1}, $exp->{concentration_1}, $exp->{units_1}) : "";
 my $cond2 = $exp->{condition_2} ? join(" ", $exp->{condition_2}, $exp->{concentration_2}, $exp->{units_2}) : "";
 my $media = $exp->{media};
@@ -129,6 +154,7 @@ if (@fit > 0) { # show the table
 	    $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
 		     $cgi->th(['&nbsp;', 'gene','name','fitness','t score','description', '&nbsp;']),
 		     @trows) ),
+	"<BR><BR>",
 	submit(-name => 'Top fitness of selected genes'),
 	end_form;
 } elsif ($show eq "quality") {
@@ -174,20 +200,14 @@ if ($show ne "specific") {
 	print $cgi->p("No genes had specific phenotypes in this experiment.");
     }
 }
-print $cgi->p($cgi->a({href => "exp.cgi?orgId=$orgId&expName=$expName&show=important"}, "Show important genes"))
-    if $show ne "important";
-print $cgi->p($cgi->a({href => "exp.cgi?orgId=$orgId&expName=$expName&show=detrimental"}, "Show detrimental genes"))
-    if $show ne "detrimental";
-print $cgi->p($cgi->a({href => "exp.cgi?orgId=$orgId&expName=$expName&show=quality"}, "Show quality metrics"))
-    if $show ne "quality";
+# print $cgi->p($cgi->a({href => "exp.cgi?orgId=$orgId&expName=$expName&show=important"}, "Show important genes"))
+#     if $show ne "important";
+# print $cgi->p($cgi->a({href => "exp.cgi?orgId=$orgId&expName=$expName&show=detrimental"}, "Show detrimental genes"))
+#     if $show ne "detrimental";
+# print $cgi->p($cgi->a({href => "exp.cgi?orgId=$orgId&expName=$expName&show=quality"}, "Show quality metrics"))
+#     if $show ne "quality";
 
 print
-    start_form(-name => 'input', -method => 'GET', -action => 'compareExps.cgi'),
-    hidden('orgId', $orgId),
-    hidden('expName2', $expName),
-    "Compare to another experiment: ",
-    textfield(-name => 'query1', -value => '', -size => 20, -maxlength => 100),
-    end_form,
     p(a({href => "orthCond.cgi?expGroup=$exp->{expGroup}&condition1=$exp->{condition_1}"},
 	"Specific phenotypes for $exp->{expGroup} $exp->{condition_1} across organisms"));
     

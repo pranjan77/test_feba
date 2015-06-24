@@ -85,15 +85,17 @@ foreach my $o1 (@orth1b) {
 }
 
 my $title = "Conservation of cofitness between $show1 and $show2 in $orginfo->{$orgId}{genome}";
+my $start = Utils::start_page("$title");
 print
-    start_html(
-	-title => $title,
-	-style => {-code => $style},
-	-author=>'morgannprice@yahoo.com',
-	-meta=>{'copyright'=>'copyright 2015 UC Berkeley'} ),
+	$start, '<div id="ntcontent">',
+ #    start_html(
+	# -title => $title,
+	# -style => {-code => $style},
+	# -author=>'morgannprice@yahoo.com',
+	# -meta=>{'copyright'=>'copyright 2015 UC Berkeley'} ),
     h2($title),
-    div({-style => "float: right; vertical-align: top;"},
-	a({href => "help.cgi#ortholog"}, "Help")),
+ #    div({-style => "float: right; vertical-align: top;"},
+	# a({href => "help.cgi#ortholog"}, "Help")),
     h3("$nBoth genomes with putative orthologs of both genes"),
     table({-cellspacing => 0, cellpadding => 3}, @trows);
 print p("Not shown: $n1only genomes with orthologs for $show1 only; $n2only genomes with orthologs for $show2 only");

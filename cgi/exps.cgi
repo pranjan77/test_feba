@@ -46,15 +46,18 @@ if ($orgId ne "" && !defined $expGroup && ($cgi->param("All experiments") || $ex
   # print redirect(-url=>"cond.cgi?expGroup=$expSpec");
 # }
 
-my $style = Utils::get_style();
-print $cgi->header;
+# my $style = Utils::get_style();
+my $start = Utils::start_page("Experiments for $expSpec");
 
-print $cgi->start_html(
-    -title =>"Experiments for $expSpec",
-    -style => {-code => $style},
-    -author=>'Morgan Price',
-    -meta=>{'copyright'=>'copyright 2015 UC Berkeley'},
-);
+print $cgi->header, $start, '<div id="ntcontent">';
+
+
+# print $cgi->start_html(
+#     -title =>"Experiments for $expSpec",
+#     -style => {-code => $style},
+#     -author=>'Morgan Price',
+#     -meta=>{'copyright'=>'copyright 2015 UC Berkeley'},
+# );
 
 
 $expSpec = "" if $cgi->param("All experiments");
@@ -104,6 +107,8 @@ if (@$exps == 0) {
 		 "Specific phenotypes for $exp1->{expGroup} $exp1->{condition_1} across organisms"));
   }
 }
+
+print "<br><br>";
 
 $dbh->disconnect();
 Utils::endHtml($cgi);
