@@ -58,6 +58,10 @@ RunFEBA = function(args = commandArgs(trailingOnly=TRUE)) {
 	if(length(name_list) != nrow(exps)) stop("Number of data columns in  ",allfile," does not match number of rows in ",expsfile);
 	if(any(name_list != exps$name)) stop("Column names in  ",allfile," do not match names from ",expsfile);
 
+	# remove trailing spaces from Group, Condition_1, Condition_2
+	for(n in c("Group","Condition_1","Condition_2")) {
+	    if(!is.null(exps[[n]])) exps[[n]] = sub(" +$", "", exps[[n]]);
+	}
 	names(all)[-metacol] = expNamesNew;
 	exps$name = expNamesNew;
 
