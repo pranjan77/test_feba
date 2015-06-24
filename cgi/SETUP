@@ -22,9 +22,6 @@ Some of the scripts also write temporary files to
 This directory will need to be writable by the web server, i.e.,
 	chmod a+w tmp
 
-Interactive pages rely on the D3.js javascript library (version 3), which must be in:
-     d3js/d3.min.js
-
 The other dependencies are perl modules:
 	CGI
 	DBI
