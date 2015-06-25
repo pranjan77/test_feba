@@ -288,7 +288,7 @@ $start
 <i>y</i> axis <A HREF="exp.cgi?orgId=$orgId&expName=$expName2">$expName2</A>: $exp2->{expDescLong}
 
 <TABLE width=100% style="border: none;">
-<TR>
+<TR class="reset">
 <TD valign="top" align="left" style="border: none;"><!-- left column -->
 
 <div id="left"><!-- where SVG goes -->
@@ -486,7 +486,7 @@ function dotClick(d) {
     var col = selectColors[(iSelected++) % selectColors.length];
     d3.select(this).style("fill",col).attr("r",5);
     columns = [ d.sysName, d.gene, d.desc ];
-    var tr = d3.select("#genesel").append("tr").attr("valign","top").style("color", col);
+    var tr = d3.select("#genesel").append("tr").attr("class","reset2").attr("valign","middle").style("color", col);
     var showId = d.sysName === "" ? d.locusId : d.sysName;
     var URL = "myFitShow.cgi?orgId=" + org + "&gene=" + d.locusId;
     var beginHref = "<A target='_blank' style='color: " + col + "' HREF='" + URL + "'>";

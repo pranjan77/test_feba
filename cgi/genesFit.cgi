@@ -77,6 +77,7 @@ if ($around) {
     my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId = ? AND locusId = ?",
 				       {}, $orgId, $centralId);
     $centralShow = $gene->{sysName} || $gene->{locusId};
+    $type = $gene->{type};
     my $scgenes = $dbh->selectall_arrayref("SELECT * from Gene where orgId = ? AND scaffoldId = ? ORDER BY begin",
 					   { Slice => {} }, $orgId, $gene->{scaffoldId});
     die "Cannot find genes for $gene->{scaffoldId}" unless scalar(@$scgenes) > 0;
@@ -93,7 +94,6 @@ if ($around) {
 	my $arrow = $scgenes->[$i]{strand} eq "+" ? "&#8594;" : "&#8592;"; # rightarrow or leftarrow
 	$spacingDesc{ $scgenes->[$i]{locusId} } = join(" ",$leftsep,$arrow,$rightsep);
     };
-    $type = $gene->{type};
 }
 
 my @genes = ();
@@ -116,7 +116,7 @@ my $pageTitle = $around ? "Fitness for $centralShow and surrounding genes in $ge
     : "Fitness for " . scalar(@genes) . " genes in $genome";
 my $start = Utils::start_page("$pageTitle");
 my $tabs;
-if ($around or !$addgene) {
+if ($around) {
     $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$centralId,0,$type,"nearby");
 } else {
     $tabs = qq[<div id="ntcontent">];
@@ -190,7 +190,7 @@ print p,
     submit('Go'),
     end_form
        if $around;
-print "</P></div></div><BR><BR>";
+print "</P></div></div>";
 
 
 print $cgi->h3($addgene_error) if defined $addgene_error;

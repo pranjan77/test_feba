@@ -42,15 +42,13 @@ if (!defined $geneSpec || $geneSpec eq "") {
 }
 
 # check user input
-
 Utils::fail($cgi, "$geneSpec is invalid. Please enter correct gene name!") unless ($geneSpec =~ m/^[A-Za-z0-9_-]*$/);
 
 # connect to database
-
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
 
-my $query = qq{SELECT orgId, locusId, sysName, desc, gene, type FROM Gene
+my $query = qq{SELECT * FROM Gene
 		WHERE ( locusId = ? OR sysName = ? OR upper(gene) = upper(?) )};
 my $hits;
 if ($orgSpec) {
@@ -107,9 +105,80 @@ if (@$hits == 0) {
     my $gene = $hits->[0];
     my $orgId = $gene->{orgId};
     my $locusId = $gene->{locusId};
-	
+    my $scaffold = $gene->{scaffoldId};
+    my $begin = $gene->{begin};
+    my $end = $gene->{end};
+    my $strand = $gene->{strand};
+    my $type = $gene->{type};
+    my $typeName = "";
+    $typeName = "Protein-coding gene" if $type == 1;
+    $typeName = "23S (large subunit) ribosomal RNA" if $type == 2;
+	$typeName = "16S (small subunit) ribosomal RNA" if $type == 3;
+	$typeName = "5S ribosomal RNA" if $type == 4;
+	$typeName = "Transfer RNA" if $type == 5;
+	$typeName = "Other non-coding RNA" if $type == 6;
+	$typeName = "Pseudogene derived from a protein-coding gene" if $type == 7;
+	$typeName = "Pseudogene derived from an RNA gene" if $type == 8;
+	$typeName = "CRISPR" if $type == 9;
+	$typeName = "CRISPR spacer" if $type == 10;
+	$typeName = "Antisense RNA" if $type == 11;
+	$typeName = "Unclassified feature (possibly a pseudogene)" if $type == 99;
+
+	#nearby 5 genes
+	my @locusIds = $geneSpec;
+	my $idShow = $gene->{sysName} || $gene->{locusId};
+	my %spacingDesc = (); # locusId => spacing description
+	my $type;
+    die "Cannot specify nearby with multiple locusIds or with addgene" unless @locusIds == 1;
+    my $centralId = $locusIds[0];
+    my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId = ? AND locusId = ?",
+				       {}, $orgId, $centralId);
+    $type = $gene->{type};
+    my $scgenes = $dbh->selectall_arrayref("SELECT * from Gene where orgId = ? AND scaffoldId = ? ORDER BY begin",
+					   { Slice => {} }, $orgId, $gene->{scaffoldId});
+    die "Cannot find genes for $gene->{scaffoldId}" unless scalar(@$scgenes) > 0;
+    my ($iCentral) = grep { $scgenes->[$_]{locusId} eq $centralId } (0..(scalar(@$scgenes)-1));
+    die if !defined $iCentral;
+    my $i1 = $iCentral - 5;
+    $i1 = 0 if $i1 < 0;
+    my $i2 = $iCentral + 5;
+    $i2 = scalar(@$scgenes) if $i2 > scalar(@$scgenes);
+    @locusIds = map { $scgenes->[$_]{locusId} } ($i1..$i2);
+ #    foreach my $i ($i1..$i2) {
+	# my $leftsep = $i == 0 ? "" : $scgenes->[$i]{begin} - $scgenes->[$i-1]{end};
+	# my $rightsep = $i == scalar(@$scgenes)-1 ? "" : $scgenes->[$i+1]{begin} - $scgenes->[$i]{end};
+	# my $arrow = $scgenes->[$i]{strand} eq "+" ? "&#8594;" : "&#8592;"; # rightarrow or leftarrow
+	# $spacingDesc{ $scgenes->[$i]{locusId} } = join(" ",$leftsep,$arrow,$rightsep);
+ #    };
+
+ # 	my @genes = ();
+	# foreach my $locusId (@locusIds) {
+ #    	my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId = ? AND locusId = ?",
+	# 				       {}, $orgSpec, $locusId);
+ #    	# print $gene->{desc};
+	#     die "No such locus $locusId in org $orgId" if !defined $gene->{locusId};
+	# }
+
+
+    my @genes = ();
+	foreach my $locusId (@locusIds) {
+	    my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId = ? AND locusId = ?",
+					       {}, $orgSpec, $locusId);
+	    die "No such locus $locusId in org $orgId" if !defined $gene->{locusId};
+	    # expName => "fit" => fitness value
+	    $gene->{fit} = $dbh->selectall_hashref(qq{SELECT expName,fit,t FROM GeneFitness
+	                                               WHERE orgId = ? AND locusId = ?},
+						   "expName", {}, $orgId, $locusId);
+	    foreach my $expName (keys %{ $gene->{fit} }) {
+		# die "No such experiment: $expName" unless exists $expinfo->{$expName};
+	    }
+	    $gene->{nExps} = scalar(keys %{ $gene->{fit} });
+	    push @genes, $gene;
+	}
+
+
+
     if ($hits->[0]{has_fitness} == 0) {
-		my $idShow = $gene->{sysName} || $gene->{locusId};
 		my $start = Utils::start_page("Fitness data for $idShow in $orginfo->{$orgId}{genome}");
 		my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusId,0,$gene->{type},"gene");
 		
@@ -143,8 +212,7 @@ if (@$hits == 0) {
 	    @fit = sort { $a->{fit} <=> $b->{fit} } @fit;
 	}
 
-	my $idShow = $gene->{sysName} || $gene->{locusId};
-	my $title = "Fitness data for $idShow in $orginfo->{$orgId}{genome}";
+	my $title = "Gene Info for $idShow in $orginfo->{$orgId}{genome}";
 	my $tabs = Utils::tabsGene($dbh,$cgi,$orgSpec,$geneSpec,$showAll,$gene->{type},"gene");
 
 	print
@@ -152,11 +220,59 @@ if (@$hits == 0) {
 			 # -meta=>{'copyright'=>'copyright 2015 UC Berkeley'} ),
 		$start, $tabs,
 		# div({-id=>"tabcontent"},
-	    h2("Fitness data for $idShow in " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
+	    h2("Gene info for $idShow in " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
 	 #    div({-style => "float: right; vertical-align: top;"},
 		# a({href => "help.cgi#fitness"}, "Help")),
-	    h3("$idShow $gene->{gene}: $gene->{desc}");
+	    h3("$idShow $gene->{gene}: $gene->{desc}"),
 
+	   	"Type $type: $typeName<BR>
+	   	Located on scaffold $scaffold, $strand strand, $begin - $end";
+
+
+    my @links = ();
+    if ($gene->{locusId} =~ m/^\d+$/) {
+	push @links, $cgi->a({href => "http://www.microbesonline.org/cgi-bin/fetchLocus.cgi?locus=$gene->{locusId}"},
+			     "MicrobesOnline");
+    }
+    if ($orgId eq "Keio" && $gene->{sysName} =~ m/^b\d+$/) {
+	push @links, $cgi->a({href => "http://ecocyc.org/ECOLI/search-query?type=GENE&gname=$gene->{sysName}"}, "EcoCyc");
+    }
+    print $cgi->p("Links: " . join(", ", @links)) if (@links > 0);
+
+   	   	# for my $locus(@locusIds) {
+   	# 	print "locus ". $locus . "<br>";
+   	# }
+   	# print \@genes;
+   	# foreach my $gene2(@genes) {
+   	# 	print $gene2->{sysName}, $gene2->{desc}, $gene2->{strand}, "<br>";
+   	# 	# print $gene2->{desc};
+   	# };
+
+	my @headings = qw{Locus Name Description Strand Distance(nt) Phenotype};
+	my @trows = ( Tr({ -valign => 'top', -align => 'center' }, map { th($_) } \@headings) );
+
+	my $diff = "0";
+	my $prevrow;
+	foreach my $row (@genes) {
+		$diff = $row->{begin} - $prevrow->{end} if defined $prevrow;
+		$prevrow = $row;
+		my ($phen, $tip) = Utils::gene_fit_string($dbh,$orgSpec,$row->{locusId});
+		my $bgcolor = undef;
+		$bgcolor = "#f4f3e4" if $row->{locusId}==$geneSpec;
+	    push @trows, Tr({ -valign => 'top', -align => 'left', -bgcolor=>"$bgcolor"},
+	    	# display result row by row
+		    td([ $row->{locusId}, #locus
+			 	$row->{sysName}, 
+			 	$row->{desc}, 
+			 	$row->{strand},
+			 	$diff, # $row->{begin},
+			 	a({title=>$tip},$phen),
+			 	# a( { href => "exps.cgi?orgId=$orgId&expGroup=$row->{expGroup}"},
+			  #   $row->{nExp} ), #experiments
+			 ]));
+	}
+
+	print table({cellspacing => 0, cellpadding => 3}, @trows);
 	   
 
 	# links
@@ -184,19 +300,10 @@ if (@$hits == 0) {
 #     }
     
 
-    my @links = ();
-    if ($gene->{locusId} =~ m/^\d+$/) {
-	push @links, $cgi->a({href => "http://www.microbesonline.org/cgi-bin/fetchLocus.cgi?locus=$gene->{locusId}"},
-			     "MicrobesOnline");
-    }
-    if ($orgId eq "Keio" && $gene->{sysName} =~ m/^b\d+$/) {
-	push @links, $cgi->a({href => "http://ecocyc.org/ECOLI/search-query?type=GENE&gname=$gene->{sysName}"}, "EcoCyc");
-    }
-    print $cgi->p("Links: " . join(", ", @links)) if (@links > 0);
 } #  end if just 1 hit
 
 }
-
+print "<br><br>";
 
 $dbh->disconnect();
 Utils::endHtml($cgi);

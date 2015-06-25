@@ -35,7 +35,7 @@ tr,td {
 /*	-webkit-transition: background-color 0.2s;*/
 }
 
-tr:hover td{
+tr:hover td, tr.reset2:hover td{
 /*	background-color: rgba(255,255,255,0.2) !important;*/
 	border-width: 1px 0px;
 	border-color: #011B47;
@@ -96,7 +96,7 @@ a:hover {
 /*    background-color: black;*/
     height: 40px;
     max-width: 780px;
-	left: -3%;
+	left: 0;
 }
 
 #nav li {
@@ -235,8 +235,6 @@ a:hover {
 	float:right;
 	display: inline;
 }
-    
-
 
 #tabs li:hover {
     background-color: #f9f6dd;
@@ -331,7 +329,7 @@ input[type=text]:focus, textarea:focus {
 		float: right; 
 		top: -70px; 
 		right: 0px; 
-		border-width: 2px 0px;
+		border-width: 0px 0px;
 		border-color: #011B47;
 		border-style: solid; 
 		padding: 10px;
@@ -422,6 +420,12 @@ table.frontpage img:hover {
 	-o-transition: opacity 0.50s ease-in-out;
 }
 
+tr.reset td {
+	border-width: 1px 0px;
+	border-color: lightgrey;
+	border-style: solid;
+}
+
 form.search {
 	margin: 0 auto;
 /*	min-width: 50%;*/
@@ -468,6 +472,31 @@ form input[type=submit]:hover, form input[type=reset]:hover {
 
 input[type=checkbox] {
 	
+}
+
+button {
+	/*display:block;*/
+	/*margin: 0 auto;*/
+	text-align: center;
+/*	width: 40%;*/
+	border: 1px solid #83AFCC;
+	border-radius: 5px;
+	background-color: white;
+	box-shadow: 1px 1px 2px #83AFCC;
+	padding: 5px 10px;
+	font-weight: bold;
+	-webkit-transition: box-shadow 0.5s;
+	-moz-transition: box-shadow 0.5s ease-in-out;	
+	-ms-transition: box-shadow 0.50s ease-in-out;	
+	-o-transition: box-shadow 0.50s ease-in-out;
+}
+button:hover {
+	box-shadow: 1px 1px 10px #83AFCC; 
+	border: 1px solid #83AFCC;
+	-webkit-transition: box-shadow 0.5s;
+	-moz-transition: box-shadow 0.5s ease-in-out; 
+	-ms-transition: box-shadow 0.50s ease-in-out;	
+	-o-transition: box-shadow 0.50s ease-in-out;
 }
 
 p.buttons {

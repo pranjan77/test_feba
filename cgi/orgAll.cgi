@@ -36,8 +36,21 @@ my $orginfo = Utils::orginfo($dbh);
 # gather data and slice it into an array of hashes
 # my $cond = $dbh->selectall_arrayref(qq{SELECT orgId, expGroup, COUNT(DISTINCT condition_1) AS nCond, COUNT(*) as nExp FROM Experiment GROUP BY orgId,expGroup ORDER BY orgId; },
     # { Slice => {} });
-my $cond = $dbh->selectall_arrayref(qq{SELECT orgId, COUNT(DISTINCT condition_1) AS nCond, COUNT(*) as nExp FROM Experiment GROUP BY orgId ORDER BY orgId; },
+my $cond = $dbh->selectall_arrayref(qq{SELECT orgId, COUNT(DISTINCT expDesc) AS nCond, COUNT(*) as nExp FROM Experiment WHERE expGroup NOT IN ('carbon source', 'nitrogen source', 'stress') GROUP BY orgId ORDER BY orgId; },
     { Slice => {} });
+
+my $total = $dbh->selectall_hashref(qq{SELECT orgId, COUNT(*) as nExp FROM Experiment GROUP BY orgId ORDER BY orgId; },
+    'orgId');
+# my $cond = $dbh->selectall_arrayref(qq{SELECT orgId, expGroup, COUNT(DISTINCT condition_1) AS nCond, COUNT(*) as nExp FROM Experiment GROUP BY orgId ORDER BY orgId, expGroup; },
+#     { Slice => {} });
+
+my $nNitrogen = $dbh->selectall_hashref(qq{SELECT orgId, COUNT(DISTINCT Condition_1) AS nCon FROM Experiment WHERE expGroup='nitrogen source' AND NOT Condition_1='' GROUP BY orgId; },
+    'orgId');
+my $nCarbon = $dbh->selectall_hashref(qq{SELECT orgId, COUNT(DISTINCT Condition_1) AS nCon FROM Experiment WHERE expGroup='carbon source' AND NOT Condition_1='' GROUP BY orgId; },
+    'orgId');
+my $nStress = $dbh->selectall_hashref(qq{SELECT orgId, COUNT(DISTINCT Condition_1) AS nCon FROM Experiment WHERE expGroup='stress' AND NOT Condition_1='' GROUP BY orgId; },
+    'orgId');
+
 
 
 # write the title
@@ -56,21 +69,32 @@ print
 Utils::fail($cgi, "No experiments for this organism.") if @$cond == 0;
 
 #create table
-my @headings = qw{Organism Conditions Experiments};
-my @trows = ( Tr({ -valign => 'top', -align => 'center' }, map { th($_) } \@headings) );
+# my @headings = qw{Organism Experiments Carbon Nitrogen Stresses Other};
+my @trows = ( Tr({-valign => "top", -align => 'center'}, th([ 'Organism', 'Experiments', 'Carbon Sources', 'Nitrogen Sources', 'Stress Sources', 'Other Sources', ])));
+#Tr({ -valign => 'top', -align => 'center' }, map { th($_) } \@headings) );
 foreach my $row (@$cond) {
-    push @trows, Tr({ -valign => 'top', -align => 'left' },
+	my $orgId = $row->{orgId};
+	# my $other = $row->{nCond} - $nCarbon->{$row->{orgId}}->{nCon} - $nNitrogen->{$row->{orgId}}->{nCon} - $nStress->{$row->{orgId}}->{nCon};
+    push @trows, Tr({ -valign => 'top', -align => 'center' },
     	# display result row by row
-	    td([ a({href=>"org.cgi?orgId=$row->{orgId}"},$orginfo-> {$row->{orgId}}{genome}), #organism
+	     td ({-align=>'left'}, a({href=>"org.cgi?orgId=$row->{orgId}"},$orginfo-> {$row->{orgId}}{genome})), #organism
 		 	# $row->{expGroup} || "unrecorded", #group
-		 	$row->{nCond}, #conditions
+		 td([#$row->{nCond}, #conditions
 		 	a( { href => "org.cgi?orgId=$row->{orgId}"},
-		    $row->{nExp} ), #experiments
+		    $total->{$row->{orgId}}->{nExp}),#$row->{nExp} ), #experiments
+		 	a({href=>"exps.cgi?orgId=$orgId&expGroup=carbon%20source"}, $nCarbon->{$row->{orgId}}->{nCon}),
+		 	a({href=>"exps.cgi?orgId=$orgId&expGroup=nitrogen%20source"}, $nNitrogen->{$row->{orgId}}->{nCon}), 
+		 	a({href=>"exps.cgi?orgId=$orgId&expGroup=stress"}, $nStress->{$row->{orgId}}->{nCon}),
+		 	$row->{nCond},
 		 ]));
 }
 
 print table({cellspacing => 0, cellpadding => 3}, @trows);
 print "<br><br>";
+
+# foreach my $line (@$sources) {
+#     print $line->{nCon}, "<br>";
+# }
 
 # display number of genes that have data out of total genes
 # gather number of genes and data

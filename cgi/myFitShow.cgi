@@ -162,7 +162,8 @@ if (@$hits == 0) {
 	print
 	    qq[<div style="position: relative;"><div class="floatbox">],
 	    start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
-	    "<P><center><b>Compare</b></center> <br>Add gene: ",
+	    # "<P><center><b>Compare</b></center> 
+	    "<br>Add gene: ",
 	    hidden( -name => 'orgId', -value => $orgId, -override => 1 ),
 	    hidden( -name => 'showAll', -value => $showAll, -override => 1  ),
 	    hidden( -name => 'locusId', -value => $locusId, -override => 1 ),
@@ -251,15 +252,15 @@ if (@$hits == 0) {
 #     }
     
 
-    my @links = ();
-    if ($gene->{locusId} =~ m/^\d+$/) {
-	push @links, $cgi->a({href => "http://www.microbesonline.org/cgi-bin/fetchLocus.cgi?locus=$gene->{locusId}"},
-			     "MicrobesOnline");
-    }
-    if ($orgId eq "Keio" && $gene->{sysName} =~ m/^b\d+$/) {
-	push @links, $cgi->a({href => "http://ecocyc.org/ECOLI/search-query?type=GENE&gname=$gene->{sysName}"}, "EcoCyc");
-    }
-    print $cgi->p("Links: " . join(", ", @links)) if (@links > 0);
+ #    my @links = ();
+ #    if ($gene->{locusId} =~ m/^\d+$/) {
+	# push @links, $cgi->a({href => "http://www.microbesonline.org/cgi-bin/fetchLocus.cgi?locus=$gene->{locusId}"},
+	# 		     "MicrobesOnline");
+ #    }
+ #    if ($orgId eq "Keio" && $gene->{sysName} =~ m/^b\d+$/) {
+	# push @links, $cgi->a({href => "http://ecocyc.org/ECOLI/search-query?type=GENE&gname=$gene->{sysName}"}, "EcoCyc");
+ #    }
+ #    print $cgi->p("Links: " . join(", ", @links)) if (@links > 0);
     print "<br><br>";
 } #  end if just 1 hit
 
