@@ -8,30 +8,24 @@ lib/Utils.pm -- shared functions
 
 Site map:
 
-# top nav bar
-	find gene => geneSearch.cgi => myFitShow.cgi
-	BLAST => blastSearch.cgi  => mySeqSearch.cgi
-	Organisms => orgAll.cgi => org.cgi
-	Experiment => expSearch.cgi => exps.cgi (search), or cond.cgi (for all C/N/stress)
-# gene-wise tabs
-Gene => geneOverview.cgi
-Fitness => myFitShow.cgi (1 gene mode)
-Nearby => genesFit.cgi (around mode)
-Cofitness => cofit.cgi
-Protein => domains.cgi
-Homologs => mySeqSearch.cgi (gene query mode)
+myFrontPage.cgi -- the front page
+	search by name => myFitShow.cgi
+	search by sequence => mySeqSearch.cgi
+	search by condition, or all for 1 organism => exps.cgi
+	list conditions by group => cond.cgi
 # gene-wise pages
+singleFit.cgi -- show table of fitness data for one gene
+	if showing table of fitness data:
+	each experiment => exp.cgi
+	each cell => orthFit.cgi
+	add a gene => genesFit.cgi
+	show all => showAll=1 option
+	show nearby => genesFit.cgi with around
+	sequence  => getSeq.cgi
+	check homologs => mySeqSearch.cgi
+	cofitness => cofit.cgi
 myFitShow.cgi -- show list of matching genes, or table of fitness data for one gene
-	if a list, links to page for individual gene and genome
-	if showing table of fitness data (either top phenotypes or all data):
-		title => org.cgi
-		each experiment => exp.cgi
-		each cell => orthFit.cgi
-		add a gene => genesFit.cgi
-	and also links to compare (to genesFit.cgi) or to change top vs. all
-cofit.cgi -- top cofit hits for a gene
-	each hit => myFitShow.cgi
-	checkboxes => genesFit.cgi
+	if a list, links to page for individual gene
 orthFit.cgi -- for a gene in a condition, show table of fitness across orthologs
 	each gene => showFit.cgi
 	each experiment => exp.cgi
@@ -42,30 +36,26 @@ genesFit.cgi -- show fitness of multiple genes
 	each experiment => exp.cgi
 	add or remove genes => locusId or addgene options
 	show all => showAll=1 option
-# experiment tabs -- they all link to exp.cgi
-Overview => all the metadata (default)
-Specific => specific phenotypes (show=specific)
-- Genes => show=important
-+ Genes => show=detrimental
-Metrics => show=quality
+cofit.cgi -- top cofit hits for a gene
+	each hit => myFitShow.cgi
+	checkboxes => genesFit.cgi
+	fitness data (for query gene) => myFitShow.cgi
+	homologs => mySeqSearch.cgi
+mySeqSearch.cgi -- a list of hits, linking to myFitShow.cgi for each (if it has data)
+getSeq.cgi -- sequence of gene (if it is a protein)
 # experiment-wise pages
+exps.cgi -- matching experiments => exp.cgi
+	across all organisms => orthCond.cgi (if a condition query was made)
 exp.cgi -- for an experiment, show metrics, or top genes
 	if showing specific phenotypes, or important genes, or detrimental genes
 		each gene => myFitShow.cgi, each cell => orthFit.cgi
 	compare to => compareExps.cgi
-	across all organisms => orthCond.cgi [will this be on all tabs?]
-exps.cgi -- matching experiments => exp.cgi
-	across all organisms => orthCond.cgi (if a condition query was made)
-	If showing all experiments for an organism, uses org.cgi to show the organism instead
+	across all organisms => orthCond.cgi
 compareExps.cgi -- interactive scatterplot to compare two experiments
 	links to exp.cgi
 	link to itself to change which experiments to show
 	can interactively or programmatically build a gene table
 		link to myFitShow.cgi per gene or genesFit.cgi for multi-gene heatmap
-# other pages
-mySeqSearch.cgi -- a list of BLAST hits, linking to myFitShow.cgi for each (if it has data)
-org.cgi -- overview page for an organism with #experiments of each type and data download.
-orgAll.cgi -- overview of organisms with links to org.cgi, exps.cgi
 # condition-wise pages
 cond.cgi -- list all conditions in a group
 	links to exps.cgi and orthCond.cgi for each condition
@@ -73,5 +63,4 @@ orthCond.cgi -- specific sick genes for a condition across all organisms
 	link to myFitShow.cgi per gene or exp.cgi per experiment
 	link to orthFit.cgi to compare a cell
 
-Dead pages:
-getSeq.cgi -- sequence of gene (if it is a protein)
+And every page ends with a link to the front page

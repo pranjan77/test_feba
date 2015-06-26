@@ -93,7 +93,7 @@ foreach my $o (@genes) {
 			      td($orgShort),
 			      td($first ? a({href => "myFitShow.cgi?orgId=$o->{orgId}&gene=$o->{locusId}"}, #style => "color: rgb(0,0,0)"},
 					    $o->{sysName} || $o->{locusId}) : ""),
-			      td($first ? $o->{gene} : ""),
+			      td($first ? a({href => "myFitShow.cgi?orgId=$o->{orgId}&gene=$o->{locusId}"}, $o->{gene}) : ""),
 			      td($first ? $o->{desc} : ""),
 			      td(a({href => "exp.cgi?orgId=$o->{orgId}&expName=$row->{expName}"}, #style => "color: rgb(0,0,0)"},
 				   $row->{expDesc})),

@@ -43,11 +43,15 @@ my $dbh = Utils::get_dbh();
 
 my $start = Utils::start_page("Blast Results");
 my $tabs = "";
+my $orth;
 if (defined $orgId and $locusSpec) {
     $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusSpec,0,1,"homo");
+    $orth = $dbh->selectall_hashref("SELECT * FROM Ortholog WHERE orgId1 = ? AND locusId1 = ?",
+                             'orgId2',{Slice=>{}}, $orgId, $locusSpec);
 } else {
     $tabs = '<div id = "ntcontent">';
 }
+
 
 print $cgi->header, $start, $tabs;
 # print $cgi->start_html(
@@ -155,18 +159,42 @@ while(<RES>) {
 
     my ($sys,$geneName,$desc) = $dbh->selectrow_array("SELECT sysName,gene,desc FROM Gene WHERE orgId = ? AND locusId = ?",
 						     undef, $orgId, $locusId);
+
     if (!defined $desc) {
 	print "Warning! Unknown hit $orgId:$locusId<BR>";
 	next;
     }
 
+
     my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $orgId, $locusId);
-    my @hit = ($sys || $locusId,$geneName,$desc,
-        $cgi->a({href => "org.cgi?orgId=$orgId"},$orginfo->{$orgId}->{genome}),
-	       a( { href => "myFitShow.cgi?orgId=$orgId&gene=$locusId", title => $fittitle },
-		  $fitstring ),
-	       $percIdentity,$cov,$eVal,$bitScore);
-    push @hits, \@hit;
+    my @hit = ($cgi->a({href => "org.cgi?orgId=$orgId"},$orginfo->{$orgId}->{genome}),
+        $sys || $locusId,
+        $cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, $geneName),
+        $desc,
+	    $cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId", title => $fittitle }, $fitstring ),
+        $cgi->a({title=>"evalue: $eVal ($bitScore bits)"},$percIdentity),
+        $cgi->a({title=>"evalue: $eVal ($bitScore bits)"},$cov));
+    # @hit = map td($_), @hit;
+
+    my $tr;
+    if (defined $orgId and $locusSpec) {
+        if (exists $orth->{$orgId}) { #and $orth->{$orgId} == $locusId) {
+            unshift @hit, '<a title="ortholog">o</a>';
+            @hit = map td($_), @hit;
+            $tr = $cgi->Tr({ -align => 'left', -valign => 'top', bgcolor=>'white' }, @hit );
+        } else {
+            unshift @hit, ' ';
+            @hit = map td($_), @hit;
+            $tr = $cgi->Tr({ -align => 'left', -valign => 'top' }, @hit );
+        }
+    } else {
+        unshift @hit, ' ';
+        @hit = map td($_), @hit;
+        $tr = $cgi->Tr({ -align => 'left', -valign => 'top' }, @hit );
+    }
+        
+        push @hits, $tr;
+        # die $tr;
     $cnt++;
 }
 close(RES) || die "Error reading $blastOut";
@@ -176,15 +204,16 @@ if ($cnt > 0) {
 
     print $cgi->p("Top " . scalar(@hits) . " hits (E < 0.01)");
 
-    my @td = ();
-    foreach my $row (@hits) {
-        push @td, $cgi->td( $row );
-    }
+    # my @td = ();
+    # foreach my $row (@hits) {
+    #     push @td, $cgi->td( $row );
+    # }
     print $cgi->table(
         { cellspacing=>0, cellpadding=>3 },
         $cgi->Tr({-align=>'left',-valign=>'top'},
-		 $cgi->th( [ 'geneId','name','description','species','fitness','identity%','coverage%','eValue','bitScore' ] ) ),
-            $cgi->Tr({ -align => 'left', -valign => 'top' }, \@td )
+		 $cgi->th( ['', 'Species','Gene ID','Name','Description','Fitness','Identity %','Coverage %'])),#,'E Value','Bit Score' ] ) ),
+            # $cgi->Tr({ -align => 'left', -valign => 'top' }, \@td), 
+            @hits
     );
 
 } else {

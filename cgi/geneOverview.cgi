@@ -233,6 +233,8 @@ if (@$hits == 0) {
     }
     print $cgi->p("Links: " . join(", ", @links)) if (@links > 0);
 
+    print $cgi->h3({style=>'text-align:center'},"Nearby Genes");
+
    	   	# for my $locus(@locusIds) {
    	# 	print "locus ". $locus . "<br>";
    	# }
@@ -257,11 +259,11 @@ if (@$hits == 0) {
 	    push @trows, Tr({ -valign => 'top', -align => 'left', -bgcolor=>"$bgcolor"},
 	    	# display result row by row
 		    td([ $row->{locusId}, #locus
-			 	$row->{gene} || $row->{sysName}, 
+			 	a({href => "myFitShow.cgi?orgId=$orgId&gene=$row->{locusId}"},$row->{gene} || $row->{sysName}), 
 			 	$row->{desc}, 
 			 	$row->{strand},
 			 	$diff, # $row->{begin},
-			 	a({title=>$tip},$phen),
+			 	a({href => "myFitShow.cgi?orgId=$orgId&gene=$row->{locusId}", title=>$tip},$phen),
 			 	# a( { href => "exps.cgi?orgId=$orgId&expGroup=$row->{expGroup}"},
 			  #   $row->{nExp} ), #experiments
 			 ]));

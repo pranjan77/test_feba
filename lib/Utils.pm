@@ -44,6 +44,8 @@ sub start_page($) {
     <link rev="made" href="mailto:morgannprice%40yahoo.com" />
     <title>$title</title>
     <meta name="copyright" content="copyright 2015 UC Berkeley" />
+    <link rel="shortcut icon" href="../images/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="../images/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="../images/feba.css">
     <link href='http://fonts.googleapis.com/css?family=Montserrat:700' rel='stylesheet' type='text/css'>
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />

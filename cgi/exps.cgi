@@ -65,11 +65,11 @@ my $exps;
 
 if (defined $expGroup && defined $orgId && !defined $condition1){
     # $exps = Utils::matching_exps_strict($dbh, $orgId, $expSpec, $expGroup);
-    $exps = $dbh->selectall_arrayref(qq{SELECT * from Experiment WHERE expGroup = ? AND orgId = ?},
+    $exps = $dbh->selectall_arrayref(qq{SELECT * from Experiment WHERE expGroup = ? AND orgId = ? GROUP BY expGroup, condition_1, expName},
             { Slice => {} },
             $expGroup, $orgId);
 } elsif (defined $expGroup && defined $condition1) {
-    $exps = $dbh->selectall_arrayref(qq{SELECT * from Experiment WHERE expGroup = ? AND condition_1 = ?},
+    $exps = $dbh->selectall_arrayref(qq{SELECT * from Experiment WHERE expGroup = ? AND condition_1 = ? GROUP BY expGroup, condition_1, expName},
 				    { Slice => {} },
 				    $expGroup, $condition1);
     Utils::fail($cgi, "No experiments for specified group and condition") if scalar(@$exps) == 0;
@@ -85,10 +85,20 @@ if (@$exps == 0) {
    print $cgi->h3(qq{No experiment found matching "$expSpec"});
 } else {
   my $heading = "Experiments";
-  $heading .= " in $orginfo->{$orgId}{genome}" if $orgId ne "";
+  $heading .= " in ". $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}") if $orgId ne "";
   $heading .= qq{ matching "$expSpec"} if $expSpec ne "";
   print $cgi->h2($heading);
   my @trows = ();
+
+
+if (defined $expGroup && defined $orgId && !defined $condition1){
+   push @trows, $cgi->Tr({-valign => "top"}, $cgi->th(['Name', 'Group', 'Condition', 'Description' ]));
+  foreach my $row (@$exps) {
+      push @trows, $cgi->Tr({-valign => "top"},
+                 $cgi->td([$cgi->a({href => "exp.cgi?orgId=$row->{orgId}&expName=$row->{expName}"}, $row->{expName}),
+          $row->{expGroup}, $row->{condition_1}, $row->{expDesc} ]));
+    }
+} elsif (defined $expGroup && defined $condition1) {
   push @trows, $cgi->Tr({-valign => "top"}, $cgi->th([ 'Organism', 'Name', 'Group', 'Condition', 'Description' ]));
   foreach my $row (@$exps) {
       push @trows, $cgi->Tr({-valign => "top"},
@@ -96,6 +106,8 @@ if (@$exps == 0) {
 	              $cgi->a({href => "exp.cgi?orgId=$row->{orgId}&expName=$row->{expName}"}, $row->{expName}),
 		      $row->{expGroup}, $row->{condition_1}, $row->{expDesc} ]));
   }
+}
+
   print table({cellspacing => 0, cellpadding => 3}, @trows);
   my $exp1 = $exps->[0];
   if ($exp1->{expGroup} ne ""
