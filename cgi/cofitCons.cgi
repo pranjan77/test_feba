@@ -47,11 +47,11 @@ my @orth1 = sort { $b->{ratio} <=> $a->{ratio} } values(%$orth1);
 my @orth1b = grep { exists $orth2->{$_->{orgId}} } @orth1;
 
 my @trows = ( Tr({-valign => 'top', -align => 'center'},
-		 th(["organism",
-		     a({title=>"score ratio for ortholog 1: blast_score_of_alignment / self_score"},'ratio1'),
-		     "gene1", "name1", "description1",
-		     a({title=>"score ratio for ortholog 2: blast_score_of_alignment / self_score"},'ratio2'),
-		     "gene2", "name2", "description2", "cofit", "rank" ])),
+		 th(["Organism",
+		     a({title=>"score ratio for ortholog 1: blast_score_of_alignment / self_score"},'Ratio1'),
+		     "Gene1", "Name1", "Description1",
+		     a({title=>"score ratio for ortholog 2: blast_score_of_alignment / self_score"},'Ratio2'),
+		     "Gene2", "Name2", "Description2", "Cofit", "Rank" ])),
 	     Tr({-valign => 'top', -align => 'left'},
 		 td([ $cgi->a({href => "org.cgi?orgId=". $orginfo->{$orgId}{orgId}}, $orginfo->{$orgId}{genome}),
 		      "1.0",

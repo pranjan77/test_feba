@@ -42,25 +42,24 @@ $orgId, $expSpec, $expGroup, $condition1 =~ s/[\'\"\n\r\;\\]//g; #'
 # Redirect to orgGroup.cgi if displaying all exp from one organism
 if ($orgId ne "" && !defined $expGroup && ($cgi->param("All experiments") || $expSpec eq "")) {
     print redirect(-url=>"org.cgi?orgId=$orgId");
-} #elsif ($orgId eq "" && $expSpec ne "") {
+} elsif ($orgId eq "" && $expSpec eq "") {
+  print redirect(-url=>"orgAll.cgi");
+} 
+#elsif ($orgId eq "" && $expSpec ne "") {
   # print redirect(-url=>"cond.cgi?expGroup=$expSpec");
 # }
 
 # my $style = Utils::get_style();
 my $start = Utils::start_page("Experiments for $expSpec");
+$expSpec = "" if $cgi->param("All experiments");
 
 print $cgi->header, $start, '<div id="ntcontent">';
-
-
 # print $cgi->start_html(
 #     -title =>"Experiments for $expSpec",
 #     -style => {-code => $style},
 #     -author=>'Morgan Price',
 #     -meta=>{'copyright'=>'copyright 2015 UC Berkeley'},
 # );
-
-
-$expSpec = "" if $cgi->param("All experiments");
 
 my $exps;
 
@@ -74,8 +73,6 @@ if (defined $expGroup && defined $orgId && !defined $condition1){
 				    { Slice => {} },
 				    $expGroup, $condition1);
     Utils::fail($cgi, "No experiments for specified group and condition") if scalar(@$exps) == 0;
-} elsif ($orgId eq "" && $expSpec eq "") {
-    Utils::fail($cgi, "Cannot show all experiments: please specify organism and/or condition");
 } else {
     $exps = Utils::matching_exps($dbh, $orgId, $expSpec);
 }

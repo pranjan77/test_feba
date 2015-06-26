@@ -65,7 +65,7 @@ if ($addgene) {
     }
 }
 
-#####
+
 my $centralId; # the focal gene
 my $centralShow; # how to show its id
 my %spacingDesc = (); # locusId => spacing description
@@ -199,7 +199,7 @@ if ($showAll) {
 } else {
     print $cgi->p("Top " . scalar(@exps) . " experiments (either direction), sorted by average fitness");
 }
-print "or view ";
+print "Or view ";
 
 my $locusSpec = $around ? "locusId=$centralId" : join("&", map {"locusId=$_"} @locusIds);
 if ($showAll) {
@@ -207,10 +207,10 @@ if ($showAll) {
 } else {
     print $cgi->a( { href => "genesFit.cgi?orgId=$orgId&$locusSpec&showAll=1&around=$around" }, "all fitness data" );
 }
-print "<br><br>";
+print ".<br><br>";
 
 my @trows = ();
-my @headings = qw{group condition};
+my @headings = qw{Group Condition};
 my @headings2 = ("", "");
 foreach my $gene (@genes) {
     push @headings, $cgi->a({ href => "myFitShow.cgi?orgId=$orgId&gene=$gene->{locusId}",

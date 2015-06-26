@@ -42,7 +42,12 @@ my $orgId = $cgi->param('orgId') || "";
 my $dbh = Utils::get_dbh();
 
 my $start = Utils::start_page("Blast Results");
-my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusSpec,0,1,"homo");
+my $tabs = "";
+if (defined $orgId and $locusSpec) {
+    $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusSpec,0,1,"homo");
+} else {
+    $tabs = '<div id = "ntcontent">';
+}
 
 print $cgi->header, $start, $tabs;
 # print $cgi->start_html(

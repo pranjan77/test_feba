@@ -91,11 +91,11 @@ foreach my $o (@genes) {
 	push @trows, $cgi->Tr({ -valign => 'top', -align => 'left'},
 			      td($first ?  $ratio : ""),
 			      td($orgShort),
-			      td($first ? a({href => "myFitShow.cgi?orgId=$o->{orgId}&gene=$o->{locusId}", style => "color: rgb(0,0,0)"},
+			      td($first ? a({href => "myFitShow.cgi?orgId=$o->{orgId}&gene=$o->{locusId}"}, #style => "color: rgb(0,0,0)"},
 					    $o->{sysName} || $o->{locusId}) : ""),
 			      td($first ? $o->{gene} : ""),
 			      td($first ? $o->{desc} : ""),
-			      td(a({href => "exp.cgi?orgId=$o->{orgId}&expName=$row->{expName}", style => "color: rgb(0,0,0)"},
+			      td(a({href => "exp.cgi?orgId=$o->{orgId}&expName=$row->{expName}"}, #style => "color: rgb(0,0,0)"},
 				   $row->{expDesc})),
 			      td({ -bgcolor => Utils::fitcolor($row->{fit}) }, sprintf("%.1f", $row->{fit})),
 			      td(sprintf("%.1f", $row->{t})) );

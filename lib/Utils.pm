@@ -378,19 +378,19 @@ sub tabsExp($$$$$$$) {
 
     my $sClass = "exp";
     $sClass = "selected" if $curr eq "specific";
-    $code .= qq[<li class="$sClass"> <a href="exp.cgi?orgId=$orgId&expName=$expName&show=specific">Specific</a></li>];
+    $code .= qq[<li class="$sClass"> <a href="exp.cgi?orgId=$orgId&expName=$expName&show=specific" title="Specific Phenotypes">Specific</a></li>];
 
     my $nClass = "exp";
     $nClass = "selected" if $curr eq "-gene"; #and $show eq "important");
-    $code .= qq[<li class="$nClass"> <a href="exp.cgi?orgId=$orgId&expName=$expName&show=important">- Genes</a></li>];
+    $code .= qq[<li class="$nClass"> <a href="exp.cgi?orgId=$orgId&expName=$expName&show=important" title="Important Genes">- Genes</a></li>];
 
     my $pClass = "exp";
     $pClass = "selected" if $curr eq "+gene";
-    $code .= qq[<li class="$pClass"> <a href="exp.cgi?orgId=$orgId&expName=$expName&show=detrimental">+ Genes</a></li>];
+    $code .= qq[<li class="$pClass"> <a href="exp.cgi?orgId=$orgId&expName=$expName&show=detrimental" title="Detrimental Genes">+ Genes</a></li>];
 
     my $mClass = "exp";
     $mClass = "selected" if $curr eq "metrics";
-    $code .= qq[<li class="$mClass"><a href="exp.cgi?orgId=$orgId&expName=$expName&show=quality">Metrics</a></li>];
+    $code .= qq[<li class="$mClass"><a href="exp.cgi?orgId=$orgId&expName=$expName&show=quality" title="Quality Metrics">Metrics</a></li>];
 
     # my $cClass = "exp";
     # $cClass = "selected" if $curr eq "compare";

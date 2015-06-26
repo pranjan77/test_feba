@@ -144,12 +144,6 @@ if (@$hits == 0) {
     my $i2 = $iCentral + 5;
     $i2 = scalar(@$scgenes) if $i2 > scalar(@$scgenes);
     @locusIds = map { $scgenes->[$_]{locusId} } ($i1..$i2);
- #    foreach my $i ($i1..$i2) {
-	# my $leftsep = $i == 0 ? "" : $scgenes->[$i]{begin} - $scgenes->[$i-1]{end};
-	# my $rightsep = $i == scalar(@$scgenes)-1 ? "" : $scgenes->[$i+1]{begin} - $scgenes->[$i]{end};
-	# my $arrow = $scgenes->[$i]{strand} eq "+" ? "&#8594;" : "&#8592;"; # rightarrow or leftarrow
-	# $spacingDesc{ $scgenes->[$i]{locusId} } = join(" ",$leftsep,$arrow,$rightsep);
- #    };
 
  # 	my @genes = ();
 	# foreach my $locusId (@locusIds) {
@@ -226,7 +220,7 @@ if (@$hits == 0) {
 	    h3("$idShow $gene->{gene}: $gene->{desc}"),
 
 	   	"Type $type: $typeName<BR>
-	   	Located on scaffold $scaffold, $strand strand, $begin - $end";
+	   	Located on scaffold $scaffold, $strand strand, nucleotides $begin - $end";
 
 
     my @links = ();
@@ -248,10 +242,11 @@ if (@$hits == 0) {
    	# 	# print $gene2->{desc};
    	# };
 
-	my @headings = qw{Locus Name Description Strand Distance(nt) Phenotype};
-	my @trows = ( Tr({ -valign => 'top', -align => 'center' }, map { th($_) } \@headings) );
+	# my @headings = qw{Locus Name Description Strand Distance(nt) Phenotype};
+	# my @trows = ( Tr({ -valign => 'top', -align => 'center' }, map { th($_) } \@headings) );
+	my @trows = ( Tr({-valign => "top", -align => 'center'}, th([ 'Locus', 'Name', 'Description', 'Strand', a({title=>'Distance between the end of previous gene and beginning of current gene', color=>"#011B47"},'Distance (nt)'), 'Phenotype', ])));
 
-	my $diff = "0";
+	my $diff = "";
 	my $prevrow;
 	foreach my $row (@genes) {
 		$diff = $row->{begin} - $prevrow->{end} if defined $prevrow;
@@ -262,7 +257,7 @@ if (@$hits == 0) {
 	    push @trows, Tr({ -valign => 'top', -align => 'left', -bgcolor=>"$bgcolor"},
 	    	# display result row by row
 		    td([ $row->{locusId}, #locus
-			 	$row->{sysName}, 
+			 	$row->{gene} || $row->{sysName}, 
 			 	$row->{desc}, 
 			 	$row->{strand},
 			 	$diff, # $row->{begin},

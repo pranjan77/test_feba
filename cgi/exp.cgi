@@ -5,7 +5,7 @@
 ## Copyright (c) 2015 University of California
 ##
 ## Authors:
-## Morgan Price
+## Morgan Price, Victoria Lo
 #######################################################
 #
 # Required parameters: orgId and expName, for organism and which experiment
@@ -47,7 +47,6 @@ my $spec = $dbh->selectall_arrayref(qq{SELECT * from SpecificPhenotype JOIN Gene
 				    $orgId, $expName);
 my $start = Utils::start_page("Experiment $expName for $orginfo->{$orgId}{genome}");
 my $tabs;
-# print "show=".$show;
 if ($show eq "") {
 	$tabs = Utils::tabsExp($dbh,$cgi,$orgId,$expName,$exp->{expGroup},$exp->{condition_1},"overview");
 } elsif ($show eq "specific") {
@@ -68,9 +67,8 @@ print $start, $tabs,
     h2("Experiment $expName for ". $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
  #    div({-style => "float: right; vertical-align: top;"},
 	# a({href => "help.cgi#fitness"}, "Help")),
-    h3($exp->{expDescLong});
-
-print qq[<div style="position: relative;"><div class="floatbox">],
+	# corner compare box
+	qq[<div style="position: relative;"><div class="floatbox">],
     start_form(-name => 'input', -method => 'GET', -action => 'compareExps.cgi'),
     hidden('orgId', $orgId),
     hidden('expName2', $expName),
@@ -78,6 +76,16 @@ print qq[<div style="position: relative;"><div class="floatbox">],
     textfield(-name => 'query1', -value => '', -size => 20, -maxlength => 100),
     end_form,
     qq[</P></div></div>],
+    h3($exp->{expDescLong});
+
+# print qq[<div style="position: relative;"><div class="floatbox">],
+#     start_form(-name => 'input', -method => 'GET', -action => 'compareExps.cgi'),
+#     hidden('orgId', $orgId),
+#     hidden('expName2', $expName),
+#     "Compare to another experiment: ",
+#     textfield(-name => 'query1', -value => '', -size => 20, -maxlength => 100),
+#     end_form,
+#     qq[</P></div></div>],
 
 my $cond1 = $exp->{condition_1} ? join(" ", $exp->{condition_1}, $exp->{concentration_1}, $exp->{units_1}) : "";
 my $cond2 = $exp->{condition_2} ? join(" ", $exp->{condition_2}, $exp->{concentration_2}, $exp->{units_2}) : "";
@@ -132,15 +140,16 @@ if (@fit > 0) { # show the table
 	my $geneId = $row->{sysName} || $row->{locusId};
 	push @trows, $cgi->Tr({align => 'left', valign => 'top'},
 			      td(checkbox('locusId',0,$row->{locusId},'')),
-			      td(a({href => "myFitShow.cgi?orgId=$orgId&gene=$row->{locusId}",
-					       style => "color:rgb(0,0,0)"},
+			      td(a({href => "myFitShow.cgi?orgId=$orgId&gene=$row->{locusId}",},
+					       # style => "color:rgb(0,0,0)"},
 						$geneId)),
 			      td($row->{gene}),
 			      td({ -bgcolor => Utils::fitcolor($row->{fit}) },
 				       sprintf("%.1f", $row->{fit})),
 			      td( sprintf("%.1f", $row->{t}) ),
 			      td($row->{desc}),
-			      td(a({ style => "color:rgb(0,0,0)",
+			      td(a({ 
+			      	# style => "color:rgb(0,0,0)",
 				     title => "Compare to data from similar experiments or orthologs",
 				     href => "orthFit.cgi?orgId=$orgId&locusId=$row->{locusId}"
 					      . "&expGroup=$exp->{expGroup}&condition1=$exp->{condition_1}" },
