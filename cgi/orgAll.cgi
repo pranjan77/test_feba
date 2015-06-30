@@ -39,12 +39,17 @@ my $orginfo = Utils::orginfo($dbh);
 # my $cond = $dbh->selectall_arrayref(qq{SELECT *, COUNT(DISTINCT expDesc) AS nCond, COUNT(*) as nExp FROM Experiment WHERE expGroup NOT IN ('carbon source', 'nitrogen source', 'stress') GROUP BY orgId ORDER BY orgId; },
 #     { Slice => {} });
 
-my $cond = $dbh->selectall_arrayref(qq{SELECT e.orgId, COUNT(DISTINCT e.expDesc) AS nCond, o.division
+my $all = $dbh->selectall_arrayref(qq{SELECT e.orgId, o.division
 	FROM "Experiment" as e 
 	JOIN "Organism" as o on e.orgId = o.orgId
-	WHERE e.expGroup NOT IN ('carbon source', 'nitrogen source', 'stress') 
 	GROUP BY e.orgId ORDER BY o.genus, o.species, o.strain; },
     { Slice => {} });
+
+my $count = $dbh->selectall_hashref(qq{SELECT orgId, COUNT(DISTINCT expDesc) AS nCond
+	FROM "Experiment"
+	WHERE expGroup NOT IN ('carbon source', 'nitrogen source', 'stress') 
+	GROUP BY orgId  },
+    'orgId');
 
 # my $total = $dbh->selectall_hashref(qq{SELECT *, COUNT(*) as nExp FROM Experiment GROUP BY orgId ORDER BY genus, species, strain; },
 #     'orgId');
@@ -79,13 +84,13 @@ print
     # div({-style => "float: right; vertical-align: top;"}, a({href => "help.cgi#specific"}, "Help"));
 
 #exit if no results
-Utils::fail($cgi, "No experiments for this organism.") if @$cond == 0;
+# Utils::fail($cgi, "No experiments for this organism.") if @$cond == 0;
 
 #create table
 # my @headings = qw{Organism Experiments Carbon Nitrogen Stresses Other};
 my @trows = ( Tr({-valign => "top", -align => 'center'}, th([ 'Organism', 'Division', 'Experiments', 'Carbon Sources', 'Nitrogen Sources', 'Stress Compounds', 'Other Conditions'])));
 #Tr({ -valign => 'top', -align => 'center' }, map { th($_) } \@headings) );
-foreach my $row (@$cond) {
+foreach my $row (@$all) {
 	my $orgId = $row->{orgId};
 	# my $other = $row->{nCond} - $nCarbon->{$row->{orgId}}->{nCon} - $nNitrogen->{$row->{orgId}}->{nCon} - $nStress->{$row->{orgId}}->{nCon};
     push @trows, Tr({ -valign => 'top', -align => 'right' },
@@ -98,7 +103,7 @@ foreach my $row (@$cond) {
 		 	a({href=>"exps.cgi?orgId=$orgId&expGroup=carbon%20source"}, $nCarbon->{$row->{orgId}}->{nCon}),
 		 	a({href=>"exps.cgi?orgId=$orgId&expGroup=nitrogen%20source"}, $nNitrogen->{$row->{orgId}}->{nCon}), 
 		 	a({href=>"exps.cgi?orgId=$orgId&expGroup=stress"}, $nStress->{$row->{orgId}}->{nCon}),
-		 	$row->{nCond},
+		 	$count->{$row->{orgId}}->{nCond},
 		 ]));
 }
 

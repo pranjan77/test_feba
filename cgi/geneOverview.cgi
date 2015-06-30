@@ -179,70 +179,74 @@ if (@$hits == 0) {
 		print 
 			# $cgi->div({-id=>"ntcontent"},
 			$start, $tabs, 
-			$cgi->h3("$idShow $gene->{gene}: $gene->{desc} in " . $orginfo->{$gene->{orgId}}{genome});
-			# $cgi->p("Sorry, no fitness data for $idShow");
+			h2("Gene info for $idShow in " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
+			$cgi->h3("$idShow $gene->{gene}: $gene->{desc} in " . $orginfo->{$gene->{orgId}}{genome}),
+			# $cgi->p("Sorry, no fitness data for $idShow.");
     } else {
-	# show fitness data for gene
-		my @fit = @{ $dbh->selectall_arrayref("SELECT expName,fit,t from GeneFitness where orgId=? AND locusId=?",
-					      { Slice => {} },
-					      $orgId, $locusId) };
-		my $nTotValues = scalar(@fit);
-		die "Unreachable" if $nTotValues == 0;
-		my $limitRows = $showAll ? $nTotValues : 20;
-		my $minAbsFit;
-	if ($nTotValues > $limitRows) {
-	    # subset the rows
-	    @fit = sort { abs($b->{fit}) <=> abs($a->{fit}) } @fit;
-	    @fit = @fit[0..($limitRows-1)];
-	    $minAbsFit = abs($fit[$#fit]{fit});
+		# show fitness data for gene
+			my @fit = @{ $dbh->selectall_arrayref("SELECT expName,fit,t from GeneFitness where orgId=? AND locusId=?",
+						      { Slice => {} },
+						      $orgId, $locusId) };
+			my $nTotValues = scalar(@fit);
+			die "Unreachable" if $nTotValues == 0;
+			my $limitRows = $showAll ? $nTotValues : 20;
+			my $minAbsFit;
+		if ($nTotValues > $limitRows) {
+		    # subset the rows
+		    @fit = sort { abs($b->{fit}) <=> abs($a->{fit}) } @fit;
+		    @fit = @fit[0..($limitRows-1)];
+		    $minAbsFit = abs($fit[$#fit]{fit});
+		}
+
+		# and get metadata about experiments
+		my $expinfo = Utils::expinfo($dbh,$orgId);
+
+		if ($showAll) {
+		    @fit = sort { Utils::CompareExperiments($expinfo->{$a->{expName}}, $expinfo->{$b->{expName}}) } @fit;
+		} else {
+		    @fit = sort { $a->{fit} <=> $b->{fit} } @fit;
+		}
+
+		my $title = "Gene Info for $idShow in $orginfo->{$orgId}{genome}";
+		my $tabs = Utils::tabsGene($dbh,$cgi,$orgSpec,$geneSpec,$showAll,$gene->{type},"gene");
+
+
+		print
+		   #  start_html( -title => $title, -style => {-code => $style}, -author=>'wjshaoATberkeley.edu',
+				 # -meta=>{'copyright'=>'copyright 2015 UC Berkeley'} ),
+			$start, $tabs,
+
+			# div({-id=>"tabcontent"},
+		    h2("Gene info for $idShow in " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
+		 #    div({-style => "float: right; vertical-align: top;"},
+			# a({href => "help.cgi#fitness"}, "Help")),
+		    h3("$idShow $gene->{gene}: $gene->{desc}");
 	}
 
-	# and get metadata about experiments
-	my $expinfo = Utils::expinfo($dbh,$orgId);
-
-	if ($showAll) {
-	    @fit = sort { Utils::CompareExperiments($expinfo->{$a->{expName}}, $expinfo->{$b->{expName}}) } @fit;
-	} else {
-	    @fit = sort { $a->{fit} <=> $b->{fit} } @fit;
-	}
-
-	my $title = "Gene Info for $idShow in $orginfo->{$orgId}{genome}";
-	my $tabs = Utils::tabsGene($dbh,$cgi,$orgSpec,$geneSpec,$showAll,$gene->{type},"gene");
-
-	print
-	   #  start_html( -title => $title, -style => {-code => $style}, -author=>'wjshaoATberkeley.edu',
-			 # -meta=>{'copyright'=>'copyright 2015 UC Berkeley'} ),
-		$start, $tabs,
-		# div({-id=>"tabcontent"},
-	    h2("Gene info for $idShow in " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
-	 #    div({-style => "float: right; vertical-align: top;"},
-		# a({href => "help.cgi#fitness"}, "Help")),
-	    h3("$idShow $gene->{gene}: $gene->{desc}"),
-
-	   	"Type $type: $typeName<BR>
-	   	Located on scaffold $scaffold, $strand strand, nucleotides $begin - $end";
+   	print "Type $type: $typeName<BR>
+   	Located on scaffold $scaffold, $strand strand, nucleotides $begin - $end";
 
 
-    my @links = ();
-    if ($gene->{locusId} =~ m/^\d+$/) {
+	my @links = ();
+	if ($gene->{locusId} =~ m/^\d+$/) {
 	push @links, $cgi->a({href => "http://www.microbesonline.org/cgi-bin/fetchLocus.cgi?locus=$gene->{locusId}"},
 			     "MicrobesOnline");
-    }
-    if ($orgId eq "Keio" && $gene->{sysName} =~ m/^b\d+$/) {
+	}
+	if ($orgId eq "Keio" && $gene->{sysName} =~ m/^b\d+$/) {
 	push @links, $cgi->a({href => "http://ecocyc.org/ECOLI/search-query?type=GENE&gname=$gene->{sysName}"}, "EcoCyc");
-    }
-    print $cgi->p("Links: " . join(", ", @links)) if (@links > 0);
+	}
+	print $cgi->p("Links: " . join(", ", @links)) if (@links > 0);
 
-    print $cgi->h3({style=>'text-align:center'},"Nearby Genes");
+	print $cgi->h3({style=>'text-align:center'},"Nearby Genes");
 
-   	   	# for my $locus(@locusIds) {
-   	# 	print "locus ". $locus . "<br>";
-   	# }
-   	# print \@genes;
-   	# foreach my $gene2(@genes) {
-   	# 	print $gene2->{sysName}, $gene2->{desc}, $gene2->{strand}, "<br>";
-   	# 	# print $gene2->{desc};
-   	# };
+		   	# for my $locus(@locusIds) {
+		# 	print "locus ". $locus . "<br>";
+		# }
+		# print \@genes;
+		# foreach my $gene2(@genes) {
+		# 	print $gene2->{sysName}, $gene2->{desc}, $gene2->{strand}, "<br>";
+		# 	# print $gene2->{desc};
+		# };
 
 	# my @headings = qw{Locus Name Description Strand Distance(nt) Phenotype};
 	# my @trows = ( Tr({ -valign => 'top', -align => 'center' }, map { th($_) } \@headings) );
@@ -255,7 +259,7 @@ if (@$hits == 0) {
 		$prevrow = $row;
 		my ($phen, $tip) = Utils::gene_fit_string($dbh,$orgSpec,$row->{locusId});
 		my $bgcolor = undef;
-		$bgcolor = "#f4f3e4" if $row->{locusId}==$geneSpec;
+		$bgcolor = "#FFFFFF" if $row->{locusId} eq $geneSpec; #f4f3e4
 	    push @trows, Tr({ -valign => 'top', -align => 'left', -bgcolor=>"$bgcolor"},
 	    	# display result row by row
 		    td([ a({href => "geneOverview.cgi?orgId=$orgId&gene=$row->{locusId}"},$row->{sysName}||$row->{locusId}), #locus
@@ -299,7 +303,7 @@ if (@$hits == 0) {
 
 } #  end if just 1 hit
 
-}
+# }
 print "<br><br>";
 
 $dbh->disconnect();
