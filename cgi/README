@@ -8,14 +8,20 @@ lib/Utils.pm -- shared functions
 
 Site map:
 
+Top nav bar
+	home => myFrontPage.cgi
+	find gene => geneSearch.cgi => myFitShow.cgi
+	BLAST => blastSearch.cgi  => mySeqSearch.cgi
+	Organisms => orgAll.cgi => org.cgi
+	Experiment => expSearch.cgi => exps.cgi (search), or cond.cgi (for all C/N/stress)
 myFrontPage.cgi -- the front page
-	search by name => myFitShow.cgi
-	search by sequence => mySeqSearch.cgi
-	search by condition, or all for 1 organism => exps.cgi
-	list conditions by group => cond.cgi
+	by gene name => geneSearch.cgi
+	by sequence => blastSearch.cgi
+	by condition => expSearch.cgi
+	organisms => orgAll.cgi
+	various groups of conditions => cond.cgi
 # gene-wise pages
-singleFit.cgi -- show table of fitness data for one gene
-	if showing table of fitness data:
+singleFit.cgi -- show table of fitness data for one gene (if it has data)
 	each experiment => exp.cgi
 	each cell => orthFit.cgi
 	add a gene => genesFit.cgi
@@ -24,8 +30,8 @@ singleFit.cgi -- show table of fitness data for one gene
 	sequence  => getSeq.cgi
 	check homologs => mySeqSearch.cgi
 	cofitness => cofit.cgi
-myFitShow.cgi -- show list of matching genes, or table of fitness data for one gene
-	if a list, links to page for individual gene
+myFitShow.cgi -- show list of matching genes, or forward to singleFit.cgi for a single gene
+	each gene => singleFit.cgi, org => org.cgi
 orthFit.cgi -- for a gene in a condition, show table of fitness across orthologs
 	each gene => showFit.cgi
 	each experiment => exp.cgi
@@ -42,7 +48,7 @@ cofit.cgi -- top cofit hits for a gene
 	fitness data (for query gene) => myFitShow.cgi
 	homologs => mySeqSearch.cgi
 mySeqSearch.cgi -- a list of hits, linking to myFitShow.cgi for each (if it has data)
-getSeq.cgi -- sequence of gene (if it is a protein)
+	also each organism links to org.cgi
 # experiment-wise pages
 exps.cgi -- matching experiments => exp.cgi
 	across all organisms => orthCond.cgi (if a condition query was made)
@@ -63,4 +69,5 @@ orthCond.cgi -- specific sick genes for a condition across all organisms
 	link to myFitShow.cgi per gene or exp.cgi per experiment
 	link to orthFit.cgi to compare a cell
 
-And every page ends with a link to the front page
+Dead pages:
+getSeq.cgi -- sequence of gene (if it is a protein)
