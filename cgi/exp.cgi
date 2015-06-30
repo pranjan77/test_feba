@@ -87,27 +87,29 @@ print $start, $tabs,
 #     end_form,
 #     qq[</P></div></div>],
 
-my $cond1 = $exp->{condition_1} ? join(" ", $exp->{condition_1}, $exp->{concentration_1}, $exp->{units_1}) : "";
-my $cond2 = $exp->{condition_2} ? join(" ", $exp->{condition_2}, $exp->{concentration_2}, $exp->{units_2}) : "";
-my $media = $exp->{media};
-if ($cond2) {
-    $media = join(" + ", $media, $cond1, $cond2);
-} elsif ($cond1) {
-    $media = join(" + ", $media, $cond1);
-}
-$media .= " pH=$exp->{pH}" if $exp->{pH} ne "";
-my @culture = ("Culturing: ". $exp->{mutantLibrary});
-push @culture, $exp->{vessel} if $exp->{vessel} ne "";
-push @culture, $exp->{aerobic} if $exp->{aerobic} ne "";
-push @culture, "at $exp->{temperature} (C)" if $exp->{temperature} ne "";
-push @culture, "shaken=$exp->{shaking}" if $exp->{shaking} ne "";
-push @culture, "($exp->{liquid})" if $exp->{liquid} ne "" && lc($exp->{liquid}) ne "liquid";
 
-print $cgi->p(join("<BR>", "Media: $media", join(", ",@culture), "By: $exp->{person} on $exp->{dateStarted}"));
 
 my @fit = (); # sorted list of fitness values to show
 my $header = undef;
-if ($show eq "specific") {
+if ($show eq "") {
+	my $cond1 = $exp->{condition_1} ? join(" ", $exp->{condition_1}, $exp->{concentration_1}, $exp->{units_1}) : "";
+	my $cond2 = $exp->{condition_2} ? join(" ", $exp->{condition_2}, $exp->{concentration_2}, $exp->{units_2}) : "";
+	my $media = $exp->{media};
+	if ($cond2) {
+	    $media = join(" + ", $media, $cond1, $cond2);
+	} elsif ($cond1) {
+	    $media = join(" + ", $media, $cond1);
+	}
+	$media .= " pH=$exp->{pH}" if $exp->{pH} ne "";
+	my @culture = ("Culturing: ". $exp->{mutantLibrary});
+	push @culture, $exp->{vessel} if $exp->{vessel} ne "";
+	push @culture, $exp->{aerobic} if $exp->{aerobic} ne "";
+	push @culture, "at $exp->{temperature} (C)" if $exp->{temperature} ne "";
+	push @culture, "shaken=$exp->{shaking}" if $exp->{shaking} ne "";
+	push @culture, "($exp->{liquid})" if $exp->{liquid} ne "" && lc($exp->{liquid}) ne "liquid";
+
+	print $cgi->p(join("<BR>", "Media: $media", join(", ",@culture), "By: $exp->{person} on $exp->{dateStarted}"));
+} elsif ($show eq "specific") {
     $header = "Genes with " . a({href => "help.cgi#specific"}, "specific") . " phenotypes:";
     @fit = @{ $dbh->selectall_arrayref(qq{SELECT * FROM SpecificPhenotype JOIN GeneFitness USING (orgId,expName,locusId)
                                           JOIN Gene USING (orgId,locusId)

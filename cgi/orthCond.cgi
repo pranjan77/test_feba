@@ -18,6 +18,7 @@ use strict;
 use CGI qw(:standard Vars);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
+use List::MoreUtils qw( minmax );
 
 use lib "../lib";
 use Utils;
@@ -126,7 +127,7 @@ foreach my $gene (@genes) {
     $og{$gene->{orgId}}{$gene->{locusId}} = $iOG;
 }
 
-my @headings = qw{Organism Gene Name Description Experiment Fitness};
+my @headings = qw{Organism Gene Name Description Fitness(Lower) Fitness(Upper)};  #Experiment
 my @trows = ( $cgi->Tr({ -valign => 'top', -align => 'center' }, map { th($_) } @headings ) );
 
 my $shade = 0;
@@ -157,29 +158,50 @@ sub RowsForGene($$) {
     my ($gene,$shade) = @_;
     my @trows = ();
    
-    my $firstForGene = 1;
+    # my $firstForGene = 1;
     my $orgId = $gene->{orgId};
     my $showId = $gene->{sysName} || $gene->{locusId};
     my $genome = $orginfo->{$orgId}{genome};
     my $genomeShort = $genome;
     $genomeShort =~ s/^(.)\S+/\1./;
     my $locusId = $gene->{locusId};
+
+    my @fitList = ();
+    my %fitHash;
     foreach my $expName (sort keys %{ $gene->{fit} }) {
-	my $fit = $gene->{fit}{$expName}{fit};
-	my $t = $gene->{fit}{$expName}{t};
-	push @trows, $cgi->Tr({ -valign => 'top', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF" },
-			      td( $firstForGene ? a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId},  -title => $genome },  $genomeShort) : "&nbsp;" ),
-			      td( $firstForGene ? a({ -href => "myFitShow.cgi?orgId=$orgId&gene=$locusId" }, $showId)
-				  : "&nbsp"),
-			      td( $firstForGene ? $gene->{name} : "&nbsp;" ),
-			      td( $firstForGene ? $gene->{desc} : "&nbsp;" ),
-			      td( a({ -href => "exp.cgi?orgId=$orgId&expName=$expName" }, $expDesc{$orgId}{$expName}) ),
-			      td( { -bgcolor => Utils::fitcolor($fit) },
-				  a( { -title => sprintf("Click to compare (t = %.1f)",$t), -style => "color: rgb(0,0,0)",
-				       -href => "orthFit.cgi?orgId=$orgId&locusId=$locusId&expGroup=$expGroup&condition1=$condition1"},
-				     sprintf("%.1f",$fit) ) )
-	    );
-	$firstForGene = 0;
+        my $fit = $gene->{fit}{$expName}{fit};
+	    my $t = $gene->{fit}{$expName}{t};
+	    push @fitList, $fit;
+        $fitHash{$fit} = $t;
     }
+    my ($min, $max) = minmax @fitList;
+    push @trows, $cgi->Tr(
+        { -valign => 'top', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF" },
+			      td( 
+                  #$firstForGene ? 
+                  a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId},  -title => $genome },  $genomeShort)),# : "&nbsp;" ),
+			      td( 
+                    #$firstForGene ? 
+                    a({ -href => "myFitShow.cgi?orgId=$orgId&gene=$locusId" }, $showId)),
+				  #: "&nbsp"),
+			      td( #$firstForGene ? 
+                  $gene->{name}),#: "&nbsp;" ),
+			      td( 
+                  #$firstForGene ? 
+                  $gene->{desc}), #: "&nbsp;" ),
+			      # td( a({ -href => "exp.cgi?orgId=$orgId&expName=$expName" }, $expDesc{$orgId}{$expName}) ),
+			      td( { -bgcolor => Utils::fitcolor($min) },
+				  a( { -title => sprintf("Click to compare (t = %.1f)",$fitHash{$min}), 
+                    #-style => "color: rgb(0,0,0)",
+				       -href => "orthFit.cgi?orgId=$orgId&locusId=$locusId&expGroup=$expGroup&condition1=$condition1"},
+				     sprintf("%.1f",$min) ) ),
+                  td( { -bgcolor => Utils::fitcolor($max) },
+                  a( { -title => sprintf("Click to compare (t = %.1f)",$fitHash{$max}), 
+                    #-style => "color: rgb(0,0,0)",
+                       -href => "orthFit.cgi?orgId=$orgId&locusId=$locusId&expGroup=$expGroup&condition1=$condition1"},
+                     sprintf("%.1f",$max) ) )
+	    );
+	# $firstForGene = 0;
+
     return @trows;
 }

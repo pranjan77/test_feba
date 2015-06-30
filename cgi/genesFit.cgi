@@ -181,7 +181,8 @@ print
 
 print p,
     start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
-    "How many surrounding genes: ",
+    #"How many surrounding genes: ",
+    "Number of genes on each side: ",
     hidden('orgId', $orgId),
     hidden('locusId', $centralId),
     hidden('showAll', $showAll),

@@ -258,8 +258,8 @@ if (@$hits == 0) {
 		$bgcolor = "#f4f3e4" if $row->{locusId}==$geneSpec;
 	    push @trows, Tr({ -valign => 'top', -align => 'left', -bgcolor=>"$bgcolor"},
 	    	# display result row by row
-		    td([ $row->{locusId}, #locus
-			 	a({href => "myFitShow.cgi?orgId=$orgId&gene=$row->{locusId}"},$row->{gene} || $row->{sysName}), 
+		    td([ a({href => "geneOverview.cgi?orgId=$orgId&gene=$row->{locusId}"},$row->{sysName}||$row->{locusId}), #locus
+			 	a({href => "geneOverview.cgi?orgId=$orgId&gene=$row->{locusId}"},$row->{gene} || $row->{sysName}), 
 			 	$row->{desc}, 
 			 	$row->{strand},
 			 	$diff, # $row->{begin},

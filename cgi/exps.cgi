@@ -42,7 +42,7 @@ $orgId, $expSpec, $expGroup, $condition1 =~ s/[\'\"\n\r\;\\]//g; #'
 # Redirect to orgGroup.cgi if displaying all exp from one organism
 if ($orgId ne "" && !defined $expGroup && ($cgi->param("All experiments") || $expSpec eq "")) {
     print redirect(-url=>"org.cgi?orgId=$orgId");
-} elsif ($orgId eq "" && $expSpec eq "") {
+} elsif ($orgId eq "" && $expSpec eq "" && $expGroup eq "" && $condition1 eq "") {
   print redirect(-url=>"orgAll.cgi");
 } 
 #elsif ($orgId eq "" && $expSpec ne "") {
@@ -73,6 +73,12 @@ if (defined $expGroup && defined $orgId && !defined $condition1){
 				    { Slice => {} },
 				    $expGroup, $condition1);
     Utils::fail($cgi, "No experiments for specified group and condition") if scalar(@$exps) == 0;
+} elsif (($orgId eq "" or !defined $orgId) && defined $expSpec) {
+  # $exps = $dbh->selectall_arrayref(qq{SELECT * from Experiment WHERE expGroup = ? OR condition_1 = ? GROUP BY expGroup, condition_1, expName},
+  #           { Slice => {} },
+  #           $expSpec, $expSpec);
+    $exps = Utils::matching_exps($dbh, "", $expSpec);
+    # die scalar(@$exps);
 } else {
     $exps = Utils::matching_exps($dbh, $orgId, $expSpec);
 }
@@ -88,9 +94,19 @@ if (@$exps == 0) {
   $heading .= " in ". $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}") if $orgId ne "";
   $heading .= qq{ matching "$expSpec"} if $expSpec ne "";
   print $cgi->h2($heading);
+
+  my $exp1 = $exps->[0];
+  if ($exp1->{expGroup} ne ""
+      && ($expSpec ne "" || (defined $expGroup && defined $condition1))) {
+      print p(a( { -href => "orthCond.cgi?expGroup=$exp1->{expGroup}&condition1=$exp1->{condition_1}" },
+     "Specific phenotypes for $exp1->{expGroup} $exp1->{condition_1} across organisms"));
+  }
+}
+
   my @trows = ();
 
 
+# remove organism column if already specified
 if (defined $expGroup && defined $orgId && !defined $condition1){
    push @trows, $cgi->Tr({-valign => "top"}, $cgi->th(['Name', 'Group', 'Condition', 'Description' ]));
   foreach my $row (@$exps) {
@@ -98,7 +114,7 @@ if (defined $expGroup && defined $orgId && !defined $condition1){
                  $cgi->td([$cgi->a({href => "exp.cgi?orgId=$row->{orgId}&expName=$row->{expName}"}, $row->{expName}),
           $row->{expGroup}, $row->{condition_1}, $row->{expDesc} ]));
     }
-} elsif (defined $expGroup && defined $condition1) {
+} else {
   push @trows, $cgi->Tr({-valign => "top"}, $cgi->th([ 'Organism', 'Name', 'Group', 'Condition', 'Description' ]));
   foreach my $row (@$exps) {
       push @trows, $cgi->Tr({-valign => "top"},
@@ -109,13 +125,7 @@ if (defined $expGroup && defined $orgId && !defined $condition1){
 }
 
   print table({cellspacing => 0, cellpadding => 3}, @trows);
-  my $exp1 = $exps->[0];
-  if ($exp1->{expGroup} ne ""
-      && ($expSpec ne "" || (defined $expGroup && defined $condition1))) {
-      print p(a( { -href => "orthCond.cgi?expGroup=$exp1->{expGroup}&condition1=$exp1->{condition_1}" },
-		 "Specific phenotypes for $exp1->{expGroup} $exp1->{condition_1} across organisms"));
-  }
-}
+  
 
 print "<br><br>";
 

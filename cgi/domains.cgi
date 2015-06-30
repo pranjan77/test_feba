@@ -166,16 +166,13 @@ print
 		# -author=>'jj326ATberkeley.edu',
 		# -meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
     h3("Sequence of $showId in " . $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),),
-    "<center>",
+    qq[<div style="position: relative; margin: 0 auto; width: 480px; font-family: monospace;white-space: pre;"],
+    # "<center>",
     pre(">$showId $gene->{desc} ($orginfo->{$orgId}{genome})\n$seq"),
-    "</center>";
+    # "</center>";
     # p(a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, "Show fitness")),
     # p(a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Check homologs"));
-
-
-
-
-	print '</div>';
+    '</div></div>';
 
 #display number of genes that have data out of total genes
 # print $cgi->p("Fitness data for $numData genes of $numGenes genes.");

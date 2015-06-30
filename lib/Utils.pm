@@ -261,7 +261,8 @@ sub matching_exps($$$) {
 	            OR expDesc = '$expSpec' OR expDesc LIKE "$expSpec %" OR expDesc LIKE "% $expSpec" OR expDesc LIKE "% $expSpec %"
 	            OR expDescLong = '$expSpec' OR expDescLong LIKE "$expSpec %" OR expDescLong LIKE "% $expSpec" OR expDescLong LIKE "% $expSpec %")
 	     $orgClause
-	     ORDER BY genus, species, strain, expGroup, condition_1, concentration_1, expDesc};
+	     ORDER BY genus, species, strain, expGroup, condition_1, concentration_1, expDesc;};
+         # die $sql;
     return $dbh->selectall_arrayref($sql, { Slice => {} });
 }
 

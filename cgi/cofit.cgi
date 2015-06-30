@@ -49,6 +49,11 @@ print
  #    div({-style => "float: right; vertical-align: top;"},
 	# a({href => "help.cgi#cofitness"}, "Help")),
 
+	# qq[<div style="position: relative;"><div class="floatbox">],
+	# start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
+	# "<BR>Compare selected genes to $showId $geneName: " . submit(-name=>"heatmap"),
+	# end_form,
+	# qq[</div>];
 
     h3("$showId $geneName : $desc");
 #print $cgi->p(qq{<A HREF="myFitShow.cgi?orgId=$orgId&gene=$locusId">$sysName: $desc</A>});
@@ -61,7 +66,7 @@ my $cofitResults = $dbh->selectall_arrayref(qq{
 if (@$cofitResults == 0) {
     print $cgi->p(qq{Cofitness results are not available for this gene, sorry.});
 } else {
-    my @headRow = map { $cgi->td($cgi->b($_)) } qw{&nbsp; Rank Hit Name Description}, a({title => "Maximum cofitness of orthologs"}, "Conserved?"), "Cofitness";
+    my @headRow = map { $cgi->td($cgi->b($_)) } qw{Rank Hit Name Description}, a({title => "Maximum cofitness of orthologs"}, "Conserved?"), "Cofitness &nbsp;" ;
 
     my @trows = ( $cgi->Tr(@headRow) );
     my @colors = ('#FFFFDD', '#FFFFFF');
@@ -80,7 +85,6 @@ if (@$cofitResults == 0) {
                                          AND o2.locusId2 = c.hitId; },
 				    {}, $orgId, $locusId, $hitId);
 	push @trows, $cgi->Tr({bgcolor => $rowcolor, align => 'left', valign => 'top' },
-			      $cgi->td(checkbox('locusId',0,$hitId,'')),
 			      $cgi->td($rank),
 			      $cgi->td($cgi->a( {href => "myFitShow.cgi?orgId=$orgId&gene=$hitId" },
 						$showId )),
@@ -89,6 +93,7 @@ if (@$cofitResults == 0) {
                   $cgi->td( $cgi->a({href => "cofitCons.cgi?orgId=$orgId&locusId=$locusId&hitId=$hitId"},
 						defined $cofitCons ? sprintf("%.2f", $cofitCons) : "no") ),
                   $cgi->td($cofit),
+                  $cgi->td(checkbox('locusId',0,$hitId,'')),
 	                      );
 
     }
@@ -97,9 +102,12 @@ if (@$cofitResults == 0) {
 	hidden('orgId', $orgId),
 	hidden('locusId', $locusId),
 	table( {cellpadding => 3, cellspacing => 0 }, @trows ),
-	"<BR>Compare selected genes to $showId $geneName: " . submit(-name=>"heatmap"),
-	end_form;
-	print "<BR><BR>";
+	qq[<div style="position: relative;"><div class="floatbox", style="top:-750px; right: 180px;">],
+	# "<BR>Compare selected genes to $showId $geneName: " . 
+	submit(-name=>"heatmap with $geneName"),
+	end_form,
+	qq[</div></div>],
+	"<BR><BR>";
 }
 # print $cgi->p($cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, "Fitness data"));
 

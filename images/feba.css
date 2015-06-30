@@ -323,32 +323,6 @@ input[type=text]:focus, textarea:focus {
 	color: #011B47;
 }
 
-@media screen and (min-width: 1150px) {
-	.floatbox {
-		position: absolute; 
-		float: right; 
-		top: -70px; 
-		right: 0px; 
-		border-width: 0px 0px;
-		border-color: #011B47;
-		border-style: solid; 
-		padding: 10px;
-	}
-}
-
-@media screen and (max-width: 1150px) {
-	.floatbox {
-/*		border: 2px 0px #011B47 solid; */
-		border-width: 2px 0px;
-		border-color: #011B47;
-		border-style: solid; 
-		padding: 10px;
-		text-align: center;
-		max-width: 400px;
-		margin: 0 auto;
-	}
-}
-
 /*
 select:hover, select:focus {
 	box-shadow: 0 0 5px #83AFCC;
@@ -460,6 +434,40 @@ form input[type=submit], form input[type=reset] {
 	-ms-transition: box-shadow 0.50s ease-in-out;	
 	-o-transition: box-shadow 0.50s ease-in-out;
 }
+
+@media screen and (min-width: 1150px) {
+	.floatbox {
+		position: absolute; 
+		float: right; 
+		top: -70px; 
+		right: 0px; 
+		border-width: 0px 0px;
+		border-color: #011B47;
+		border-style: solid; 
+		padding: 10px;
+		max-height: 90px !important;
+	}
+}
+
+@media screen and (max-width: 1150px) {
+	.floatbox {
+/*		border: 2px 0px #011B47 solid; */
+		border-width: 0px 0px;
+		border-color: #011B47;
+		border-style: solid; 
+		padding: 10px;
+		text-align: center;
+		max-width: 400px;
+		margin: 0 auto;
+	}
+}
+
+.floatbox form input[type=submit], .floatbox form input[type=reset] {
+	display:inline;
+	padding: 5px 20px;
+	margin-left: 5px;
+}
+
 form input[type=submit]:hover, form input[type=reset]:hover {
 	box-shadow: 1px 1px 10px #83AFCC; 
 	border: 1px solid #83AFCC;
