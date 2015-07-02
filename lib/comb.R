@@ -364,7 +364,7 @@ compare_genes = function(org, locus1, locus2=NULL, xlab=NULL, ylab=NULL, eq=TRUE
 		cat("C sources in blue, N sources in green, stresses in red\n");
 	    }
 	}
-	plot(mat[,1], mat[,2], xlab=xlab, ylab=ylab, col=col, pch=pch);
+	plot(mat[,1], mat[,2], xlab=xlab, ylab=ylab, col=col, pch=pch, ...);
 	if(eq) eqline();
 	if(locate) {
 		cat("Click on points, or right click to exit\n");
