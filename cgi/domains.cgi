@@ -64,17 +64,27 @@ my $seqLen = length($seq);
 
 
 # write the title
-my $title = scalar(@$cond) > 0 ? "Gene Domains for $orginfo->{$orgId}{genome} at Locus $locusId" : "No experiments for this organism and/or locus.";
+# my $title = scalar(@$cond) > 0 ? # : "Protein Info";
+my $title = "Protein Info for $orginfo->{$orgId}{genome} at Locus $locusId";
 my $start = Utils::start_page("$title");
 my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusId,0,1,"protein");
-# my $proName = $gene->{sysName} || $gene->{locusId};
+
+my $gene = $dbh->selectall_arrayref(qq(SELECT sysName,locusId,gene,desc FROM Gene where orgid = ? and locusId = ?;),
+		{ },
+	    $orgId, $locusId);
+my $sys;
+foreach my $grow(@$gene) {
+		my ($sysName, $locusId, $geneName, $desc) = @$grow;
+		$sys = $sysName || $locusId;
+}
 
 print
     header, $start, $tabs, '<div id="tabcontent">',
     # start_html( -title => $title, -style => { -code => $style }, -author => 'Morgan Price, Victoria Lo',
 		# -meta => { 'copyright' => 'copyright 2015 UC Berkeley' }),
-	h2("Protein Info for $orginfo->{$orgId}{genome} at Locus $locusId"),
-    h3("Gene Domains for ". $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")." at Locus $locusId"); #$title),
+	h2("Protein Info for $sys in " . $cgi->a({href => "org.cgi?orgId=$orgId"},$orginfo->{$orgId}{genome})),
+	h3("Domains");
+    # h3("Gene Domains for ". $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")." at Locus $locusId"); #$title),
     # div({-style => "float: right; vertical-align: top;"}, a({href => "help.cgi#specific"}, "Help"));
 
 #exit if no results
@@ -83,9 +93,6 @@ if (@$cond == 0) {
 	print "Sorry, no domains for this organism and/or locus."
 } else {
 	# sysname/locusId (gene): desc => myFitShow.cgi
-	my $gene = $dbh->selectall_arrayref(qq(SELECT sysName,locusId,gene,desc FROM Gene where orgid = ? and locusId = ?;),
-		{ },
-	    $orgId, $locusId);
 	foreach my $grow(@$gene) {
 		my ($sysName, $locusId, $geneName, $desc) = @$grow;
 		my $sys = $sysName || $locusId;
@@ -160,18 +167,19 @@ $seq =~ s/(.{60})/$1\n/gs;
 
 unlink($seqFile) || die "Error deleting $seqFile: $!";
 
-my $showId = $gene->{sysName} || $gene->{locusId};
-my $orginfo = Utils::orginfo($dbh);
-my $title = "Sequence of $showId in $orginfo->{$orgId}{genome}",;
+# my $showId = $gene->{sysName} || $gene->{locusId};
+# my $orginfo = Utils::orginfo($dbh);
+# my $title = "Sequence of $showId in $orginfo->{$orgId}{genome}",;
 print
   #   start_html( -title => $title,
 		# -style => {-code => $style},
 		# -author=>'jj326ATberkeley.edu',
 		# -meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
-    h3("Sequence of $showId in " . $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),),
-    qq[<div style="position: relative; margin: 0 auto; width: 480px; font-family: monospace;white-space: pre;"],
+    # h3("Sequence of $showId in " . $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),),
+    h3("Protein Sequence"),
+    qq[<div style="position: relative; margin: 0 auto; width: 59em; font-family: monospace;white-space: pre;"],
     # "<center>",
-    pre(">$showId $gene->{desc} ($orginfo->{$orgId}{genome})\n$seq"),
+    pre(">$sys $gene->{desc} ($orginfo->{$orgId}{genome})\n$seq"),
     # "</center>";
     # p(a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, "Show fitness")),
     # p(a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Check homologs"));

@@ -31,7 +31,7 @@ my $cgi=CGI->new;
 my $orgSpec = $cgi->param('orgId') || "";
 my $geneSpec = $cgi->param('gene');
 my $showAll = $cgi->param('showAll') ? 1 : 0;
-my $start = Utils::start_page("Gene Search");
+my $start = Utils::start_page("Fitness for $geneSpec ($orgSpec)");
 
 $geneSpec =~ s/ *$//;
 $geneSpec =~ s/^ *//;
@@ -88,12 +88,12 @@ if (@$hits == 0) {
 	h3(b("Genes found for $geneSpec:"));
     my @trows = ();
     push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
-			  $cgi->th( [ 'geneId','sysName','geneName','description','genome','fitness' ] ) );
+			  $cgi->th( [ 'Gene ID','Gene Name','Description','Genome','Fitness' ] ) );
     foreach my $gene (@$hits) {
 	my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
 	my @trow = map $cgi->td($_), (
-		a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"}, $gene->{locusId}), 
-		$gene->{sysName}, 
+		a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"}, $gene->{sysName}||$gene->{locusId}), 
+		# $gene->{sysName}, 
 		$gene->{gene}, 
 		$gene->{desc},
 				      $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),

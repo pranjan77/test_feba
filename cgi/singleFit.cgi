@@ -35,7 +35,7 @@ my $style = Utils::get_style();
 my $orgSpec = $cgi->param('orgId') || "";
 my $locusId = $cgi->param('locusId');
 my $showAll = $cgi->param('showAll') ? 1 : 0;
-my $start = Utils::start_page("Gene Search");
+my $start = Utils::start_page("Fitness for $locusId ($orgSpec)");
 
 # connect to database
 my $dbh = Utils::get_dbh();
@@ -102,6 +102,7 @@ if (@$hits == 0) {
 	}
 
 	my $idShow = $gene->{sysName} || $gene->{locusId};
+	my $start = Utils::start_page("Fitness for $idShow ($orginfo->{$orgId}{genome})");
 	my $title = "Fitness data for $idShow in $orginfo->{$orgId}{genome}";
 	my $tabs = Utils::tabsGene($dbh,$cgi,$orgSpec,$locusId,$showAll,$gene->{type},"fit");
 

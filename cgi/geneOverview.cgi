@@ -32,7 +32,7 @@ my $style = Utils::get_style();
 my $orgSpec = $cgi->param('orgId') || "";
 my $geneSpec = $cgi->param('gene');
 my $showAll = $cgi->param('showAll') ? 1 : 0;
-my $start = Utils::start_page("Gene Search");
+my $start = Utils::start_page("Overview for $geneSpec ($orgSpec)");
 
 $geneSpec =~ s/ *$//;
 $geneSpec =~ s/^ *//;
@@ -179,7 +179,7 @@ if (@$hits == 0) {
 		print 
 			# $cgi->div({-id=>"ntcontent"},
 			$start, $tabs, 
-			h2("Gene info for $idShow in " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
+			h2("Gene $idShow in " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
 			$cgi->h3("$idShow $gene->{gene}: $gene->{desc} in " . $orginfo->{$gene->{orgId}}{genome}),
 			# $cgi->p("Sorry, no fitness data for $idShow.");
     } else {
@@ -207,6 +207,7 @@ if (@$hits == 0) {
 		    @fit = sort { $a->{fit} <=> $b->{fit} } @fit;
 		}
 
+		my $start = Utils::start_page("Overview for $idShow ($orginfo->{$orgId}{genome})");
 		my $title = "Gene Info for $idShow in $orginfo->{$orgId}{genome}";
 		my $tabs = Utils::tabsGene($dbh,$cgi,$orgSpec,$geneSpec,$showAll,$gene->{type},"gene");
 

@@ -48,6 +48,8 @@ if (defined $orgId and $locusSpec) {
     $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusSpec,0,1,"homo");
     $orth = $dbh->selectall_hashref("SELECT * FROM Ortholog WHERE orgId1 = ? AND locusId1 = ?",
                              'orgId2',{Slice=>{}}, $orgId, $locusSpec);
+    my $orginfo = Utils::orginfo($dbh);
+    $start = Utils::start_page("Orthologs for locus $locusSpec ($orginfo->{$orgId}{genome})");
 } else {
     $tabs = '<div id = "ntcontent">';
 }
@@ -168,7 +170,7 @@ while(<RES>) {
 
     my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $orgId, $locusId);
     my @hit = ($cgi->a({href => "org.cgi?orgId=$orgId"},$orginfo->{$orgId}->{genome}),
-        $sys || $locusId,
+        $cgi->a({href => "geneOverview.cgi?orgId=$orgId&gene=$locusId"},$sys || $locusId),
         $cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, $geneName),
         $desc,
 	    $cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId", title => $fittitle }, $fitstring ),
@@ -220,7 +222,7 @@ if ($cnt > 0) {
     print $cgi->p("No hit found!");
 }
 
-print "<BR><BR>";
+    print qq[<br><a href="http://www.microbesonline.org/cgi-bin/seqsearch.cgi?qtype=protein&query=$query">Search for homologs in MicrobesOnline</a><BR><BR>];
 $dbh->disconnect();
 unlink($seqFile) || die "Error deleting $seqFile: $!";
 unlink($blastOut) || die "Error deleting $blastOut: $!";

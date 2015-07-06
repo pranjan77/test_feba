@@ -46,7 +46,7 @@ sub start_page($) {
     <meta name="copyright" content="copyright 2015 UC Berkeley" />
     <link rel="shortcut icon" href="../images/favicon.ico" type="image/x-icon">
     <link rel="icon" href="../images/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="../images/feba.css">
+    <link rel="stylesheet" href="../images/feba2.css">
     <link href='http://fonts.googleapis.com/css?family=Montserrat:700' rel='stylesheet' type='text/css'>
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
         </head>
@@ -340,7 +340,8 @@ sub tabsGene($$$$$$$) {
     $code .= qq[<li class="$cClass"><a href="cofit.cgi?orgId=$orgId&locusId=$locusId" title="$max">Cofit</a></li>];
 
     if ($type == 1) {
-        my $hClass, my $pClass = "gene";
+        my $hClass =  "gene";
+        my $pClass = "gene";
         if ($curr eq "protein") {
             $pClass = "selected";
         } elsif ($curr eq "homo") {

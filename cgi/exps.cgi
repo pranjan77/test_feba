@@ -99,7 +99,7 @@ if (@$exps == 0) {
   if ($exp1->{expGroup} ne ""
       && ($expSpec ne "" || (defined $expGroup && defined $condition1))) {
       print p(a( { -href => "orthCond.cgi?expGroup=$exp1->{expGroup}&condition1=$exp1->{condition_1}" },
-     "Specific phenotypes for $exp1->{expGroup} $exp1->{condition_1} across organisms"));
+     "Or see specific phenotypes for $exp1->{expGroup} $exp1->{condition_1} across organisms"));
   }
 }
 

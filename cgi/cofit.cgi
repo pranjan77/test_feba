@@ -55,7 +55,7 @@ print
 	# end_form,
 	# qq[</div>];
 
-    h3("$showId $geneName : $desc");
+    h3({class=>"short"},"$showId $geneName : $desc");
 #print $cgi->p(qq{<A HREF="myFitShow.cgi?orgId=$orgId&gene=$locusId">$sysName: $desc</A>});
 
 my $cofitResults = $dbh->selectall_arrayref(qq{
@@ -97,16 +97,17 @@ if (@$cofitResults == 0) {
 	                      );
 
     }
+    my $name = $geneName || $showId;
     print
 	start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
 	hidden('orgId', $orgId),
 	hidden('locusId', $locusId),
-	table( {cellpadding => 3, cellspacing => 0 }, @trows ),
-	qq[<div style="position: relative;"><div class="floatbox", style="top:-750px; right: 180px;">],
-	# "<BR>Compare selected genes to $showId $geneName: " . 
-	submit(-name=>"heatmap with $geneName"),
-	end_form,
+	qq[<br><div style="position: relative;"><div class="floatbox floatbox2">],
+	submit(-class=>"heatmap", -name=>"heatmap with $name"),
 	qq[</div></div>],
+	table( {cellpadding => 3, cellspacing => 0 }, @trows ),
+	# "<BR>Compare selected genes to $showId $geneName: " . 
+	end_form,
 	"<BR><BR>";
 }
 # print $cgi->p($cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, "Fitness data"));
