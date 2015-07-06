@@ -66,7 +66,7 @@ my $cofitResults = $dbh->selectall_arrayref(qq{
 if (@$cofitResults == 0) {
     print $cgi->p(qq{Cofitness results are not available for this gene, sorry.});
 } else {
-    my @headRow = map { $cgi->td($cgi->b($_)) } qw{Rank Hit Name Description}, a({title => "Maximum cofitness of orthologs"}, "Conserved?"), "Cofitness &nbsp;" ;
+    my @headRow = map { $cgi->td($cgi->b($_)) } qw{Rank Hit Name Description}, a({title => "Maximum cofitness of orthologs"}, "Conserved?"), "Cofitness", "" ;
 
     my @trows = ( $cgi->Tr(@headRow) );
     my @colors = ('#FFFFDD', '#FFFFFF');
