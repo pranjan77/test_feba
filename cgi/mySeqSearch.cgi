@@ -222,7 +222,7 @@ if ($cnt > 0) {
     print $cgi->p("No hit found!");
 }
 
-    print qq[<br><a href="http://www.microbesonline.org/cgi-bin/seqsearch.cgi?qtype=protein&query=$query">Search for homologs in MicrobesOnline</a><BR><BR>];
+    print qq[<br><a href="http://www.microbesonline.org/cgi-bin/seqsearch.cgi?qtype=protein&query=$seq">Search for homologs in MicrobesOnline</a><BR><BR>];
 $dbh->disconnect();
 unlink($seqFile) || die "Error deleting $seqFile: $!";
 unlink($blastOut) || die "Error deleting $blastOut: $!";
