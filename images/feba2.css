@@ -29,6 +29,8 @@ table {
 	margin: 0 auto;
 	border-top: 3px solid #011B47;
 	border-bottom: 3px solid #011B47;
+	table-layout:fixed;
+	max-width: 100%;
 }
 th,td {
 	border-width: 1px 0px;
@@ -573,6 +575,9 @@ h3.short {
 
 /*mini-forms on upper-right-hand corners of pages*/
 @media screen and (min-width: 1150px) {
+	table {
+		max-width: 100%;
+	}
 	.floatbox {
 		position: absolute; 
 		float: right; 
@@ -586,6 +591,9 @@ h3.short {
 }
 
 @media screen and (max-width: 1150px) {
+	table {
+		width: 100%;
+	}
 	.floatbox {
 /*		border: 2px 0px #011B47 solid; */
 		border-width: 0px 0px;
