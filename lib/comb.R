@@ -523,6 +523,27 @@ show_fit = function(org, loci, labels=NULL, locate=TRUE, around=0, condspec=NULL
 	par(oldpar);
 }
 
+show_fit_dot = function(org, locus, jitterBy=0.25, xlim=c(-4,4),
+	     		xlab=paste("Fitness of",locus), main="",
+			pch=20, col=1, locate=T) {
+	exps = metadata_by_exp(org);
+	nGroups = length(unique(exps$Group));
+	exps$fit = get_fit(org, locus);
+	exps$t = get_t(org, locus);
+	exps$iGroup = as.integer(as.factor(exps$Group));
+	# The y layout is to jitter by +/- jitterBy, centered at iGroup
+	y = jitterBy * (runif(nrow(exps)) - 0.5) * 2 + exps$iGroup;
+
+	plot(xlim, c(1-0.4, nGroups+0.4), bty="n", xlab=xlab, ylab="", main=main, yaxt="n", pch=NA, yaxs="i");
+	points(pmin(xlim[2], pmax(xlim[1], exps$fit)), y, pch=pch, col=col);
+	d = unique(exps[,c("Group","iGroup")]);
+	text(xlim[1], d$iGroup + jitterBy + strheight("A")/2, as.character(d$Group), adj=c(0,0), xpd=T);
+	if (locate) {
+		cat("Click on points, or right click to exit\n");
+		identify_exps(org, exps$fit, y);
+	}
+}
+
 breaksUse = function(scale=2) 
 {
     d = seq(-3, 3, 0.25) * scale/3;
