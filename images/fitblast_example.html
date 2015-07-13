@@ -1,0 +1,66 @@
+ <!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US">
+<head>
+    <!-- This meta tag may be necessary for it to work in Internet Explorer.
+	 The rest of the head metadata is optional --!>
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+    <link rev="made" href="mailto:morgannprice%40yahoo.com" />
+
+    <title>Fitness BLAST Example</title>
+    <meta name="copyright" content="copyright 2015 UC Berkeley" />
+    <link rel="shortcut icon" href="../images/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="../images/favicon.ico" type="image/x-icon">
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+
+    <!-- This is the standard D3 javascript library. It is used by fitblast.js -->
+    <script src="../d3js/d3.min.js"></script>
+    <!-- This URL should be relative to the server being used for Fitness BLAST
+	 (or you can copy fitblast.js to your code base) -->
+    <script src="../images/fitblast.js"></script>
+
+    <!-- The table will be of class fitblast -->
+    <style>
+      table.fitblast { border-collapse: collapse; }
+      table.fitblast tr {border: 1px solid grey; }
+      table.fitblast tr:hover td { background-color: rgb(200,200,200); }
+
+    </style>
+
+</head>
+<body>
+
+<H2>Short Results</H2>
+<!-- The TD contents will be overwritten by the script -->
+
+<TABLE class="fitblast">
+<TR><TH>E. coli gene</TH><TH>Short fitness BLAST result</TH></TR>
+<TR><TD valign="top">uvrC</TD><TD valign="top" id="fitblast_short_uvrC"> </TD>
+<TR><TD valign="top">yqiB</TD><TD valign="top" id="fitblast_short_yqiB"> </TD>
+<TR><TD valign="top">csrA</TD><TD valign="top" id="fitblast_short_csrA"> </TD>
+</TABLE>
+
+<H2>Fitness BLAST table</H2>
+<!-- The DIV contents will be overwritten by the script -->
+<DIV id="fitblast_table_uvrC"></DIV>
+
+<script>
+/* this would be replaced by the root of the server being used for Fitness BLAST */
+var server_root = "../";
+
+/* this would be replaced by the protein sequence of interest */
+var uvrC ="MSDQFDAKAFLKTVTSQPGVYRMYDAGGTVIYVGKAKDLKKRLSSYFRSNLASRKTEALVAQIQQIDVTVTHTETEALLLEHNYIKLYQPRYNVLLRDDKSYPFIFLSGDTHPRLAMHRGAKHAKGEYFGPFPNGYAVRETLALLQKIFPIRQCENSVYRNRSRPCLQYQIGRCLGPCVEGLVSEEEYAQQVEYVRLFLSGKDDQVLTQLISRMETASQNLEFEEAARIRDQIQAVRRVTEKQFVSNTGDDLDVIGVAFDAGMACVHVLFIRQGKVLGSRSYFPKVPGGTELSEVVETFVGQFYLQGSQMRTLPGEILLDFNLSDKTLLADSLSELAGRKINVQTKPRGDRARYLKLARTNAATALTSKLSQQSTVHQRLTALASVLKLPEVKRMECFDISHTMGEQTVASCVVFDANGPLRAEYRRYNITGITPGDDYAAMNQVLRRRYGKAIDDSKIPDVILIDGGKGQLAQAKNVFAELDVSWDKNHPLLLGVAKGADRKAGLETLFFEPEGEGFSLPPDSPALHVIQHIRDESHDHAIGGHRKKRAKVKNTSSLETIEGVGPKRRQMLLKYMGGLQGLRNASVEEIAKVPGISQGLAEKIFWSLKH";
+
+var yqiB = "MKRYTPDFPEMMRLCEMNFSQLRRLLPRNDAPGETVSYQVANAQYRLTIVESTRYTTLVT IEQTAPAISYWSLPSMTVRLYHDAMVAEVCSSQQIFRFKARYDYPNKKLHQRDEKHQINQ FLADWLRYCLAHGAMAIPVY";
+
+var csrA = "MLILTRRVGETLMIGDEVTVTVLGVKGNQVRIGVNAPKEVSVHREEIYQRIQAEKSQQSSY";
+
+fitblast_load_short("fitblast_short_uvrC", server_root, uvrC);
+fitblast_load_short("fitblast_short_yqiB", server_root, yqiB);
+fitblast_load_short("fitblast_short_csrA", server_root, csrA);
+
+fitblast_load_table("fitblast_table_uvrC", server_root, uvrC);
+</script>
+
+</body>
+</html>

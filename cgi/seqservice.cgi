@@ -12,6 +12,10 @@
 # Optional parameters: maxhits -- default is 20. Cannot be raised above 50.
 # debug -- write lines starting with # to output to record status
 # Must start the ublast service first with bin/start_ublast_service.pl
+#
+# For an example of a page that uses this service see
+# ../images/fitblast_example.html
+# ../images/fitblast.js
 
 use strict;
 use CGI qw(:standard Vars);
@@ -29,12 +33,12 @@ print $cgi->header('text/plain');
 my $seq = $cgi->param('seq');
 $seq =~ s/[ \r\n]//g;
 if (! $seq) {
-    print "#Error\tNo sequence specified\n";
+    print "Error\nNo sequence specified\n";
     exit(0);
 }
 # Allow * as internal stop codon
 unless ($seq =~ m/^[A-Z*]+$/) {
-    print "#Error\tIllegal sequence\n";
+    print "Error\nIllegal sequence\n";
     exit(0);
 }
 
@@ -66,22 +70,21 @@ open(QFILE, ">", "$dir.q") || die "Cannot write to $dir.q";
 print QFILE "$path/$dir/faa $path/$dir\n";
 close(QFILE) || die "Error writing to $dir.q";
 
-# poll every 0.1 seconds for up to 15 seconds
-for (my $i = 0; $i < 150; $i++) {
+# poll every 0.05 seconds for up to 15 seconds
+for (my $i = 0; $i < 300; $i++) {
     if (-e "$dir/done.q") {
 	last;
     }  else {
-	usleep(100*1000); # in microseconds
+	usleep(50*1000); # in microseconds
     }
 }
 if (! -e "$dir/done.q") {
-    print "#Timeout\n";
+    print "Error\nTimeout\n";
     exit;
 }
 
 #else
 my $dbh = Utils::get_dbh() || die "Cannot access database";
-print "#Success\n";
 my @rows = ();
 open(OUT, "<", "$dir/ublast.out") || die "No $dir/ublast.out file";
 while(<OUT>) {
@@ -99,15 +102,16 @@ unlink("$dir/faa");
 unlink("$dir/done.q");
 rmdir("$dir");
 
-print join("\t", qw{orgId organism locusId sysName identity coverage evalue bits minfit maxfit minT maxT maxcofit})."\n";
+print join("\t", qw{orgId organism locusId sysName name description identity coverage evalue bits minfit maxfit minT maxT maxcofit})."\n";
 my $orginfo = Utils::orginfo($dbh);
 foreach my $row (@rows) {
     my ($query,$locusspec,$identity,$alnlen,$mm,$gap,$qBeg,$qEnd,$lBeg,$lEnd,$evalue,$bits) = @$row;
     my ($orgId,$locusId) = split /:/, $locusspec;
     die "Invalid locus $locusspec" unless defined $orgId && defined $locusId;
-    my ($sysName) = $dbh->selectrow_array("SELECT sysName FROM Gene WHERE orgId = ? AND locusId = ?",
+    my ($sysName,$name,$desc) = $dbh->selectrow_array("SELECT sysName, gene, desc FROM Gene WHERE orgId = ? AND locusId = ?",
 					  {}, $orgId, $locusId);
     $sysName = "" if !defined $sysName;
+    $name = "" if !defined $name;
     my ($minFit,$maxFit,$minT,$maxT) = $dbh->selectrow_array(qq{ SELECT min(fit), max(fit), min(t), max(t)
                                                                  FROM GeneFitness WHERE orgId = ? AND locusId = ? ; },
 							     {}, $orgId, $locusId);
@@ -120,8 +124,8 @@ foreach my $row (@rows) {
 	$maxCofit = $dbh->selectrow_array(qq{ SELECT cofit FROM Cofit WHERE orgId = ? AND locusId = ? AND rank = 1 LIMIT 1; },
 					  {}, $orgId, $locusId);
     }
-    print join("\t",$orgId,$orginfo->{$orgId}{genome},
-	       $locusId, $sysName,
+    print join("\t",$orgId, $orginfo->{$orgId}{genome},
+	       $locusId, $sysName, $name, $desc,
 	       $identity,$alnlen/length($seq),$evalue,$bits,
 	       $minFit,$maxFit,$minT,$maxT,$maxCofit)."\n";
 }
