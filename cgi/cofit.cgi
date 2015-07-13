@@ -66,7 +66,7 @@ my $cofitResults = $dbh->selectall_arrayref(qq{
 if (@$cofitResults == 0) {
     print $cgi->p(qq{Cofitness results are not available for this gene, sorry.});
 } else {
-    my @headRow = map { $cgi->td($cgi->b($_)) } qw{Rank Hit Name Description}, a({title => "Maximum cofitness of orthologs"}, "Conserved?"), "Cofitness", "" ;
+    my @headRow = map { $cgi->td($cgi->b($_)) } qw{Rank Hit Name Description}, a({title => "Maximum cofitness of orthologs"}, "Conserved?"), "Cofitness &nbsp;" ;
 
     my @trows = ( $cgi->Tr(@headRow) );
     my @colors = ('#FFFFDD', '#FFFFFF');
@@ -92,7 +92,7 @@ if (@$cofitResults == 0) {
 			      $cgi->td($hitDesc),
                   $cgi->td( $cgi->a({href => "cofitCons.cgi?orgId=$orgId&locusId=$locusId&hitId=$hitId"},
 						defined $cofitCons ? sprintf("%.2f", $cofitCons) : "no") ),
-                  $cgi->td($cofit),
+                  $cgi->td($cgi->a({title=>"Compare genes via scatterplot", href => "compareGenes.cgi?orgId=$orgId&locus1=$locusId&locus2=$hitId"}, $cofit)),
                   $cgi->td(checkbox('locusId',0,$hitId,'')),
 	                      );
 
