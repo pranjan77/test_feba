@@ -129,7 +129,9 @@ CREATE TABLE GeneDomain(
    geneSymbol TEXT,
    ec TEXT,
    definition TEXT,
-   PRIMARY KEY (orgId,locusId,domainId,begin)
+   /* Combination of domain, begin, end should be unique for each locus */
+   PRIMARY KEY (orgId,locusId,domainId,begin,end)
 );
 CREATE INDEX 'orgLocus' on GeneDomain ('orgId' ASC, 'locusId' ASC);
 CREATE INDEX 'domainDbId' on GeneDomain ('domainDb' ASC, 'domainId' ASC);
+CREATE INDEX 'domainDbName' on GeneDomain ('domainDb' ASC, 'domainName' ASC);

@@ -268,7 +268,8 @@ sub WorkPutHash($@); # hash and list of fields to use
 	StartWork("Cofit",$org);
 	foreach my $row (@cofit) {
 	    $row->{orgId} = $org;
-	    WorkPutHash($row, qw{orgId locusId hitId rank cofit});
+	    # work around for how empty cofit gets written out in R, with a single bogus line.
+	    WorkPutHash($row, qw{orgId locusId hitId rank cofit}) if $row->{locusId} ne "";
 	}
 	EndWork();
     }
@@ -351,16 +352,17 @@ sub WorkPutHash($@); # hash and list of fields to use
 	# Check #rows in each table
 	my $dbh = DBI->connect("dbi:SQLite:dbname=$dbfile", "", "", { RaiseError => 1 }) || die $DBI::errstr;
 	while (my ($table, $nRowsExpect) = each %workRows) {
-	    my ($nRowsActual) = $dbh->selectrow_array("SELECT COUNT(*) FROM $table")
-		|| die "counting rows in $table failed";
+	    my ($nRowsActual) = $dbh->selectrow_array("SELECT COUNT(*) FROM $table");
+	    die "counting rows in $table failed" unless defined $nRowsActual;
 	    die "Failed to load $table: expect $nRowsExpect rows but see $nRowsActual rows instead\n"
 		unless $nRowsActual == $nRowsExpect;
 	}
 
 	# Sanity check orthologs:
-	my ($nOrthRows) = $dbh->selectrow_array("SELECT COUNT(*) FROM Ortholog") || die;
-	my ($nOrthRows1) = $dbh->selectrow_array("SELECT COUNT(*) FROM Ortholog JOIN Gene ON orgId1=orgId AND locusId1=locusId") || die;
-	my ($nOrthRows2) = $dbh->selectrow_array("SELECT COUNT(*) FROM Ortholog JOIN Gene ON orgId2=orgId AND locusId2=locusId") || die;
+	my ($nOrthRows) = $dbh->selectrow_array("SELECT COUNT(*) FROM Ortholog");
+	my ($nOrthRows1) = $dbh->selectrow_array("SELECT COUNT(*) FROM Ortholog JOIN Gene ON orgId1=orgId AND locusId1=locusId");
+	my ($nOrthRows2) = $dbh->selectrow_array("SELECT COUNT(*) FROM Ortholog JOIN Gene ON orgId2=orgId AND locusId2=locusId");
+	die "Cannot count orths" unless defined $nOrthRows && defined $nOrthRows1 && defined $nOrthRows2;
 	die "Invalid values of locusId1 in Ortholog table: $nOrthRows != $nOrthRows1" unless $nOrthRows == $nOrthRows1;
 	die "Invalid values of locusId2 in Ortholog table: $nOrthRows != $nOrthRows1" unless $nOrthRows == $nOrthRows2;
 
