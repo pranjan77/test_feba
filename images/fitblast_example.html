@@ -1,47 +1,44 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US">
 <head>
-    <!-- This meta tag may be necessary for it to work in Internet Explorer.
-	 The rest of the head metadata is optional --!>
+  <!-- The meta tag may be necessary for it to work in some versions of Internet Explorer.
+       The other metdata attributes are not nceessary.-->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
     <link rev="made" href="mailto:morgannprice%40yahoo.com" />
-
     <title>Fitness BLAST Example</title>
     <meta name="copyright" content="copyright 2015 UC Berkeley" />
     <link rel="shortcut icon" href="../images/favicon.ico" type="image/x-icon">
     <link rel="icon" href="../images/favicon.ico" type="image/x-icon">
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 
-    <!-- This is the standard D3 javascript library. It is used by fitblast.js -->
-    <script src="../d3js/d3.min.js"></script>
-    <!-- This URL should be relative to the server being used for Fitness BLAST
-	 (or you can copy fitblast.js to your code base) -->
-    <script src="../images/fitblast.js"></script>
-
-    <!-- The table will be of class fitblast -->
+    <!-- The table made by fitblast_load_table() will be of class fitblast, so
+	 this lets you modify its style -->
     <style>
       table.fitblast { border-collapse: collapse; }
       table.fitblast tr {border: 1px solid grey; }
       table.fitblast tr:hover td { background-color: rgb(200,200,200); }
 
     </style>
-
+    <!-- These javascript libraries are required -->
+    <script src="../d3js/d3.min.js"></script>
+    <script src="../images/fitblast.js"></script>
 </head>
 <body>
 
 <H2>Short Results</H2>
-<!-- The TD contents will be overwritten by the script -->
 
 <TABLE class="fitblast">
 <TR><TH>E. coli gene</TH><TH>Short fitness BLAST result</TH></TR>
+<!-- Note use of id -- the id tells fitblast_load_short() where to write  -->
 <TR><TD valign="top">uvrC</TD><TD valign="top" id="fitblast_short_uvrC"> </TD>
 <TR><TD valign="top">yqiB</TD><TD valign="top" id="fitblast_short_yqiB"> </TD>
 <TR><TD valign="top">csrA</TD><TD valign="top" id="fitblast_short_csrA"> </TD>
 </TABLE>
 
 <H2>Fitness BLAST table</H2>
-<!-- The DIV contents will be overwritten by the script -->
+
+<!-- Note use of id -- the id tells fitblast_load_table() where to write  -->
 <DIV id="fitblast_table_uvrC"></DIV>
 
 <script>
