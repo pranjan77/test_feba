@@ -19,6 +19,7 @@
 # show_fit(org, list of gene names)
 #	an interactive heatmap of the fitness data for those genes
 #	The gene names are as for get_genes()
+#	Also try show_fit_dot(org, gene) for one gene.
 
 # compare_genes(org, gene1, gene2)
 #	interactive scatterplot of fitness data for the two genes
@@ -313,16 +314,30 @@ get_fit = function(org, loci, t=FALSE) {
 
 get_t = function(org, loci) get_fit(org, loci, t=TRUE);
 
-identify_exps = function(org, x, y) {
-	q = orgs[[org]]$q;
-	q = q[q$u,];
+identify_exps = function(org, x, y, xlim=NULL, save=FALSE, showY=TRUE, col="darkgreen", cex=1) {
+	q = metadata_by_exp(org);
 	if(is.null(q)) stop("Invalid org: ",org);
 	if(length(x) != nrow(q)) stop("Incorrect lengths: x ",length(x), " metadata ",nrow(q));
 	if(length(y) != nrow(q)) stop("Incorrect lengths: y ",length(y), " metadata ",nrow(q));
-	rows = identify(x, y, q$name);
-	q$x = c(x,recursive=T);
-	q$y = c(y,recursive=T);
-	return(q[rows,words("name short x y")]);
+	cat("Click on points, or right click to exit\n");
+	n = 0;
+	iSaved = c();
+	xUse = if (!is.null(xlim)) pmin(xlim[2], pmax(xlim[1], x)) else x;
+	while(TRUE) {
+	    i = identify(xUse, y, "", n=1);
+	    if (length(i) != 1) break;
+	    if(!i %in% iSaved) {
+	        iSaved = c(iSaved,i);
+		text(xUse[i], y[i], length(iSaved),adj=c(-0.5,0), col=col, cex=cex, xpd=T);
+	        if (showY) {
+	            cat(sprintf("%d %s: %s (x %.1f y %.1f)\n", length(iSaved), q$name[i], q$short[i], x[i], y[i]));
+	        } else {
+	            cat(sprintf("%d %s: %s (fit %.1f)\n", length(iSaved), q$name[i], q$short[i], x[i]));
+	        }
+	    }
+	}
+	if (save && length(iSaved) > 0) return(click=1:n, exp=q$name[iSaved], short=q$short[iSaved], x=x[iSaved], y=y[iSaved]);
+	return(NULL);
 }
 
 # For a given organism, for each column in lrn or t, a table of metadata
@@ -366,10 +381,7 @@ compare_genes = function(org, locus1, locus2=NULL, xlab=NULL, ylab=NULL, eq=TRUE
 	}
 	plot(mat[,1], mat[,2], xlab=xlab, ylab=ylab, col=col, pch=pch, ...);
 	if(eq) eqline();
-	if(locate) {
-		cat("Click on points, or right click to exit\n");
-		identify_exps(org, mat[,1], mat[,2]);
-	}
+	if(locate) identify_exps(org, mat[,1], mat[,2]);
 }
 
 compare_exps = function(org, exp1, exp2, xlab=exp1, ylab=exp2, eq=TRUE, locate=TRUE, minT=4, col=NULL, ...) {
@@ -411,10 +423,7 @@ volcano_fit = function(org, locus, xlab="Fitness", ylab="|t|", locate=TRUE, ...)
 	if(is.na(x[1])) stop("No data for: ",locus);
 	tval = get_t(org, locus);
 	plot(x, abs(tval), xlab=xlab, ylab=ylab, ...);
-	if(locate) {
-		cat("Click on points, or right click to exit\n");
-		identify_exps(org, x, abs(tval));
-	}
+	if(locate) identify_exps(org, x, abs(tval));
 }
 
 eqline <- function(col="grey",lty=2,lwd=1) {
@@ -525,7 +534,7 @@ show_fit = function(org, loci, labels=NULL, locate=TRUE, around=0, condspec=NULL
 
 show_fit_dot = function(org, locus, jitterBy=0.25, xlim=c(-4,4),
 	     		xlab=paste("Fitness of",locus), main="",
-			pch=20, col=1, locate=T) {
+			pch=20, col=1, locate=T, ...) {
 	exps = metadata_by_exp(org);
 	nGroups = length(unique(exps$Group));
 	exps$fit = get_fit(org, locus);
@@ -538,9 +547,10 @@ show_fit_dot = function(org, locus, jitterBy=0.25, xlim=c(-4,4),
 	points(pmin(xlim[2], pmax(xlim[1], exps$fit)), y, pch=pch, col=col);
 	d = unique(exps[,c("Group","iGroup")]);
 	text(xlim[1], d$iGroup + jitterBy + strheight("A")/2, as.character(d$Group), adj=c(0,0), xpd=T);
+	abline(v=0,col="darkgrey");
 	if (locate) {
 		cat("Click on points, or right click to exit\n");
-		identify_exps(org, exps$fit, y);
+		identify_exps(org, exps$fit, y, xlim=xlim, showY=FALSE, ...);
 	}
 }
 
