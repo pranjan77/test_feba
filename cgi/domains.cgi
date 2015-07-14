@@ -61,6 +61,7 @@ system($fastacmd,'-d',$myDB,'-s',$id,'-o',$seqFile)==0 || die "Error running $fa
 my $in = Bio::SeqIO->new(-file => $seqFile,-format => 'fasta');
 my $seq = $in->next_seq()->seq;
 my $seqLen = length($seq);
+unlink($seqFile) || die "Error deleting $seqFile: $!";
 
 
 # write the title
@@ -145,11 +146,12 @@ if (@$cond == 0) {
 
 	print table({cellspacing => 0, cellpadding => 3}, @trows);
 
-	unlink($seqFile) || die "Error deleting $seqFile: $!";
-
-	print "<br><br>";
 }
 
+# %0A encodes "\n" so that it looks like fasta input.
+print br(),
+    p(a({-href => "http://www.ncbi.nlm.nih.gov/Structure/cdd/wrpsb.cgi?seqinput=>${sys}%0A$seq"},
+	(@$cond > 0 ? "Or see" : "See") . " Conserved Domains Database"));
 
 # print sequence
 my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId=? AND locusId=?",
@@ -157,15 +159,7 @@ my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId=? AND locusId
 Utils::fail($cgi,"unknown gene") unless defined $gene->{locusId};
 Utils::fail($cgi,"sequence information is only available for protein-coding genes.") unless $gene->{type} == 1;
 
-my $fastacmd = '../bin/blast/fastacmd';
-my $id = join(":",$orgId,$locusId);
-system($fastacmd,'-d',$myDB,'-s',$id,'-o',$seqFile)==0 || die "Error running $fastacmd -d $myDB -s $id -o $seqFile -- $!"; #error
-
-my $in = Bio::SeqIO->new(-file => $seqFile,-format => 'fasta');
-$seq = $in->next_seq()->seq;
 $seq =~ s/(.{60})/$1\n/gs;
-
-unlink($seqFile) || die "Error deleting $seqFile: $!";
 
 # my $showId = $gene->{sysName} || $gene->{locusId};
 # my $orginfo = Utils::orginfo($dbh);
