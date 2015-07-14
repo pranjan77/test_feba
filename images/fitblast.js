@@ -32,11 +32,11 @@ function fitblast_usefulhit(row) {
 }
 
 function fitblast_fitness_url(server_root, orgId, locusId) {
-    return(server_root + 'cgi/singleFit.cgi?orgId=' + orgId + '&locusId=' + locusId);
+    return(server_root + 'cgi-bin/singleFit.cgi?orgId=' + orgId + '&locusId=' + locusId);
 }
 
 function fitblast_cofit_url(server_root, orgId, locusId) {
-    return(server_root + 'cgi/cofit.cgi?orgId=' + orgId + '&locusId=' + locusId);
+    return(server_root + 'cgi-bin/cofit.cgi?orgId=' + orgId + '&locusId=' + locusId);
 }
 
 function fitblast_locus_with_link(row, server_root) {
@@ -71,10 +71,10 @@ function fitblast_load_short(id, server_root, sequence) {
 
     d.innerHTML = "<small>loading...</small>";
 
-    var URL = server_root + "cgi/seqservice.cgi?seq=" + sequence;
+    var URL = server_root + "cgi-bin/seqservice.cgi?seq=" + sequence;
     d3.tsv(URL, function(error, data) {
         if (error || data.length == 0) {
-            d.innerHTML = "Cannot contact server";
+            d.innerHTML = 'Cannot contact <A HREF="' + URL + '">server</A>';
 	    return;
         }
 	//else
@@ -110,7 +110,7 @@ function fitblast_load_table(id, server_root, sequence) {
     var d = d3.select("#"+id);
     d.html("<small>loading...</small>");
 
-    var URL = server_root + "cgi/seqservice.cgi?seq=" + sequence;
+    var URL = server_root + "cgi-bin/seqservice.cgi?seq=" + sequence;
     d3.tsv(URL, function(error, data) {
         if (error || data.length == 0) {
             d.html("Cannot contact server");
