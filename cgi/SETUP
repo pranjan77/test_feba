@@ -31,3 +31,10 @@ The other dependencies are perl modules:
 
 The front page for the web site is:
 	cgi/myFrontPage.cgi
+
+If setting up fitness blast -- see images/fitblast_example.html,
+cgi/seqservice.cgi, and bin/start_ublast_service.pl. You'll need to
+create bin/usearch6. Also, images/fitblast.js uses URLs of the form
+server_root/cgi-bin/, not server_root/cgi/. You may need to set up
+cgi-bin as a symbolic link for it to work, i.e. in the feba directory,
+	ln -s cgi cgi-bin
