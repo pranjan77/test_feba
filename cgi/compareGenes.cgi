@@ -317,8 +317,8 @@ and |fit| &gt; <select name="minabs" style="width: 60px;">
 var org = "$orgId";
 var xLocus = "$gene1->{locusId}";
 var yLocus = "$gene2->{locusId}";
-var xName = "$gene1->{gene}";
-var yName = "$gene2->{gene}";
+var xName = "$showName1";
+var yName = "$showName2";
 var xDesc = "$gene1->{desc}";
 var yDesc = "$gene2->{desc}";
 var color = d3.scale.category10();
@@ -425,7 +425,7 @@ d3.tsv(tsvUrl, function(error, data) {
 var cValue = function(d) { return d.expGroup;};
 var tooltip = d3.select("body").append("div")
     .attr("class", "tooltip")
-    .style("opacity", 0.5);
+    .style("opacity", 0.0);
 
   svg.selectAll(".dot")
       .data(data)

@@ -277,8 +277,8 @@ sub matching_genes($$$) {
     my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
     my $sql = qq{SELECT * from Organism JOIN Gene USING (orgId)
              WHERE (
-                sysName LIKE "$geneSpec" OR sysName = "$geneSpec"
-                OR gene LIKE "$geneSpec" OR gene = "$geneSpec"
+                sysName = "$geneSpec" OR sysName LIKE "$geneSpec"
+                OR gene = "$geneSpec" OR gene LIKE "$geneSpec"
                 OR locusId = "$geneSpec"
                 OR desc LIKE "% $geneSpec" OR desc LIKE "$geneSpec %" OR desc LIKE "% $geneSpec %")                
          $orgClause
@@ -287,6 +287,27 @@ sub matching_genes($$$) {
     return $dbh->selectall_arrayref($sql, { Slice => {} });
 }
 
+
+sub matching_domains($$$) {
+    my ($dbh,$orgId,$geneSpec) = @_;
+    die if !defined $dbh || !defined $orgId || !defined $geneSpec;
+    # make the query safe to include in SQL
+    $geneSpec =~ s/ +$//;
+    $geneSpec =~ s/^ +$//;
+    $geneSpec =~ s/[\'\"\n\r]//g;
+
+    my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
+    my $sql = qq{SELECT * from GeneDomain JOIN Gene USING (orgId)
+             WHERE (
+                domainId = "$geneSpec" OR domainId LIKE "$geneSpec"
+                OR domainName = "$geneSpec" OR domainName LIKE "$geneSpec" 
+                OR locusId = "$geneSpec"
+                OR desc LIKE "% $geneSpec" OR desc LIKE "$geneSpec %" OR desc LIKE "% $geneSpec %")                
+         $orgClause
+         ORDER BY genus, species, strain, locusId, sysName, gene, begin, end, desc;};
+         # die $sql;
+    return $dbh->selectall_arrayref($sql, { Slice => {} });
+}
 
 
 # Returns a reference to a hash from ortholog's orgId => gene

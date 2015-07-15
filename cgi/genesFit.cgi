@@ -265,10 +265,10 @@ if (@genes > 0) {
 	my @others = grep { $_->{locusId} ne $gene->{locusId} } @genes;
 	my $url = "genesFit.cgi?orgId=$orgId&" . join("&", map { "locusId=$_->{locusId}" } @others);
 
-    if ($around and $centralId != $gene->{locusId}) {
+    if ($around and $centralId != $gene->{locusId} or $centralId ne $gene->{locusId}) {
         $compare = "compareGenes.cgi?orgId=$orgId&locus1=$centralId&locus2=" . $gene->{locusId};
         $compare = "<BR>" . $cgi->a({href=>$compare}, "compare");
-    } elsif (!$around and $firstGene != $gene->{locusId}) {
+    } elsif (!$around and $firstGene != $gene->{locusId} or $firstGene ne $gene->{locusId}) {
         $compare = "compareGenes.cgi?orgId=$orgId&locus1=$firstGene&locus2=" . $gene->{locusId};
         $compare = "<BR>" . $cgi->a({href=>$compare}, "compare");
     }
