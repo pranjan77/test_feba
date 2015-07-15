@@ -43,10 +43,15 @@ genesFit.cgi -- show fitness of multiple genes
 	add or remove genes => locusId or addgene options
 	show all => showAll=1 option
 cofit.cgi -- top cofit hits for a gene
-	each hit => myFitShow.cgi
+	each hit => myFitShow.cgi or compareGenes.cgi
 	checkboxes => genesFit.cgi
 	fitness data (for query gene) => myFitShow.cgi
 	homologs => mySeqSearch.cgi
+compareGenes.cgi => geneOverview.cgi for each gene,
+	exp.cgi for selected experiments (in table),
+	genesFit.cgi (of the same two genes)
+	=> itself (change which comparison to show)
+	=> itself to select which of multiple matching genes to compare to
 mySeqSearch.cgi -- a list of hits, linking to myFitShow.cgi for each (if it has data)
 	also each organism links to org.cgi
 # experiment-wise pages
