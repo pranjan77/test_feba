@@ -71,6 +71,47 @@ if (defined $query1 && $query1 ne "") {
     }
 }
 
+#choose if multiple
+if (scalar(@geneCand) > 0) {
+    die "Cannot use tsv mode with queries" if $tsv;
+    # show table of these experiments
+    my $locusConst = $choosing == 1 ? $locus2 : $locus1;
+    my $geneConst = $dbh->selectrow_hashref("SELECT * from Gene WHERE orgId = ? AND locusId = ?",
+             {}, $orgId, $locusConst);
+    die "Unknown locus: $locusConst" unless exists $geneConst->{locusId};
+    my $notChoosing = $choosing == 1 ? 2 : 1;
+
+    my @trows = ();
+    my @headings = qw{&nbsp; LocusId Name SysName Description};
+    push @trows, $cgi->Tr({-valign => 'top', -align => 'center'}, $cgi->th(\@headings));
+    my $isFirst = 1;
+    foreach my $gene (@geneCand) {
+  my $checked = $isFirst ? "CHECKED" : "";
+  push @trows, $cgi->Tr({-valign => 'top', -align => 'left'},
+            $cgi->td([ qq{<input type="radio" name="locus$choosing" value="$gene->{locusId}" $checked >},
+           $cgi->a({href => "geneOverview.cgi?orgId=$orgId&$gene->{locusId}"}, $gene->{locusId}),
+           $gene->{gene}, $gene->{sysName}, $gene->{desc} ]));
+  $isFirst = 0;
+    }
+
+  my $start = Utils::start_page("Select experiment to compare to");
+    print $start, '<div id="ntcontent">',
+  # start_html( -title => "Select experiment to compare to", -style => {-code => $style},
+  #       -author => 'Morgan Price', -mata => {'copyright'=>'copyright 2015 UC Berkeley'} ),
+  h2("Select gene in $orginfo->{$orgId}{genome}"),
+  p("Selected gene will be compared to "
+    . a( { href => "geneOverview.cgi?orgId=$orgId&locus=$locusConst" }, $geneConst->{gene} )
+    . ": $geneConst->{desc}"),
+  start_form(-name => 'input', -method => 'GET', -action => 'compareGenes.cgi'),
+  hidden('orgId', $orgId),
+  hidden("locus$notChoosing", $locusConst),
+  table( {cellpadding => 3, cellspacing => 0}, @trows),
+  submit('Go'),
+  end_form;
+    Utils::endHtml($cgi);
+}
+
+
 # expName
 # expGroup
 # expDesc
@@ -84,11 +125,11 @@ if (defined $query1 && $query1 ne "") {
 
 my $gene1 = $dbh->selectrow_hashref("SELECT * from Gene WHERE orgId = ? AND locusId = ?",
 				   {}, $orgId, $locus1);
-die "Unknown locus: $locus1" unless exists $gene1->{locusId};
+die "Unknown locus 1: $locus1" unless exists $gene1->{locusId};
 
 my $gene2 = $dbh->selectrow_hashref("SELECT * from Gene WHERE orgId = ? AND locusId = ?",
 				   {}, $orgId, $locus2);
-die "Unknown locus: $locus2" unless exists $gene2->{locusId};
+die "Unknown locus 2: $locus2" unless exists $gene2->{locusId};
 
 my $loc1 = $gene1->{locusId};
 my $loc2 = $gene2->{locusId};
@@ -148,7 +189,18 @@ $dbh->disconnect();
 # else interactive scatterplot
 
 my $title = "Compare Genes for $orginfo->{$orgId}{genome}";
+my $title2 = "Compare Genes for " . $cgi->a({href=>"org.cgi?orgId=$orgId"},$orginfo->{$orgId}{genome});
 my $start = Utils::start_page("$title");
+
+my $error = "";
+if (Utils::gene_has_fitness($dbh,$orgId,$locus1) == 0) {
+      $error = "Sorry! No fitness data for locus 1 (locus $locus1).";
+    } if (Utils::gene_has_fitness($dbh,$orgId,$locus2) == 0) {
+      $error = "Sorry! No fitness data for locus 2 (locus $locus2).";
+    } 
+    # else {
+      # d3.select("#loading").html("Sorry! Cannot load data from " + tsvUrl + "<BR>Error: " + error);
+
 # <!DOCTYPE html>
 # <head>
 # <title>$title</title>
@@ -158,30 +210,52 @@ my $start = Utils::start_page("$title");
 # $style
 # </style>
 
-print <<END
+
+my $showName1 = $gene1->{gene} || $gene1->{sysName} || $gene1->{locusId};
+my $showName2 = $gene2->{gene} || $gene2->{sysName} || $gene2->{locusId};
+
+print <<PART1
 $start
 <script src="../d3js/d3.min.js"></script>
 <body style="padding-left: 1%">
 <div id="ntcontent">
 
-<H2>$title</H2>
+<H2>$title2</H2>
 
 <P>
-<i>x</i> axis <A HREF="geneOverview.cgi?orgId=$orgId&gene=$locus1">$gene1->{gene}</A>: $gene1->{desc}</H3>
+<i>x</i> axis <A HREF="geneOverview.cgi?orgId=$orgId&gene=$locus1">$showName1</A>: $gene1->{desc}</H3>
 <BR>
-<i>y</i> axis <A HREF="geneOverview.cgi?orgId=$orgId&gene=$locus2">$gene2->{gene}</A>: $gene2->{desc}
+<i>y</i> axis <A HREF="geneOverview.cgi?orgId=$orgId&gene=$locus2">$showName2</A>: $gene2->{desc}
 
-<TABLE width=100% style="border: none;">
-<TR class="reset">
-<TD valign="top" align="left" style="border: none; width: 500px"><!-- left column -->
+  <p>$error</p>
+PART1
+;
+
+if ($error ne "") {
+  Utils::endHtml($cgi);
+}
+
+
+
+print <<END
+
+<!-- <TABLE width=100% style="border: none> <TR class="reset">
+ <TD valign="top" align="left" style="border: none; width: 500px"> left column 
+ -->
+<div id="graphbox"> <div id="graphleft">
+
 
 <div id="left"><!-- where SVG goes -->
 <div id="loading"><!-- where status text goes -->
 Please try another browser if this message remains
 </div>
 </div>
-</TD>
-<TD valign="top" align="left" style="border: none;"><!-- right column -->
+  </div>
+<!-- </TD>
+
+ <TD valign="top" align="left" style="border: none;"> right column  
+ -->
+<div id="graphright">
 <p>
 <form method="get" action="compareGenes.cgi" enctype="multipart/form-data" name="input">
 <input type="hidden" name="orgId" value="$orgId" />
@@ -195,7 +269,7 @@ Change x axis: <input type="text" name="query1"  size="20" maxlength="100" />
 Change y axis: <input type="text" name="query2"  size="20" maxlength="100" />
 </form>
 
-<form method="get" action="compareExps.cgi" enctype="multipart/form-data" name="input">
+<form method="get" action="compareGenes.cgi" enctype="multipart/form-data" name="input">
 <input type="hidden" name="orgId" value="$orgId" />
 <input type="hidden" name="locus1" value="$locus2" />
 <input type="hidden" name="locus2" value="$locus1" />
@@ -203,7 +277,7 @@ Change y axis: <input type="text" name="query2"  size="20" maxlength="100" />
 </form>
 </p>
 
-<P>Click on genes to add them to the table:
+<P>Click on experiments to add them to the table:
 
 <TABLE id="genesel" cellspacing=0 cellpadding=3 >
 <tr><th>Name</th><th>Group</th><th>Description</th><th>x</th><th>y</th><th>&nbsp;</th></tr>
@@ -234,8 +308,10 @@ and |fit| &gt; <select name="minabs" style="width: 60px;">
 
 <P>
 <A href="genesFit.cgi?orgId=$orgId&showAll=0&locusId=$locus1&locusId=$locus2">View heatmap for 2 genes</A>
-</TD></TR></TABLE>
-</P>
+  </P></P></div>
+  <div style="clear: both;"></div></div>
+<!-- </TD></TR></TABLE>
+ </P>-->
 
 <script>
 var org = "$orgId";
@@ -280,7 +356,7 @@ d3.select("#loading").html("Fetching data...");
 var tsvUrl = "compareGenes.cgi?tsv=1&orgId=" + org + "&locus1=" + xLocus + "&locus2=" + yLocus;
 d3.tsv(tsvUrl, function(error, data) {
   if (error || data.length == 0) {
-      d3.select("#loading").html("Cannot load data from " + tsvUrl + "<BR>Error: " + error);
+      d3.select("#loading").html("Sorry! Cannot load data from " + tsvUrl + "<BR>Error: " + error);
       return;
   }
   d3.select("#loading").html("Formatting " + data.length + " genes...");
@@ -359,6 +435,7 @@ var tooltip = d3.select("body").append("div")
       .attr("cx", function(d) { return x(d.x); })
       .attr("cy", function(d) { return y(d.y); })
       .style("fill", function(d) { return color(cValue(d)); })
+      .style("z-index","1000")
       .on("click", dotClick)
       .on("mouseover", function(d) {
         // console.log("mouseover");

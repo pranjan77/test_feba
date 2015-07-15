@@ -64,7 +64,7 @@ my $cofitResults = $dbh->selectall_arrayref(qq{
 		WHERE Cofit.orgId=? AND Cofit.locusId=?
 		ORDER BY rank LIMIT 20}, undef, $orgId, $locusId) || die;
 if (@$cofitResults == 0) {
-    print $cgi->p(qq{Cofitness results are not available for this gene, sorry.});
+    print "<br>", $cgi->p(qq{Cofitness results are not available for this gene, sorry.});
 } else {
     my @headRow = map { $cgi->td($cgi->b($_)) } qw{Rank Hit Name Description}, a({title => "Maximum cofitness of orthologs"}, "Conserved?"), "Cofitness &nbsp;" ;
 

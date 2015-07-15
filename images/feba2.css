@@ -110,7 +110,7 @@ a:hover {
     list-style-type: none;
 /*    border-top: 3px #011B47 solid;*/
 /*    border-bottom: 3px #011B47 solid;*/
-    height: 40px;
+    min-height: 40px;
     margin: 0px 40% 20px 10px;
     background-color: #40C0CB;    /*#00A8C6;*/
 	font-weight: bold;
@@ -573,6 +573,7 @@ h3.short {
 	margin: 0;
 }
 
+
 /*mini-forms on upper-right-hand corners of pages*/
 @media screen and (min-width: 1150px) {
 	table {
@@ -610,6 +611,86 @@ h3.short {
 	}
 }
 
+/*for compareGenes page graph*/
+#graphbox {
+	/*height: 100%;*/
+	min-height: 500px;
+	/*position: relative;*/
+	background-color: aliceblue;
+}
+
+#graphleft {
+	position: relative;
+	/*float: left;*/
+	/*width: 500px;*/
+	height: 100%;
+
+}
+
+#graphright {
+	position: relative;
+	height: 100%;
+
+}
+
+@media screen and (max-width: 1250px) {
+	#graphright {
+		/*width: 100%;*/
+		padding: 10px;
+		margin: 0 auto;
+	}
+}
+
+/*graphright > 615px*/
+@media screen and (min-width: 1250px) and (max-width: 1500px) {
+	#graphleft {
+		float: left;
+
+	}
+	#graphright {
+		float: right;
+		padding: 5px;
+		/*right: 0px;*/
+		/*max-width: 470px;*/
+		width: 40%;
+		background-color: aliceblue;
+		/*margin: 0 auto;*/
+		left: 0px;
+	}	
+	#graphright table {table-layout: fixed; width: 100%;}
+	#graphright table td{word wrap: break-word; /*word-break:break-all;*/}
+
+}
+
+
+@media screen and (min-width: 1500px) {
+	#graphleft {
+		float: left;
+
+	}
+	#graphright {
+		float: right;
+		background-color: aliceblue;
+		margin: 0 auto;
+		padding: 10px;
+	}
+}
+
+
+/*@media screen and (min-width: 1380px) and (max-width: 1500px) {
+	#graphleft {
+		float: left;
+
+	}
+	#graphright {
+		float: right;
+		padding: 5px;
+		max-width: 600px;
+		background-color: aliceblue;
+		margin: 0 auto;
+	}	
+
+}*/
 
 
 /*@media screen and (max-width: 1140px) {
@@ -683,19 +764,15 @@ and (min-width: 800px)
 .tooltip {
   position: absolute;
   max-width: 200px;
-  height: 28px;
+  min-height: 30px;
   pointer-events: none;
   z-index: 1000;
-  font-size: 10px;
-  background-color: rgba(255,209,103,0.6);
+  font-size: 12px;
+  background-color: rgba(255,209,103,0.7);
   border-radius: 10px;
   padding: 5px;
 }
 
-.legend {
-	position: absolute;
-	top: 300px;
-}
 
 /*
 <!--[if IE]>
