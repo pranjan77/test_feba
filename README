@@ -74,6 +74,14 @@ web sites at
 
 http://genomics.lbl.gov/supplemental/rbarseq/
 
+The files that these scripts depend on (genome.fna, genes.tab,
+genes.GC, aaseq) can be set up from a genbank file or a JGI assembly
+with a gff file by the script SetupOrg.pl. Unlike most of the other
+code, this script depends on BioPerl.
+
+For web server code to browse the results, see the cgi/ directory,
+especially cgi/README and cgi/SETUP.
+
 This is research software that has undergone limited testing. Be careful.
 
 Morgan Price, Lawrence Berkeley Lab, October 2014
