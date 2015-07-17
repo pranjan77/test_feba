@@ -258,24 +258,23 @@ foreach my $exp (@exps) {
 }
 
 my $compare = "";
-my $firstGene = @genes[0]->{locusId};
+my $firstGene = $centralId || $genes[0]->{locusId};
 if (@genes > 0) {
     my @footer = ("","");
     foreach my $gene (@genes) {
 	my @others = grep { $_->{locusId} ne $gene->{locusId} } @genes;
 	my $url = "genesFit.cgi?orgId=$orgId&" . join("&", map { "locusId=$_->{locusId}" } @others);
 
-    if ($around and $centralId != $gene->{locusId} or $centralId ne $gene->{locusId}) {
+    if ($around and ($centralId != $gene->{locusId})) {
         $compare = "compareGenes.cgi?orgId=$orgId&locus1=$centralId&locus2=" . $gene->{locusId};
         $compare = "<BR>" . $cgi->a({href=>$compare}, "compare");
-    } elsif (!$around and $firstGene != $gene->{locusId} or $firstGene ne $gene->{locusId}) {
+    } elsif (!$around and ($firstGene != $gene->{locusId}) or ($firstGene ne $gene->{locusId})) {
         $compare = "compareGenes.cgi?orgId=$orgId&locus1=$firstGene&locus2=" . $gene->{locusId};
         $compare = "<BR>" . $cgi->a({href=>$compare}, "compare");
     }
     else {
         $compare = "";
     }
-
     push @footer, $cgi->a( { href => $url, style => "", title => $gene->{desc} }, "remove")
 			       . "<BR>" . ($gene->{sysName} || $gene->{locusId}) . $compare ;
     }

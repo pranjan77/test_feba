@@ -297,14 +297,13 @@ sub matching_domains($$$) {
     $geneSpec =~ s/[\'\"\n\r]//g;
 
     my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
-    my $sql = qq{SELECT * from GeneDomain JOIN Gene USING (orgId)
+    my $sql = qq{SELECT DISTINCT genus, species, strain, orgId, locusId, sysName, gene, domainId, domainName, desc from Gene JOIN Organism USING (orgId) JOIN GeneDomain USING (orgId, locusId)
              WHERE (
                 domainId = "$geneSpec" OR domainId LIKE "$geneSpec"
                 OR domainName = "$geneSpec" OR domainName LIKE "$geneSpec" 
-                OR locusId = "$geneSpec"
-                OR desc LIKE "% $geneSpec" OR desc LIKE "$geneSpec %" OR desc LIKE "% $geneSpec %")                
+                OR locusId = "$geneSpec")                
          $orgClause
-         ORDER BY genus, species, strain, locusId, sysName, gene, begin, end, desc;};
+         ORDER BY genus, species, strain, locusId, sysName, gene, domainId, domainName;};
          # die $sql;
     return $dbh->selectall_arrayref($sql, { Slice => {} });
 }
@@ -358,7 +357,7 @@ sub tabsGene($$$$$$$) {
     $fClass = "selected" if $curr eq "fit";
     $fClass = "disable" if $hasFit == 0;
 
-    $code .= qq[<li class="$fClass"> <a href="myFitShow.cgi?orgId=$orgId&gene=$locusId&showAll=0">Fitness</a></li>];
+    $code .= qq[<li class="$fClass"> <a href="singleFit.cgi?orgId=$orgId&locusId=$locusId&showAll=0">Fitness</a></li>];
     # magic switching tabs for fitness!
     # if ($showAll == 0) {
     #     my $showAllDest = qq(myFitShow.cgi?orgId=$orgId&gene=$locusId&showAll=1);
