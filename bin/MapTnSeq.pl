@@ -331,8 +331,9 @@ sub BLAT8($$$$$$) {
     open(OLD_STDOUT, ">&STDOUT");
     print OLD_STDOUT ""; # prevent warning
     open(STDOUT, ">", "/dev/null");
-    system($blatcmd, "-out=blast8", "-t=dna", "-q=dna", "-minScore=$minScore", "-minIdentity=$minIdentity", "-maxIntron=0", "-noTrimA", $dbFile, $queriesFile, $blat8File) == 0
-        || die "Cannot run $blatcmd: $!";
+    my @cmd = ($blatcmd, "-out=blast8", "-t=dna", "-q=dna", "-minScore=$minScore", "-minIdentity=$minIdentity", "-maxIntron=0", "-noTrimA", $dbFile, $queriesFile, $blat8File);
+    print STDERR join(" ", "Running:", @cmd)."\n" if $debug;
+    system(@cmd) == 0 || die "Cannot run $blatcmd: $!";
     close(STDOUT);
     open(STDOUT, ">&OLD_STDOUT") || die "Cannot restore stdout: $!";
     return($blat8File);
