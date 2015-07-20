@@ -31,7 +31,7 @@ foreach my $hash (@orginfo) {
     push @orgOptions, $orgId;
     $orgLabels{$orgId} = $hash->{genome};
 }
-my $start = Utils::start_page("Fitness Browser");
+my $start = Utils::start_page("Fitness Browser - Exp Search");
 
 print header, $start,
  #    start_html(
