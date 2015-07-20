@@ -151,10 +151,16 @@ LoadOrgs = function(orgnames, base="data/FEBA/", html=paste(base,"/html/",sep=""
 	orgs <<- orgs;
 
 	tigrfams = read.delim(paste(base,"/tigrinfo",sep=""), as.is=T, quote="");
+	tigrfams$roleId = NULL;
+	tigrfams$ignore = NULL;
+	rolelink = read.delim(paste(base,"/TIGRFAMS_ROLE_LINK",sep=""), as.is=T, header=F, col.names=c("tigrId","roleId"));
+	rolelink = rolelink[is.unique(rolelink$tigrId),]; # ignore any multiple mappings
 	roles = read.delim(paste(base,"/tigrroles",sep=""), as.is=T, quote="");
 	roles = merge(roles[roles$level=="main",], roles[roles$level=="sub1",], by="roleId", suffixes=c("",".sub"));
-	tigrfams = merge(tigrfams, data.frame(roleId=roles$roleId, toprole=roles$description, subrole=roles$description.sub),
-		         by="roleId", all.x=T);
+	rolelink = merge(rolelink, data.frame(roleId=roles$roleId, toprole=roles$description, subrole=roles$description.sub));
+	# as of TIGRFAMs 15, a few roles are lost due to lack of metadata, odd.
+	if(!all(is.unique(rolelink$tigrId))) stop("Non-unique role descriptions");
+	tigrfams = merge(tigrfams, rolelink, by="tigrId", all.x=T);
 	tigrfams <<- tigrfams;
 	tigrroles <<- tigrfams[!is.na(tigrfams$toprole),];
 }
