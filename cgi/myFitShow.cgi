@@ -28,28 +28,41 @@ use Utils;
 my $cgi=CGI->new;
 # my $style = Utils::get_style();
 
+
 my $orgSpec = $cgi->param('orgId') || "";
 my $geneSpec = $cgi->param('gene');
 my $showAll = $cgi->param('showAll') ? 1 : 0;
-my $start = Utils::start_page("Fitness for $geneSpec ($orgSpec)");
+
+my $dbh = Utils::get_dbh();
+my $orginfo = Utils::orginfo($dbh);
+my $orgTitle = $cgi->param('orgId') ? "in $orginfo->{$orgSpec}{genome}" : "";
+my $start = Utils::start_page("Genes matching $geneSpec $orgTitle");
 
 $geneSpec =~ s/ *$//;
 $geneSpec =~ s/^ *//;
 
 if (!defined $geneSpec || $geneSpec eq "") {
+	print $cgi->header;
+ #    print $cgi->start_html(
+	# -title =>"Gene Search",
+	# -style => {-code => $style},
+	# -author=>'wjshaoATberkeley.edu',
+	# -meta=>{'copyright'=>'copyright 2015 UC Berkeley'} );
+	print $start,'<div id="ntcontent">';
     Utils::fail($cgi, "you must enter the gene name or locus tag");
 }
 
 # check user input
-Utils::fail($cgi, "$geneSpec is invalid. Please enter correct gene name!") unless ($geneSpec =~ m/^[A-Za-z0-9_-]*$/);
+# Utils::fail($cgi, "$geneSpec is invalid. Please enter correct gene name!") unless ($geneSpec =~ m/^[A-Za-z0-9_-]*$/);
 
 # connect to database
-my $dbh = Utils::get_dbh();
-my $orginfo = Utils::orginfo($dbh);
+
+# my $orginfo = Utils::orginfo($dbh);
 
 # my $query = qq{SELECT orgId, locusId, sysName, desc, gene, type FROM Gene
 		# WHERE ( locusId = ? OR sysName = ? OR upper(gene) = upper(?) )};
 my $hits = Utils::matching_exact($dbh, $orgSpec, $geneSpec);
+
 
 
 #sort by exact name/ID match, descriptor match, domain match - hisg
@@ -68,7 +81,7 @@ foreach my $gene (@$hits) {
 	next if (exists $used{$gene->{locusId}}) or ($count > 100);
     $gene->{has_fitness} = Utils::gene_has_fitness($dbh,$gene->{orgId},$gene->{locusId});
     $used{$gene->{orgId}}->{$gene->{locusId}} = 1;
-	$count += 1;
+	# $count += 1;
 }
 
 
@@ -79,7 +92,41 @@ if (@$hits == 1) {
     my $locusId = $gene->{locusId};
 
     print redirect(-url=>"singleFit.cgi?orgId=$orgId&locusId=$locusId&showAll=0");
+    exit(0);
 
+} else {
+	print $cgi->header;
+ #    print $cgi->start_html(
+	# -title =>"Gene Search",
+	# -style => {-code => $style},
+	# -author=>'wjshaoATberkeley.edu',
+	# -meta=>{'copyright'=>'copyright 2015 UC Berkeley'} );
+	print $start,'<div id="ntcontent">';
+} if (scalar(@$hits) > 1) {
+	my @trows = ();
+	print h3(b("Match by gene/locus for $geneSpec:"));
+	push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
+		  $cgi->th( [ 'Gene ID','Gene Name','Description','Genome','Fitness' ] ) );
+
+    foreach my $gene (@$hits) {
+    	if ($count > 100) {
+				print "Only the first 100 results are shown. <br>";
+				last;
+		} else {
+			my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
+			my @trow = map $cgi->td($_), (
+				a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"}, $gene->{sysName}||$gene->{locusId}), 
+				# $gene->{sysName}, 
+				$gene->{gene}, 
+				$gene->{desc},
+						      $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
+						      a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
+							 $fitstring));
+			push @trows, $cgi->Tr(@trow);
+			$count += 1;
+		}
+	}
+	print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
 }
 
 my $descs = Utils::matching_descs($dbh, $orgSpec, $geneSpec);
@@ -88,93 +135,42 @@ foreach my $gene (@$descs) {
 	next if (exists $used{$gene->{locusId}}) or ($count > 100);
     $gene->{has_fitness} = Utils::gene_has_fitness($dbh,$gene->{orgId},$gene->{locusId});
     $used{$gene->{orgId}}->{$gene->{locusId}} = 1;
-	$count += 1;
+	# $count += 1;
 }
 
-
-my $domains = Utils::matching_domains($dbh, $orgSpec, $geneSpec);
-@$domains = grep { !exists $used{ $_->{orgId} }{ $_->{locusId} } } @$domains;
-
-
-
-if (@$domains == 1) {
-    # just 1 hit
-    my $gene = $domains->[0];
-    my $orgId = $gene->{orgId};
-    my $locusId = $gene->{locusId};
-
-    print redirect(-url=>"singleFit.cgi?orgId=$orgId&locusId=$locusId&showAll=0");
-}
-
-if (@$hits == 0 and @$descs == 0 and @$domains == 0) {
-	print $cgi->header;
- #    print $cgi->start_html(
-	# -title =>"Gene Search",
-	# -style => {-code => $style},
-	# -author=>'wjshaoATberkeley.edu',
-	# -meta=>{'copyright'=>'copyright 2015 UC Berkeley'} );
-	print $start,'<div id="ntcontent">';
-    print $cgi->h3("No gene found for $geneSpec",
-		   (exists $orginfo->{$orgSpec}{genome} ? " in " . $orginfo->{$orgSpec}{genome} : ""));
-
-} elsif (@$hits > 1 or @$descs > 1 or @$domains > 1) {
-	print $cgi->header;
- #    print $cgi->start_html(
-	# -title =>"Gene Search",
-	# -style => {-code => $style},
-	# -author=>'wjshaoATberkeley.edu',
-	# -meta=>{'copyright'=>'copyright 2015 UC Berkeley'} ),
-	# div({-style => "float: right; vertical-align: top;"},
-	#     a({href => "help.cgi"}, "Help")),
-	
-
-	print $start, qq[<div id="ntcontent">];
-
-	my @trows = ();
-    if (@$hits > 1) {
-    	print h3(b("Match by gene/locus for $geneSpec:"));
-    	push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
-			  $cgi->th( [ 'Gene ID','Gene Name','Description','Genome','Fitness' ] ) );
-
-	    foreach my $gene (@$hits) {
-		my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
-		my @trow = map $cgi->td($_), (
-			a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"}, $gene->{sysName}||$gene->{locusId}), 
-			# $gene->{sysName}, 
-			$gene->{gene}, 
-			$gene->{desc},
-					      $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
-					      a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
-						 $fitstring));
-		push @trows, $cgi->Tr(@trow);
-	    }
-	}
-	print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
-    # print qq[<br><br>];
-
-    my @trows = ();
+my @trows = ();
+$count = 0;
     if (@$descs > 1) {
     	print h3(b("Match by description for $geneSpec:"));
     	push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
 			  $cgi->th( [ 'Gene ID','Gene Name','Description','Genome','Fitness' ] ) );
 
 	    foreach my $gene (@$descs) {
-		my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
-		my @trow = map $cgi->td($_), (
-			a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"}, $gene->{sysName}||$gene->{locusId}), 
-			# $gene->{sysName}, 
-			$gene->{gene}, 
-			$gene->{desc},
-					      $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
-					      a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
-						 $fitstring));
-		push @trows, $cgi->Tr(@trow);
+	    	if ($count > 100) {
+				print "Only the first 100 results are shown. <br>";
+				last;
+			} else {
+				my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
+				my @trow = map $cgi->td($_), (
+					a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"}, $gene->{sysName}||$gene->{locusId}), 
+					# $gene->{sysName}, 
+					$gene->{gene}, 
+					$gene->{desc},
+							      $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
+							      a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
+								 $fitstring));
+				push @trows, $cgi->Tr(@trow);
+				$count += 1;
 	    }
 	}
 	print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
-    # print qq[<br><br>];
+}
 
-	my @trows = ();
+
+my $domains = Utils::matching_domains($dbh, $orgSpec, $geneSpec);
+@$domains = grep { !exists $used{ $_->{orgId} }{ $_->{locusId} } } @$domains;
+
+@trows = ();
     $count = 0;    
 	if (@$domains > 1) {
 		print h3(b("Match by domain for $geneSpec:"));
@@ -182,35 +178,80 @@ if (@$hits == 0 and @$descs == 0 and @$domains == 0) {
 			  $cgi->th( [ 'Gene ID','Gene Name','Description','Genome', 'Domain ID', 'Domain Name', 'Fitness' ] ) );
 
 		foreach my $gene (@$domains) {
-			next if (exists $used{$gene->{locusId}}) or ($count > 100);
-		my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
-		my @trow = map $cgi->td($_), (
-			a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"}, $gene->{sysName}||$gene->{locusId}), 
-			# $gene->{sysName}, 
-			$gene->{gene}, 
-			$gene->{desc},
-	      	$cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
-			$gene->{domainId},
-			$gene->{domainName},
-	      	a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
-						 $fitstring));
-		push @trows, $cgi->Tr(@trow);
-		$used{$gene->{locusId}} = 1;
-		$count += 1;
-		}
+			if ($count > 100) {
+				print "Only the first 100 results are shown. <br>";
+				last;
+			} else {
+				next if (exists $used{$gene->{locusId}}) or ($count > 100);
+				my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
+				my @trow = map $cgi->td($_), (
+					a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"}, $gene->{sysName}||$gene->{locusId}), 
+					# $gene->{sysName}, 
+					$gene->{gene}, 
+					$gene->{desc},
+			      	$cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
+					$gene->{domainId},
+					$gene->{domainName},
+			      	a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
+								 $fitstring));
+				push @trows, $cgi->Tr(@trow);
+				$used{$gene->{locusId}} = 1;
+				$count += 1;
+			}
 	}
     
     print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
-    print qq[<br><br>];
-    # PRINT TABLE
+}
 
-} else {
-    # just 1 hit
-    my $gene = $hits->[0];
-    my $orgId = $gene->{orgId};
-    my $locusId = $gene->{locusId};
+# if (@$domains == 1) {
+#     # just 1 hit
+#     my $gene = $domains->[0];
+#     my $orgId = $gene->{orgId};
+#     my $locusId = $gene->{locusId};
 
-    print redirect(-url=>"singleFit.cgi?orgId=$orgId&locusId=$locusId&showAll=0");
+#     print redirect(-url=>"singleFit.cgi?orgId=$orgId&locusId=$locusId&showAll=0");
+# }
+
+
+if (@$hits == 0 and @$descs == 0 and @$domains == 0) {
+	# print $cgi->header;
+ # #    print $cgi->start_html(
+	# # -title =>"Gene Search",
+	# # -style => {-code => $style},
+	# # -author=>'wjshaoATberkeley.edu',
+	# # -meta=>{'copyright'=>'copyright 2015 UC Berkeley'} );
+	# print $start,'<div id="ntcontent">';
+    print $cgi->h3("No gene found for $geneSpec",
+		   (exists $orginfo->{$orgSpec}{genome} ? " in " . $orginfo->{$orgSpec}{genome} : ""));
+
+} 
+  print qq[<br><br>];
+# } elsif (@$hits > 1 or @$descs > 1 or @$domains > 1) {
+# 	print $cgi->header;
+#  #    print $cgi->start_html(
+# 	# -title =>"Gene Search",
+# 	# -style => {-code => $style},
+# 	# -author=>'wjshaoATberkeley.edu',
+# 	# -meta=>{'copyright'=>'copyright 2015 UC Berkeley'} ),
+# 	# div({-style => "float: right; vertical-align: top;"},
+# 	#     a({href => "help.cgi"}, "Help")),
+	
+# 	print $start, qq[<div id="ntcontent">];
+	
+#     # print qq[<br><br>];
+    
+#     # print qq[<br><br>];
+  
+#     # PRINT TABLE
+
+# else {
+#     # just 1 hit
+#     my $gene = $hits->[0];
+#     my $orgId = $gene->{orgId};
+#     my $locusId = $gene->{locusId};
+
+#     print redirect(-url=>"singleFit.cgi?orgId=$orgId&locusId=$locusId&showAll=0");
+#     exit(0);
 	
 #     if ($hits->[0]{has_fitness} == 0) {
 # 		my $idShow = $gene->{sysName} || $gene->{locusId};
@@ -374,8 +415,8 @@ if (@$hits == 0 and @$descs == 0 and @$domains == 0) {
 	# push @links, $cgi->a({href => "http://ecocyc.org/ECOLI/search-query?type=GENE&gname=$gene->{sysName}"}, "EcoCyc");
  #    }
  #    print $cgi->p("Links: " . join(", ", @links)) if (@links > 0);
-    print "<br><br>";
-} #  end if just 1 hit
+    # print "<br><br>";
+# } #  end if just 1 hit
 
 
 

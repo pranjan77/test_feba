@@ -318,7 +318,13 @@ sub matching_descs($$$) {
     my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
     my $sql = qq{SELECT * from Organism JOIN Gene USING (orgId)
              WHERE (
-                desc LIKE "% $geneSpec" OR desc LIKE "$geneSpec %" OR desc LIKE "% $geneSpec %")                
+                desc LIKE "% $geneSpec" OR desc LIKE "$geneSpec %" OR desc LIKE "% $geneSpec %"
+                OR desc LIKE "$geneSpec-%" OR desc LIKE "$geneSpec-"
+                OR desc LIKE "% $geneSpec-%" OR desc LIKE "%-$geneSpec %"
+                OR desc LIKE "$geneSpec/%" OR desc LIKE "%/$geneSpec"
+                OR desc LIKE "% $geneSpec/%" OR desc LIKE "%/$geneSpec %"
+                OR desc LIKE "$geneSpec,%" OR desc LIKE "% $geneSpec,%"
+                )                
          $orgClause
          ORDER BY genus, species, strain, locusId, sysName, gene, begin, end, desc;};
          # die $sql;
@@ -337,8 +343,7 @@ sub matching_domains($$$) {
     my $sql = qq{SELECT DISTINCT genus, species, strain, orgId, locusId, sysName, gene, domainId, domainName, desc from Gene JOIN Organism USING (orgId) JOIN GeneDomain USING (orgId, locusId)
              WHERE (
                 domainId = "$geneSpec" OR domainId LIKE "$geneSpec"
-                OR domainName = "$geneSpec" OR domainName LIKE "$geneSpec" 
-                OR locusId = "$geneSpec")                
+                OR domainName = "$geneSpec" OR domainName LIKE "$geneSpec")                
          $orgClause
          ORDER BY genus, species, strain, locusId, sysName, gene, domainId, domainName;};
          # die $sql;
