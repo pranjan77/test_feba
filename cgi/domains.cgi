@@ -104,7 +104,7 @@ if (@$cond == 0) {
 
 
 	#create table
-	my @headings = qw{Gene ID Domain EValue}; # Begin End};
+	my @headings = qw{Family ID Coverage EValue}; # Begin End};
 	my @trows = ( Tr({ -valign => 'top', -align => 'center' }, map { th($_) } \@headings) );
 	foreach my $row (@$cond) {
 		# display result row by row
