@@ -291,7 +291,7 @@ sub WorkPutHash($@); # hash and list of fields to use
 	
 	# fields that are usually in tigrfam but are not enforced
 	# my @tigrInfo = &ReadTable("$indir/tigrinfo", qw{id tigrId type roleId geneSymbol ec definition});
-	my @tigrInfo = &ReadTable("tigrinfo", qw{id tigrId type roleId geneSymbol ec definition});
+	my @tigrInfo = &ReadTable("tigrinfo", qw{id tigrId type geneSymbol ec definition});
 	my %tigrInfo = map {$_->{tigrId} => $_} @tigrInfo;
 
 	StartWork("GeneDomain",$org);
@@ -300,11 +300,10 @@ sub WorkPutHash($@); # hash and list of fields to use
 	    $row->{"orgId"} = $org;
 	    $row->{"domainId"} =~ s/\.\d+//; # remove the suffix to allow easier searches
 	    $row->{"type"} = "";
-	    $row->{"roleId"} = "";
 	    $row->{"geneSymbol"} = "";
 	    $row->{"ec"} = "";
 	    $row->{"definition"} = "";
-	    WorkPutHash($row, qw{domainDb orgId locusId domainId domainName begin end score evalue type roleId geneSymbol ec definition});
+	    WorkPutHash($row, qw{domainDb orgId locusId domainId domainName begin end score evalue type geneSymbol ec definition});
 	};
 
 	foreach my $row (@tigrFam) {
@@ -320,19 +319,17 @@ sub WorkPutHash($@); # hash and list of fields to use
 		    # $row->{"locusId"} = $info->{"id"};
 		    # $row->{"domainId"} = $info->{"tigrId"};
 		    $row->{"type"} = $info->{"type"};
-		    $row->{"roleId"} = $info->{"roleId"};
 		    $row->{"geneSymbol"} = $info->{"geneSymbol"};
 		    $row->{"ec"} = $info->{"ec"};
 		    $row->{"definition"} = $info->{"definition"};
 		} else {
-			$row->{"type"} = "";
-		    $row->{"roleId"} = "";
+		    $row->{"type"} = "";
 		    $row->{"geneSymbol"} = "";
 		    $row->{"ec"} = "";
 		    $row->{"definition"} = "";
 		}
 
-	    WorkPutHash($row, qw{domainDb orgId locusId domainId domainName begin end score evalue type roleId geneSymbol ec definition});
+	    WorkPutHash($row, qw{domainDb orgId locusId domainId domainName begin end score evalue type geneSymbol ec definition});
 	}
 	EndWork();
     }

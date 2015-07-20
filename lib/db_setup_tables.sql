@@ -125,7 +125,6 @@ CREATE TABLE GeneDomain(
    score REAL NOT NULL,
    evalue REAL NOT NULL,
    type TEXT,
-   roleId INT,
    geneSymbol TEXT,
    ec TEXT,
    definition TEXT,
