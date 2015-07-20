@@ -287,6 +287,43 @@ sub matching_genes($$$) {
     return $dbh->selectall_arrayref($sql, { Slice => {} });
 }
 
+sub matching_exact($$$) {
+    my ($dbh,$orgId,$geneSpec) = @_;
+    die if !defined $dbh || !defined $orgId || !defined $geneSpec;
+    # make the query safe to include in SQL
+    $geneSpec =~ s/ +$//;
+    $geneSpec =~ s/^ +$//;
+    $geneSpec =~ s/[\'\"\n\r]//g;
+
+    my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
+    my $sql = qq{SELECT * from Organism JOIN Gene USING (orgId)
+             WHERE (
+                sysName = "$geneSpec" OR sysName LIKE "$geneSpec"
+                OR gene = "$geneSpec" OR gene LIKE "$geneSpec"
+                OR locusId = "$geneSpec")             
+         $orgClause
+         ORDER BY genus, species, strain, locusId, sysName, gene, begin, end, desc;};
+         # die $sql;
+    return $dbh->selectall_arrayref($sql, { Slice => {} });
+}
+
+sub matching_descs($$$) {
+    my ($dbh,$orgId,$geneSpec) = @_;
+    die if !defined $dbh || !defined $orgId || !defined $geneSpec;
+    # make the query safe to include in SQL
+    $geneSpec =~ s/ +$//;
+    $geneSpec =~ s/^ +$//;
+    $geneSpec =~ s/[\'\"\n\r]//g;
+
+    my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
+    my $sql = qq{SELECT * from Organism JOIN Gene USING (orgId)
+             WHERE (
+                desc LIKE "% $geneSpec" OR desc LIKE "$geneSpec %" OR desc LIKE "% $geneSpec %")                
+         $orgClause
+         ORDER BY genus, species, strain, locusId, sysName, gene, begin, end, desc;};
+         # die $sql;
+    return $dbh->selectall_arrayref($sql, { Slice => {} });
+}
 
 sub matching_domains($$$) {
     my ($dbh,$orgId,$geneSpec) = @_;

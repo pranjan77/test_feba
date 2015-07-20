@@ -55,10 +55,10 @@ div({-id=>"ntcontent"},
 	# drop down list of species
 	p("Choose organism:",
 	  popup_menu( -name    => 'orgId', -values  => \@orgOptions, -labels  => \%orgLabels, -default => $orgOptions[0])),
-	p("Enter gene name:",
+	p("Enter gene name or domain name:",
 	  textfield( -name      => 'gene', -size => 20, -maxlength => 100 ),
 	  br(),
-	  small(qq{examples: "Shewana3_0001" or "recA"})),
+	  small(qq{examples: "Shewana3_0001", "recA", "homoserine", or "HisG_c"})),
 	p(submit("Find gene")),
 	end_form,
  #    # Experiment search form
