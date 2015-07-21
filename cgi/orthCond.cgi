@@ -39,7 +39,7 @@ my $speclist = $dbh->selectall_arrayref(qq{SELECT DISTINCT orgId, locusId, expNa
 					   WHERE Experiment.expGroup = ? AND Experiment.condition_1 = ?},
 					   {}, $expGroup, $condition1);
 
-my $title = "Specific Genes for $expGroup $condition1 Across Organisms";
+my $title = "Specific Genes for $expGroup Experiments in $condition1 Across Organisms";
 $title = "No Specific Genes" if (@$speclist == 0);
 my $start = Utils::start_page("$title");
 # my $tabs = Utils::tabsExp($dbh,$cgi,$orgId,$expName,$expGroup,$condition1,"specific");
