@@ -57,8 +57,8 @@ sub start_page($) {
         <li><a href="myFrontPage.cgi">Home</a></li>
         <li><a href="geneSearch.cgi">Find Gene</a></li>
         <li><a href="blastSearch.cgi">BLAST</a></li>
-        <li><a href="orgAll.cgi">Organisms</a></li>
         <li><a href="expSearch.cgi">Experiments</a></li>
+        <li><a href="orgAll.cgi">Organisms</a></li>
         <li><a href="help.cgi">Help</a></li>
         </div></div>
       
@@ -302,7 +302,8 @@ sub matching_exact($$$) {
                 OR gene = "$geneSpec" OR gene LIKE "$geneSpec"
                 OR locusId = "$geneSpec")             
          $orgClause
-         ORDER BY genus, species, strain, locusId, sysName, gene, begin, end, desc;};
+         ORDER BY genus, species, strain, locusId, sysName, gene, begin, end, desc
+         LIMIT 100;};
          # die $sql;
     return $dbh->selectall_arrayref($sql, { Slice => {} });
 }
@@ -324,9 +325,10 @@ sub matching_descs($$$) {
                 OR desc LIKE "$geneSpec/%" OR desc LIKE "%/$geneSpec"
                 OR desc LIKE "% $geneSpec/%" OR desc LIKE "%/$geneSpec %"
                 OR desc LIKE "$geneSpec,%" OR desc LIKE "% $geneSpec,%"
-                )                
+                )
          $orgClause
-         ORDER BY genus, species, strain, locusId, sysName, gene, begin, end, desc;};
+         ORDER BY genus, species, strain, locusId, sysName, gene, begin, end, desc 
+         LIMIT 100;};
          # die $sql;
     return $dbh->selectall_arrayref($sql, { Slice => {} });
 }
@@ -345,7 +347,8 @@ sub matching_domains($$$) {
                 domainId = "$geneSpec" OR domainId LIKE "$geneSpec"
                 OR domainName = "$geneSpec" OR domainName LIKE "$geneSpec")                
          $orgClause
-         ORDER BY genus, species, strain, locusId, sysName, gene, domainId, domainName;};
+         ORDER BY genus, species, strain, locusId, sysName, gene, domainId, domainName
+         LIMIT 100;};
          # die $sql;
     return $dbh->selectall_arrayref($sql, { Slice => {} });
 }
