@@ -85,7 +85,7 @@ END
 
     if (defined $gffFile && !defined $aaseq) {
 	system("cp", $fnaFile, "$outdir/genome.fna") == 0 || die $!;
-	system("./gffToGenes.pl -prefix $prefix < $gffFile > $outdir/genes.tab") == 0 || die "gffToGenes.pl failed";
+	system("$Bin/gffToGenes.pl -prefix $prefix < $gffFile > $outdir/genes.tab") == 0 || die "gffToGenes.pl failed";
     }
     if (defined $gffFile) {
 	system("$Bin/genesTabTranslation.pl $outdir/genes.tab $outdir/genome.fna > $outdir/aaseq") == 0
