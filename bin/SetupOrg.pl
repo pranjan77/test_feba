@@ -66,8 +66,12 @@ END
     unlink("$outdir/tigrfam.tab");
 
     if (defined $gbkFile && !defined $aaseq) {
+        die "Please install genbank2gff.pl in $Bin and make it executable\n"
+            . "This script is available from Ian Holmes' gfftools repository\n"
+            . "See https://github.com/ihh/gfftools\n"
+            unless -x "$Bin/genbank2gff.pl";
 	system("$Bin/gbkToSeq.pl $gbkFile > $outdir/genome.fna") == 0 || die "gbkToSeq.pl failed";
-	system("./genbank2gff.pl < $gbkFile > $outdir/genes.gff") == 0 || die "genbank2gff.pl failed";
+	system("$Bin/genbank2gff.pl < $gbkFile > $outdir/genes.gff") == 0 || die "genbank2gff.pl failed";
 	system("$Bin/gffToGenes.pl -prefix $prefix < $outdir/genes.gff > $outdir/genes.tab") == 0 || die "gffToGenes.pl failed";
     }
     if (defined $gbkFile) {
@@ -89,7 +93,7 @@ END
     }
 
     if (!defined $aaseq) {
-	system("./RegionGC.pl $outdir/genome.fna $outdir/genes.tab > $outdir/genes.GC") == 0 || die "RegionGC.pl failed";
+	system("$Bin/RegionGC.pl $outdir/genome.fna $outdir/genes.tab > $outdir/genes.GC") == 0 || die "RegionGC.pl failed";
     }
 }
 
