@@ -1041,18 +1041,20 @@ TopCofit = function(g, r,
 		fraction=0.02,
 		n = pmin(pmax(1,round(length(g)*fraction)),length(g)-1)) {
 	if (length(g) != nrow(r)) stop("rows and number of genes does not match");
-	cofits = cor(t(r),use="p"); # correlation between rows
+	cofits = cor(t(r)); # correlation between rows; note does not check for NA (is much faster that way)
 	if(debug) cat("nTop",n,"\n");
 	nOut = length(g) * n;
-	out = data.frame(locusId=rep(g,each=n), hitId=NA, cofit=NA, rank=rep(1:n,length(g)));
-	if(debug) cat("Making output with",nrow(out),"rows\n");
+	if(debug) cat("Making output with",nOut,"rows\n");
+        out_hitId = rep("", nOut);
+        out_cofit = rep(NA, nOut);
 	for (i in 1:length(g)) {
 		values = cofits[i,];
 		j = order(-values)[2:(n+1)]; # assume self is in position 1
 		outi = (i-1)*n + (1:n); # where to put inside out
-		out$hitId[outi] = g[j];
-		out$cofit[outi] = values[j];
+		out_hitId[outi] = g[j];
+		out_cofit[outi] = values[j];
 	}
+	out = data.frame(locusId=rep(g,each=n), hitId=out_hitId, cofit=out_cofit, rank=rep(1:n,length(g)));
 	return(out);
 }
 
