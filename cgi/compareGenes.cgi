@@ -512,8 +512,12 @@ function dotClick(d) {
     tr.append("td").attr("class","expName").attr("expName",d.expName).html(beginHref + showId + "</A>");
     tr.append("td").html(d.expGroup);
     tr.append("td").html(d.expDesc);
-    tr.append("td").html("<A style='color: " + col + "' TITLE='t = " + d.tx.toFixed(1) + "'>" + d.x.toFixed(1) + "</A>");
-    tr.append("td").html("<A style='color: " + col + "' TITLE='t = " + d.ty.toFixed(1) + "'>" + d.y.toFixed(1) + "</A>");
+    var hrefX = "strainTable.cgi?orgId=" + org + "&expName=" + d.expName + "&locusId="+xLocus;
+    var hrefY = "strainTable.cgi?orgId=" + org + "&expName=" + d.expName + "&locusId="+yLocus;
+    tr.append("td").html("<A style='color: " + col + "' TITLE='t = " + d.tx.toFixed(1) + "'"
+                         + " HREF='"+hrefX+"'>" + d.x.toFixed(1) + "</A>");
+    tr.append("td").html("<A style='color: " + col + "' TITLE='t = " + d.ty.toFixed(1) + "'"
+                         + " HREF='"+hrefY+"'>" + d.y.toFixed(1) + "</A>");
     tr.append("td").html("<button type='button' onclick='removeRow(this)'>remove</button>");
 }
 

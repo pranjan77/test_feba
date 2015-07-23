@@ -176,7 +176,10 @@ if (@$hits == 0) {
 					       href => "exp.cgi?orgId=$orgId&expName=$expName" },
 					       $exp->{expDesc})),
 			    td( { -bgcolor => Utils::fitcolor($fitrow->{fit}) },
-				      sprintf("%.1f", $fitrow->{fit}) ),
+                                a({ -href => "strainTable.cgi?orgId=$orgId&locusId=$locusId&expName=$expName",
+                                    -title => "per-strain data",
+                                    -style => "color:rgb(0,0,0)" },
+                                  sprintf("%.1f", $fitrow->{fit}) ) ),
 			    td( sprintf("%.1f", $fitrow->{t}) ),
 			    td(a({ 
 			    	# style => "color:rgb(0,0,0)",

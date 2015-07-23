@@ -493,8 +493,10 @@ function dotClick(d) {
     tr.append("td").attr("class","locusId").attr("locusId",d.locusId).html(beginHref + showId + "</A>");
     tr.append("td").html(d.gene);
     tr.append("td").html(d.desc);
-    tr.append("td").html("<A TITLE='t = " + d.tx.toFixed(1) + "'>" + d.x.toFixed(1) + "</A>");
-    tr.append("td").html("<A TITLE='t = " + d.ty.toFixed(1) + "'>" + d.y.toFixed(1) + "</A>");
+    var hrefX = "strainTable.cgi?orgId=" + org + "&expName=" + xName + "&locusId=" + d.locusId;
+    var hrefY = "strainTable.cgi?orgId=" + org + "&expName=" + yName + "&locusId=" + d.locusId;
+    tr.append("td").html("<A TITLE='t = " + d.tx.toFixed(1) + "' HREF='" + hrefX + "'>" + d.x.toFixed(1) + "</A>");
+    tr.append("td").html("<A TITLE='t = " + d.ty.toFixed(1) + "' HREF='" + hrefY + "'>" + d.y.toFixed(1) + "</A>");
     tr.append("td").html("<button type='button' onclick='removeRow(this)'>remove</button>");
 }
 
