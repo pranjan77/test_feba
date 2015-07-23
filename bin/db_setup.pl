@@ -9,7 +9,9 @@ use DBI;
 
 my $usage = <<END
 Usage: db_setup.pl [ -db db_file_name ] -orth orth_table -orginfo orginfo -indir htmldir nickname1 ... nicknameN
-    Other optional arguments: -secrets secrets_file
+Other optional arguments:
+    -secrets secrets_file
+    -outdir out_directory
 
     Sets up a sqlite database suitable for the cgi scripts, reading from
     the html directories indir/nickname1 ... indir/nicknameN
@@ -28,6 +30,10 @@ Usage: db_setup.pl [ -db db_file_name ] -orth orth_table -orginfo orginfo -indir
     commands to be used to import them into a database (that already has
     the tables set up by using lib/db_setup_tables.sql; otherwise,
     it uses them to load the database and deletes the files.
+
+    If either -db or -outdir is specified, then the per-strain data
+    files (which are not loaded into the database) are moved into the
+    directory that contains the database file or into outdir.
 
     secrets_file should contain lines of the form
         orgId SetName
@@ -53,12 +59,13 @@ sub WorkPutHash($@); # hash and list of fields to use
 sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs to exclude
 
 {
-    my ($dbfile,$indir,$orgfile,$orthfile,$secretsfile);
+    my ($dbfile,$indir,$outdir,$orgfile,$orthfile,$secretsfile);
     (GetOptions('db=s' => \$dbfile,
                 'orginfo=s' => \$orgfile,
                 'orth=s' => \$orthfile,
                 'secrets=s' => \$secretsfile,
-                'indir=s' => \$indir)
+                'indir=s' => \$indir,
+                'outdir=s' => \$outdir )
      && defined $indir && defined $orgfile && defined $orthfile)
         || die $usage;
     my @orgs = @ARGV;
@@ -67,6 +74,15 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
     die "No such file: $orthfile" unless -e $orthfile;
     die "No such file: $secretsfile" if defined $secretsfile && ! -e $secretsfile;
     die "No organism nicknames specified\n" if scalar(@orgs) < 1;
+    if (!defined $outdir && defined $dbfile) {
+        if ($dbfile =~ m|/|) {
+            $outdir = $dbfile;
+            $outdir =~ s|/[^/]+$||;
+        } else {
+            $outdir = ".";
+        }
+        die "Not a directory: $outdir\n" if !-d $outdir;
+    }
 
     foreach my $org (@orgs) {
         die "No such directory: $indir/$org" unless -d "$indir/$org";
@@ -76,12 +92,22 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
     }
 
     print STDERR "Reading " . scalar(@orgs) . " organisms from $indir\n";
+
+    my $tmpdir = $ENV{TMPDIR} || "/tmp";
+    my $tmpdbfile = "$tmpdir/db.$$.sqlite3";
     if (defined $dbfile) {
+        # make sure we can write to it
+        open(DB, ">", $dbfile) || die "Cannot write to $dbfile";
+        close(DB) || die "Error writing to $dbfile";
+        unlink($dbfile);
+
+        # create the temporary database
         my $sqlfile = "$Bin/../lib/db_setup_tables.sql";
         die "No such file: $sqlfile" unless -e $sqlfile;
-        print STDERR "Creating seqlite3 database $dbfile\n";
-        unlink($dbfile) if -e $dbfile; # start with an empty database
-        system("sqlite3 $dbfile < $sqlfile") == 0 || die $!;
+        print STDERR "Creating sqlite3 database $tmpdbfile\n";
+        unlink($tmpdbfile); # in case it somehow exists
+        system("sqlite3 $tmpdbfile < $sqlfile") == 0 || die $!;
+        die "Could not create temporary database $tmpdbfile" unless -e $tmpdbfile;
     }
     else {
         print STDERR "Writing test files\n";
@@ -414,10 +440,87 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
         EndWork();
     }
 
+    # Strain fitness tables are expected to be sorted by scaffoldId and position (but this is not checked).
+    # Strains with scaffold="pastEnd" or enoughT0 != "TRUE" are ignored.
+    # Strain fitness values are rounded to just 1 decimal point.
+    # Strain fitness tables are indexed by seek positions to the kb, which is in StrainDataSeek table.
+    foreach my $org (@orgs) {
+        open(OUT, ">", "db.StrainFitness.$org") || die "Cannot write to db.StrainFitness.$org";
+        my $infile = "$indir/$org/strain_fit.tab";
+        if (!open(IN, "<", $infile)) {
+            print STDERR "Cannot read $infile -- skipping strain fitness for $org\n";
+        } else {
+            StartWork("StrainDataSeek", $org);
+            my $headerLine = <IN>;
+            chomp $headerLine;
+            my @colNames = split /\t/, $headerLine;
+            # column name => index
+            my %colNames = map {$colNames[$_] => $_} (0..(scalar(@colNames)-1));
+            my @metaShow = qw{barcode scaffold strand pos locusId used};
+            foreach my $col (@metaShow) {
+                die "No column for $col in $infile" unless exists $colNames{$col};
+            }
+            foreach my $col (qw{enoughT0}) {
+                die "No column for $col in $infile" unless exists $colNames{$col};
+            }
+            my $expKept = $expKept{$org};
+            foreach my $expName (keys %$expKept) {
+                die "No column for $expName in $infile" unless exists $colNames{$expName};
+            }
+            my @exps = grep { exists $expKept->{$_} } @colNames;
+            my @expI = map { $colNames{$_} } @exps;
 
+            print OUT join("\t", @metaShow, @exps)."\n";
+            my @metaShowI = map { $colNames{$_} } @metaShow;
+            my $iColEnoughT0 = $colNames{enoughT0};
+            my $iColScaffold = $colNames{scaffold};
+            my $iColLocus = $colNames{locusId};
+            my $iColPos = $colNames{pos};
+
+            my $lastScaffold = "";
+            my $lastKb = -1;
+
+            # No hash look ups in inner loop make this ~2x faster.
+            while (<IN>) {
+                chomp;
+                my @F = split /\t/, $_, -1;
+                die "Wrong number of rows in\n$_\nfrom $infile" unless scalar(@F) == scalar(@colNames);
+                my $scaffold = $F[$iColScaffold];
+                next unless $F[$iColEnoughT0] eq "TRUE" && $scaffold ne "pastEnd";
+                $F[$iColLocus] = "" if $F[$iColLocus] eq "NA";
+                my @out = @F[ @metaShowI ];
+                push @out, map { sprintf("%.1f",$_) } @F[@expI];
+
+                my $kb = int($F[$iColPos] / 1000.0);
+                if ($scaffold ne $lastScaffold || $kb != $lastKb) {
+                    WorkPutRow($org, $scaffold, $kb, tell(OUT));
+                }
+                print OUT join("\t", @out)."\n";
+
+                $lastScaffold = $scaffold;
+                $lastKb = $kb;
+            }
+            EndWork();
+            close(IN) || die "Error reading $infile";
+        } # end if have strain data for org
+        close(OUT) || die "Error writing to db.StrainFitness.$org";
+        print STDERR "Wrote db.StrainFitness.$org\n";
+    } # end loop over orgs
+
+    # rename the strain fitness files
+    if (defined $outdir && $outdir ne ".") {
+        foreach my $org (@orgs) {
+            system("mv", "db.StrainFitness.$org", $outdir) == 0 || die "mv db.StrainFitness.$org $outdir failed: $!";
+            die "No such file: $outdir/db.StrainFitness.$org" unless -e "$outdir/db.StrainFitness.$org";
+        }
+        print STDERR "Moved db.StrainFitness.* into $outdir\n";
+    }
+
+    # load the other data into sqlite3
     if (defined $dbfile) {
+
         # Run the commands
-        open(SQLITE, "|-", "sqlite3", "$dbfile") || die "Cannot run sqlite3 on $dbfile";
+        open(SQLITE, "|-", "sqlite3", "$tmpdbfile") || die "Cannot run sqlite3 on $tmpdbfile";
         print SQLITE ".bail on\n";
         print SQLITE ".mode tabs\n";
         print STDERR "Loading tables\n";
@@ -427,7 +530,7 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
         close(SQLITE) || die "Error running sqlite3 commands\n";
 
         # Check #rows in each table
-        my $dbh = DBI->connect("dbi:SQLite:dbname=$dbfile", "", "", { RaiseError => 1 }) || die $DBI::errstr;
+        my $dbh = DBI->connect("dbi:SQLite:dbname=$tmpdbfile", "", "", { RaiseError => 1 }) || die $DBI::errstr;
         while (my ($table, $nRowsExpect) = each %workRows) {
             my ($nRowsActual) = $dbh->selectrow_array("SELECT COUNT(*) FROM $table");
             die "counting rows in $table failed" unless defined $nRowsActual;
@@ -444,6 +547,9 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
         die "Invalid values of locusId2 in Ortholog table: $nOrthRows != $nOrthRows1" unless $nOrthRows == $nOrthRows2;
 
         $dbh->disconnect();
+
+        system("mv",$tmpdbfile,$dbfile) == 0 || die "mv $tmpdbfile $dbfile failed: $!";
+        die "mv $tmpdbfile $dbfile failed" unless -e $dbfile;
         print STDERR "Successfully created $dbfile\n";
         print STDERR "Cleaning up\n";
         # Delete the files

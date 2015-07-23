@@ -134,3 +134,15 @@ CREATE TABLE GeneDomain(
 CREATE INDEX 'orgLocus' on GeneDomain ('orgId' ASC, 'locusId' ASC);
 CREATE INDEX 'domainDbId' on GeneDomain ('domainDb' ASC, 'domainId' ASC);
 CREATE INDEX 'domainDbName' on GeneDomain ('domainDb' ASC, 'domainName' ASC);
+
+/* For each kilobase on each scaffold, shows the seek position into db.StrainFitness.orgId
+   This arrangement is used because the StrainFitness tables are so large.
+   If there are no insertions within 1000*kb to 1000*kb+999, then the entry might be omitted.
+ */
+CREATE TABLE StrainDataSeek(
+       orgId TEXT not NULL,
+       scaffoldId TEXT not NULL,
+       kb INT NOT NULL,
+       seek INT NOT NULL,
+       PRIMARY KEY (orgId,scaffoldId,kb)
+);
