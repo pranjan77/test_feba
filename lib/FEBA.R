@@ -470,7 +470,7 @@ FEBA_Fit = function(expsUsed, all, genes,
 	    if(sum(status==s) > 0) cat(s, ":", q$name[status==s],"\n");
 	}
 
-	fit$version = "1.0.1";
+	fit$version = "1.0.2";
 	fit$q = q;
 	fit$genesUsed = genesUsed;
 	fit$strainsUsed = strainsUsed;
@@ -480,7 +480,7 @@ FEBA_Fit = function(expsUsed, all, genes,
 	fit$t0_gN = t0_gN;
 
 	# These include all strains, not just those in genes
-	fit$strains = cbind(all[,metacol], used=fit$strainsUsed);
+	fit$strains = cbind(all[,metacol], used=fit$strainsUsed, enoughT0=rowMeans(t0tot) >= minT0Strain);
 	fit$strain_lr = data.frame(lapply(results, with, strain_fit));
 	fit$strain_se = data.frame(lapply(results, with, strain_se));
 
@@ -588,7 +588,8 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	writeDelim(d, nameToPath("fit_standard_error_naive.tab"));
 	wroteName("fit_standard_error_naive.tab");
 
-	writeDelim(cbind(fit$strains,fit$strain_lrn), nameToPath("strain_fit.tab"));
+	writeDelim(cbind(fit$strains,fit$strain_lrn)[order(fit$strains$scaffold, fit$strains$pos),],
+		nameToPath("strain_fit.tab"));
 	wroteName("strain_fit.tab");
 
 	FEBA_Quality_Plot(fit$q, nameToPath("fit_quality.pdf"), org, ...);
