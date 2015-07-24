@@ -50,6 +50,11 @@ tr,td {
 /*	-webkit-transition: background-color 0.2s;*/
 }
 
+/*to collapse table on orthCond page*/
+/*tr.header {
+    display: table-row;
+}*/
+
 /*hover effects for tables (line outlines)*/
 tr:hover td, tr.reset2:hover td{
 /*	background-color: rgba(255,255,255,0.2) !important;*/
