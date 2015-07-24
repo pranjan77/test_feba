@@ -22,7 +22,7 @@ use List::MoreUtils qw( minmax );
 
 use lib "../lib";
 use Utils;
-sub RowsForGene($$); # gene object, shade or not => list of rows
+sub RowsForGene($$$$); # gene object, shade or not => list of rows
 
 my $cgi=CGI->new;
 my $style = Utils::get_style();
@@ -43,9 +43,61 @@ my $title = "Specific Genes for $expGroup Experiments in $condition1 Across Orga
 $title = "No Specific Genes" if (@$speclist == 0);
 my $start = Utils::start_page("$title");
 # my $tabs = Utils::tabsExp($dbh,$cgi,$orgId,$expName,$expGroup,$condition1,"specific");
+#$(this).find('span').text(function(_, value){return value=='+'?'-':'+'});
+#$(this).nextUntil('tr.header').slideToggle(100, function(){});});
+#$('.header').click(function(){
+        
+    #     $(this).nextUntil('tr.header').css('display', function(i,v){
+    #         return this.style.display === 'table-row' ? 'none' : 'table-row';
+    #     });
+    # });
+
+# $('tr').hide().filter(function () {
+#         return $(this).find('td[colspan]').length;
+#     }).addClass('header').css('display', 'table-row').click(function () {
+#         $(this).nextUntil('tr.header').css('display', function (i, v) {
+#             return this.style.display === 'table-row' ? 'none' : 'table-row';
+#         });
+#     });
+
+# $('.header').hide(function(){
+#         $(this).find('span').text(function(_, value){return value=='+'?'-':'+'});
+#         $(this).nextUntil('tr.header').slideToggle(100);
+#     });
+#     $('.header').click(function(){
+#         $(this).find('span').text(function(_, value){return value=='-'?'+':'-'});
+#         $(this).nextUntil('tr.header').slideToggle(100);
+#     });
+
+# $(this).find('span').text(function(_, value){return value=='Collapse -'?'Expand +':'Collapse -'});
+
+my $js =  q[<script type="text/javascript" src="../images/jquery-1.11.3.min.js"></script>
+<script type="text/javascript">$(document).ready(function(){ 
+    $('tr.header2').nextUntil('tr.header').hide();
+    $('tr.header2').click(function(){
+        $('tr.header2').toggle();
+        //$('tr.header3').show();
+        //$('tr.header2').hide();
+        //$(this).find('span').text(function(_, value){return value=='+'?'-':'+'});
+        $(this).nextUntil('tr.header').css('display', function(i,v){
+            return this.style.display === 'table-row' ? 'none' : 'table-row';
+        });
+    });
+    $('tr.header3').click(function(){
+        //$('tr.header3').toggle();
+        $('tr.header2').show();
+        $('tr.header3').hide();
+        $(this).nextUntil('tr.header').css('display', function(i,v){
+            return this.style.display === 'table-row' ? 'none' : 'table-row';
+        });
+    });
+    
+});
+    </script>];
+
 
 print
-    header, $start, '<div id="ntcontent">',#$tabs,
+    header, $start, $js, '<div id="ntcontent">', #$tabs,
   #   start_html( -title => $title, -style => { -code => $style }, -author => 'Morgan Price',
 		# -meta => { 'copyright' => 'copyright 2015 UC Berkeley' }),
     h2($title);
@@ -115,28 +167,47 @@ foreach my $gene (@genes) {
     # strictly speaking, this should be based on which is most similar, or #hits, in case of conflicts b/w OGs
     # punt on that for now
     while (my ($orthTax,$orthObj) = each %$orth) {
-	$iOG = $og{$orthTax}{$orthObj->{locusId}};
-	last if defined $iOG;
+	   $iOG = $og{$orthTax}{$orthObj->{locusId}};
+	   last if defined $iOG;
     }
     if (defined $iOG) {
         push @{ $OGs[$iOG] }, $gene;
     } else {
-	$iOG = scalar(@OGs);
-	push @OGs, [ $gene ];
+	   $iOG = scalar(@OGs);
+	   push @OGs, [ $gene ];
     }
     $og{$gene->{orgId}}{$gene->{locusId}} = $iOG;
 }
 
-my @headings = ['Organism', 'Gene', 'Name', 'Description', 'Fitness (Lower)', 'Fitness (Upper)'];  #Experiment
+my @headings = ['&nbsp', 'Organism', 'Gene', 'Name', 'Description', 'Fitness (Lower)', 'Fitness (Upper)'];  #Experiment
 my @trows = ( $cgi->Tr({ -valign => 'middle', -align => 'center' }, map { th($_) } @headings ) );
 
 my $shade = 0;
+my $group = 1;
+my $row = 0;
+my $singletonHead = 0;
 
 foreach my $og (@OGs) {
     foreach my $gene (@$og) {
-	push @trows, RowsForGene($gene, $shade);
+        if (scalar(@$og) == 1 and $singletonHead == 0) {
+            push @trows, qq[<tr class="header2"><th colspan="8"><center>Singletons</center></th></tr>];
+            $singletonHead = 1;
+        }
+        if ($row == 3) {
+            # my $color = $shade % 2 ? "#DDDDDD" : "#FFFFFF";
+            push @trows, summaryRow($og, $shade);
+            push @trows, qq[<tr class="header3"><th colspan="8"><center><span>Collapse -</span></center></th></tr>];
+        }
+        if ($singletonHead == 1) {
+            push @trows, RowsForGene($gene, $shade, "", $row);
+        } else {
+            push @trows, RowsForGene($gene, $shade, $group, $row);
+        }
+        $row++;
     }
     $shade++;
+    $group++;
+    $row = 0;
 }
 
 print
@@ -153,9 +224,39 @@ print
 $dbh->disconnect();
 Utils::endHtml($cgi);
 
+sub summaryRow($$) {
+    my ($og, $shade) = @_;
+    my $orgs = "Expand more from ";
+    my @row;
+    my $ind = 0;
+    my $len = scalar(@$og) - 1;
+
+    foreach my $gene(@$og) {
+        my $orgId = $gene->{orgId};
+        my $genome = $orginfo->{$orgId}{genome};
+        my $genomeShort = $genome;
+        $genomeShort =~ s/^(.)\S+/\1./;
+        my $locusId = $gene->{locusId};
+       
+        if ($ind > 2 and $ind < $len) {
+            $orgs = $orgs . $cgi->a({href=>"orthFit.cgi?orgId=$orgId&locusId=$locusId&expGroup=$expGroup&condition1=$condition1", title=>"$gene->{desc}"},$genomeShort).  ", ";
+        } elsif ($ind == $len) {
+             $orgs = $orgs . $cgi->a({href=>"orthFit.cgi?orgId=$orgId&locusId=$locusId&expGroup=$expGroup&condition1=$condition1", title=>"$gene->{desc}"},$genomeShort);
+        }
+        $ind += 1;
+    }
+    
+    push @row, $cgi->Tr(
+        {-class=>'header2', -valign => 'middle', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF"},
+        td(span("+")),
+        td({colspan=>"6"}, $orgs)
+    );
+    return @row;
+}
+
 	
-sub RowsForGene($$) {
-    my ($gene,$shade) = @_;
+sub RowsForGene($$$$) {
+    my ($gene,$shade,$group,$row) = @_;
     my @trows = ();
    
     # my $firstForGene = 1;
@@ -170,13 +271,22 @@ sub RowsForGene($$) {
     my %fitHash;
     foreach my $expName (sort keys %{ $gene->{fit} }) {
         my $fit = $gene->{fit}{$expName}{fit};
-	    my $t = $gene->{fit}{$expName}{t};
-	    push @fitList, $fit;
-        $fitHash{$fit} = $t;
+  	    my $t = $gene->{fit}{$expName}{t};
+  	    push @fitList, $fit;
+          $fitHash{$fit} = $t;
     }
     my ($min, $max) = minmax @fitList;
+    my $rowLabel = "";
+    my $collapse = "";
+    # q[-valign => 'middle', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF"];
+    if ($row == 0) {
+        $rowLabel = $group;
+        $collapse = 'header';
+        # q[-class=>'header', -valign => 'middle', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF"];
+    }
     push @trows, $cgi->Tr(
-        { -valign => 'middle', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF" },
+        { -class=> $collapse, -valign => 'middle', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF" },
+                td($rowLabel),
 			      td( 
                   #$firstForGene ? 
                   a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId},  -title => $genome },  $genomeShort)),# : "&nbsp;" ),
