@@ -249,7 +249,10 @@ foreach my $exp (@exps) {
 	    my $fitShow = sprintf("%.1f",$fit);
 	    $t = sprintf("%.1f", $t);
 	    push @values, $cgi->td({ -bgcolor => Utils::fitcolor($fit) },
-				   qq{<div title="$showId: t = $t">$fitShow</div>});
+                                   a({ -href => "strainTable.cgi?orgId=$orgId&locusId=$gene->{locusId}&expName=$expName",
+                                       -title => "$showId: t = $t",
+                                       -style => "color:rgb(0,0,0)" },
+                                     $fitShow) );
 	} else {
 	    push @values, $cgi->td({ -bgcolor => Utils::fitcolor($fit) }, "&nbsp;");
 	}

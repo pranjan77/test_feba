@@ -97,7 +97,11 @@ foreach my $o (@genes) {
 			      td($first ? $o->{desc} : ""),
 			      td(a({href => "exp.cgi?orgId=$o->{orgId}&expName=$row->{expName}"}, #style => "color: rgb(0,0,0)"},
 				   $row->{expDesc})),
-			      td({ -bgcolor => Utils::fitcolor($row->{fit}) }, sprintf("%.1f", $row->{fit})),
+			      td({ -bgcolor => Utils::fitcolor($row->{fit}) },
+                                 a({ -href => "strainTable.cgi?orgId=$o->{orgId}&locusId=$o->{locusId}&expName=$row->{expName}",
+                                     -title => "per-strain data",
+                                     -style => "color:rgb(0,0,0)" },
+                                   sprintf("%.1f", $row->{fit}) ) ),
 			      td(sprintf("%.1f", $row->{t})) );
 	$first = 0;
     }

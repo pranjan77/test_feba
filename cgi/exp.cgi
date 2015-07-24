@@ -147,7 +147,10 @@ if (@fit > 0) { # show the table
 						$geneId)),
 			      td($row->{gene}),
 			      td({ -bgcolor => Utils::fitcolor($row->{fit}) },
-				       sprintf("%.1f", $row->{fit})),
+                                 a({ -href => "strainTable.cgi?orgId=$orgId&locusId=$row->{locusId}&expName=$expName",
+                                     -title => "per-strain data",
+                                     -style => "color:rgb(0,0,0)" },
+                                     sprintf("%.1f", $row->{fit})) ),
 			      td( sprintf("%.1f", $row->{t}) ),
 			      td($row->{desc}),
 			      td(a({ 

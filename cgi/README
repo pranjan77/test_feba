@@ -34,6 +34,7 @@ singleFit.cgi -- show table of fitness data for one gene (if it has data)
 myFitShow.cgi -- show list of matching genes, or forward to singleFit.cgi for a single gene
 	each gene => singleFit.cgi, org => org.cgi
 orthFit.cgi -- for a gene in a condition, show table of fitness across orthologs
+	each cell => strainTable.cgi
 	each gene => showFit.cgi
 	each experiment => exp.cgi
 	show all homologs => mySeqSearch.cgi
@@ -62,7 +63,7 @@ exps.cgi -- matching experiments => exp.cgi
 	across all organisms => orthCond.cgi (if a condition query was made)
 exp.cgi -- for an experiment, show metrics, or top genes
 	if showing specific phenotypes, or important genes, or detrimental genes
-		each gene => myFitShow.cgi, each cell => orthFit.cgi
+		each gene => myFitShow.cgi, each cell => orthFit.cgi and strainTable.cgi
 	compare to => compareExps.cgi
 	across all organisms => orthCond.cgi
 compareExps.cgi -- interactive scatterplot to compare two experiments
