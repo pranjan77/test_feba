@@ -546,18 +546,30 @@ p.buttons {
 	position: relative;
 	height: 40px;
 	max-width:440px;
-	display:-webkit-box;
+	display: -webkit-box;
 	display: -moz-box;
-	display:-ms-flexbox;
-	display:-webkit-flex;
-	display:flex;
+	display: -ms-flexbox;
+	display: -webkit-flex;
+	display: flex;
 	margin: 0 auto;
 	left: 0%;
 	white-space: nowrap;
 }
 
-p.buttons input[type=submit] {position: absolute; float: left; left: 80px;}
-p.buttons input[type=reset] {position: absolute; float: right; right: 80px;}
+.search p.buttons input[type=submit] {position: absolute; float: left; left: 80px;}
+.search p.buttons input[type=reset] {position: absolute; float: right; right: 80px;}
+p.buttons:nth-child(1) {position: absolute; float: left; }
+p.buttons:nth-child(2) {position: absolute; float: right;}
+
+
+span.deco {
+	font-weight: bold;
+	border: 1px solid darkgrey;
+	border-radius: 20px;
+	color: #011B47;
+	font-size: 14px;
+	padding: 2px;
+}
 
 
 /*to handle heatmap button on cofit pages*/

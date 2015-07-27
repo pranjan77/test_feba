@@ -119,18 +119,17 @@ print
     h2("Strain Fitness in ",
        a({-href => "org.cgi?orgId=$orgId"}, "$genome"),
        defined $locusSpecShow ? "around " . a({-href => "singleFit.cgi?orgId=$orgId&locusId=$locusSpec"}, $locusSpecShow)
-       : " at $scaffoldId : $begComma to $endComma"),
+       : " at $scaffoldId: $begComma to $endComma"),
     start_form(-name => 'input', -method => 'GET', -action => 'strainTable.cgi'),
     hidden( -name => 'orgId', -value => $orgId, -override => 1),
     hidden( -name => 'scaffoldId', -value => $scaffoldId, -override => 1),
     hidden( -name => 'begin', -value => $begin, -override => 1),
     hidden( -name => 'end', -value => $end, -override => 1),
     join("\n", map { hidden( -name => 'expName', -value => $_, -override => 1) } @expNames),
-    p({-class => "inline"},
+    p(
       "Add experiment(s): ",
-      textfield(-name => 'addexp', -default => "", -override => 1, -size => 20, -maxLength => 100),
-      "Zoom", submit('zoom','in'), submit('zoom','out'),
-      "Pan:", submit('pan','left'), submit('pan','right')),
+      textfield(-name => 'addexp', -default => "", -override => 1, -size => 20, -maxLength => 100)),
+    p({-class => "buttons", style=>"max-width:500px; line-height:40px; white-space:nowrap;"}, "Zoom:", submit('zoom','in'), submit('zoom','out'), "\tPan:", submit('pan','left'), submit('pan','right')),
     end_form,
     p(small("Only strains with sufficient reads to estimate fitness are shown, but the strain fitness values are still rather noisy. Strains near the edge of a gene are not shown as being associated with that gene (the Gene column will be empty)."));
 
@@ -143,7 +142,7 @@ if (@$rows == 0) {
 my @trows = (); # the table
 # header row
 my @headings = qw{Position Strand Gene};
-push @headings, a({-title => "Fractional position within gene"}, "fraction");
+push @headings, a({-title => "Fractional position within gene"}, "Fraction");
 foreach my $expName (@expNames) {
     push @headings, a({-href => "exp.cgi?orgId=$orgId&expName=$expName", -title => $expName},
                       $expinfo->{$expName}{expDesc});

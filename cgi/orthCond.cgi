@@ -75,7 +75,7 @@ my $js =  q[<script type="text/javascript" src="../images/jquery-1.11.3.min.js">
 <script type="text/javascript">$(document).ready(function(){ 
     $('tr.header2').nextUntil('tr.header').hide();
     $('tr.header2').click(function(){
-        $('tr.header2').toggle();
+        $(this).toggle();
         //$('tr.header3').show();
         //$('tr.header2').hide();
         //$(this).find('span').text(function(_, value){return value=='+'?'-':'+'});
@@ -84,9 +84,9 @@ my $js =  q[<script type="text/javascript" src="../images/jquery-1.11.3.min.js">
         });
     });
     $('tr.header3').click(function(){
-        //$('tr.header3').toggle();
+        $(this).toggle();
         $('tr.header2').show();
-        $('tr.header3').hide();
+        //$('tr.header3').hide();
         $(this).nextUntil('tr.header').css('display', function(i,v){
             return this.style.display === 'table-row' ? 'none' : 'table-row';
         });
@@ -188,12 +188,13 @@ my $row = 0;
 my $singletonHead = 0;
 
 foreach my $og (@OGs) {
+    @$og = sort { ($b->{gene} ne "") <=> ($a->{gene} ne "") } @$og; # sort them so the ones with gene names come up first 
     foreach my $gene (@$og) {
         if (scalar(@$og) == 1 and $singletonHead == 0) {
             push @trows, qq[<tr class="header2"><th colspan="8"><center>Singletons</center></th></tr>];
             $singletonHead = 1;
         }
-        if ($row == 3) {
+        if ($row == 3 and scalar(@$og) > 4) {
             # my $color = $shade % 2 ? "#DDDDDD" : "#FFFFFF";
             push @trows, summaryRow($og, $shade);
             push @trows, qq[<tr class="header3"><th colspan="8"><center><span>Collapse -</span></center></th></tr>];
@@ -226,7 +227,8 @@ Utils::endHtml($cgi);
 
 sub summaryRow($$) {
     my ($og, $shade) = @_;
-    my $orgs = "Expand more from ";
+    my $count = scalar(@$og) - 3;
+    my $orgs = "$count more from ";
     my @row;
     my $ind = 0;
     my $len = scalar(@$og) - 1;
@@ -248,7 +250,7 @@ sub summaryRow($$) {
     
     push @row, $cgi->Tr(
         {-class=>'header2', -valign => 'middle', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF"},
-        td(span("+")),
+        td(span({class=>"deco"}, a({title=>"Expand"}, '+'))),
         td({colspan=>"6"}, $orgs)
     );
     return @row;
@@ -280,7 +282,7 @@ sub RowsForGene($$$$) {
     my $collapse = "";
     # q[-valign => 'middle', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF"];
     if ($row == 0) {
-        $rowLabel = $group;
+        $rowLabel = a({style=>"color: #011B47", title=>"Ortholog group $group"},$group);
         $collapse = 'header';
         # q[-class=>'header', -valign => 'middle', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF"];
     }
