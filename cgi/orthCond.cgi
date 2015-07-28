@@ -18,13 +18,14 @@ use strict;
 use CGI qw(:standard Vars);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
-use List::MoreUtils qw( minmax );
 
 use lib "../lib";
 use Utils;
 use URI::Escape;
+use Time::HiRes qw(gettimeofday tv_interval);
 
-sub RowsForGene($$$$); # gene object, shade or not => list of rows
+sub RowForGene($$$$); # gene object, shade or not => the row
+sub summaryRow($$$); # ortholog group
 
 my $cgi=CGI->new;
 my $style = Utils::get_style();
@@ -35,48 +36,19 @@ die "no condition1 parameter" unless defined $condition1;
 
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
+my $debug = $cgi->param('debug');
+my $start_time = gettimeofday() if $debug;
 
 my $speclist = $dbh->selectall_arrayref(qq{SELECT DISTINCT orgId, locusId, expName, expDesc
                                            FROM Experiment JOIN SpecificPhenotype USING (orgId,expName)
 					   WHERE Experiment.expGroup = ? AND Experiment.condition_1 = ?},
 					   {}, $expGroup, $condition1);
+print STDERR sprintf("Specific sicks: %.3f seconds\n", tv_interval([$start_time])) if $debug;
 
 my $title = "Specific Genes for $expGroup Experiments in $condition1 Across Organisms";
 $title = "No Specific Genes" if (@$speclist == 0);
 my $start = Utils::start_page("$title");
-# my $tabs = Utils::tabsExp($dbh,$cgi,$orgId,$expName,$expGroup,$condition1,"specific");
-#$(this).find('span').text(function(_, value){return value=='+'?'-':'+'});
-#$(this).nextUntil('tr.header').slideToggle(100, function(){});});
-#$('.header').click(function(){
-        
-    #     $(this).nextUntil('tr.header').css('display', function(i,v){
-    #         return this.style.display === 'table-row' ? 'none' : 'table-row';
-    #     });
-    # });
 
-# $('tr').hide().filter(function () {
-#         return $(this).find('td[colspan]').length;
-#     }).addClass('header').css('display', 'table-row').click(function () {
-#         $(this).nextUntil('tr.header').css('display', function (i, v) {
-#             return this.style.display === 'table-row' ? 'none' : 'table-row';
-#         });
-#     });
-
-# $('.header').hide(function(){
-#         $(this).find('span').text(function(_, value){return value=='+'?'-':'+'});
-#         $(this).nextUntil('tr.header').slideToggle(100);
-#     });
-#     $('.header').click(function(){
-#         $(this).find('span').text(function(_, value){return value=='-'?'+':'-'});
-#         $(this).nextUntil('tr.header').slideToggle(100);
-#     });
-
-# $(this).find('span').text(function(_, value){return value=='Collapse -'?'Expand +':'Collapse -'});
-
-# tr.header is the first for each gene
-# tr.header2 is the expandable row
-# tr.header3 is the row that collapses it back down
-#
 my $js =  q[<script type="text/javascript" src="../images/jquery-1.11.3.min.js"></script>
 <script type="text/javascript">$(document).ready(function(){ 
     $('tr.header2').nextUntil('tr.header').hide(); // after each tr.header2, hide rows until the next header
@@ -98,7 +70,6 @@ my $js =  q[<script type="text/javascript" src="../images/jquery-1.11.3.min.js">
     
 });
     </script>];
-
 
 print
     header, $start, $js, '<div id="ntcontent">', #$tabs,
@@ -125,22 +96,22 @@ foreach my $row (@$speclist) {
 	$expDesc{$orgId}{$expName} = $expDesc; # overwriting is OK
 }
 
+print STDERR sprintf("Fetch genes and orths: %.3f seconds\n", tv_interval([$start_time])) if $debug;
+
 # Fetch the actual fitness values
 while (my ($orgId, $geneHash) = each %genes) {
     my @expNames = keys %{ $expDesc{$orgId} };
     die if @expNames == 0;
     my $expNameSpec = join(",", map { "'" . $_ . "'" } @expNames);
     while (my ($locusId, $gene) = each %$geneHash) {
-	$gene->{fit} = {};
-	my $fitrows = $dbh->selectall_arrayref(qq{ SELECT expName,fit,t FROM GeneFitness
-                                                   WHERE orgId = ? AND locusId = ? AND expName IN ($expNameSpec) },
-					       {}, $orgId, $locusId);
-	foreach my $row (@$fitrows) {
-	    my ($expName,$fit,$t) = @$row;
-	    $gene->{fit}{$expName} = { 'fit' => $fit, 't' => $t };
-	}
+	$gene->{values} = $dbh->selectrow_arrayref(qq{ SELECT min(fit), max(fit), min(t), max(t) FROM GeneFitness
+                                                       WHERE orgId = ? AND locusId = ? AND expName IN ($expNameSpec) },
+                                                       {}, $orgId, $locusId);
+        die "No fitness data for $orgId $locusId $expGroup $condition1" unless defined $gene->{values}[0];
     }
 }
+
+print STDERR sprintf("Fetch fitness: %.3f seconds\n", tv_interval([$start_time])) if $debug;
 
 # Now, sort the genes to show by ortholog groups
 # Put first the ones that have the most orthologs in this set.
@@ -164,6 +135,8 @@ while (my ($orgId, $geneHash) = each %genes) {
 }
 @genes = sort { $b->{nOrth} <=> $a->{nOrth} } @genes;
 
+print STDERR sprintf("Fetch orthology: %.3f seconds\n", tv_interval([$start_time])) if $debug;
+
 # And make ortholog groups
 my @OGs = ();
 my %og = (); # orgId => locusId => which OG if gene is in there
@@ -185,6 +158,8 @@ foreach my $gene (@genes) {
     $og{$gene->{orgId}}{$gene->{locusId}} = $iOG;
 }
 
+print STDERR sprintf("Make OGs: %.3f seconds\n", tv_interval([$start_time])) if $debug;
+
 my @headings = ['&nbsp', 'Organism', 'Gene', 'Name', 'Description', 'Fitness (Lower)', 'Fitness (Upper)'];  #Experiment
 my @trows = ( $cgi->Tr({ -valign => 'middle', -align => 'center' }, map { th($_) } @headings ) );
 
@@ -202,14 +177,10 @@ foreach my $og (@OGs) {
         }
         if ($row == 3 and scalar(@$og) > 4) {
             # my $color = $shade % 2 ? "#DDDDDD" : "#FFFFFF";
-            push @trows, summaryRow($og, $shade);
+            push @trows, summaryRow($og, $shade, 4);
             push @trows, qq[<tr class="header3"><th colspan="8"><center><span>Collapse -</span></center></th></tr>];
         }
-        if ($singletonHead == 1) {
-            push @trows, RowsForGene($gene, $shade, "", $row);
-        } else {
-            push @trows, RowsForGene($gene, $shade, $group, $row);
-        }
+        push @trows, RowForGene($gene, $shade, $singletonHead == 1 ? "" : $group, $row);
         $row++;
     }
     $shade++;
@@ -231,56 +202,50 @@ print
 $dbh->disconnect();
 Utils::endHtml($cgi);
 
-sub summaryRow($$) {
-    my ($og, $shade) = @_;
+sub summaryRow($$$) {
+    my ($og, $shade, $firstToShow) = @_;
     my $count = scalar(@$og) - 3;
     my @row;
     my @showOrgs = ();
+    my $i = 0;
 
     foreach my $gene(@$og) {
         my $orgId = $gene->{orgId};
         my $genome = $orginfo->{$orgId}{genome};
         my $genomeShort = $genome;
-        $genomeShort =~ s/^(.)\S+/\1./;
+        $genomeShort =~ s/^(.)\S+/$1./;
         my $locusId = $gene->{locusId};
 
         push @showOrgs, $cgi->a({href=>"orthFit.cgi?orgId=$orgId&locusId=$locusId"
                                  . "&expGroup=" . uri_escape($expGroup)
                                  . "&condition1=" . uri_escape($condition1),
                                  title=>"$gene->{desc}"},
-                                $genomeShort);
+                                $genomeShort)
+            if $i >= $firstToShow;
+        $i++;
     }
     
     push @row, $cgi->Tr(
         {-class=>'header2', -valign => 'middle', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF"},
         td(span({class=>"deco"}, a({title=>"Expand"}, '+'))),
-        td({colspan=>"6"}, "$count more from " . join(" ", @showOrgs))
+        td({colspan=>"6"}, "$count more from " . join(", ", @showOrgs))
     );
     return @row;
 }
 
 	
-sub RowsForGene($$$$) {
+sub RowForGene($$$$) {
     my ($gene,$shade,$group,$row) = @_;
-    my @trows = ();
    
     # my $firstForGene = 1;
     my $orgId = $gene->{orgId};
     my $showId = $gene->{sysName} || $gene->{locusId};
     my $genome = $orginfo->{$orgId}{genome};
     my $genomeShort = $genome;
-    $genomeShort =~ s/^(.)\S+/\1./;
+    $genomeShort =~ s/^(.)\S+/$1./;
     my $locusId = $gene->{locusId};
 
-    my @fitList = ();
-    my %fitHash;
-    foreach my $expName (sort keys %{ $gene->{fit} }) {
-        my $fit = $gene->{fit}{$expName}{fit};
-  	    my $t = $gene->{fit}{$expName}{t};
-  	    push @fitList, $fit;
-          $fitHash{$fit} = $t;
-    }
-    my ($min, $max) = minmax @fitList;
+    my ($min,$max,$minT,$maxT) = @{ $gene->{values} };
     my $rowLabel = "";
     my $collapse = "";
     # q[-valign => 'middle', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF"];
@@ -292,7 +257,7 @@ sub RowsForGene($$$$) {
     my $orthFitURI = "orthFit.cgi?orgId=$orgId&locusId=$locusId"
         . "&expGroup=" . uri_escape($expGroup)
         . "&condition1=" . uri_escape($condition1);
-    push @trows, $cgi->Tr(
+    return $cgi->Tr(
         { -class=> $collapse, -valign => 'middle', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF" },
         td($rowLabel),
         td( a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId},  -title => $genome },  $genomeShort)),
@@ -300,19 +265,18 @@ sub RowsForGene($$$$) {
         td( $gene->{gene}),
         td( $gene->{desc}),
         td( { -bgcolor => Utils::fitcolor($min), -style=>'text-align: center;' },
-            a( { -title => sprintf("Click to compare (t = %.1f)",$fitHash{$min}), 
+            a( { -title => sprintf("Click to compare (t = %.1f to %.1f)",$minT,$maxT),
                  -style => "color: rgb(0,0,0)",
                  -onMouseOver=>"this.style.color='#CC0024'",
                  -onMouseOut=>"this.style.color='#000000'",
                  -href => $orthFitURI },
                sprintf("%.1f",$min) ) ),
         td( { -bgcolor => Utils::fitcolor($max), -style=>'text-align: center;' },
-            a( { -title => sprintf("Click to compare (t = %.1f)",$fitHash{$max}), 
+            a( { -title => sprintf("Click to compare (t = %.1f to %.1f)",$minT,$maxT),
                  -style => "color: rgb(0,0,0)",
                  -onMouseOver=>"this.style.color='#CC0024'",
                  -onMouseOut=>"this.style.color='#000000'",
                  -href => $orthFitURI },
                sprintf("%.1f",$max) ) )
 	    );
-    return @trows;
 }
