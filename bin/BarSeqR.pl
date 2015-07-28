@@ -171,7 +171,7 @@ END
 		push @pcfileThis, $pcfile;
 	    } elsif (!exists $sets{$pcfile} && lc(substr($pcfile, 0, length($set))) eq lc($set)) {
 		my $postfix = substr($pcfile, length($set));
-		if ($postfix eq "" || $postfix =~ m/^_?[a-zA-Z]$/ || $postfix =~ m/^_rep[a-zA-Z0-9]+$/ || $postfix =~ m/seq[a-zA-Z0-9]+$/) {
+		if ($postfix eq "" || $postfix =~ m/^_?[a-zA-Z]$/ || $postfix =~ m/^_rep[a-zA-Z0-9]+$/ || $postfix =~ m/seq[a-zA-Z0-9]+$/ || $postfix =~ m/^_re$/) {
 		    print STDERR "Found extra file $pcfile for $set\n";
 		    push @pcfileThis, $pcfile;
 		}
