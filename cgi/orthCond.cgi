@@ -24,8 +24,8 @@ use Utils;
 use URI::Escape;
 use Time::HiRes qw(gettimeofday tv_interval);
 
-sub RowForGene($$$$); # gene object, shade or not => the row
-sub summaryRow($$$); # ortholog group
+sub RowForGene($$$$); # gene object, shade or not, which row (0 indexed) => the row
+sub summaryRow($$$); # ortholog group, shade, first to include (1 indexed)
 
 my $cgi=CGI->new;
 my $style = Utils::get_style();
@@ -203,11 +203,10 @@ $dbh->disconnect();
 Utils::endHtml($cgi);
 
 sub summaryRow($$$) {
-    my ($og, $shade, $firstToShow) = @_;
-    my $count = scalar(@$og) - 3;
+    my ($og, $shade, $firstToInclude) = @_; # firstToInclude is 1-based
+    my $i = 1;
     my @row;
     my @showOrgs = ();
-    my $i = 0;
 
     foreach my $gene(@$og) {
         my $orgId = $gene->{orgId};
@@ -221,10 +220,11 @@ sub summaryRow($$$) {
                                  . "&condition1=" . uri_escape($condition1),
                                  title=>"$gene->{desc}"},
                                 $genomeShort)
-            if $i >= $firstToShow;
+            if $i >= $firstToInclude;
         $i++;
     }
     
+    my $count = scalar(@$og) - ($firstToInclude-1);
     push @row, $cgi->Tr(
         {-class=>'header2', -valign => 'middle', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF"},
         td(span({class=>"deco"}, a({title=>"Expand"}, '+'))),
@@ -233,7 +233,7 @@ sub summaryRow($$$) {
     return @row;
 }
 
-	
+# $row is 0-indexed; $group is the ortholog group number (1-indexed)
 sub RowForGene($$$$) {
     my ($gene,$shade,$group,$row) = @_;
    
