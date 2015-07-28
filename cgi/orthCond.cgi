@@ -22,6 +22,8 @@ use List::MoreUtils qw( minmax );
 
 use lib "../lib";
 use Utils;
+use URI::Escape;
+
 sub RowsForGene($$$$); # gene object, shade or not => list of rows
 
 my $cgi=CGI->new;
@@ -151,14 +153,16 @@ while (my ($orgId, $geneHash) = each %genes) {
 	my $orth = $gene->{orth};
 	my $nOrth = 0;
 	while (my ($orthTax,$orthObj) = each %$orth) {
-	    $nOrth++ if exists $genes{$orthTax}{$orthObj->{locusId}};
+            # avoid a subtle bug -- exists $genes{$orthTax}{$orthId} would silently create
+            # $genes{$orthTax} and screw up the each %genes loop so that an organism
+            # could get processed twice.
+	    $nOrth++ if exists $genes{$orthTax} && exists $genes{$orthTax}{$orthObj->{locusId}};
 	}
 	$gene->{nOrth} = $nOrth;
 	push @genes, $gene;
     }
 }
 @genes = sort { $b->{nOrth} <=> $a->{nOrth} } @genes;
-
 
 # And make ortholog groups
 my @OGs = ();
@@ -230,10 +234,8 @@ Utils::endHtml($cgi);
 sub summaryRow($$) {
     my ($og, $shade) = @_;
     my $count = scalar(@$og) - 3;
-    my $orgs = "$count more from ";
     my @row;
-    my $ind = 0;
-    my $len = scalar(@$og) - 1;
+    my @showOrgs = ();
 
     foreach my $gene(@$og) {
         my $orgId = $gene->{orgId};
@@ -241,19 +243,18 @@ sub summaryRow($$) {
         my $genomeShort = $genome;
         $genomeShort =~ s/^(.)\S+/\1./;
         my $locusId = $gene->{locusId};
-       
-        if ($ind > 2 and $ind < $len) {
-            $orgs = $orgs . $cgi->a({href=>"orthFit.cgi?orgId=$orgId&locusId=$locusId&expGroup=$expGroup&condition1=$condition1", title=>"$gene->{desc}"},$genomeShort).  ", ";
-        } elsif ($ind == $len) {
-             $orgs = $orgs . $cgi->a({href=>"orthFit.cgi?orgId=$orgId&locusId=$locusId&expGroup=$expGroup&condition1=$condition1", title=>"$gene->{desc}"},$genomeShort);
-        }
-        $ind += 1;
+
+        push @showOrgs, $cgi->a({href=>"orthFit.cgi?orgId=$orgId&locusId=$locusId"
+                                 . "&expGroup=" . uri_escape($expGroup)
+                                 . "&condition1=" . uri_escape($condition1),
+                                 title=>"$gene->{desc}"},
+                                $genomeShort);
     }
     
     push @row, $cgi->Tr(
         {-class=>'header2', -valign => 'middle', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF"},
         td(span({class=>"deco"}, a({title=>"Expand"}, '+'))),
-        td({colspan=>"6"}, $orgs)
+        td({colspan=>"6"}, "$count more from " . join(" ", @showOrgs))
     );
     return @row;
 }
@@ -288,36 +289,30 @@ sub RowsForGene($$$$) {
         $collapse = 'header';
         # q[-class=>'header', -valign => 'middle', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF"];
     }
+    my $orthFitURI = "orthFit.cgi?orgId=$orgId&locusId=$locusId"
+        . "&expGroup=" . uri_escape($expGroup)
+        . "&condition1=" . uri_escape($condition1);
     push @trows, $cgi->Tr(
         { -class=> $collapse, -valign => 'middle', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF" },
-                td($rowLabel),
-			      td( 
-                  #$firstForGene ? 
-                  a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId},  -title => $genome },  $genomeShort)),# : "&nbsp;" ),
-			      td( 
-                    #$firstForGene ? 
-                    a({ -href => "myFitShow.cgi?orgId=$orgId&gene=$locusId" }, $showId)),
-				  #: "&nbsp"),
-			      td( #$firstForGene ? 
-                  $gene->{gene}),#: "&nbsp;" ),
-			      td( 
-                  #$firstForGene ? 
-                  $gene->{desc}), #: "&nbsp;" ),
-			      # td( a({ -href => "exp.cgi?orgId=$orgId&expName=$expName" }, $expDesc{$orgId}{$expName}) ),
-			      td( { -bgcolor => Utils::fitcolor($min), -style=>'text-align: center;' },
-				  a( { -title => sprintf("Click to compare (t = %.1f)",$fitHash{$min}), 
-                    -style => "color: rgb(0,0,0)",
-                     onMouseOver=>"this.style.color='#CC0024'", onMouseOut=>"this.style.color='#000000'",
-				       -href => "orthFit.cgi?orgId=$orgId&locusId=$locusId&expGroup=$expGroup&condition1=$condition1"},
-				     sprintf("%.1f",$min) ) ),
-                  td( { -bgcolor => Utils::fitcolor($max), -style=>'text-align: center;' },
-                  a( { -title => sprintf("Click to compare (t = %.1f)",$fitHash{$max}), 
-                    -style => "color: rgb(0,0,0)",
-                    onMouseOver=>"this.style.color='#CC0024'", onMouseOut=>"this.style.color='#000000'",
-                       -href => "orthFit.cgi?orgId=$orgId&locusId=$locusId&expGroup=$expGroup&condition1=$condition1"},
-                     sprintf("%.1f",$max) ) )
+        td($rowLabel),
+        td( a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId},  -title => $genome },  $genomeShort)),
+        td( a({ -href => "myFitShow.cgi?orgId=$orgId&gene=$locusId" }, $showId)),
+        td( $gene->{gene}),
+        td( $gene->{desc}),
+        td( { -bgcolor => Utils::fitcolor($min), -style=>'text-align: center;' },
+            a( { -title => sprintf("Click to compare (t = %.1f)",$fitHash{$min}), 
+                 -style => "color: rgb(0,0,0)",
+                 -onMouseOver=>"this.style.color='#CC0024'",
+                 -onMouseOut=>"this.style.color='#000000'",
+                 -href => $orthFitURI },
+               sprintf("%.1f",$min) ) ),
+        td( { -bgcolor => Utils::fitcolor($max), -style=>'text-align: center;' },
+            a( { -title => sprintf("Click to compare (t = %.1f)",$fitHash{$max}), 
+                 -style => "color: rgb(0,0,0)",
+                 -onMouseOver=>"this.style.color='#CC0024'",
+                 -onMouseOut=>"this.style.color='#000000'",
+                 -href => $orthFitURI },
+               sprintf("%.1f",$max) ) )
 	    );
-	# $firstForGene = 0;
-
     return @trows;
 }

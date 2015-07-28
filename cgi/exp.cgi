@@ -22,6 +22,7 @@ use DBI;
 
 use lib "../lib";
 use Utils;
+use URI::Escape;
 
 my $cgi=CGI->new;
 # my $style = Utils::get_style();
@@ -157,7 +158,8 @@ if (@fit > 0) { # show the table
 			      	# style => "color:rgb(0,0,0)",
 				     title => "Compare to data from similar experiments or orthologs",
 				     href => "orthFit.cgi?orgId=$orgId&locusId=$row->{locusId}"
-					      . "&expGroup=$exp->{expGroup}&condition1=$exp->{condition_1}" },
+					      . "&expGroup=" . uri_escape($exp->{expGroup})
+                                              . "&condition1=" . uri_escape($exp->{condition_1}) },
 				 "compare")) );
     }
     print
@@ -222,7 +224,8 @@ if ($show ne "specific") {
 #     if $show ne "quality";
 
 print
-    p(a({href => "orthCond.cgi?expGroup=$exp->{expGroup}&condition1=$exp->{condition_1}"},
+    p(a({href => "orthCond.cgi?expGroup=" . uri_escape($exp->{expGroup})
+         . "&condition1=" . uri_escape($exp->{condition_1})},
 	"Specific phenotypes for $exp->{expGroup} $exp->{condition_1} across organisms"));
     
 $dbh->disconnect();

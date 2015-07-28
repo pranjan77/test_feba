@@ -25,6 +25,7 @@ use DBI;
 
 use lib "../lib";
 use Utils;
+use URI::Escape;
 
 my $cgi=CGI->new;
 
@@ -69,13 +70,12 @@ my @headings = qw{Organism Group Conditions Experiments};
 my @trows = ( Tr({ -valign => 'top', -align => 'center' }, map { th($_) } \@headings) );
 foreach my $row (@$cond) {
     push @trows, Tr({ -valign => 'top', -align => 'left' },
-    	# display result row by row
-	    td([ $orginfo-> {$row->{orgId}}{genome}, #organism
-		 	$row->{expGroup} || "unrecorded", #group
-		 	$row->{nCond}, #conditions
-		 	a( { href => "exps.cgi?orgId=$orgId&expGroup=$row->{expGroup}"},
-		    $row->{nExp} ), #experiments
-		 ]));
+                    td([ $orginfo-> {$row->{orgId}}{genome}, #organism
+                         $row->{expGroup} || "unrecorded", #group
+                         $row->{nCond}, #conditions
+                         a( { href => "exps.cgi?orgId=$orgId&expGroup=" . uri_escape($row->{expGroup}) },
+                            $row->{nExp} ), #experiments
+                       ]));
 }
 
 print table({cellspacing => 0, cellpadding => 3}, @trows);

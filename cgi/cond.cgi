@@ -17,6 +17,7 @@ use DBI;
 
 use lib "../lib";
 use Utils;
+use URI::Escape;
 
 my $cgi=CGI->new;
 
@@ -48,9 +49,11 @@ foreach my $row (@$cond) {
     push @trows, Tr({ -valign => 'top', -align => 'left' },
 		    td([ $row->{condition_1} || "unrecorded",
 			 $row->{nOrg},
-			 a( { href => "exps.cgi?expGroup=$expGroup&condition1=$row->{condition_1}" },
+			 a( { href => "exps.cgi?expGroup=" . uri_escape($expGroup)
+                                  . "&condition1=" . uri_escape($row->{condition_1}) },
 			    $row->{nExp} ),
-			 a( { href => "orthCond.cgi?expGroup=$expGroup&condition1=$row->{condition_1}" },
+			 a( { href => "orthCond.cgi?expGroup=" . uri_escape($expGroup)
+                                  . "&condition1=" . uri_escape($row->{condition_1}) },
 			    "compare" ) ]));
 }
 

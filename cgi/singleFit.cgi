@@ -26,6 +26,7 @@ use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
 
 use lib "../lib";
+use URI::Escape;
 use Utils;
 
 my $cgi=CGI->new;
@@ -184,7 +185,9 @@ if (@$hits == 0) {
 			    td(a({ 
 			    	# style => "color:rgb(0,0,0)",
 				   title => "Compare to data from similar experiments or orthologs",
-				   href => "orthFit.cgi?orgId=$orgId&locusId=$locusId&expGroup=$exp->{expGroup}&condition1=$exp->{condition_1}" }),
+				   href => "orthFit.cgi?orgId=$orgId&locusId=$locusId"
+                                       . "&expGroup=" . uri_escape($exp->{expGroup})
+                                       . "&condition1=" . uri_escape($exp->{condition_1}) }),
 				 "compare") );
 	    $lastGroup = $group if $showAll;
 	}

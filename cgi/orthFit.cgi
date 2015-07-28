@@ -27,6 +27,7 @@ use DBI;
 
 use lib "../lib";
 use Utils;
+use URI::Escape;
 
 my $cgi=CGI->new;
 # my $style = Utils::get_style();
@@ -109,7 +110,8 @@ foreach my $o (@genes) {
 print
     table({ cellpadding => 3, cellspacing =>0}, @trows),
     $nSkipOrth ? p("$nSkipOrth orthologs are not shown because they lack fitness data for this condition (or they lack data entirely)") : "",
-    p(a({href => "orthCond.cgi?expGroup=$expGroup&condition1=$condition1"}, "Specific phenotypes for $expGroup $condition1 across organisms")),
+    p(a({href => "orthCond.cgi?expGroup=" . uri_escape($expGroup) . "&condition1=" . uri_escape($condition1) },
+        "Specific phenotypes for $expGroup $condition1 across organisms")),
     p(a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Show all homologs"));
 
 

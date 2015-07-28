@@ -64,7 +64,7 @@ div({-id=>"ntcontent"},
         a({href=>"orgAll.cgi"},'Organisms<BR>',img({src=>"http://i.imgur.com/QUcjMNZ.png"}))
         ),
       td({class=>"searchbar"},
-        'Browse Conditions:<BR><BR>', a({href=>"cond.cgi?expGroup=carbon source", title=>"Carbon Sources"},"Carbon Sources<BR>"), a({href=>"cond.cgi?expGroup=nitrogen source", title=>"Nitrogen Sources"},"Nitrogen Sources<BR>"), a({href=>"cond.cgi?expGroup=stress", title=>"Stresses"},"Stresses"),
+        'Browse Conditions:<BR><BR>', a({href=>"cond.cgi?expGroup=carbon%20source", title=>"Carbon Sources"},"Carbon Sources<BR>"), a({href=>"cond.cgi?expGroup=nitrogen source", title=>"Nitrogen Sources"},"Nitrogen Sources<BR>"), a({href=>"cond.cgi?expGroup=stress", title=>"Stresses"},"Stresses"),
         )
       )
     ),
