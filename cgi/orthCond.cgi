@@ -71,22 +71,24 @@ my $start = Utils::start_page("$title");
 
 # $(this).find('span').text(function(_, value){return value=='Collapse -'?'Expand +':'Collapse -'});
 
+# tr.header is the first for each gene
+# tr.header2 is the expandable row
+# tr.header3 is the row that collapses it back down
+#
 my $js =  q[<script type="text/javascript" src="../images/jquery-1.11.3.min.js"></script>
 <script type="text/javascript">$(document).ready(function(){ 
-    $('tr.header2').nextUntil('tr.header').hide();
+    $('tr.header2').nextUntil('tr.header').hide(); // after each tr.header2, hide rows until the next header
     $('tr.header2').click(function(){
+	// click on header2 to hide it and turn on elements until next header
         $(this).toggle();
-        //$('tr.header3').show();
-        //$('tr.header2').hide();
-        //$(this).find('span').text(function(_, value){return value=='+'?'-':'+'});
         $(this).nextUntil('tr.header').css('display', function(i,v){
             return this.style.display === 'table-row' ? 'none' : 'table-row';
         });
     });
     $('tr.header3').click(function(){
+        // click on header3 to hide it and turn off elements until next header, but why show *all* header2s ?
         $(this).toggle();
         $('tr.header2').show();
-        //$('tr.header3').hide();
         $(this).nextUntil('tr.header').css('display', function(i,v){
             return this.style.display === 'table-row' ? 'none' : 'table-row';
         });
