@@ -26,7 +26,7 @@ The other dependencies are perl modules:
 	CGI
 	DBI
 	List::Util;
-	Time::HiRes (for making unique file names)
+	Time::HiRes (for making unique file names, and for timing some cgi's with debug=1)
 	Bio::SeqIO (used to read FASTA files; could be replaced)
 
 The front page for the web site is:
