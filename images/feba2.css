@@ -118,8 +118,7 @@ a:hover {
     min-height: 40px;
     margin: 0px 40% 20px 10px;
     background-color: #40C0CB;    /*#00A8C6;*/
-	font-weight: bold;
-    
+	font-weight: bold;        
 }
 
 /*a box to center the links within the navigation bar*/
@@ -127,9 +126,19 @@ a:hover {
     position: relative;
     margin: 0 auto;
 /*    background-color: black;*/
-    height: 40px;
+    min-height: 40px;
+    /*max-height: 80px;*/
     max-width: 780px;
+    background-color: #40C0CB;
 	left: 0;
+	display: -webkit-box;      /* OLD - iOS 6-, Safari 3.1-6 */
+  	display: -moz-box;         /* OLD - Firefox 19- (buggy but mostly works) */
+  	display: -ms-flexbox;      /* TWEENER - IE 10 */
+  	display: -webkit-flex;     /* NEW - Chrome */
+  	display: flex; 
+  	flex-wrap: wrap;
+  	align-items: center;
+  	align-content: flex-start;
 }
 
 /*the box for each link on the navigation bar*/
@@ -145,6 +154,7 @@ a:hover {
 	-moz-transition: background-color 0.5s ease-in-out; 	
 	-ms-transition: background-color 0.50s ease-in-out;	
 	-o-transition: background-color 0.50s ease-in-out;
+	flex: 1 1 auto;
 }
 
 #nav li:hover {
@@ -173,7 +183,7 @@ a:hover {
 #nav li.header:hover {
 	background-color: #40C0CB;
 	border-bottom: 0px #40C0CB solid;
-	height: 0px;
+	/*height: 0px;*/
 }
 
 /*the content that includes everything except the nav bar. includes tabs.*/
@@ -561,7 +571,7 @@ p.buttons {
 p.buttons:nth-child(1) {position: absolute; float: left; }
 p.buttons:nth-child(2) {position: absolute; float: right;}
 
-
+/*for the "+" in expanding/collapsing sections on orthCond*/
 span.deco {
 	font-weight: bold;
 	border: 1px solid darkgrey;
@@ -571,6 +581,16 @@ span.deco {
 	padding: 2px;
 }
 
+/*for the "Nearby Genes" arrows on geneOverview*/
+svg.arrows {
+	margin: 0 auto !important;
+	max-width: 800px;
+	max-height: 100px;
+	border-left: 2px darkgray solid;
+	border-right: 2px darkgray solid;
+	padding-left: 5px;
+	padding-right: 5px;
+}
 
 /*to handle heatmap button on cofit pages*/
 .floatbox2 {
@@ -611,6 +631,7 @@ h3.short {
 @media screen and (max-width: 1150px) {
 	table {
 		width: 100%;
+		display: inline-table;
 	}
 	.floatbox {
 /*		border: 2px 0px #011B47 solid; */
