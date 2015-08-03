@@ -11,7 +11,7 @@
 # Required CGI parameters:
 # orgId -- which organism
 # and either
-#	scaffoldId, begin, pos -- the range of interest (limited to 50 kb)
+#	scaffoldId, begin, end -- the range of interest (limited to 50 kb)
 # or
 #	locusId -- which gene to show (by default, range is exactly the width of the gene)
 # Optional CGI parameters:
