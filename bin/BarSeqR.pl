@@ -114,7 +114,13 @@ END
 	$exp->{Condition_2} =~ s/$alpha/a/g;
     }
     @exps = grep { $_->{Description} ne "" } @exps;
-    if (scalar(@sets) == 0) { # no pre-specified set(s)
+    my $prespec_sets = scalar(@sets) > 0;
+    if ($prespec_sets) {
+	# ignore experiments not in pre-specified sets
+	my %sets = map { $_ => 1 } @sets;
+	@exps = grep { exists $sets{ $_->{SetName} } } @exps;
+	die "No experiments in specified sets (having Description filled out)\n" if scalar(@exps) == 0;
+    } else {
 	# ignore tests
 	my %sets = map { $_->{SetName} => 1 } @exps;
 	foreach my $set (keys %sets) {
@@ -132,11 +138,6 @@ END
 	    push @sets, $set unless exists $setsSeen{$set};
 	    $setsSeen{$set} = 1;
 	}
-    } else {
-	# ignore experiments not in pre-specified sets
-	my %sets = map { $_ => 1 } @sets;
-	@exps = grep { exists $sets{ $_->{SetName} } } @exps;
-	die "No experiments in specified sets (having Description filled out)\n" if scalar(@exps) == 0;
     }
 
     my @genes = &ReadTable($genesfile, qw{locusId scaffoldId begin end strand});
@@ -164,16 +165,19 @@ END
     die "No *.poolcount files in $indir\n" if @pcfiles == 0;
     my %sets = map { $_ => 1 } @sets;
     my %setFiles = (); # set to list of prefixes for poolcount files
+    my %pcToSet = (); # pcFile to set
     foreach my $set (@sets) {
 	my @pcfileThis = ();
 	foreach my $pcfile (@pcfiles) {
 	    if ($pcfile eq $set) {
 		push @pcfileThis, $pcfile;
+                $pcToSet{$pcfile} = $set;
 	    } elsif (!exists $sets{$pcfile} && lc(substr($pcfile, 0, length($set))) eq lc($set)) {
 		my $postfix = substr($pcfile, length($set));
 		if ($postfix eq "" || $postfix =~ m/^_?[a-zA-Z]$/ || $postfix =~ m/^_rep[a-zA-Z0-9]+$/ || $postfix =~ m/seq[a-zA-Z0-9]+$/ || $postfix =~ m/^_re$/) {
 		    print STDERR "Found extra file $pcfile for $set\n";
 		    push @pcfileThis, $pcfile;
+                    $pcToSet{$pcfile} = $set;
 		}
 	    }
 	}
@@ -186,6 +190,33 @@ END
 	}
     }
     @sets = grep { exists $setFiles{$_} } @sets;
+
+    if (! $prespec_sets) {
+        # look for set files that are not in the metadata
+        foreach my $pcfile (@pcfiles) {
+            if (!exists $pcToSet{$pcfile} && $pcfile !~ m/test/) {
+                print STDERR "Warning: poolcount file with no metadata: $pcfile\n";
+            }
+        }
+    }
+
+    # Build list of experiments for each set
+    my %setExps = ();
+    foreach my $exp (@exps) {
+        push @{ $setExps{$exp->{SetName}} }, $exp;
+    }
+    # And check that each index is unique for each set
+    while (my ($set,$exps) = each %setExps) {
+        my %indexSeen = ();
+        foreach my $exp (@$exps) {
+            my $index = $exp->{Index};
+            if (exists $indexSeen{$index}) {
+                die "Duplicate experiment entries for index $index in set $set";
+            }
+            #else
+            $indexSeen{$index} = 1;
+        }
+    }
 
     print STDERR sprintf("%s %d experiments, %d genes, %d sets for $org\n",
 			 defined $test ? "Test found" : "Processing",
@@ -217,8 +248,8 @@ END
 		$setIndex{$set} = \@index;
 		# check that all Indexes in @exps for this set are present
 		my %index = map { $_ => 1 } @index;
-		foreach my $exp (@exps) {
-		    next unless $exp->{SetName} eq $set;
+		foreach my $exp (@{ $setExps{$set} }) {
+		    die unless $exp->{SetName} eq $set;
 		    print STDERR "WARNING! No field for index $exp->{Index} in $indir/$file.poolcount!\n"
 			unless exists $index{ $exp->{Index} };
 		}
