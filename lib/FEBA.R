@@ -359,7 +359,14 @@ FEBA_Fit = function(expsUsed, all, genes,
 	# note that t0tot does not contain any metadata columns, but t0_gN does
 	t0tot = data.frame(lapply(expsT0, function(x) rowSums(all[,x,drop=F])), check.names=F);
         write("Aggregating Time0 totals",stderr());
-	t0_gN = aggregate(t0tot[has_gene2,,drop=F], list(locusId=all$locusId[has_gene2]), sum);
+
+        # the next few lines are much faster than doing
+	# t0_gN = data.frame(locusId = names(t0_gN_list[[1]]), aggregate(t0tot[has_gene2,,drop=F], list(locusId=all$locusId[has_gene2]), sum);
+        indexBy = as.factor(all$locusId[has_gene2]);
+        t0_gN_list = mclapply(names(t0tot), function(n) tapply(t0tot[has_gene2,n], indexBy, sum));
+        names(t0_gN_list) = names(t0tot);
+        t0_gN = data.frame(locusId=names(t0_gN_list[[1]]), t0_gN_list, check.names=F);
+
 	cat("Central Reads per t0set, in millions:\n");
 	print(colSums(t0_gN[,-1,drop=F])/1e6, digits=2);
 
