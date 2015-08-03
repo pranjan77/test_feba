@@ -11,7 +11,7 @@ sub ReadTable($*) {
     my ($filename,@required) = @_;
     open(IN, "<", $filename) || die "Cannot read $filename";
     my $headerLine = <IN>;
-    chomp $headerLine;
+    $headerLine =~ s/[\r\n]+$//; # for DOS
     my @cols = split /\t/, $headerLine;
     my %cols = map { $cols[$_] => $_ } (0..(scalar(@cols)-1));
     foreach my $field (@required) {
@@ -37,7 +37,7 @@ sub ReadColumnNames($) {
     my $line = <IN>;
     close(IN) || die "Error reading $filename";
 
-    chomp $line;
+    $line =~ s/[\r\n]+$//; # for DOS
     my @cols = split /\t/, $line;
     return @cols;
 }
