@@ -82,6 +82,8 @@ CREATE TABLE Experiment(
    condition_2   TEXT       NOT NULL,
    units_2       TEXT       NOT NULL,
    concentration_2 TEXT     NOT NULL,
+   growthPlate TEXT NOT NULL,
+   growthWells TEXT NOT NULL,
    PRIMARY KEY (orgId, expName)
 );
 
@@ -140,9 +142,24 @@ CREATE INDEX 'domainDbName' on GeneDomain ('domainDb' ASC, 'domainName' ASC);
    If there are no insertions within 1000*kb to 1000*kb+999, then the entry might be omitted.
  */
 CREATE TABLE StrainDataSeek(
-       orgId TEXT not NULL,
-       scaffoldId TEXT not NULL,
+       orgId TEXT NOT NULL,
+       scaffoldId TEXT NOT NULL,
        kb INT NOT NULL,
        seek INT NOT NULL,
        PRIMARY KEY (orgId,scaffoldId,kb)
 );
+
+CREATE TABLE Compounds(
+	compound TEXT NOT NULL,
+        MW REAL,                /* molecular weight in g/mol */
+        CAS TEXT,               /* CAS number usable at commonchemistry.org */
+        PRIMARY KEY (compound)
+);
+
+CREATE TABLE MediaComponents(
+	media TEXT NOT NULL,
+        compound TEXT NOT NULL,
+        concentration REAL,
+        units TEXT
+);
+CREATE INDEX 'MediaComponentsByMedia' on MediaComponents('media' ASC);
