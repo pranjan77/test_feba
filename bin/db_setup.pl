@@ -227,7 +227,7 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
                                  Condition_2 Units_2 Concentration_2});
         my %exps = map {$_->{name} => $_} @exps;
         # fields that are usually in exps but are not enforced
-        my @optional = qw{Temperature pH Shaking Growth.Method Liquid.v..solid Aerobic_v_Anaerobic};
+        my @optional = qw{Temperature pH Shaking Growth.Method Liquid.v..solid Aerobic_v_Anaerobic Growth.Plate.ID Growth.Plate.wells};
         foreach my $field (@optional) {
             if (!exists $exps[0]{$field}) {
                 print STDERR "Field $field is not in $indir/$org/expsUsed -- using blank values\n";
@@ -271,7 +271,10 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
                           "vessel" => "Growth.Method",
                           "aerobic" => "Aerobic_v_Anaerobic",
                           "liquid" => "Liquid.v..solid",
-                          "pH" => "pH");
+                          "pH" => "pH",
+                          "growthPlate" => "Growth.Plate.ID",
+                          "growthWells" => "Growth.Plate.wells"
+                );
             # and lower case these fields
             foreach my $field (qw{Person Media Condition_1 Units_1 Concentration_1
                                  Condition_2 Units_2 Concentration_2}) {
@@ -293,7 +296,8 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
                                  expGroup expDescLong mutantLibrary person dateStarted setName seqindex media
                                  temperature pH vessel aerobic liquid shaking
                                  condition_1 units_1 concentration_1
-                                 condition_2 units_2 concentration_2});
+                                 condition_2 units_2 concentration_2
+                                 growthPlate growthWells});
         }
         EndWork();
     }
