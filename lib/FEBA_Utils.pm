@@ -19,7 +19,7 @@ sub ReadTable($*) {
     }
     my @rows = ();
     while(my $line = <IN>) {
-	chomp $line;
+	$line =~ s/[\r\n]+$//;
 	my @F = split /\t/, $line, -1;
 	die "Wrong number of columns in:\n$line\nin $filename"
 	    unless scalar(@F) == scalar(@cols);
