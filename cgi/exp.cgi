@@ -19,6 +19,7 @@ use strict;
 use CGI qw(:standard Vars -nosticky);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
+sub CompoundToHTML($);
 
 use lib "../lib";
 use Utils;
@@ -89,27 +90,51 @@ print $start, $tabs,
 #     qq[</P></div></div>],
 
 
-
 my @fit = (); # sorted list of fitness values to show
 my $header = undef;
 if ($show eq "") {
-	my $cond1 = $exp->{condition_1} ? join(" ", $exp->{condition_1}, $exp->{concentration_1}, $exp->{units_1}) : "";
-	my $cond2 = $exp->{condition_2} ? join(" ", $exp->{condition_2}, $exp->{concentration_2}, $exp->{units_2}) : "";
-	my $media = $exp->{media};
-	if ($cond2) {
-	    $media = join(" + ", $media, $cond1, $cond2);
-	} elsif ($cond1) {
-	    $media = join(" + ", $media, $cond1);
-	}
-	$media .= " pH=$exp->{pH}" if $exp->{pH} ne "";
-	my @culture = ("Culturing: ". $exp->{mutantLibrary});
-	push @culture, $exp->{vessel} if $exp->{vessel} ne "";
-	push @culture, $exp->{aerobic} if $exp->{aerobic} ne "";
-	push @culture, "at $exp->{temperature} (C)" if $exp->{temperature} ne "";
-	push @culture, "shaken=$exp->{shaking}" if $exp->{shaking} ne "";
-	push @culture, "($exp->{liquid})" if $exp->{liquid} ne "" && lc($exp->{liquid}) ne "liquid";
-
-	print $cgi->p(join("<BR>", "Media: $media", join(", ",@culture), "By: $exp->{person} on $exp->{dateStarted}"));
+    my ($html1,$html2);
+    $html1 = CompoundToHTML( $exp->{condition_1} );
+    $html2 = CompoundToHTML( $exp->{condition_2} );
+    my $cond1 = $exp->{condition_1} ? join(" ", $html1,
+                                           $exp->{concentration_1}, $exp->{units_1}) : "";
+    my $cond2 = $exp->{condition_2} ? join(" ", $html2,
+                                           $exp->{concentration_2}, $exp->{units_2}) : "";
+    my $media = $exp->{media};
+    if ($cond2) {
+        $media = join(" + ", $media, $cond1, $cond2);
+    } elsif ($cond1) {
+        $media = join(" + ", $media, $cond1);
+    }
+    $media .= " pH=$exp->{pH}" if $exp->{pH} ne "";
+    my @culture = ("Culturing: ". $exp->{mutantLibrary});
+    push @culture, $exp->{vessel} if $exp->{vessel} ne "";
+    push @culture, $exp->{aerobic} if $exp->{aerobic} ne "";
+    push @culture, "at $exp->{temperature} (C)" if $exp->{temperature} ne "";
+    push @culture, "shaken=$exp->{shaking}" if $exp->{shaking} ne "";
+    push @culture, "($exp->{liquid})" if $exp->{liquid} ne "" && lc($exp->{liquid}) ne "liquid";
+    
+    my @pieces = ("Media: $media", join(", ",@culture), "By: $exp->{person} on $exp->{dateStarted}");
+    
+    my $mediaComponents = $dbh->selectall_arrayref(qq{SELECT * from MediaComponents LEFT JOIN Compounds USING (compound)
+                                                          WHERE media = ?},
+                                                   { Slice => {} },
+                                                   $exp->{media});
+    if (@$mediaComponents > 0) {
+        my @compStrings = ();
+        foreach my $row (@$mediaComponents) {
+            my $compString = $row->{CAS} ?
+                a({-href => "http://commonchemistry.org/ChemicalDetail.aspx?ref=$row->{CAS}"}, $row->{compound})
+                :  $row->{compound};
+            $compString = "$row->{concentration} $row->{units} $compString" if $row->{concentration} && $row->{units};
+            push @compStrings, $compString;
+        }
+        push @pieces, "Media components: " . small(join(", ", @compStrings));
+    }
+    if ($exp->{growthPlate} ne "" && $exp->{growthWells} ne "") {
+        push @pieces, "Growth plate: $exp->{growthPlate} $exp->{growthWells}";
+    }
+    print join("<BR>\n", @pieces)."\n";
 } elsif ($show eq "specific") {
     $header = "Genes with " . a({href => "help.cgi#specific"}, "specific") . " phenotypes:";
     @fit = @{ $dbh->selectall_arrayref(qq{SELECT * FROM SpecificPhenotype JOIN GeneFitness USING (orgId,expName,locusId)
@@ -230,3 +255,11 @@ print
     
 $dbh->disconnect();
 Utils::endHtml($cgi);
+
+sub CompoundToHTML($) {
+    my ($compound) = @_;
+    return $compound if ! $compound;
+    my ($cas) = $dbh->selectrow_array("SELECT CAS FROM Compounds WHERE compound=?", {}, $compound);
+    return $cas ? a({-href => "http://commonchemistry.org/ChemicalDetail.aspx?ref=$cas"}, $compound)
+        : $compound;
+}
