@@ -1,0 +1,1079 @@
+#### ALP and variants
+# ALP_rich is the definition in Ryan Melnyk's paper. pH should be 7.2.
+ALP_rich
+monobasic sodium phosphate dihydrate	0.49	g/L
+dibasic anhydrous sodium phosphate	0.97	g/L
+KCl	0.1	g/L
+NH4Cl	0.25	g/L
+sodium lactate	4.56	g/L	# 7.6g of 60% wt/wt
+sodium pyruvate	1.10	g/L
+Sodium acetate	0.82	g/L
+yeast extract	2.0	g/L
+#Wolfe's vitamins 10 ml/L
+Pyridoxine-HCl	0.1	mg/L
+p-Aminobenzoic acid	0.05	mg/L
+Lipoic acid	0.05	mg/L
+Nicotinic acid	0.05	mg/L
+Riboflavin	0.05	mg/L
+Thiamine-HCl	0.05	mg/L
+Calcium DL-pantothenate	0.05	mg/L
+Biotin	0.02	mg/L
+Folic acid	0.02	mg/L
+Vitamin B12	0.001	mg/L
+# Wolfe's Minerals, 10 ml/L # same as RCH2 mineral mix
+Nitrilotriacetic acid disodium salt	15	mg/L
+MgSO4 7H2O	30	mg/L
+MnSO4 H2O	5	mg/L
+NaCl	10	mg/L
+FeSO4 7H2O	1	mg/L
+CaCl2 2H2O	1	mg/L
+CoCl2 6H2O	1	mg/L
+ZnCl2	1.3	mg/L
+CuSO4 5H2O	0.1	mg/L
+AlK(SO4)2 12H2O	0.1	mg/L
+Boric Acid	0.1	mg/L
+Na2MoO4 2H2O	0.25	mg/L
+NiCl2 6H2O	0.24	mg/L
+Na2WO4 2H2O	0.25	mg/L
+Na2SeO4	0.2	mg/L
+
+# From Ryan Melnyk. pH should be 7.2
+ALP_defined_noC
+monobasic sodium phosphate dihydrate	0.49	g/L
+dibasic anhydrous sodium phosphate	0.97	g/L
+KCl	0.1	g/L
+NH4Cl	0.25	g/L
+# Wolfe’s Vitamins, 10 ml/L
+Pyridoxine-HCl	0.1	mg/L
+p-Aminobenzoic acid	0.05	mg/L
+Lipoic acid	0.05	mg/L
+Nicotinic acid	0.05	mg/L
+Riboflavin	0.05	mg/L
+Thiamine-HCl	0.05	mg/L
+Calcium DL-pantothenate	0.05	mg/L
+Biotin	0.02	mg/L
+Folic acid	0.02	mg/L
+Vitamin B12	0.001	mg/L
+# Wolfe’s Minerals, 10 ml/L # same as the RCH2 mineral mix
+Nitrilotriacetic acid disodium salt	15	mg/L
+MgSO4 7H2O	30	mg/L
+MnSO4 H2O	5	mg/L
+NaCl	10	mg/L
+FeSO4 7H2O	1	mg/L
+CaCl2 2H2O	1	mg/L
+CoCl2 6H2O	1	mg/L
+ZnCl2	1.3	mg/L
+CuSO4 5H2O	0.1	mg/L
+AlK(SO4)2 12H2O	0.1	mg/L
+Boric Acid	0.1	mg/L
+Na2MoO4 2H2O	0.25	mg/L
+NiCl2 6H2O	0.24	mg/L
+Na2WO4 2H2O	0.25	mg/L
+Na2SeO4	0.2	mg/L
+
+# ALP_richB was used instead of ALP_rich by accident for stress experiments
+ALP_richB
+Na2HPO4 7H2O	0.9713	g/L
+KCl	0.1	g/L
+NH4Cl	0.25	g/L
+yeast extract	2.0	g/L
+sodium lactate	40	mM
+sodium pyruvate	1.10	g/L
+Sodium acetate	0.8203	g/L
+# Wolfe’s Vitamins, 10 ml/L
+Pyridoxine-HCl	0.1	mg/L
+p-Aminobenzoic acid	0.05	mg/L
+Lipoic acid	0.05	mg/L
+Nicotinic acid	0.05	mg/L
+Riboflavin	0.05	mg/L
+Thiamine-HCl	0.05	mg/L
+Calcium DL-pantothenate	0.05	mg/L
+Biotin	0.02	mg/L
+Folic acid	0.02	mg/L
+Vitamin B12	0.001	mg/L
+# Wolfe’s Minerals, 10 ml/L # same as the RCH2 mineral mix
+Nitrilotriacetic acid disodium salt	15	mg/L
+MgSO4 7H2O	30	mg/L
+MnSO4 H2O	5	mg/L
+NaCl	10	mg/L
+FeSO4 7H2O	1	mg/L
+CaCl2 2H2O	1	mg/L
+CoCl2 6H2O	1	mg/L
+ZnCl2	1.3	mg/L
+CuSO4 5H2O	0.1	mg/L
+AlK(SO4)2 12H2O	0.1	mg/L
+Boric Acid	0.1	mg/L
+Na2MoO4 2H2O	0.25	mg/L
+NiCl2 6H2O	0.24	mg/L
+Na2WO4 2H2O	0.25	mg/L
+Na2SeO4	0.2	mg/L
+
+# ALP_mm_minus_carbon was used by accident instead of ALP_defined_noC for some carbon source experiments
+ALP_mm_minus_carbon
+Na2HPO4 7H2O	0.9713	g/L
+KCl	0.1	g/L
+NH4Cl	0.25	g/L
+# Wolfe’s Vitamins, 10 ml/L
+Pyridoxine-HCl	0.1	mg/L
+p-Aminobenzoic acid	0.05	mg/L
+Lipoic acid	0.05	mg/L
+Nicotinic acid	0.05	mg/L
+Riboflavin	0.05	mg/L
+Thiamine-HCl	0.05	mg/L
+Calcium DL-pantothenate	0.05	mg/L
+Biotin	0.02	mg/L
+Folic acid	0.02	mg/L
+Vitamin B12	0.001	mg/L
+# Wolfe’s Minerals, 10 ml/L # same as the RCH2 mineral mix
+Nitrilotriacetic acid disodium salt	15	mg/L
+MgSO4 7H2O	30	mg/L
+MnSO4 H2O	5	mg/L
+NaCl	10	mg/L
+FeSO4 7H2O	1	mg/L
+CaCl2 2H2O	1	mg/L
+CoCl2 6H2O	1	mg/L
+ZnCl2	1.3	mg/L
+CuSO4 5H2O	0.1	mg/L
+AlK(SO4)2 12H2O	0.1	mg/L
+Boric Acid	0.1	mg/L
+Na2MoO4 2H2O	0.25	mg/L
+NiCl2 6H2O	0.24	mg/L
+Na2WO4 2H2O	0.25	mg/L
+Na2SeO4	0.2	mg/L
+
+### DinoMM and variants	
+DinoMM		
+sea salts (Sigma)	20	g/L
+Ammonium Sulfate	0.3	g/L
+Potassium phosphate monobasic	0.1	g/L
+Sodium Acetate	1.37	g/L
+Magnesium sulfate heptahydrate	0.015	g/L
+Nitrilotriacetic acid	0.0075	g/L
+Sodium Chloride	0.005	g/L
+Manganese (II) sulfate monohydrate	0.0075	g/L
+Cobalt chloride hexahydrate	0.0009	g/L
+Zinc sulfate heptahydrate	0.0009	g/L
+Calcium Chloride Dihydrate	0.0005	g/L
+Iron (II) sulfate heptahydrate	0.0005	g/L
+Nickel (II) chloride hexahydrate	0.000125	g/L
+Aluminum potassium sulfate dodecahydrate	0.0001	g/L
+Copper (II) sulfate pentahydrate	0.00005	g/L
+Boric acid	0.00005	g/L
+Sodium Molybdate Dihydrate	0.00005	g/L
+Sodium selenite pentahydrate	0.0000015	g/L
+biotin	0.01	mg/L
+Folic Acid	0.01	mg/L
+Pyridoxine HCl	0.05	mg/L
+Riboflavin	0.025	mg/L
+Thiamine HCl	0.025	mg/L
+Nicotinic Acid	0.025	mg/L
+calcium pantothenate	0.025	mg/L
+Cyanocobalamin	0.0005	mg/L
+4-Aminobenzoic acid 	0.025	mg/L
+Lipoic acid 	0.025	mg/L
+		
+DinoMM_noCarbon		
+sea salts (Sigma)	20	g/L
+Ammonium Sulfate	0.3	g/L
+Potassium phosphate monobasic	0.1	g/L
+Magnesium sulfate heptahydrate	0.015	g/L
+Nitrilotriacetic acid	0.0075	g/L
+Sodium Chloride	0.005	g/L
+Manganese (II) sulfate monohydrate	0.0075	g/L
+Cobalt chloride hexahydrate	0.0009	g/L
+Zinc sulfate heptahydrate	0.0009	g/L
+Calcium Chloride Dihydrate	0.0005	g/L
+Iron (II) sulfate heptahydrate	0.0005	g/L
+Nickel (II) chloride hexahydrate	0.000125	g/L
+Aluminum potassium sulfate dodecahydrate	0.0001	g/L
+Copper (II) sulfate pentahydrate	0.00005	g/L
+Boric acid	0.00005	g/L
+Sodium Molybdate Dihydrate	0.00005	g/L
+Sodium selenite pentahydrate	0.0000015	g/L
+biotin	0.01	mg/L
+Folic Acid	0.01	mg/L
+Pyridoxine HCl	0.05	mg/L
+Riboflavin	0.025	mg/L
+Thiamine HCl	0.025	mg/L
+Nicotinic Acid	0.025	mg/L
+calcium pantothenate	0.025	mg/L
+Cyanocobalamin	0.0005	mg/L
+4-Aminobenzoic acid 	0.025	mg/L
+Lipoic acid 	0.025	mg/L
+		
+DinoMM_noNitrogen		
+sea salts (Sigma)	20	g/L
+Potassium phosphate monobasic	0.1	g/L
+Sodium Acetate	1.37	g/L
+Magnesium sulfate heptahydrate	0.015	g/L
+Nitrilotriacetic acid	0.0075	g/L
+Sodium Chloride	0.005	g/L
+Manganese (II) sulfate monohydrate	0.0075	g/L
+Cobalt chloride hexahydrate	0.0009	g/L
+Zinc sulfate heptahydrate	0.0009	g/L
+Calcium Chloride Dihydrate	0.0005	g/L
+Iron (II) sulfate heptahydrate	0.0005	g/L
+Nickel (II) chloride hexahydrate	0.000125	g/L
+Aluminum potassium sulfate dodecahydrate	0.0001	g/L
+Copper (II) sulfate pentahydrate	0.00005	g/L
+Boric acid	0.00005	g/L
+Sodium Molybdate Dihydrate	0.00005	g/L
+Sodium selenite pentahydrate	0.0000015	g/L
+biotin	0.01	mg/L
+Folic Acid	0.01	mg/L
+Pyridoxine HCl	0.05	mg/L
+Riboflavin	0.025	mg/L
+Thiamine HCl	0.025	mg/L
+Nicotinic Acid	0.025	mg/L
+calcium pantothenate	0.025	mg/L
+Cyanocobalamin	0.0005	mg/L
+4-Aminobenzoic acid 	0.025	mg/L
+Lipoic acid 	0.025	mg/L
+
+# to define
+DinoMM_alphaKetoGlutAcid_NoNitrogen
+DinoMM_SodiumNitrate
+DinoMM_alphaKetoGlutAcid_SodiumNitrate
+DinoMM_noCarbon_HighNutrient
+DinoMM_noNitrogen_HighNutrient
+DinoMM_noNitrogen_HighNutrient_SucroseC
+
+### KB and variants (from Ryan Melnyk)
+KB
+Bacto Peptone	10	g/L
+K2HPO4	1.5	g/L
+glycerol	15	g/L
+MgSO4	0.60	g/L
+
+KB-half	# half-strength KB
+Bacto Peptone	5	g/L
+K2HPO4	0.75	g/L
+glycerol	7.5	g/L
+MgSO4	0.30	g/L
+
+### LB and variants
+LB
+Tryptone	10	g/L
+Yeast Extract	5	g/L
+Sodium Chloride	5	g/L
+
+# to define
+LB 0.8% Agar
+LB 0.4% Agar
+LB 0.3% Agar
+LB 0.2% Agar
+LB 0.1% Agar
+
+LB_Miller_Kan
+Casein	10	g/L
+Yeast Extract	5	g/L
+NaCl	10	g/L
+Kanamycin sulfate	50	mg/L # in recipe as Kanamycin, assume is the sulfate salt
+
+#### marine_broth_2216 and variants
+marine_broth_2216
+Peptone	5	g/L
+Yeast Extract	1	g/L
+Ferric Citrate	0.1	g/L
+Sodium Chloride	19.45	g/L
+Magnesium Chloride	5.9	g/L
+Magnesium Sulfate	3.24	g/L
+Calcium Chloride	1.8	g/L
+Potassium Chloride	0.55	g/L
+Sodium Bicarbonate	0.16	g/L
+Potassium Bromide	0.08	g/L
+Strontium Chloride	34	mg/L
+Boric Acid	22	mg/L
+Sodium Silicate	4	mg/L
+Sodium Fluoride	2.4	mg/L
+Disodium Phosphate	8	mg/L
+
+# to define
+marine_broth_2216_SodiumNitrate
+marine_broth_2216_pH5.5
+marine_broth_2216_pH6
+marine_broth_2216_pH6.5
+marine_broth_2216_pH7
+marine_broth_2216_pH8
+marine_broth_2216_pH9
+marine_broth_2216_pH10
+marine_broth_2216 0.3% Agar
+
+### RCH2_defined and variants
+RCH2_defined
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+Sodium D,L-Lactate	20	mM
+PIPES sesquisodium salt	30	mM
+pyridoxine HCl	0.1	mg/L
+4-Aminobenzoic acid	0.05	mg/L
+Lipoic acid	0.05	mg/L
+Nicotinic Acid	0.05	mg/L
+Riboflavin	0.05	mg/L
+thiamine HCl	0.05	mg/L
+calcium pantothenate	0.05	mg/L
+biotin	0.02	mg/L
+Folic Acid	0.02	mg/L
+Cyanocobalamin	0.001	mg/L
+Magnesium Sulfate Heptahydrate	0.03	g/L
+Nitrilotriacetic acid	0.015	g/L
+Sodium Chloride	0.01	g/L
+Manganese (II) sulfate monohydrate	0.005	g/L
+Cobalt chloride hexahydrate	0.001	g/L
+Zinc sulfate heptahydrate	0.001	g/L
+Calcium Chloride Dihydrate	0.001	g/L
+Iron (II) sulfate heptahydrate	0.001	g/L
+Nickel (II) chloride hexahydrate	0.00025	g/L
+Aluminum potassium sulfate dodecahydrate	0.0002	g/L
+Copper (II) sulfate pentahydrate	0.0001	g/L
+Boric Acid	0.0001	g/L
+Sodium Molybdate Dihydrate	0.0001	g/L
+Sodium selenite pentahydrate	0.003	mg/L
+		
+RCH2_defined_noCarbon
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+PIPES sesquisodium salt	30	mM
+pyridoxine HCl	0.1	mg/L
+4-Aminobenzoic acid	0.05	mg/L
+Lipoic acid	0.05	mg/L
+Nicotinic Acid	0.05	mg/L
+Riboflavin	0.05	mg/L
+thiamine HCl	0.05	mg/L
+calcium pantothenate	0.05	mg/L
+biotin	0.02	mg/L
+Folic Acid	0.02	mg/L
+Cyanocobalamin	0.001	mg/L
+Magnesium Sulfate Heptahydrate	0.03	g/L
+Nitrilotriacetic acid	0.015	g/L
+Sodium Chloride	0.01	g/L
+Manganese (II) sulfate monohydrate	0.005	g/L
+Cobalt chloride hexahydrate	0.001	g/L
+Zinc sulfate heptahydrate	0.001	g/L
+Calcium Chloride Dihydrate	0.001	g/L
+Iron (II) sulfate heptahydrate	0.001	g/L
+Nickel (II) chloride hexahydrate	0.00025	g/L
+Aluminum potassium sulfate dodecahydrate	0.0002	g/L
+Copper (II) sulfate pentahydrate	0.0001	g/L
+Boric Acid	0.0001	g/L
+Sodium Molybdate Dihydrate	0.0001	g/L
+Sodium selenite pentahydrate	0.003	mg/L
+		
+RCH2_defined_noNitrogen
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+Sodium D,L-Lactate	20	mM
+PIPES sesquisodium salt	30	mM
+pyridoxine HCl	0.1	mg/L
+4-Aminobenzoic acid	0.05	mg/L
+Lipoic acid	0.05	mg/L
+Nicotinic Acid	0.05	mg/L
+Riboflavin	0.05	mg/L
+thiamine HCl	0.05	mg/L
+calcium pantothenate	0.05	mg/L
+biotin	0.02	mg/L
+Folic Acid	0.02	mg/L
+Cyanocobalamin	0.001	mg/L
+Magnesium Sulfate Heptahydrate	0.03	g/L
+Nitrilotriacetic acid	0.015	g/L
+Sodium Chloride	0.01	g/L
+Manganese (II) sulfate monohydrate	0.005	g/L
+Cobalt chloride hexahydrate	0.001	g/L
+Zinc sulfate heptahydrate	0.001	g/L
+Calcium Chloride Dihydrate	0.001	g/L
+Iron (II) sulfate heptahydrate	0.001	g/L
+Nickel (II) chloride hexahydrate	0.00025	g/L
+Aluminum potassium sulfate dodecahydrate	0.0002	g/L
+Copper (II) sulfate pentahydrate	0.0001	g/L
+Boric Acid	0.0001	g/L
+Sodium Molybdate Dihydrate	0.0001	g/L
+Sodium selenite pentahydrate	0.003	mg/L
+
+RCH2_Lactate_noTEA_YE_C
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Magnesium Sulfate Heptahydrate	0.4928	g/L
+Calcium Chloride Dihydrate	0.01468	g/L
+Sodium Chloride	0.01	g/L
+Nitrilotriacetic acid	0.0125	g/L
+Manganese (II) sulfate monohydrate	0.005	g/L
+Iron (II) sulfate heptahydrate	0.002	g/L
+Cobalt chloride hexahydrate	0.001	g/L
+Zinc sulfate heptahydrate	0.0013	g/L
+Copper (II) chloride dihydrate	0.00007	g/L
+Aluminum potassium sulfate dodecahydrate	0.0001	g/L
+Boric Acid	0.0001	g/L
+Ammonium heptamolybdate tetrahydrate	0.00018	g/L
+Nickel (II) chloride hexahydrate	0.00024	g/L
+Sodium tungstate dihydrate	0.00025	g/L
+Sodium selenite pentahydrate	0.000278	mg/L
+biotin	0.02	mg/L
+Folic Acid	0.02	mg/L
+pyridoxine HCl	0.1	mg/L
+Riboflavin	0.05	mg/L
+thiamine HCl	0.05	mg/L
+Nicotinic Acid	0.05	mg/L
+Pantothenic acid hemicalcium salt	0.05	mg/L
+Cyanocobalamin	0.001	mg/L
+Potassium 4-aminobenzoate	0.05	mg/L
+Lipoic acid	0.05	mg/L
+Sodium D,L-Lactate	20	mM
+Sodium bicarbonate	2.5	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+Yeast Extract	0.5	g/L
+Casein	0.5	g/L
+
+RCH2_Lactate_Nitrate_YE_C-Fe
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Magnesium Sulfate Heptahydrate	0.4928	g/L
+Calcium Chloride Dihydrate	0.01468	g/L
+Sodium Chloride	0.01	g/L
+Nitrilotriacetic acid	0.0125	g/L
+Manganese (II) sulfate monohydrate	0.005	g/L
+Cobalt chloride hexahydrate	0.001	g/L
+Zinc sulfate heptahydrate	0.0013	g/L
+Copper (II) chloride dihydrate	0.00007	g/L
+Aluminum potassium sulfate dodecahydrate	0.0001	g/L
+Boric Acid	0.0001	g/L
+Ammonium heptamolybdate tetrahydrate	0.00018	g/L
+Nickel (II) chloride hexahydrate	0.00024	g/L
+Sodium tungstate dihydrate	0.00025	g/L
+Sodium selenite pentahydrate	0.000278	mg/L
+biotin	0.02	mg/L
+Folic Acid	0.02	mg/L
+pyridoxine HCl	0.1	mg/L
+Riboflavin	0.05	mg/L
+thiamine HCl	0.05	mg/L
+Nicotinic Acid	0.05	mg/L
+Pantothenic acid hemicalcium salt	0.05	mg/L
+Cyanocobalamin	0.001	mg/L
+Potassium 4-aminobenzoate	0.05	mg/L
+Lipoic acid	0.05	mg/L
+Potassium nitrate	20	mM
+Sodium D,L-Lactate	20	mM
+Sodium bicarbonate	2.5	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+Yeast Extract	0.5	g/L
+Casein	0.5	g/L
+
+RCH2_Lactate_Nitrate
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Magnesium Sulfate Heptahydrate	0.4928	g/L
+Calcium Chloride Dihydrate	0.01468	g/L
+Sodium Chloride	0.01	g/L
+Nitrilotriacetic acid	0.0125	g/L
+Manganese (II) sulfate monohydrate	0.005	g/L
+Iron (II) sulfate heptahydrate	0.002	g/L
+Cobalt chloride hexahydrate	0.001	g/L
+Zinc sulfate heptahydrate	0.0013	g/L
+Copper (II) chloride dihydrate	0.00007	g/L
+Aluminum potassium sulfate dodecahydrate	0.0001	g/L
+Boric Acid	0.0001	g/L
+Ammonium heptamolybdate tetrahydrate	0.00018	g/L
+Nickel (II) chloride hexahydrate	0.00024	g/L
+Sodium tungstate dihydrate	0.00025	g/L
+Sodium selenite pentahydrate	0.000278	mg/L
+biotin	0.02	mg/L
+Folic Acid	0.02	mg/L
+pyridoxine HCl	0.1	mg/L
+Riboflavin	0.05	mg/L
+thiamine HCl	0.05	mg/L
+Nicotinic Acid	0.05	mg/L
+Pantothenic acid hemicalcium salt	0.05	mg/L
+Cyanocobalamin	0.001	mg/L
+Potassium 4-aminobenzoate	0.05	mg/L
+Lipoic acid	0.05	mg/L
+Potassium nitrate	20	mM
+Sodium D,L-Lactate	20	mM
+Sodium bicarbonate	2.5	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+
+RCH2_Lactate_Nitrate_YE
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Magnesium Sulfate Heptahydrate	0.4928	g/L
+Calcium Chloride Dihydrate	0.01468	g/L
+Sodium Chloride	0.01	g/L
+Nitrilotriacetic acid	0.0125	g/L
+Manganese (II) sulfate monohydrate	0.005	g/L
+Iron (II) sulfate heptahydrate	0.002	g/L
+Cobalt chloride hexahydrate	0.001	g/L
+Zinc sulfate heptahydrate	0.0013	g/L
+Copper (II) chloride dihydrate	0.00007	g/L
+Aluminum potassium sulfate dodecahydrate	0.0001	g/L
+Boric Acid	0.0001	g/L
+Ammonium heptamolybdate tetrahydrate	0.00018	g/L
+Nickel (II) chloride hexahydrate	0.00024	g/L
+Sodium tungstate dihydrate	0.00025	g/L
+Sodium selenite pentahydrate	0.000278	mg/L
+biotin	0.02	mg/L
+Folic Acid	0.02	mg/L
+pyridoxine HCl	0.1	mg/L
+Riboflavin	0.05	mg/L
+thiamine HCl	0.05	mg/L
+Nicotinic Acid	0.05	mg/L
+Pantothenic acid hemicalcium salt	0.05	mg/L
+Cyanocobalamin	0.001	mg/L
+Potassium 4-aminobenzoate	0.05	mg/L
+Lipoic acid	0.05	mg/L
+Potassium nitrate	20	mM
+Sodium D,L-Lactate	20	mM
+Sodium bicarbonate	2.5	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+Yeast Extract	0.5	g/L
+
+RCH2_Lactate_Nitrate_YE-Mo-W
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Magnesium Sulfate Heptahydrate	0.4928	g/L
+Calcium Chloride Dihydrate	0.01468	g/L
+Sodium Chloride	0.01	g/L
+Nitrilotriacetic acid	0.0125	g/L
+Manganese (II) sulfate monohydrate	0.005	g/L
+Iron (II) sulfate heptahydrate	0.002	g/L
+Cobalt chloride hexahydrate	0.001	g/L
+Zinc sulfate heptahydrate	0.0013	g/L
+Copper (II) chloride dihydrate	0.00007	g/L
+Aluminum potassium sulfate dodecahydrate	0.0001	g/L
+Boric Acid	0.0001	g/L
+Nickel (II) chloride hexahydrate	0.00024	g/L
+Sodium selenite pentahydrate	0.000278	mg/L
+biotin	0.02	mg/L
+Folic Acid	0.02	mg/L
+pyridoxine HCl	0.1	mg/L
+Riboflavin	0.05	mg/L
+thiamine HCl	0.05	mg/L
+Nicotinic Acid	0.05	mg/L
+Pantothenic acid hemicalcium salt	0.05	mg/L
+Cyanocobalamin	0.001	mg/L
+Potassium 4-aminobenzoate	0.05	mg/L
+Lipoic acid	0.05	mg/L
+Potassium nitrate	20	mM
+Sodium D,L-Lactate	20	mM
+Sodium bicarbonate	2.5	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+Yeast Extract	0.5	g/L
+
+RCH2_noCarbon_Nitrate_YE
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Magnesium Sulfate Heptahydrate	0.4928	g/L
+Calcium Chloride Dihydrate	0.01468	g/L
+Sodium Chloride	0.01	g/L
+Nitrilotriacetic acid	0.0125	g/L
+Manganese (II) sulfate monohydrate	0.005	g/L
+Iron (II) sulfate heptahydrate	0.002	g/L
+Cobalt chloride hexahydrate	0.001	g/L
+Zinc sulfate heptahydrate	0.0013	g/L
+Copper (II) chloride dihydrate	0.00007	g/L
+Aluminum potassium sulfate dodecahydrate	0.0001	g/L
+Boric Acid	0.0001	g/L
+Ammonium heptamolybdate tetrahydrate	0.00018	g/L
+Nickel (II) chloride hexahydrate	0.00024	g/L
+Sodium tungstate dihydrate	0.00025	g/L
+Sodium selenite pentahydrate	0.000278	mg/L
+biotin	0.02	mg/L
+Folic Acid	0.02	mg/L
+pyridoxine HCl	0.1	mg/L
+Riboflavin	0.05	mg/L
+thiamine HCl	0.05	mg/L
+Nicotinic Acid	0.05	mg/L
+Pantothenic acid hemicalcium salt	0.05	mg/L
+Cyanocobalamin	0.001	mg/L
+Potassium 4-aminobenzoate	0.05	mg/L
+Lipoic acid	0.05	mg/L
+Potassium nitrate	20	mM
+Sodium bicarbonate	2.5	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+Yeast Extract	0.5	g/L
+
+RCH2_Lactate_Nitrate_YE-Fe
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Magnesium Sulfate Heptahydrate	0.4928	g/L
+Calcium Chloride Dihydrate	0.01468	g/L
+Sodium Chloride	0.01	g/L
+Nitrilotriacetic acid	0.0125	g/L
+Manganese (II) sulfate monohydrate	0.005	g/L
+Cobalt chloride hexahydrate	0.001	g/L
+Zinc sulfate heptahydrate	0.0013	g/L
+Copper (II) chloride dihydrate	0.00007	g/L
+Aluminum potassium sulfate dodecahydrate	0.0001	g/L
+Boric Acid	0.0001	g/L
+Ammonium heptamolybdate tetrahydrate	0.00018	g/L
+Nickel (II) chloride hexahydrate	0.00024	g/L
+Sodium tungstate dihydrate	0.00025	g/L
+Sodium selenite pentahydrate	0.000278	mg/L
+biotin	0.02	mg/L
+Folic Acid	0.02	mg/L
+pyridoxine HCl	0.1	mg/L
+Riboflavin	0.05	mg/L
+thiamine HCl	0.05	mg/L
+Nicotinic Acid	0.05	mg/L
+Pantothenic acid hemicalcium salt	0.05	mg/L
+Cyanocobalamin	0.001	mg/L
+Potassium 4-aminobenzoate	0.05	mg/L
+Lipoic acid	0.05	mg/L
+Potassium nitrate	20	mM
+Sodium D,L-Lactate	20	mM
+Sodium bicarbonate	2.5	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+Yeast Extract	0.5	g/L
+
+# to define
+RCH2_defined_Glucose_noNitrogen
+RCH2_defined_glucose_MES_Bfr_pH6
+RCH2_defined_glucose
+RCH2_defined_glucose_TAPS_Bfr_pH8
+RCH2_defined_glucose_TAPS_Bfr_pH9
+RCH2_defined_glucose_TAPS
+RCH2_defined_glucose_CAPS
+RCH2_defined_no_vitamin
+RCH2_Lactate_1μM_Fe-Cu
+RCH2_Lactate_YE_1μM_Fe-Cu
+RCH2_defined_TAPS_Bfr_pH9
+
+# ShewMM and variants		
+ShewMM
+Ammonium chloride	1.5	g/L
+Sodium Chloride	1.75	g/L
+Magnesium chloride hexahydrate	0.61	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+Sodium D,L-Lactate	20	mM
+PIPES sesquisodium salt	30	mM
+pyridoxine HCl	0.1	mg/L
+4-Aminobenzoic acid	0.05	mg/L
+Lipoic acid	0.05	mg/L
+Nicotinic Acid	0.05	mg/L
+Riboflavin	0.05	mg/L
+thiamine HCl	0.05	mg/L
+calcium pantothenate	0.05	mg/L
+biotin	0.02	mg/L
+Folic Acid	0.02	mg/L
+Cyanocobalamin	0.001	mg/L
+Magnesium Sulfate Heptahydrate	0.03	g/L
+Nitrilotriacetic acid	0.015	g/L
+Sodium Chloride	0.01	g/L
+Manganese (II) sulfate monohydrate	0.005	g/L
+Cobalt chloride hexahydrate	0.001	g/L
+Zinc sulfate heptahydrate	0.001	g/L
+Calcium Chloride Dihydrate	0.001	g/L
+Iron (II) sulfate heptahydrate	0.001	g/L
+Nickel (II) chloride hexahydrate	0.00025	g/L
+Aluminum potassium sulfate dodecahydrate	0.0002	g/L
+Copper (II) sulfate pentahydrate	0.0001	g/L
+Boric Acid	0.0001	g/L
+Sodium Molybdate Dihydrate	0.0001	g/L
+Sodium selenite pentahydrate	0.003	mg/L
+		
+ShewMM_noCarbon
+Ammonium chloride	1.5	g/L
+Sodium Chloride	1.75	g/L
+Magnesium chloride hexahydrate	0.61	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+PIPES sesquisodium salt	30	mM
+pyridoxine HCl	0.1	mg/L
+4-Aminobenzoic acid	0.05	mg/L
+Lipoic acid	0.05	mg/L
+Nicotinic Acid	0.05	mg/L
+Riboflavin	0.05	mg/L
+thiamine HCl	0.05	mg/L
+calcium pantothenate	0.05	mg/L
+biotin	0.02	mg/L
+Folic Acid	0.02	mg/L
+Cyanocobalamin	0.001	mg/L
+Magnesium Sulfate Heptahydrate	0.03	g/L
+Nitrilotriacetic acid	0.015	g/L
+Sodium Chloride	0.01	g/L
+Manganese (II) sulfate monohydrate	0.005	g/L
+Cobalt chloride hexahydrate	0.001	g/L
+Zinc sulfate heptahydrate	0.001	g/L
+Calcium Chloride Dihydrate	0.001	g/L
+Iron (II) sulfate heptahydrate	0.001	g/L
+Nickel (II) chloride hexahydrate	0.00025	g/L
+Aluminum potassium sulfate dodecahydrate	0.0002	g/L
+Copper (II) sulfate pentahydrate	0.0001	g/L
+Boric Acid	0.0001	g/L
+Sodium Molybdate Dihydrate	0.0001	g/L
+Sodium selenite pentahydrate	0.003	mg/L
+		
+ShewMM_noNitrogen
+Sodium Chloride	1.75	g/L
+Magnesium chloride hexahydrate	0.61	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+Sodium D,L-Lactate	20	mM
+PIPES sesquisodium salt	30	mM
+pyridoxine HCl	0.1	mg/L
+4-Aminobenzoic acid	0.05	mg/L
+Lipoic acid	0.05	mg/L
+Nicotinic Acid	0.05	mg/L
+Riboflavin	0.05	mg/L
+thiamine HCl	0.05	mg/L
+calcium pantothenate	0.05	mg/L
+biotin	0.02	mg/L
+Folic Acid	0.02	mg/L
+Cyanocobalamin	0.001	mg/L
+Magnesium Sulfate Heptahydrate	0.03	g/L
+Nitrilotriacetic acid	0.015	g/L
+Sodium Chloride	0.01	g/L
+Manganese (II) sulfate monohydrate	0.005	g/L
+Cobalt chloride hexahydrate	0.001	g/L
+Zinc sulfate heptahydrate	0.001	g/L
+Calcium Chloride Dihydrate	0.001	g/L
+Iron (II) sulfate heptahydrate	0.001	g/L
+Nickel (II) chloride hexahydrate	0.00025	g/L
+Aluminum potassium sulfate dodecahydrate	0.0002	g/L
+Copper (II) sulfate pentahydrate	0.0001	g/L
+Boric Acid	0.0001	g/L
+Sodium Molybdate Dihydrate	0.0001	g/L
+Sodium selenite pentahydrate	0.003	mg/L
+		
+ShewMM_noCarbonNitrogen
+Sodium Chloride	1.75	g/L
+Magnesium chloride hexahydrate	0.61	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+PIPES sesquisodium salt	30	mM
+pyridoxine HCl	0.1	mg/L
+4-Aminobenzoic acid	0.05	mg/L
+Lipoic acid	0.05	mg/L
+Nicotinic Acid	0.05	mg/L
+Riboflavin	0.05	mg/L
+thiamine HCl	0.05	mg/L
+calcium pantothenate	0.05	mg/L
+biotin	0.02	mg/L
+Folic Acid	0.02	mg/L
+Cyanocobalamin	0.001	mg/L
+Magnesium Sulfate Heptahydrate	0.03	g/L
+Nitrilotriacetic acid	0.015	g/L
+Sodium Chloride	0.01	g/L
+Manganese (II) sulfate monohydrate	0.005	g/L
+Cobalt chloride hexahydrate	0.001	g/L
+Zinc sulfate heptahydrate	0.001	g/L
+Calcium Chloride Dihydrate	0.001	g/L
+Iron (II) sulfate heptahydrate	0.001	g/L
+Nickel (II) chloride hexahydrate	0.00025	g/L
+Aluminum potassium sulfate dodecahydrate	0.0002	g/L
+Copper (II) sulfate pentahydrate	0.0001	g/L
+Boric Acid	0.0001	g/L
+Sodium Molybdate Dihydrate	0.0001	g/L
+Sodium selenite pentahydrate	0.003	mg/L
+		
+ShewMM_noSulfur
+Ammonium chloride	1.5	g/L
+Sodium Chloride	1.75	g/L
+Magnesium chloride hexahydrate	0.61	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+Sodium D,L-Lactate	20	mM
+PIPES sesquisodium salt	30	mM
+pyridoxine HCl	0.1	mg/L
+4-Aminobenzoic acid	0.05	mg/L
+Lipoic acid	0.05	mg/L
+Nicotinic Acid	0.05	mg/L
+Riboflavin	0.05	mg/L
+thiamine HCl	0.05	mg/L
+calcium pantothenate	0.05	mg/L
+biotin	0.02	mg/L
+Folic Acid	0.02	mg/L
+Cyanocobalamin	0.001	mg/L
+Magnesium chloride hexahydrate	0.025	g/L
+Nitrilotriacetic acid	0.015	g/L
+Sodium Chloride	0.01	g/L
+Manganese (II) chloride tetrahydrate	0.006	g/L
+Cobalt chloride hexahydrate	0.001	g/L
+Zinc chloride	0.0005	g/L
+Calcium Chloride Dihydrate	0.001	g/L
+Iron (II) chloride tetrahydrate	0.0007	g/L
+Nickel (II) chloride hexahydrate	0.00025	g/L
+Copper (II) chloride dihydrate	0.0001	g/L
+Boric Acid	0.0001	g/L
+Sodium Molybdate Dihydrate	0.0001	g/L
+Sodium selenite pentahydrate	0.003	mg/L
+
+# to define
+ShewMM_MES_buffer
+
+M9
+glucose	4	g/L
+MgSO4	2	mM
+CaCl2	0.1	mM
+# from M9 salts no N, diluted by 5x
+Na2HPO4 7H2O	12.8	g/L
+KH2PO4	3	g/L
+NaCl	0.5	g/L
+NH4Cl	1.0	g/L
+
+M9-D2O
+deuterated water	100	%
+glucose	4	g/L
+MgSO4	2	mM
+CaCl2	0.1	mM
+Na2HPO4 7H2O	12.8	g/L
+KH2PO4	3	g/L
+NaCl	0.5	g/L
+NH4Cl	1.0	g/L
+
+M9-Dgluc
+deuterated glucose	4	g/L
+MgSO4	2	mM
+CaCl2	0.1	mM
+Na2HPO4 7H2O	12.8	g/L
+KH2PO4	3	g/L
+NaCl	0.5	g/L
+NH4Cl	1.0	g/L
+
+M9-D2O-Dgluc
+deuterated water	100	%
+deuterated glucose	4	g/L
+MgSO4	2	mM
+CaCl2	0.1	mM
+Na2HPO4 7H2O	12.8	g/L
+KH2PO4	3	g/L
+NaCl	0.5	g/L
+NH4Cl	1.0	g/L
+
+M9 minimal media_noCarbon
+MgSO4	2	mM
+CaCl2	0.1	mM
+Na2HPO4 7H2O	12.8	g/L
+KH2PO4	3	g/L
+NaCl	0.5	g/L
+NH4Cl	1.0	g/L
+
+M9 minimal media_noNitrogen # remove space, math
+glucose	4	g/L
+MgSO4	2	mM
+CaCl2	0.1	mM
+Na2HPO4 7H2O	12.8	g/L
+KH2PO4	3	g/L
+NaCl	0.5	g/L
+
+M63_no_sulfur	# was M9_no_sulfur
+KH2PO4	64	mM
+NH4Cl	33	mM
+MgCl2	1	mM
+Thiamine	0.3	mM
+D-glucose	2	g/L
+#1% sulfur-free trace elements (SO4 replaced with Cl2)
+Nitrilotriacetic acid disodium salt	0.015	g/L
+MgCl2	0.03	g/L
+MnCl2	0.005	g/L
+NaCl	0.01	g/L
+FeCl2 7H2O	0.001	g/L
+CaCl2 2H2O	0.001	g/L
+CoCl2 6H2O	0.001	g/L
+ZnCl2	0.0013	g/L
+CuCl2	0.0001	g/L
+AlKCl2	0.0001	g/L
+Boric Acid	0.0001	g/L
+Na2MoO4 2H2O	0.00025	g/L
+NiCl2 6H2O	0.00024	g/L
+Na2WO4 2H2O	0.00025	g/L
+Na2SeO4	0.0002	g/L
+
+MOPS Rich Defined media_noCarbon
+3-(N-morpholino)propanesulfonic acid	40	mM
+Tricine	4.0	mM
+Iron Sulfate	0.01	mM
+Ammonium Chloride	9.5	mM
+Potassium Sulfate	0.276	mM
+Calcium Chloride	0.0005	mM
+Magnesium Chloride	0.525	mM
+Sodium Chloride	50	mM
+Ammonium Molybdate	3e-9	M
+Boric Acid	4e-7	M
+Cobalt Chloride	3e-8	M
+Cupric Sulfate	1e-8	M
+Manganese Chloride	8e-8	M
+Zinc Sulfate	1e-8	M
+Potassium Phosphate Dibasic	1.32	mM
+Potassium Hydroxide	1.5	mM
+Adenine	0.2	mM
+Cytosine	0.2	mM
+Uracil	0.2	mM
+Guanine	0.2	mM
+L-Alanine	0.8	mM
+L-Arginine	5.2	mM
+L-Asparagine	0.4	mM
+L-Aspartic Acid Potassium Salt	0.4	mM
+L-Glutamic Acid Potassium Salt	0.66	mM
+L-Glutamine	0.6	mM
+L-Glycine	0.8	mM
+L-Histidine HCl H2O	0.2	mM
+L-Isoleucine	0.4	mM
+L-Proline	0.4	mM
+L-Serine	10	mM
+L-Threonine	0.4	mM
+L-Tryptophan	0.1	mM
+L-Valine	0.6	mM
+L-Leucine	0.8	mM
+L-Lysine	0.4	mM
+L-Methionine	0.2	mM
+L-Phenylalanine	0.4	mM
+L-Cysteine HCl	0.1	mM
+L-Tyrosine	0.2	mM
+Thiamine	0.01	mM
+Calcium Pantothenate	0.01	mM
+para-aminobenzoic Acid	0.01	mM
+para-hydroxybenzoic Acid	0.01	mM
+2,3-dihydroxybenzoic acid	0.01	mM
+
+MOPS minimal media_noCarbon
+3-(N-morpholino)propanesulfonic acid	40	mM
+Tricine	4.0	mM
+Iron Sulfate	0.01	mM
+Ammonium Chloride	9.5	mM
+Potassium Sulfate	0.276	mM
+Calcium Chloride	0.0005	mM
+Magnesium Chloride	0.525	mM
+Sodium Chloride	50	mM
+Ammonium Molybdate	3e-9	M
+Boric Acid	4e-7	M
+Cobalt Chloride	3e-8	M
+Cupric Sulfate	1e-8	M
+Manganese Chloride	8e-8	M
+Zinc Sulfate	1e-8	M
+
+MoLS4
+Na2SO4	30	mM
+sodium D,L-lactate	60	mM
+NH4Cl	20	mM
+Tris-HCl	30	mM	# pH 7.2
+EDTA	0.12	mM
+Na2S	1	mM
+MgCl2	8	mM
+CaCl2	0.6	mM
+K2HPO4	2	mM
+FeCl2	60	uM
+MnCl2	15	uM
+CoCl2	7.8	uM
+ZnCl2	9	uM
+Na2MoO4	1.26	uM
+H3BO3	1.92	uM
+NiSO4	2.28	uM
+CuCl2	0.06	uM
+Na2SeO3	0.21	uM
+Na2WO4	0.144	uM
+# 1 ml/L Thauer's vitamins
+biotin	2	ug/L
+folic acid	2	ug/L
+pyridoxine hydrochloride	10	ug/L
+thiamin hydrochloride	5	ug/L
+riboflavin	5	ug/L
+nicotinic acid	5	ug/L
+D,L-pantothenic acid (calcium salt)	5	ug/L
+vitamin B12	0.1	ug/L
+p-aminobenzoic acid	5	ug/L
+lipoic acid	5	ug/L
+choline chloride	200	ug/L
+
+MoYLS4
+yeast extract	1	g/L
+Na2SO4	30	mM
+sodium D,L-lactate	60	mM
+NH4Cl	20	mM
+Tris-HCl	30	mM	# pH 7.2
+EDTA	0.12	mM
+Na2S	1	mM
+MgCl2	8	mM
+CaCl2	0.6	mM
+K2HPO4	2	mM
+FeCl2	60	uM
+MnCl2	15	uM
+CoCl2	7.8	uM
+ZnCl2	9	uM
+Na2MoO4	1.26	uM
+H3BO3	1.92	uM
+NiSO4	2.28	uM
+CuCl2	0.06	uM
+Na2SeO3	0.21	uM
+Na2WO4	0.144	uM
+# 1 ml/L Thauer's vitamins
+biotin	2	ug/L
+folic acid	2	ug/L
+pyridoxine hydrochloride	10	ug/L
+thiamin hydrochloride	5	ug/L
+riboflavin	5	ug/L
+nicotinic acid	5	ug/L
+D,L-pantothenic acid (calcium salt)	5	ug/L
+vitamin B12	0.1	ug/L
+p-aminobenzoic acid	5	ug/L
+lipoic acid	5	ug/L
+choline chloride	200	ug/L
+
+MoLS4_no_lactate
+Na2SO4	30	mM
+NH4Cl	20	mM
+Tris-HCl	30	mM	# pH 7.2
+EDTA	0.12	mM
+Na2S	1	mM
+MgCl2	8	mM
+CaCl2	0.6	mM
+K2HPO4	2	mM
+FeCl2	60	uM
+MnCl2	15	uM
+CoCl2	7.8	uM
+ZnCl2	9	uM
+Na2MoO4	1.26	uM
+H3BO3	1.92	uM
+NiSO4	2.28	uM
+CuCl2	0.06	uM
+Na2SeO3	0.21	uM
+Na2WO4	0.144	uM
+# 1 ml/L Thauer's vitamins
+biotin	2	ug/L
+folic acid	2	ug/L
+pyridoxine hydrochloride	10	ug/L
+thiamin hydrochloride	5	ug/L
+riboflavin	5	ug/L
+nicotinic acid	5	ug/L
+D,L-pantothenic acid (calcium salt)	5	ug/L
+vitamin B12	0.1	ug/L
+p-aminobenzoic acid	5	ug/L
+lipoic acid	5	ug/L
+choline chloride	200	ug/L
+
+MoLS4_no_ammonia
+Na2SO4	30	mM
+sodium D,L-lactate	60	mM
+Tris-HCl	30	mM	# pH 7.2
+EDTA	0.12	mM
+Na2S	1	mM
+MgCl2	8	mM
+CaCl2	0.6	mM
+K2HPO4	2	mM
+FeCl2	60	uM
+MnCl2	15	uM
+CoCl2	7.8	uM
+ZnCl2	9	uM
+Na2MoO4	1.26	uM
+H3BO3	1.92	uM
+NiSO4	2.28	uM
+CuCl2	0.06	uM
+Na2SeO3	0.21	uM
+Na2WO4	0.144	uM
+# 1 ml/L Thauer's vitamins
+biotin	2	ug/L
+folic acid	2	ug/L
+pyridoxine hydrochloride	10	ug/L
+thiamin hydrochloride	5	ug/L
+riboflavin	5	ug/L
+nicotinic acid	5	ug/L
+D,L-pantothenic acid (calcium salt)	5	ug/L
+vitamin B12	0.1	ug/L
+p-aminobenzoic acid	5	ug/L
+lipoic acid	5	ug/L
+choline chloride	200	ug/L
+
+### As yet undefined
+
+R2A
+BG11 # asked Kelly
