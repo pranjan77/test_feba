@@ -342,8 +342,10 @@ if (@$hits == 0) {
 			$bgcolor = "#FFFFFF";
 		}
 		my $label = $row->{gene} || $row->{sysName}; #|| $row->{locusId};
+		my $label2 =  $row->{gene} || $row->{sysName} || $row->{locusId};
+		$label2 = $row->{sysName}. ": " . $label2 if $row->{sysName};
 
-		$svg .= qq[<g><title>$row->{sysName}: $label - $row->{desc}</title><line id='arrow-line' $head x1="$newDistAdj" y1="$posAdj" x2="$totalAdj" y2="$posAdj" style="stroke:$color;stroke-width:2" />
+		$svg .= qq[<g><title>$label2 - $row->{desc}</title><line id='arrow-line' $head x1="$newDistAdj" y1="$posAdj" x2="$totalAdj" y2="$posAdj" style="stroke:$color;stroke-width:2" />
 		<text x="$textXAdj" y="$textYAdj" font-family="Verdana" font-size="13" fill="$color">$label</text></g>];
 
 		my ($phen, $tip) = Utils::gene_fit_string($dbh,$orgSpec,$row->{locusId});

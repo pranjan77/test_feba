@@ -210,6 +210,8 @@ if ($showAll) {
 }
 print ".<br><br>";
 
+print Utils::geneArrows(\@genes, $centralId) if $around;
+
 my @trows = ();
 my @headings = qw{Group Condition};
 my @headings2 = ("", "");
@@ -222,17 +224,20 @@ foreach my $gene (@genes) {
     push @headings2, qq{<div title="$desc">$gene->{gene}</div>};
 }
 push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'}, $cgi->th(\@headings));
+
 if (sum(map { $_ ne "" } @headings2) > 0) {
     push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'}, $cgi->th(\@headings2));
 }
-if ($around) {
-    my @headings3 = ("", "");
-    foreach my $gene (@genes) {
-	my $spac = $spacingDesc{$gene->{locusId}};
-        push @headings3, qq{<div title="Spacing on either side of gene and strandedness"><small>$spac</small></div>};
-    }
-    push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'}, $cgi->td(\@headings3));
-}
+
+# if ($around) {
+#     my @headings3 = ("", "");
+#     foreach my $gene (@genes) {
+# 	my $spac = $spacingDesc{$gene->{locusId}};
+#         push @headings3, qq{<div title="Spacing on either side of gene and strandedness"><small>$spac</small></div>};
+#     }
+#     push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'}, $cgi->td(\@headings3));
+# }
+
 foreach my $exp (@exps) {
     my @values = ();
     my $expName = $exp->{expName};

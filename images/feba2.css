@@ -611,6 +611,7 @@ h3.short {
 }
 
 
+
 /*mini-forms on upper-right-hand corners of pages*/
 @media screen and (min-width: 1150px) {
 	table {
@@ -627,6 +628,7 @@ h3.short {
 		padding: 10px;
 	}
 }
+
 
 @media screen and (max-width: 1150px) {
 	table {
@@ -809,6 +811,44 @@ and (min-width: 800px)
   background-color: rgba(255,209,103,0.7);
   border-radius: 10px;
   padding: 5px;
+}
+
+/*to make responsive scatterplots on strainTable*/
+.svg-container {
+    /*display: inline-block;*/
+    position: relative;
+    /*width: 90%;*/
+    max-width: 900px;
+    max-height: 500px;
+    vertical-align: top;
+    overflow: hidden;
+}
+.svg-content-responsive {
+    display: inline-block;
+    position: absolute;
+    top: 10px;
+    left: 0;
+}
+
+@media screen and (min-width:902px) {
+	.svg-container{padding-bottom: 550px;}
+}
+@media screen and (min-width:890px) and (max-width:970px) {
+	.svg-container {
+		position: relative;
+		left: -5%;
+		width: 950px !important;
+		padding: 0 0 65% 0;
+		margin: 0 auto;
+	}
+}
+@media screen and (max-width:890px) {
+	.svg-container{
+		left: -7%; 
+		width: 118% !important;
+		padding: 0 0 65% 0;
+		margin: 0;
+	}
 }
 
 

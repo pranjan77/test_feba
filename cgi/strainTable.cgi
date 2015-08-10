@@ -43,6 +43,8 @@ my $begin = $cgi->param('begin');
 my $end = $cgi->param('end');
 my $locusSpec = $cgi->param('locusId');
 my $locusSpecShow;
+my $tsv = $cgi->param('tsv') || 0;
+my $expName = $cgi->param('expName') || "";
 
 if (defined $locusSpec && $locusSpec ne "") {
     my $sysName;
@@ -112,26 +114,47 @@ foreach my $expName (@expNames) {
 
 my $begComma = &commify($begin);
 my $endComma = &commify($end);
-print
-    header,
-    Utils::start_page("Strain Fitness in $genome"),
-    q{<div id="ntcontent">},
-    h2("Strain Fitness in ",
-       a({-href => "org.cgi?orgId=$orgId"}, "$genome"),
-       defined $locusSpecShow ? "around " . a({-href => "singleFit.cgi?orgId=$orgId&locusId=$locusSpec"}, $locusSpecShow)
-       : " at $scaffoldId: $begComma to $endComma"),
-    start_form(-name => 'input', -method => 'GET', -action => 'strainTable.cgi'),
-    hidden( -name => 'orgId', -value => $orgId, -override => 1),
-    hidden( -name => 'scaffoldId', -value => $scaffoldId, -override => 1),
-    hidden( -name => 'begin', -value => $begin, -override => 1),
-    hidden( -name => 'end', -value => $end, -override => 1),
-    join("\n", map { hidden( -name => 'expName', -value => $_, -override => 1) } @expNames),
-    p(
-      "Add experiment(s): ",
-      textfield(-name => 'addexp', -default => "", -override => 1, -size => 20, -maxLength => 100)),
-    p({-class => "buttons", style=>"max-width:500px; line-height:40px; white-space:nowrap;"}, "Zoom:", submit('zoom','in'), submit('zoom','out'), "\tPan:", submit('pan','left'), submit('pan','right')),
-    end_form,
-    p(small("Only strains with sufficient reads to estimate fitness are shown, but the strain fitness values are still rather noisy. Strains near the edge of a gene are not shown as being associated with that gene (the Gene column will be empty)."));
+
+#make tsv here? debate in printing first vs. running db commands
+print header;
+if ($tsv != 1) {
+    print
+        Utils::start_page("Strain Fitness in $genome"),
+        q{<div id="ntcontent">},
+        h2("Strain Fitness in ",
+           a({-href => "org.cgi?orgId=$orgId"}, "$genome"),
+           defined $locusSpecShow ? "around " . a({-href => "singleFit.cgi?orgId=$orgId&locusId=$locusSpec"}, $locusSpecShow)
+           : " at $scaffoldId: $begComma to $endComma"),
+        start_form(-name => 'input', -method => 'GET', -action => 'strainTable.cgi'),
+        hidden( -name => 'orgId', -value => $orgId, -override => 1),
+        hidden( -name => 'scaffoldId', -value => $scaffoldId, -override => 1),
+        hidden( -name => 'begin', -value => $begin, -override => 1),
+        hidden( -name => 'end', -value => $end, -override => 1),
+        join("\n", map { hidden( -name => 'expName', -value => $_, -override => 1) } @expNames),
+        p(
+          "Add experiment(s): ",
+          textfield(-name => 'addexp', -default => "", -override => 1, -size => 20, -maxLength => 100)),
+        p({-class => "buttons", style=>"max-width:500px; line-height:40px; white-space:nowrap;"}, "Zoom:", submit('zoom','in'), submit('zoom','out'), "\tPan:", submit('pan','left'), submit('pan','right')),
+        end_form,
+        p(small("Only strains with sufficient reads to estimate fitness are shown, but the strain fitness values are still rather noisy. Strains near the edge of a gene are not shown as being associated with that gene (the Gene column will be empty)."));
+
+
+    if (defined $begin and defined $end and defined $scaffoldId) {
+        # foreach my $locusId (@locusIds) {
+            my $genes = $dbh->selectall_arrayref("SELECT * FROM Gene WHERE orgId = ? AND scaffoldId = ? AND Gene.end >= ? AND Gene.begin <= ?",
+                               { Slice => {} }, $orgId, $scaffoldId, $begin, $end);
+            if (@$genes == 0) {
+                print "No genes in range.";
+            } else {
+                sort @$genes;
+                # foreach my $genea(@$genes) {
+                #     print $genea->{begin} . "\t" . $genea->{end} . "\t";
+                # }
+                print Utils::geneArrows(\@$genes, "");
+            }
+    }
+}
+
 
 # should I add zoom in/out and pan left/right buttons??
 my $rows = StrainFitness::GetStrainFitness("../cgi_data", $dbh, $orgId, $scaffoldId, $begin, $end);
@@ -163,6 +186,8 @@ foreach my $locusId (keys %locusIds) {
     $genes{$locusId} = $gene;
 }
 
+
+my @avgFits = ();
 foreach my $row (@$rows) {
     my $locusId = $row->{locusId};
     my $locusShow = "";
@@ -179,12 +204,30 @@ foreach my $row (@$rows) {
                                               ($row->{pos} - $gene->{begin}) / ($gene->{end} - $gene->{begin} + 1))
         );
     @row = map { td($_) } @row;
+    my $totalFit = 0; #gather the total for averaging
+    my $ind = 0; #gather number of entries 
     foreach my $expName (@expNames) {
         my $fit = $row->{ $expName };
+        $totalFit += $fit;
+        $ind += 1;
         push @row, td( { -bgcolor => Utils::fitcolor($fit) }, sprintf("%.1f",$fit));
     }
+    push @avgFits, $totalFit/$ind;
+
     push @trows, Tr({-align => 'CENTER', -valign=>'TOP'}, @row);
 }
+
+if ($tsv == 1) { # tab delimited values, not a page
+    print join("\t", qw{position strand gene fit})."\n";
+    my $ind = 0;
+    foreach my $row (@$rows) {
+        # next unless exists $gene->{x} && exists $gene->{y};
+        print join("\t", $row->{pos}, $row->{strand}, $row->{locusId}, $avgFits[$ind])."\n";
+        $ind += 1;
+    }
+    exit 0;
+}
+
 
 if (scalar(@expNames) > 0) {
     # add row for removing items
@@ -199,6 +242,221 @@ if (scalar(@expNames) > 0) {
     }
     push @trows, Tr({-align => 'CENTER', -valign=>'TOP'}, @row);
 }
+
+
+
+print <<END
+<script src="../d3js/d3.min.js"></script>
+
+<P>
+<!--<i>x</i> axis: Position
+<BR>
+<i>y</i> axis: Average Strain Fitness-->
+
+<TABLE width=100% style="border: none;">
+<TR class="reset">
+<TD valign="top" align="center" style="border: none;"><!-- left column -->
+
+<div id="left"><!-- where SVG goes -->
+<div id="loading"><!-- where status text goes -->
+Please try another browser if this message remains
+</div>
+</div>
+</TD>
+</TR>
+
+
+</TABLE>
+</P>
+
+<script>
+var org = "$orgId";
+var scaffoldId = "$scaffoldId";
+var begin = "$begin";
+var end = "$end";
+var expName = "$expName";
+
+var xName = "Position (kb)";
+var yName = "Average Strain Fitness";
+
+
+var margin = {top: 20, right: 20, bottom: 50, left: 50},
+    width = 850 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+var x = d3.scale.linear()
+    .range([0, width]);
+
+var y = d3.scale.linear()
+    .range([height, 0]);
+
+var color = d3.scale.category10();
+var cValue = function(d) { return d.strand;};
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom");
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left");
+
+var iSelected = 0; /* for color coding */
+var selectColors = [ 'red', 'green', 'blue', 'magenta', 'brown', 'orange', 'darkturquoise' ]; //red for -, green for +
+
+// var svg = d3.select("#left").append("svg")
+//     .attr("width",900)
+//     .attr("height",500)
+//   .append("g")
+//     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+//     // console.log(svg);
+
+var svg = d3.select("#left")
+   .append("div")
+   .classed("svg-container", true) //container class to make it responsive
+   .append("svg")
+   //responsive SVG needs these 2 attributes and no width and height attr
+   .attr("preserveAspectRatio", "xMinYMin meet")
+   .attr("viewBox", "0 0 900 500")
+   //class to make it responsive
+   .classed("svg-content-responsive", true)
+   .append("g")
+   .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+d3.select("#loading").html("Fetching data...");
+var tsvUrl = "strainTable.cgi?tsv=1&orgId=" + org + "&scaffoldId=" + scaffoldId + "&begin=" + begin + "&end=" + end + "&expName=" + expName;
+// console.log(tsvUrl);
+d3.tsv(tsvUrl, function(error, data) {
+  if (error || data.length == 0) {
+      d3.select("#loading").html("Cannot load data from " + tsvUrl + "<BR>Error: " + error);
+      return;
+  }
+  d3.select("#loading").html("Formatting " + data.length + " genes...");
+  data.forEach(function(d) {
+    d.position = (+d.position)/1000;
+    d.fit = +d.fit;
+    console.log(d.position, d.fit);
+  });
+
+  var extentX = d3.extent(data, function(d) { return d.position; });
+  var extentY = d3.extent(data, function(d) { return d.fit; });
+  var extentXY = d3.extent([ extentX[0], extentX[1], extentY[0], extentY[1] ]);
+  // console.log(extentX, extentY, extentXY);
+  x.domain(extentX).nice();
+  y.domain(extentY).nice();
+  // x.domain(extentXY).nice();
+  // y.domain(extentXY).nice();
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  svg.append("text")
+      .attr("class", "label")
+      .attr("x", 350)
+      .attr("y", 500-25)
+      .style("text-anchor", "end")
+      .text(xName);
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis);
+
+  svg.append("text")
+      .attr("class", "label")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -80)
+      .attr("y", -35)
+      .style("text-anchor", "end")
+      .text(yName);
+
+  // svg.append("line")
+  //      .attr("x1", x(extentXY[0]))
+  //      .attr("x2", x(extentXY[1]))
+  //      .attr("y1", y(extentXY[0]))
+  //      .attr("y2", y(extentXY[1]))
+  //      .style("stroke","darkgrey")
+  //      .style("stroke-width",1);
+
+  svg.append("line")
+       .attr("x1", x(extentXY[0]))
+       .attr("x2", x(extentXY[1]))
+       .attr("y1", y(0))
+       .attr("y2", y(0))
+       .style("stroke","darkgrey")
+       .style("stroke-width",1);
+
+
+var tooltip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0.0);
+
+  svg.selectAll(".dot")
+      .data(data)
+    .enter().append("circle")
+    .filter(function(d) { return d.gene != "" })
+      .attr("class", "dot")
+      .attr("r", 5)
+      .attr("cx", function(d) { return x(d.position); })
+      .attr("cy", function(d) { return y(d.fit); })
+      .style("fill", function(d) { 
+        if (d.strand == '-'){return "red"} 
+        else {return "green"}
+        ; })
+      .on("mouseover", function(d) {
+          tooltip.transition()
+               .duration(200)
+               .style("opacity", .9);
+          tooltip.html(d.gene + ", at position " + (+d.position)+ " on " + d.strand + " strand, with fitness " + (+d.fit).toFixed(2))
+               .style("left", (d3.event.pageX + 5) + "px")
+               .style("top", (d3.event.pageY - 28) + "px");
+      })
+      .on("mouseout", function(d) {
+          tooltip.transition()
+               .duration(500)
+               .style("opacity", 0);
+      });
+
+
+  svg.selectAll("dot")
+        .data(data)
+      .enter().append("circle")
+      .filter(function(d) { return d.gene == "" })
+        .style("fill", "gray")
+        .attr("r", 3.5)
+        .attr("cx", function(d) { return x(d.position); })
+        .attr("cy", function(d) { return y(d.fit); })
+        .on("mouseover", function(d) {
+          tooltip.transition()
+               .duration(200)
+               .style("opacity", .9);
+          tooltip.html("position " + (+d.position) + " on " + d.strand + " strand, with fitness " + (+d.fit).toFixed(2))
+               .style("left", (d3.event.pageX + 5) + "px")
+               .style("top", (d3.event.pageY - 28) + "px");
+      })
+      .on("mouseout", function(d) {
+          tooltip.transition()
+               .duration(500)
+               .style("opacity", 0);
+      });
+
+      // svg.selectAll("text")
+      //   .data(data)
+      // .enter().append("text")
+      // // .filter(function(d) { return d.strand == '-' })
+      // .text(function(d) { return d.strand; })
+      // .attr("x", function(d) { return x(d.position); })
+      // .attr("y", function(d) { return y(d.fit); });
+
+  d3.select("#loading").html("");
+
+});
+
+</script>
+
+END
+;
     
 print small(table({ cellspacing => 0, cellpadding => 3, }, @trows));
 
@@ -211,3 +469,4 @@ sub commify($) {
     1 while s/^(-?\d+)(\d{3})/$1,$2/;
     return $_;
 }
+

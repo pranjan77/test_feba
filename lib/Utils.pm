@@ -505,7 +505,111 @@ sub tabsExp($$$$$$$) {
 
 }
 
+# create svg of arrows according to locations of genes. default dimensions 800 (set by $width) x 100. assumes that genes are in order.
+# geneSpec can be an empty string if you don't want any of the arrows to be highlighted in red.
+sub geneArrows($$) {
+    my ($genes, $geneSpec) = @_;
+    $geneSpec = "" if undef;
 
+    my $lastTot = (@$genes[-1]->{end} - @$genes[0]->{begin});
+    my $width = 800; #'100%'; #input the max-width according to the .arrow class in css
+    my $factor = $width/$lastTot;
+    my $xScale = 10 * $factor;
+    my $scale = 510 * $factor;
+    # print $factor;
+    # xmlns="http://www.w3.org/2000/svg" height="100" width="$width" viewBox="0 -10 $width 50"
+
+    my $svg = qq[
+    <center><svg class="arrows" viewBox="0 -30 $width 100">
+    <defs>
+    <marker id='rightarrow' orient="auto"
+        markerWidth='2' markerHeight='4'
+        refX='0.1' refY='2'>
+        <!-- triangle pointing right (+x) -->
+        <path d='M0,0 V4 L2,2 Z' fill="black"/>
+    </marker>
+    <marker id='rightarrow2' orient="auto"
+        markerWidth='2' markerHeight='4'
+        refX='0.1' refY='2'>
+        <!-- triangle pointing right (+x) -->
+        <path d='M0,0 V4 L2,2 Z' fill="red"/>
+    </marker>
+    <marker id='leftarrow' orient="auto"
+        markerWidth='2' markerHeight='4'
+        refX='0.5' refY='2'>
+        <!-- triangle pointing left (-x) -->
+        <path d='M0,2 L2,0 L2,4 Z' fill="black"/>
+    </marker>
+    <marker id='leftarrow2' orient="auto"
+        markerWidth='2' markerHeight='4'
+        refX='0.5' refY='2'>
+        <!-- triangle pointing left (-x) -->
+        <path d='M0,2 L2,0 L2,4 Z' fill="red"/>
+    </marker>
+    <marker id="scaleEnd" orient="auto" 
+        markerWidth='2' markerHeight='4'
+        refX='0.5' refY='2'>
+        <line x1="0" y1="5" x2="0" y2="-5" style="stroke: black;"/>
+    </marker>
+    </defs>
+
+    <line 
+        id='scale'
+        marker-start='url(#scaleEnd)'
+        marker-end='url(#scaleEnd)'
+        x1="$xScale" y1="55" x2="$scale" y2="55" style="stroke:black;stroke-width:2" />
+    <text x="3" y="53" font-family="Verdana" font-size="10" fill="black">500 nt</text>
+    ];
+  
+    my $diff = "";
+    my $prevrow;
+    my $total = 0;
+    my $newDist = 0;
+    my $newDistAdj = 0;
+    my $totalAdj = 0;
+    my $num = "15";
+    my $pos = 0;
+    foreach my $row (@$genes) {
+        $diff = $row->{begin} - $prevrow->{end} if defined $prevrow;        # $prevrow->{end} = 0 if !defined $prevrow;
+        $newDist = $total + $diff;
+        $total = $newDist + ($row->{end} - $row->{begin});
+        $newDistAdj = $newDist * $factor;
+        $totalAdj = $total * $factor;
+        my $textX = $newDist + ($total - $newDist)/2;
+        my $textXAdj = $textX * $factor - 11;
+        my $textY = $pos - 2;
+        my $textYAdj = $textY + 15;
+        # $textY = $pos + 8 if $pos < 0;
+        my $posAdj = $pos + 15;
+        my $color = "black";
+        my $head = "marker-end='url(#rightarrow)'";
+        $head = "marker-start='url(#leftarrow)'" if $row->{strand} eq "-";
+        my $bgcolor = undef;
+        if ($row->{locusId} eq $geneSpec) {
+            $color = "red";
+            $head = "marker-end='url(#rightarrow2)'";
+            $head = "marker-start='url(#leftarrow2)'" if $row->{strand} eq "-";
+            $bgcolor = "#FFFFFF";
+        }
+        my $label = $row->{gene} || $row->{sysName}; #|| $row->{locusId};
+        my $label2 =  $row->{gene} || $row->{sysName} || $row->{locusId};
+        $label2 = $row->{sysName}. ": " . $label2 if $row->{sysName};
+
+        $svg .= qq[<g><title>$label2 - $row->{desc}</title><line id='arrow-line' $head x1="$newDistAdj" y1="$posAdj" x2="$totalAdj" y2="$posAdj" style="stroke:$color;stroke-width:2" />
+        <text x="$textXAdj" y="$textYAdj" font-family="Verdana" font-size="13" fill="$color">$label</text></g>];
+
+        $prevrow = $row;
+        if ($pos == 0) {
+            $num = $num * -1;
+            $pos = $num;
+
+        } else {
+            $pos = 0;
+        }
+    }
+    $svg .= "</svg></center>";
+    return $svg;
+}
 
 #END 
 
