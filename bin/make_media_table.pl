@@ -11,7 +11,7 @@ my $metadir = "$Bin/../metadata";
 
 my $usage = <<END
 make_media_table.pl [ -out . ] [ -db feba.db ]
-             [ -metadir $Bin ]
+             [ -metadir $metadir ]
         The metadata driectory should include a media file and a FEBA_COMPOUND_sheet file.
 
 	The compound file is tab-delimited with the first five fields

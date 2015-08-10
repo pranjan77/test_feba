@@ -182,6 +182,7 @@ sub GetMedias() {
     return sort keys %media;
 }
 
+# returns undef for unknown media; otherwise, a reference to a list of [compound,concentration,units]
 sub GetMediaComponents($) {
     my ($media) = @_;
     return $media{$media};
