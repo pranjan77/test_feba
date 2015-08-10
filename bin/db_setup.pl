@@ -7,16 +7,22 @@ use lib "$Bin/../lib";
 use FEBA_Utils; # for ReadTable()
 use DBI;
 
+my $metadir = "$Bin/../metadata";
+my $gdir = "g";
 my $usage = <<END
-Usage: db_setup.pl [ -db db_file_name ] -orth orth_table -orginfo orginfo -indir htmldir nickname1 ... nicknameN
+Usage: db_setup.pl [ -db db_file_name ]
+        -orth orth_table -orginfo orginfo
+        -indir htmldir nickname1 ... nicknameN
 Other optional arguments:
     -secrets secrets_file
     -outdir out_directory
+    -metadir $metadir
+    -gdir $gdir
 
-    Sets up a sqlite database suitable for the cgi scripts, reading from
+    Sets up the cgi_data/ directory, especially the sqlite database, by reading from
     the html directories indir/nickname1 ... indir/nicknameN
     (created by BarSeqR.pl)
-    Does not set up the fasta database for the CGI.
+    Also sets up the BLAST database.
 
     The orginfo file should include all of the columns for the Orginfo
     table, but may contain organisms that are not included in the
@@ -33,7 +39,8 @@ Other optional arguments:
 
     If either -db or -outdir is specified, then the per-strain data
     files (which are not loaded into the database) are moved into the
-    directory that contains the database file or into outdir.
+    directory that contains the database file or into outdir. And, a
+    BLAST database of protein sequences is built in that directory.
 
     secrets_file should contain lines of the form
         orgId SetName
@@ -65,11 +72,15 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
                 'orth=s' => \$orthfile,
                 'secrets=s' => \$secretsfile,
                 'indir=s' => \$indir,
+                'metadir=s' => \$metadir,
+                'gdir=s' => \$gdir,
                 'outdir=s' => \$outdir )
      && defined $indir && defined $orgfile && defined $orthfile)
         || die $usage;
     my @orgs = @ARGV;
     die "No such directory: $indir" unless -d $indir;
+    die "No such directory: $metadir" unless -d $metadir;
+    die "No such directory: $gdir" unless -d $gdir;
     die "No such file: $orgfile" unless -e $orgfile;
     die "No such file: $orthfile" unless -e $orthfile;
     die "No such file: $secretsfile" if defined $secretsfile && ! -e $secretsfile;
@@ -89,7 +100,11 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
         foreach my $file (qw{.FEBA.success genes expsUsed fit_quality.tab fit_logratios_good.tab fit_t.tab}) {
             die "Missing file: $indir/$org/$file" unless -e "$indir/$org/$file";
         }
+        die "No aaseq2 file for $org in $gdir/$org/aaseq2" unless -e "$gdir/$org/aaseq2";
     }
+    my $formatexe = "$Bin/blast/formatdb";
+    die "formatdb not found in $Bin/blast" unless -e $formatexe;
+
 
     print STDERR "Reading " . scalar(@orgs) . " organisms from $indir\n";
 
@@ -561,7 +576,28 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
             unlink($file);
         }
     }
-}
+
+    # Load the media information
+    my @mediacmd = ("$Bin/make_media_table.pl", "-metadir", $metadir);
+    if (defined $dbfile) {
+        push @mediacmd, ("-db", $dbfile);
+    } elsif (defined $outdir) {
+        push @mediacmd, ("-out", $outdir);
+    }
+    system(@mediacmd) == 0 || die "Error running\n" . join(" ",@mediacmd) . "\n: $!";
+
+    if (defined $outdir) {
+        # Make the BLAST database
+        my @files = map "$gdir/$_/aaseq2", @orgs;
+        my $blastdb = "$outdir/aaseqs";
+        my $catcmd = "cat " . join(" ",@files) . " > $blastdb";
+        system($catcmd) == 0 || die "Error running\n$catcmd\n: $!";
+        print STDERR "Formatting $blastdb\n";
+        my @formatcmd = ($formatexe, "-p", "T", "-o", "T", "-i", $blastdb);
+        system(@formatcmd) == 0 || die "Error running\n".join(" ",@formatcmd)."\n: $!";
+    }
+    print STDERR "Success\n";
+}        
 
 sub StartWorkFile($$) {
     my ($table,$file) = @_;
