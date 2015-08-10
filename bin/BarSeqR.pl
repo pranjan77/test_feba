@@ -11,13 +11,15 @@ use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use FindGene; # for LocationToGene()
 use FEBA_Utils; # for ReadTable(), ReadColumnNames()
+use Compounds;
 
-
+my $metadir = "$Bin/../metadata";
 my $usage = <<END
 Usage: BarSeqR.pl -org organism [ -indir g/organism ]
     [ -exps indir/FEBA_BarSeq.tsv ] [ -genes indir/genes.GC ]
     [ -pool indir/pool.n10 or indir/pool ]
     [ -test | -noR | -outdir html/organism ]
+    [ -metadir $metadir ]
     [ setnames ]
 
     By default, the input directory includes FEBA_BarSeq.tsv,
@@ -58,18 +60,21 @@ END
 
     die $usage unless
 	GetOptions('org=s' => \$org,
-	       'indir=s' => \$indir,
-	       'exps=s' => \$expsfile,
-	       'genesfile=s' => \$genesfile,
-	       'poolfile=s' => \$poolfile,
-	       'outdir=s' => \$outdir,
-	       'noR' => \$noR,
-	       'test' => \$test )
+                   'indir=s' => \$indir,
+                   'metadir=s' => \$metadir,
+                   'exps=s' => \$expsfile,
+                   'genesfile=s' => \$genesfile,
+                   'poolfile=s' => \$poolfile,
+                   'outdir=s' => \$outdir,
+                   'noR' => \$noR,
+                   'test' => \$test )
 	&& defined $org;
     my @sets = @ARGV;
 
     $indir = "g/$org" unless defined $indir;
     die "No such directory: $indir" unless -d $indir;
+
+    die "No such directory : $metadir" unless -d $metadir;
 
     $expsfile = "$indir/FEBA_BarSeq.tsv" unless defined $expsfile;
     die "No such experiments file: $expsfile" unless -e $expsfile;
@@ -101,6 +106,9 @@ END
     my $Rscript = "$Bin/RunFEBA.R";
     die "No such script file: $Rscript" if ! -e $Rscript && !defined $noR;
 
+    LoadCompounds($metadir);
+    LoadMedia($metadir);
+
     my @exps = &ReadTable($expsfile, qw{SetName Index Description Date_pool_expt_started});
     my $alpha = chr(206).chr(177);
     foreach my $exp (@exps) {
@@ -110,9 +118,8 @@ END
 	$exp->{Index} =~ s/ *$//;
 	# replace the greek letter alpha (bytes 206 177) with "a"
 	$exp->{Description} =~ s/$alpha/a/g;
-	$exp->{Condition_1} =~ s/$alpha/a/g;
-	$exp->{Condition_2} =~ s/$alpha/a/g;
     }
+
     @exps = grep { $_->{Description} ne "" } @exps;
     my $prespec_sets = scalar(@sets) > 0;
     if ($prespec_sets) {
@@ -139,6 +146,51 @@ END
 	    $setsSeen{$set} = 1;
 	}
     }
+
+    # check the exps that are under consideration
+    my %unknownMedia = ();
+    my %unknownCompound = ();
+    foreach my $exp (@exps) {
+        # ignore lines not filled out or dropped
+        next if ($exp->{Index} eq "" && $exp->{SetName} eq "") || $exp->{Drop} eq "TRUE";
+
+        # Clean up media and warn if not a known media
+        if (defined $exp->{Media}) {
+            $exp->{Media} =~ s/^ +//;
+            $exp->{Media} =~ s/ +$//;
+            $unknownMedia{ $exp->{Media} } = 1 if !defined GetMediaComponents( $exp->{Media} );
+        }
+
+        # Clean up Group
+        if (defined $exp->{Group}) {
+            $exp->{Group} =~ s/^ +//;
+            $exp->{Group} =~ s/ +$//;
+            $exp->{Group} = lc($exp->{Group}) unless $exp->{Group} eq "pH" || $exp->{Group} eq "Time0";
+        }
+
+        print join("\t",$exp->{SetName}, $exp->{Group}, $exp->{Condition_1})."\n" if $exp->{Condition_1} =~ m/ring/;
+
+        # Clean up condition_1,2,3 and warn if not a known compound -- but skip this for Time0 samples
+        # as sometimes they have condition set to Time0
+        foreach my $field (qw{Condition_1 Condition_2 Condition_3}) {
+            if (exists $exp->{$field} && $exp->{Group} ne "Time0") {
+                $exp->{$field} =~ s/$alpha/a/g;
+                $exp->{$field} =~ s/^ +//;
+                $exp->{$field} =~ s/ +$//;
+                $exp->{$field} = "" if lc($exp->{$field}) eq "none";
+                if ($exp->{$field} ne "") {
+                    my $compound = FindCompound($exp->{$field});
+                    if (!defined $compound) {
+                        $unknownCompound{$exp->{$field}} = 1;
+                    } else {
+                        $exp->{$field} = $compound;
+                    }
+                }
+            }
+        }
+    }
+    print STDERR join("\t","Unknown media", sort keys %unknownMedia)."\n" if scalar(keys %unknownMedia) > 0;
+    print STDERR join("\t","Unknown compound", sort keys %unknownCompound)."\n" if scalar(keys %unknownCompound) > 0;
 
     my @genes = &ReadTable($genesfile, qw{locusId scaffoldId begin end strand});
     my %geneScaffolds = map { $_->{scaffoldId} => 1 } @genes;
