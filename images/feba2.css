@@ -818,7 +818,7 @@ and (min-width: 800px)
     /*display: inline-block;*/
     position: relative;
     /*width: 90%;*/
-    max-width: 900px;
+    max-width: 940px;
     max-height: 500px;
     vertical-align: top;
     overflow: hidden;
@@ -831,7 +831,11 @@ and (min-width: 800px)
 }
 
 @media screen and (min-width:902px) {
-	.svg-container{padding-bottom: 550px;}
+	.svg-container{
+		padding-bottom: 550px; 
+		width: 940px;
+		left: 1%;
+	}
 }
 @media screen and (min-width:890px) and (max-width:970px) {
 	.svg-container {
