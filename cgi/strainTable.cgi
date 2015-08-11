@@ -342,7 +342,7 @@ d3.tsv(tsvUrl, function(error, data) {
   var extentY = d3.extent(data, function(d) { return d.fit; });
   var extentXY = d3.extent([ extentX[0], extentX[1], extentY[0], extentY[1] ]);
   // console.log(extentX, extentY, extentXY);
-  x.domain(extentX).nice();
+  x.domain(extentX);//.nice();
   y.domain(extentY).nice();
   // x.domain(extentXY).nice();
   // y.domain(extentXY).nice();
@@ -408,7 +408,7 @@ var tooltip = d3.select("body").append("div")
           tooltip.transition()
                .duration(200)
                .style("opacity", .9);
-          tooltip.html(d.gene + ", at position " + (+d.position)+ " on " + d.strand + " strand, with fitness " + (+d.fit).toFixed(2))
+          tooltip.html(d.gene + ", at position " + (+d.position)+ " on " + d.strand + " strand, with fitness " + (+d.fit).toFixed(1))
                .style("left", (d3.event.pageX + 5) + "px")
                .style("top", (d3.event.pageY - 28) + "px");
       })
@@ -431,7 +431,7 @@ var tooltip = d3.select("body").append("div")
           tooltip.transition()
                .duration(200)
                .style("opacity", .9);
-          tooltip.html("position " + (+d.position) + " on " + d.strand + " strand, with fitness " + (+d.fit).toFixed(2))
+          tooltip.html("position " + (+d.position) + " on " + d.strand + " strand, with fitness " + (+d.fit).toFixed(1))
                .style("left", (d3.event.pageX + 5) + "px")
                .style("top", (d3.event.pageY - 28) + "px");
       })
