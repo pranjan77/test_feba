@@ -141,19 +141,21 @@ if ($tsv != 1) {
 
     if (defined $begin and defined $end and defined $scaffoldId) {
         # foreach my $locusId (@locusIds) {
-            my $genes = $dbh->selectall_arrayref("SELECT * FROM Gene WHERE orgId = ? AND scaffoldId = ? AND Gene.end >= ? AND Gene.begin <= ?",
+            my $genes = $dbh->selectall_arrayref("SELECT * FROM Gene WHERE orgId = ? AND scaffoldId = ? AND Gene.end >= ? AND Gene.begin <= ? ORDER by Gene.begin",
                                { Slice => {} }, $orgId, $scaffoldId, $begin, $end);
             if (@$genes == 0) {
                 print "No genes in range.";
             } else {
-                sort @$genes;
+                # sort @$genes;
                 # foreach my $genea(@$genes) {
-                #     print $genea->{begin} . "\t" . $genea->{end} . "\t";
+                #     print $genea->{begin} . "\t" . $genea->{end} . "\t | ";
                 # }
                 print Utils::geneArrows(\@$genes, "");
             }
     }
 }
+
+my $tsvUrl = "strainTable.cgi?tsv=1&orgId=" . $orgId . "&scaffoldId=" . $scaffoldId . "&begin=" . $begin . "&end=" . $end . "&" . join("&", map {"expName=$_"} @expNames); #"&expName=" + expName;
 
 
 # should I add zoom in/out and pan left/right buttons??
@@ -274,7 +276,6 @@ var org = "$orgId";
 var scaffoldId = "$scaffoldId";
 var begin = "$begin";
 var end = "$end";
-var expName = "$expName";
 
 var xName = "Position (kb)";
 var yName = "Average Strain Fitness";
@@ -324,8 +325,8 @@ var svg = d3.select("#left")
    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 d3.select("#loading").html("Fetching data...");
-var tsvUrl = "strainTable.cgi?tsv=1&orgId=" + org + "&scaffoldId=" + scaffoldId + "&begin=" + begin + "&end=" + end + "&expName=" + expName;
-// console.log(tsvUrl);
+var tsvUrl = "$tsvUrl"; //"strainTable.cgi?tsv=1&orgId=" + org + "&scaffoldId=" + scaffoldId + "&begin=" + begin + "&end=" + end + "&expName=" + expName;
+ //console.log(tsvUrl);
 d3.tsv(tsvUrl, function(error, data) {
   if (error || data.length == 0) {
       d3.select("#loading").html("Cannot load data from " + tsvUrl + "<BR>Error: " + error);
@@ -335,7 +336,7 @@ d3.tsv(tsvUrl, function(error, data) {
   data.forEach(function(d) {
     d.position = (+d.position)/1000;
     d.fit = +d.fit;
-    console.log(d.position, d.fit);
+    //console.log(d.position, d.fit);
   });
 
   var extentX = d3.extent(data, function(d) { return d.position; });
