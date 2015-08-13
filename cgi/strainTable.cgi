@@ -45,6 +45,7 @@ my $locusSpec = $cgi->param('locusId');
 my $locusSpecShow;
 my $tsv = $cgi->param('tsv') || 0;
 my $expName = $cgi->param('expName') || "";
+my $debug = $cgi->param('debug') || "";
 
 if (defined $locusSpec && $locusSpec ne "") {
     my $sysName;
@@ -146,12 +147,14 @@ if ($tsv != 1) {
             if (@$genes == 0) {
                 print "No genes in range.";
             } else {
-                # @$genes[0]->{begin} = $begin;
-                # @$genes[-1]->{end} = $end;
+                @$genes[0]->{begin} = $begin;
+                @$genes[-1]->{end} = $end;
                 # sort @$genes;
-                # foreach my $genea(@$genes) {
-                #     print $genea->{begin} . "\t" . $genea->{end} . "\t | ";
-                # }
+                if ($debug == 1) {
+                    foreach my $genea(@$genes) {
+                        print $genea->{begin} . "\t" . $genea->{end} . "\t | ";
+                    }
+                }
                 print Utils::geneArrows(\@$genes, "");
             }
     }
