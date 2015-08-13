@@ -177,6 +177,8 @@ foreach my $locusId (@locusIds) { # avoid CGI sticky oddities
 }
 print
     textfield( -name => 'addgene', -default => "", -override => 1, -size => 20, -maxLength => 100 ),
+    # submit('Go'),
+    "<button type='submit'>Go</button>",
     end_form;
 
 print p,
@@ -188,7 +190,8 @@ print p,
     hidden('showAll', $showAll),
     popup_menu(-name => 'around', -values => [ 1,2,3,4,5 ], -default => $around, -style => "min-width: 45pt"),
     "&nbsp;",
-    submit('Go'),
+    # submit('Go'),
+    "<button type='submit'>Go</button>",
     end_form
        if $around;
 print "</P></div></div>";

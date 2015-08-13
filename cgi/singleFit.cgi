@@ -121,6 +121,8 @@ if (@$hits == 0) {
 	    hidden( -name => 'showAll', -value => $showAll, -override => 1  ),
 	    hidden( -name => 'locusId', -value => $locusId, -override => 1 ),
 	    textfield( -name => 'addgene', -default => "", -override => 1, -size => 20, -maxLength => 100 ),
+	    # submit('Go'),
+    	"<button type='submit'>Go</button>",
 	    end_form,
 	    qq[</P></div></div>],
 	 #    div({-style => "float: right; vertical-align: top;"},

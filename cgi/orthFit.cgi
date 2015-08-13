@@ -70,26 +70,32 @@ print header,
 	# a({href => "help.cgi#ortholog"}, "Help")),
     div({-style => "clear: right"});
 
-my @headings = ( a({title=>"score ratio for ortholog: blast_score_of_alignment / self_score"},'ratio'),
+my @headings = ('&nbsp;', a({title=>"score ratio for ortholog: blast_score_of_alignment / self_score"},'Ratio'),
 		 qw{Organism Gene Name Description Experiment Fitness t} );
 my @trows = ( $cgi->Tr({ -valign=> 'top', -align => 'center'},
 		       map { th($_) } @headings) );
 my $nSkipOrth = 0;
+my $number = 0;
 foreach my $o (@genes) {
     my $data = $dbh->selectall_arrayref(qq{SELECT * from Experiment JOIN GeneFitness USING  (orgId,expName)
                                            WHERE orgId=? AND locusId=? AND expGroup=? AND condition_1=? ORDER BY fit},
 					{ Slice => {} }, $o->{orgId}, $o->{locusId}, $expGroup, $condition1);
     $nSkipOrth++ if @$data == 0 && $o->{orgId} ne $orgId;
     my $first = 1;
+	$number += 1;
     foreach my $row (@$data) {
-	my $ratio = $o->{orgId} eq $orgId ? "&mdash;" : sprintf("%.2f",$o->{ratio});
-	my $orgShort = "";
-	if ($first) {
-	    my $d = $orginfo->{$o->{orgId}};
-	    my $short = $d->{genome}; $short =~ s/^(.)[^ ]+/\1./;
-	    $orgShort = a({href => "org.cgi?orgId=$o->{orgId}", title => $d->{genome}}, $short);
-	}
-	push @trows, $cgi->Tr({ -valign => 'top', -align => 'left'},
+		my $ratio = $o->{orgId} eq $orgId ? "&mdash;" : sprintf("%.2f",$o->{ratio});
+		my $orgShort = "";
+		# my $border = "";
+
+		if ($first) {
+		    my $d = $orginfo->{$o->{orgId}};
+		    my $short = $d->{genome}; $short =~ s/^(.)[^ ]+/\1./;
+		    $orgShort = a({href => "org.cgi?orgId=$o->{orgId}", title => $d->{genome}}, $short);
+		    # $border = '-style="background-color: 1px black;"';
+		}
+		push @trows, $cgi->Tr({ -valign => 'top', -align => 'left',},
+				  td($first ? $number : ""),
 			      td($first ?  $ratio : ""),
 			      td($orgShort),
 			      td($first ? a({href => "myFitShow.cgi?orgId=$o->{orgId}&gene=$o->{locusId}"}, #style => "color: rgb(0,0,0)"},

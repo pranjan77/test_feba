@@ -181,7 +181,7 @@ while(<RES>) {
     my $tr;
     if (defined $orgId and $locusSpec) {
         if (exists $orth->{$orgId}) { #and $orth->{$orgId} == $locusId) {
-            unshift @hit, '<a title="ortholog">o</a>';
+            unshift @hit, '<center><a title="ortholog">o</a></center>';
             @hit = map td($_), @hit;
             $tr = $cgi->Tr({ -align => 'left', -valign => 'top', bgcolor=>'white' }, @hit );
         } else {
@@ -213,7 +213,7 @@ if ($cnt > 0) {
     print $cgi->table(
         { cellspacing=>0, cellpadding=>3 },
         $cgi->Tr({-align=>'left',-valign=>'top'},
-		 $cgi->th( ['', 'Species','Gene ID','Name','Description','Fitness','Identity %','Coverage %'])),#,'E Value','Bit Score' ] ) ),
+		 $cgi->th( ['Ortholog?', 'Species','Gene ID','Name','Description','Fitness','Identity %','Coverage %'])),#,'E Value','Bit Score' ] ) ),
             # $cgi->Tr({ -align => 'left', -valign => 'top' }, \@td), 
             @hits
     );

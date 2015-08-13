@@ -299,16 +299,20 @@ Please try another browser if this message remains
 </TD>
 <TD valign="top" align="left" style="border: none;"><!-- right column -->
 <p>
+  <!--<p>Hit "enter" to proceed.</p>-->
+
 <form method="get" action="compareExps.cgi" enctype="multipart/form-data" name="input">
 <input type="hidden" name="orgId" value="$orgId" />
 <input type="hidden" name="expName2" value="$expName2" />
 Change x axis: <input type="text" name="query1"  size="20" maxlength="100" />
+<button type='submit'>Go</button>
 </form>
 
 <form method="get" action="compareExps.cgi" enctype="multipart/form-data" name="input">
 <input type="hidden" name="orgId" value="$orgId" />
 <input type="hidden" name="expName1" value="$expName1" />
 Change y axis: <input type="text" name="query2"  size="20" maxlength="100" />
+<button type='submit'>Go</button>
 </form>
 
 <form method="get" action="compareExps.cgi" enctype="multipart/form-data" name="input">
@@ -319,7 +323,7 @@ Change y axis: <input type="text" name="query2"  size="20" maxlength="100" />
 </form>
 </p>
 
-<P>Click on genes to add them to the table:
+  <P><b>Click on genes to add them to the table:</b>
 
 <TABLE id="genesel" cellspacing=0 cellpadding=3 >
 <tr><th>gene</th><th>name</th><th>description</th><th>x</th><th>y</th><th>&nbsp;</th></tr>
@@ -459,6 +463,10 @@ d3.tsv(tsvUrl, function(error, data) {
        .style("stroke","darkgrey")
        .style("stroke-width",1);
 
+var tooltip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0.0);
+
   svg.selectAll(".dot")
       .data(data)
     .enter().append("circle")
@@ -466,7 +474,23 @@ d3.tsv(tsvUrl, function(error, data) {
       .attr("r", 3)
       .attr("cx", function(d) { return x(d.x); })
       .attr("cy", function(d) { return y(d.y); })
-      .on("click", dotClick);
+      .on("click", dotClick)
+      .on("mouseover", function(d) {
+        // console.log("mouseover");
+          tooltip.transition()
+               .duration(200)
+               .style("opacity", .9);
+          // console.log(d.expName + " " + d.x + " " + d.y);
+          tooltip.html(d.gene + " (" + d.sysName + "): " + d.desc + "<br/> (" + (+d.x).toFixed(1) 
+          + ", " + (+d.y).toFixed(1)  + ")")
+               .style("left", (d3.event.pageX + 5) + "px")
+               .style("top", (d3.event.pageY - 28) + "px");
+      })
+      .on("mouseout", function(d) {
+          tooltip.transition()
+               .duration(500)
+               .style("opacity", 0);
+      });
   // .style("fill", function(d) { return color(d.species); });
 
   d3.select("#loading").html("");

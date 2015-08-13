@@ -76,6 +76,8 @@ print $start, $tabs,
     hidden('expName2', $expName),
     "Compare to: ",
     textfield(-name => 'query1', -value => '', -size => 20, -maxlength => 100),
+    # submit('Go'),
+    "<button type='submit'>Go</button>",
     end_form,
     qq[</P></div></div>],
     h3($exp->{expDescLong});
@@ -249,9 +251,9 @@ if ($show ne "specific") {
 #     if $show ne "quality";
 
 print
-    p(a({href => "orthCond.cgi?expGroup=" . uri_escape($exp->{expGroup})
+    p(b(a({href => "orthCond.cgi?expGroup=" . uri_escape($exp->{expGroup})
          . "&condition1=" . uri_escape($exp->{condition_1})},
-	"Specific phenotypes for $exp->{expGroup} $exp->{condition_1} across organisms"));
+	"Specific phenotypes for $exp->{expGroup} $exp->{condition_1} across organisms")));
     
 $dbh->disconnect();
 Utils::endHtml($cgi);

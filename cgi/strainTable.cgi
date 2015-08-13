@@ -146,6 +146,8 @@ if ($tsv != 1) {
             if (@$genes == 0) {
                 print "No genes in range.";
             } else {
+                # @$genes[0]->{begin} = $begin;
+                # @$genes[-1]->{end} = $end;
                 # sort @$genes;
                 # foreach my $genea(@$genes) {
                 #     print $genea->{begin} . "\t" . $genea->{end} . "\t | ";

@@ -66,7 +66,7 @@ my $cofitResults = $dbh->selectall_arrayref(qq{
 if (@$cofitResults == 0) {
     print "<br>", $cgi->p(qq{Cofitness results are not available for this gene, sorry.});
 } else {
-    my @headRow = map { $cgi->td($cgi->b($_)) } qw{Rank Hit Name Description}, a({title => "Maximum cofitness of orthologs"}, "Conserved?"), "Cofitness &nbsp;" ;
+    my @headRow = map { $cgi->th($cgi->b($_)) } qw{Rank Hit Name Description}, a({title => "Maximum cofitness of orthologs"}, "Conserved?"), qw{Cofitness &nbsp;} ;
 
     my @trows = ( $cgi->Tr(@headRow) );
     my @colors = ('#FFFFDD', '#FFFFFF');
@@ -102,10 +102,13 @@ if (@$cofitResults == 0) {
 	start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
 	hidden('orgId', $orgId),
 	hidden('locusId', $locusId),
-	qq[<br><div style="position: relative;"><div class="floatbox floatbox2">],
-	submit(-class=>"heatmap", -name=>"heatmap with $name"),
-	qq[</div></div>],
+	'<br>',
+	p("Select other genes you would like to make a comparative heatmap with $name with and click the button below."),
+	# qq[<br><div style="position: relative;"><div class="floatbox floatbox2">],
+	# submit(-class=>"heatmap", -name=>"heatmap with $name"),
+	# qq[</div></div>],
 	table( {cellpadding => 3, cellspacing => 0 }, @trows ),
+	p(submit(-class=>"heatmap", -name=>"Make heatmap of $name with selected genes")),
 	# "<BR>Compare selected genes to $showId $geneName: " . 
 	end_form,
 	"<BR><BR>";

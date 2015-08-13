@@ -121,8 +121,11 @@ EOT
 
 sub fail($$) {
     my ($cgi, $notice) = @_;
-    print $cgi->h3(qq(Sorry: $notice));
-    print $cgi->h4(qq(<a href="myFrontPage.cgi">Go back to front page</a>));
+    print Utils::start_page("Sorry!");
+    print '<div id="ntcontent">',
+    $cgi->h3(qq(Sorry: $notice)),
+    $cgi->h4(qq(<a href="javascript:history.back()">Go Back</a>)),
+    $cgi->h4(qq(<a href="myFrontPage.cgi">Go to Front Page</a>));
     print $cgi->end_html;
     exit;
 }
