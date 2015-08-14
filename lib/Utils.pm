@@ -517,8 +517,8 @@ sub geneArrows($$) {
     my $lastTot = (@$genes[-1]->{end} - @$genes[0]->{begin});
     my $width = 800; #'100%'; #input the max-width according to the .arrow class in css
     my $factor = $width/$lastTot;
-    my $xScale = 10 * $factor;
-    my $scale = 510 * $factor;
+    my $xScale = 50 * $factor;
+    my $scale = 550 * $factor;
     # print $factor;
     # xmlns="http://www.w3.org/2000/svg" height="100" width="$width" viewBox="0 -10 $width 50"
 
@@ -561,7 +561,7 @@ sub geneArrows($$) {
         marker-start='url(#scaleEnd)'
         marker-end='url(#scaleEnd)'
         x1="$xScale" y1="55" x2="$scale" y2="55" style="stroke:black;stroke-width:2" />
-    <text x="3" y="53" font-family="Verdana" font-size="10" fill="black">500 nt</text>
+    <text x="10" y="53" font-family="Verdana" font-size="10" fill="black">500 nt</text>
     ];
   
     my $diff = "";
@@ -585,11 +585,13 @@ sub geneArrows($$) {
         # $textY = $pos + 8 if $pos < 0;
         my $posAdj = $pos + 15;
         my $color = "black";
+        my $text = "#00A8C6";
         my $head = "marker-end='url(#rightarrow)'";
         $head = "marker-start='url(#leftarrow)'" if $row->{strand} eq "-";
         my $bgcolor = undef;
         if ($row->{locusId} eq $geneSpec) {
             $color = "red";
+            $text = "red";
             $head = "marker-end='url(#rightarrow2)'";
             $head = "marker-start='url(#leftarrow2)'" if $row->{strand} eq "-";
             $bgcolor = "#FFFFFF";
@@ -598,8 +600,9 @@ sub geneArrows($$) {
         my $label2 =  $row->{gene} || $row->{sysName} || $row->{locusId};
         $label2 = $row->{sysName}. ": " . $label2 if $row->{sysName};
 
-        $svg .= qq[<g><title>$label2 - $row->{desc}, $row->{begin} - $row->{end}</title><line id='arrow-line' $head x1="$newDistAdj" y1="$posAdj" x2="$totalAdj" y2="$posAdj" style="stroke:$color;stroke-width:2" />
-        <text x="$textXAdj" y="$textYAdj" font-family="Verdana" font-size="13" fill="$color">$label</text></g>];
+        $svg .= qq[
+        <g class="click" onclick="window.location.href='singleFit.cgi?orgId=$row->{orgId}&locusId=$row->{locusId}'"><title>$label2 - $row->{desc}, $row->{begin} - $row->{end}</title><line id='arrow-line' $head x1="$newDistAdj" y1="$posAdj" x2="$totalAdj" y2="$posAdj" style="stroke:$color;stroke-width:2" />
+        <text x="$textXAdj" y="$textYAdj" font-family="Verdana" font-size="13" fill="$text" onmouseover="this.style.fill='#CC0024'" onmouseout="this.style.fill='#00A8C6'">$label</text></g>];
 
         $prevrow = $row;
         if ($pos == 0) {

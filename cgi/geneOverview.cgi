@@ -335,8 +335,10 @@ if (@$hits == 0) {
 		my $head = "marker-end='url(#right)'";
 		$head = "marker-start='url(#left)'" if $row->{strand} eq "-";
 		my $bgcolor = undef;
+		my $text = "#00A8C6";
 		if ($row->{locusId} eq $geneSpec) {
 			$color = "red";
+			$text = "red";
 			$head = "marker-end='url(#right2)'";
 			$head = "marker-start='url(#left2)'" if $row->{strand} eq "-";
 			$bgcolor = "#FFFFFF";
@@ -345,8 +347,9 @@ if (@$hits == 0) {
 		my $label2 =  $row->{gene} || $row->{sysName} || $row->{locusId};
 		$label2 = $row->{sysName}. ": " . $label2 if $row->{sysName};
 
-		$svg .= qq[<g><title>$label2 - $row->{desc}</title><line id='arrow-line' $head x1="$newDistAdj" y1="$posAdj" x2="$totalAdj" y2="$posAdj" style="stroke:$color;stroke-width:2" />
-		<text x="$textXAdj" y="$textYAdj" font-family="Verdana" font-size="13" fill="$color">$label</text></g>];
+		$svg .= qq[
+		<g class="click" onclick="window.location.href='singleFit.cgi?orgId=$row->{orgId}&locusId=$row->{locusId}'"><title>$label2 - $row->{desc}, $row->{begin} - $row->{end}</title><line id='arrow-line' $head x1="$newDistAdj" y1="$posAdj" x2="$totalAdj" y2="$posAdj" style="stroke:$color;stroke-width:2" />
+        <text x="$textXAdj" y="$textYAdj" font-family="Verdana" font-size="13" fill="$text" onmouseover="this.style.fill='#CC0024'" onmouseout="this.style.fill='#00A8C6'">$label</text></g>];
 
 		my ($phen, $tip) = Utils::gene_fit_string($dbh,$orgSpec,$row->{locusId});
 		 # if $row->{locusId} eq $geneSpec; #f4f3e4

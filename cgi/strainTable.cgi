@@ -118,6 +118,11 @@ my $endComma = &commify($end);
 
 #make tsv here? debate in printing first vs. running db commands
 print header;
+
+my $genes = $dbh->selectall_arrayref("SELECT * FROM Gene WHERE orgId = ? AND scaffoldId = ? AND Gene.end >= ? AND Gene.begin <= ? ORDER by Gene.begin",
+                               { Slice => {} }, $orgId, $scaffoldId, $begin, $end);
+my %genesh = map {$_->{locusId} => $_} @$genes;
+
 if ($tsv != 1) {
     print
         Utils::start_page("Strain Fitness in $genome"),
@@ -140,10 +145,10 @@ if ($tsv != 1) {
         p(small("Only strains with sufficient reads to estimate fitness are shown, but the strain fitness values are still rather noisy. Strains near the edge of a gene are not shown as being associated with that gene (the Gene column will be empty)."));
 
 
-    if (defined $begin and defined $end and defined $scaffoldId) {
+    #if (defined $begin and defined $end and defined $scaffoldId) {
         # foreach my $locusId (@locusIds) {
-            my $genes = $dbh->selectall_arrayref("SELECT * FROM Gene WHERE orgId = ? AND scaffoldId = ? AND Gene.end >= ? AND Gene.begin <= ? ORDER by Gene.begin",
-                               { Slice => {} }, $orgId, $scaffoldId, $begin, $end);
+            # my $genes = $dbh->selectall_arrayref("SELECT * FROM Gene WHERE orgId = ? AND scaffoldId = ? AND Gene.end >= ? AND Gene.begin <= ? ORDER by Gene.begin",
+            #                    { Slice => {} }, $orgId, $scaffoldId, $begin, $end);
             if (@$genes == 0) {
                 print "No genes in range.";
             } else {
@@ -157,8 +162,8 @@ if ($tsv != 1) {
                 }
                 print Utils::geneArrows(\@$genes, "");
             }
-    }
-}
+        }
+    #}
 
 my $tsvUrl = "strainTable.cgi?tsv=1&orgId=" . $orgId . "&scaffoldId=" . $scaffoldId . "&begin=" . $begin . "&end=" . $end . "&" . join("&", map {"expName=$_"} @expNames); #"&expName=" + expName;
 
@@ -171,7 +176,7 @@ if (@$rows == 0) {
 }
 my @trows = (); # the table
 # header row
-my @headings = qw{Position Strand Gene};
+my @headings = qw{Position Strand Gene Sysname};
 push @headings, a({-title => "Fractional position within gene"}, "Fraction");
 foreach my $expName (@expNames) {
     push @headings, a({-href => "exp.cgi?orgId=$orgId&expName=$expName", -title => $expName},
@@ -205,6 +210,7 @@ foreach my $row (@$rows) {
     }
     my @row = ( a({-title => "barcode $row->{barcode}"}, &commify($row->{pos})),
                 $row->{strand},
+                $genesh{$row->{locusId}}{gene},
                 $locusId eq "" ? "" : a({-title => $gene->{desc}, -href => "singleFit.cgi?orgId=$orgId&locusId=$locusId"},
                                         $locusShow),
                 $locusId eq "" ? "" : sprintf("%.2f",
@@ -225,11 +231,13 @@ foreach my $row (@$rows) {
 }
 
 if ($tsv == 1) { # tab delimited values, not a page
+
     print join("\t", qw{position strand gene fit})."\n";
     my $ind = 0;
     foreach my $row (@$rows) {
         # next unless exists $gene->{x} && exists $gene->{y};
-        print join("\t", $row->{pos}, $row->{strand}, $row->{locusId}, $avgFits[$ind])."\n";
+        my $displayName = $genesh{$row->{locusId}}{gene} || $genesh{$row->{locusId}}{sysName};
+        print join("\t", $row->{pos}, $row->{strand}, $displayName, $avgFits[$ind])."\n";
         $ind += 1;
     }
     exit 0;
@@ -344,7 +352,10 @@ d3.tsv(tsvUrl, function(error, data) {
     //console.log(d.position, d.fit);
   });
 
-  var extentX = d3.extent(data, function(d) { return d.position; });
+  var begin2 = begin/1000;
+  var end2 = end/1000;
+
+  var extentX = d3.extent([begin2, end2]); //data, function(d) { return d.position; });
   var extentY = d3.extent(data, function(d) { return d.fit; });
   var extentXY = d3.extent([ extentX[0], extentX[1], extentY[0], extentY[1] ]);
   // console.log(extentX, extentY, extentXY);

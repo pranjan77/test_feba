@@ -590,8 +590,14 @@ svg.arrows {
 	max-height: 100px;
 	border-left: 2px darkgray solid;
 	border-right: 2px darkgray solid;
-	padding-left: 5px;
-	padding-right: 5px;
+	/*padding-left: 5px;*/
+	/*padding-right: 5px;*/
+}
+
+g.click {
+	/*fill: #00A8C6;*/
+	/*color: #00A8C6;*/
+	cursor: pointer;
 }
 
 /*to handle heatmap button on cofit pages*/
