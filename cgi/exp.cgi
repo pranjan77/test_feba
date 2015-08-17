@@ -14,6 +14,7 @@
 # important or detrimental -- show top 200 genes either way
 # quality -- show quality metrics
 # (by default, shows all of these optoins)
+# help -- 1 if on help/tutorial mode
 
 use strict;
 use CGI qw(:standard Vars -nosticky);
@@ -34,6 +35,7 @@ die "Invalid species name!" unless $orgId =~ m/^[A-Za-z0-9_]*$/;
 my $expName = $cgi->param('expName') || die "no experiment identifier\n";
 die "Invalid experiment name!" unless $expName =~ m/^[A-Za-z0-9_]*$/;
 my $show = $cgi->param('show') || "";
+my $help = $cgi->param('help') || "";
 
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
@@ -90,6 +92,18 @@ print $start, $tabs,
 #     textfield(-name => 'query1', -value => '', -size => 20, -maxlength => 100),
 #     end_form,
 #     qq[</P></div></div>],
+
+if ($help == 1) {
+        print qq[<div class="helpbox">
+        <b><u>About this page:</u></b><BR><ul>
+        <li>View the top specific phenotypes in this experiment. </li>
+        <li>To get to this page, search for any experiment and click on the "Specific" tab.</li> 
+        <li>To compare to another experiment via scatterplot, add another experiment using the box above.</li>
+        <li>To make a comparative heatmap, add genes to compare with by selecting checkboxes and clicking "Top fitness" below.</li>
+        <li>To view a scatterplot of average strain fitness per gene, click on a gene fitness value.</li>
+        <li>To view specific phenotypes for $exp->{expGroup} experiments with $exp->{condition_1}, click the link at the bottom.</li>
+        </ul></div>];
+    }
 
 
 my @fit = (); # sorted list of fitness values to show

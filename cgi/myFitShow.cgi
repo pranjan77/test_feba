@@ -31,6 +31,7 @@ my $cgi=CGI->new;
 
 my $orgSpec = $cgi->param('orgId') || "";
 my $geneSpec = $cgi->param('gene');
+my $help = $cgi->param('help') || "";
 
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
@@ -65,8 +66,10 @@ if (scalar(@$hits) == 1) {
     my $gene = $hits->[0];
     my $orgId = $gene->{orgId};
     my $locusId = $gene->{locusId};
+    my $url = "singleFit.cgi?orgId=$orgId&locusId=$locusId&showAll=0";
+    $url = "singleFit.cgi?orgId=$orgId&locusId=$locusId&showAll=0&help=1" if $help == 1;
 
-    print redirect(-url=>"singleFit.cgi?orgId=$orgId&locusId=$locusId&showAll=0");
+    print redirect(-url=>"$url");
     exit(0);
 
 }

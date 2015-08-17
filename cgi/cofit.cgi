@@ -9,6 +9,8 @@
 #######################################################
 #
 # Required parameters: orgId and locusId, for organism and which gene
+# Optional CGI parameters: 
+# help -- 1 if on help/tutorial mode
 
 use strict;
 use CGI qw(:standard Vars);
@@ -24,6 +26,7 @@ print $cgi->header;
 
 my $orgId = $cgi->param('orgId') || die "no species identifier\n";
 my $locusId = $cgi->param('locusId') || die "no gene identifier\n";
+my $help = $cgi->param('help') || "";
 
 Utils::fail($cgi, "$orgId is invalid. Please enter correct species name!") unless ($orgId =~ m/^[A-Za-z0-9_]*$/);
 Utils::fail($cgi, "$locusId is invalid. Please enter correct locusId!") unless ($locusId =~ m/^[A-Za-z0-9_]*$/);
@@ -58,6 +61,17 @@ print
     h3({class=>"short"},"$showId $geneName : $desc");
 #print $cgi->p(qq{<A HREF="myFitShow.cgi?orgId=$orgId&gene=$locusId">$sysName: $desc</A>});
 
+if ($help == 1) {
+		print qq[<BR><BR><div class="helpbox">
+		<b><u>About this page:</u></b><BR><ul>
+		<li>View the top cofit genes in all experiments for this gene ($showId) in this organism. </li>
+		<li>To get to this page, search for any gene and click on the "Cofit" tab.</li> 
+		<li>To make a comparative heatmap, add genes to compare with by selecting checkboxes and clicking "Make heatbox" below.</li>
+		<li>To view a scatterplot of cofit genes, click on the corresponding cofitness value.</li>
+		</ul></div>];
+	}
+
+
 my $cofitResults = $dbh->selectall_arrayref(qq{
 	SELECT hitId, rank, cofit, gene AS hitName, sysName AS hitSysName, desc AS hitDesc
 		FROM Cofit JOIN Gene ON Cofit.hitId=Gene.locusId AND Cofit.orgId=Gene.orgId
@@ -84,6 +98,8 @@ if (@$cofitResults == 0) {
 	                                 AND o2.locusId1 = ?
                                          AND o2.locusId2 = c.hitId; },
 				    {}, $orgId, $locusId, $hitId);
+	my $url2 = "compareGenes.cgi?orgId=$orgId&locus1=$locusId&locus2=$hitId";
+	$url2 .= "&help=1" if $help == 1;
 	push @trows, $cgi->Tr({bgcolor => $rowcolor, align => 'left', valign => 'top' },
 			      $cgi->td($rank),
 			      $cgi->td($cgi->a( {href => "myFitShow.cgi?orgId=$orgId&gene=$hitId" },
@@ -92,7 +108,7 @@ if (@$cofitResults == 0) {
 			      $cgi->td($hitDesc),
                   $cgi->td( $cgi->a({href => "cofitCons.cgi?orgId=$orgId&locusId=$locusId&hitId=$hitId"},
 						defined $cofitCons ? sprintf("%.2f", $cofitCons) : "no") ),
-                  $cgi->td($cgi->a({title=>"Compare genes via scatterplot", href => "compareGenes.cgi?orgId=$orgId&locus1=$locusId&locus2=$hitId"}, $cofit)),
+                  $cgi->td($cgi->a({title=>"Compare genes via scatterplot", href => "$url2"}, $cofit)),
                   $cgi->td(checkbox('locusId',0,$hitId,'')),
 	                      );
 

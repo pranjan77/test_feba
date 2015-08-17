@@ -16,6 +16,7 @@
 # addgene -- a gene to add (locusId, name, sysName)
 # showAll -- 1 if showing all fitness values instead of just the most extreme ones
 # around -- show neighboring genes (only with just 1 locusId, no addgene)
+# help -- 1 if on help/tutorial mode
 
 use strict;
 
@@ -43,6 +44,7 @@ my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
 my $genome = $orginfo->{$orgId}{genome} || die "Invalid orgId $orgId";
 my $expinfo = Utils::expinfo($dbh,$orgId);
+my $help = $cgi->param('help') || "";
 
 my $addgene_error = undef;
 if ($addgene) {
@@ -164,6 +166,7 @@ print h2("Fitness for " . scalar(@genes) . " genes in " . $cgi->a({href => "org.
     # div({-style => "float: right; vertical-align: top;"},
 	# a({href => "help.cgi#fitness"}, "Help"));
 
+
 # corner box
 print
     qq[<div style="position: relative;"><div class="floatbox">],
@@ -197,6 +200,17 @@ print p,
 print "</P></div></div>";
 
 
+if ($help == 1) {
+        print qq[<div class="helpbox">
+        <b><u>About this page:</u></b><BR><ul>
+        <li>View the top 30 experiments in the selected genes for this organism ($orginfo->{$orgId}{genome}). (You can also choose to view all phenotypes with the link below.)</li>
+        <li>To get to this page, search for any gene and add genes to compare with using the "Fitness" tab. 
+        <li>Add genes to compare with using the "Add gene" box above.</li>
+        <li>Hover over blue links for more information.</li>
+        </ul></div>];
+    }
+
+
 print $cgi->h3($addgene_error) if defined $addgene_error;
 if ($showAll) {
     print $cgi->p("All " . scalar(@exps) . " fitness values, sorted by group and condition");
@@ -212,6 +226,7 @@ if ($showAll) {
     print $cgi->a( { href => "genesFit.cgi?orgId=$orgId&$locusSpec&showAll=1&around=$around" }, "all fitness data" );
 }
 print ".<br><br>";
+
 
 print Utils::geneArrows(\@genes, $centralId) if $around;
 

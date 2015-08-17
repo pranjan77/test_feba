@@ -326,8 +326,8 @@ if (@$hits == 0) {
 		$newDistAdj = $newDist * $factor;
 		$totalAdj = $total * $factor;
 		my $textX = $newDist + ($total - $newDist)/2;
-		my $textXAdj = $textX * $factor - 11;
-		my $textY = $pos - 2;
+		my $textXAdj = $textX * $factor - 11-3;
+		my $textY = $pos - 2-3;
 		my $textYAdj = $textY + 15;
 		# $textY = $pos + 8 if $pos < 0;
 		my $posAdj = $pos + 15;
@@ -345,11 +345,13 @@ if (@$hits == 0) {
 		}
 		my $label = $row->{gene} || $row->{sysName}; #|| $row->{locusId};
 		my $label2 =  $row->{gene} || $row->{sysName} || $row->{locusId};
+		my $label3 = $label2;
+		$label3 =~ s/^.*_/_/ if $row->{sysName} || $row->{locusId};
 		$label2 = $row->{sysName}. ": " . $label2 if $row->{sysName};
 
 		$svg .= qq[
 		<g class="click" onclick="window.location.href='singleFit.cgi?orgId=$row->{orgId}&locusId=$row->{locusId}'"><title>$label2 - $row->{desc}, $row->{begin} - $row->{end}</title><line id='arrow-line' $head x1="$newDistAdj" y1="$posAdj" x2="$totalAdj" y2="$posAdj" style="stroke:$color;stroke-width:2" />
-        <text x="$textXAdj" y="$textYAdj" font-family="Verdana" font-size="13" fill="$text" onmouseover="this.style.fill='#CC0024'" onmouseout="this.style.fill='#00A8C6'">$label</text></g>];
+        <text x="$textXAdj" y="$textYAdj" font-family="Verdana" font-size="13" fill="$text" onmouseover="this.style.fill='#CC0024'" onmouseout="this.style.fill='#00A8C6'">$label3</text></g>];
 
 		my ($phen, $tip) = Utils::gene_fit_string($dbh,$orgSpec,$row->{locusId});
 		 # if $row->{locusId} eq $geneSpec; #f4f3e4

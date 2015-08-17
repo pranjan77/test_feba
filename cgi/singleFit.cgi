@@ -18,6 +18,7 @@
 #
 # Optional CGI parameters: 
 # showAll -- 1 if showing all fitness values instead of just the most extreme ones
+# help -- 1 if on help/tutorial mode
  
 use strict;
 
@@ -36,6 +37,7 @@ my $style = Utils::get_style();
 my $orgSpec = $cgi->param('orgId') || "";
 my $locusId = $cgi->param('locusId');
 my $showAll = $cgi->param('showAll') ? 1 : 0;
+my $help = $cgi->param('help') || "";
 my $start = Utils::start_page("Fitness for $locusId ($orgSpec)");
 
 # connect to database
@@ -141,6 +143,16 @@ if (@$hits == 0) {
 	#     textfield( -name => 'addgene', -default => "", -override => 1, -size => 20, -maxLength => 100 ),
 	#     end_form,
 	#     qq[</P></div></div>];
+
+	if ($help == 1) {
+		print qq[<div class="helpbox">
+		<b><u>About this page:</u></b><BR><ul>
+		<li>View the top 20 phenotypes in all experiments for this gene ($gene->{gene}) in this organism ($orginfo->{$orgId}{genome}). (You can also choose to view all phenotypes with the link below.)</li>
+		<li>To get to this page, search for any gene and click on the "Fitness" tab.</li>
+		<li>Add genes to compare with using the "Add gene" box above.</li>
+		<li>Hover over blue links for more information.</li>
+		</ul></div>];
+	}
 
 
 

@@ -12,6 +12,7 @@
 # group them into ad hoc ortholog groups, and show the groups.
 #
 # Required CGI parameters: expGroup and condition1 (condition1 can be empty, but requires exact match)
+# Optional: help -- 1 if on help/tutorial mode
 
 use strict;
 
@@ -38,6 +39,7 @@ my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
 my $debug = $cgi->param('debug');
 my $start_time = gettimeofday() if $debug;
+my $help = $cgi->param('help') || "";
 
 my $speclist = $dbh->selectall_arrayref(qq{SELECT DISTINCT orgId, locusId, expName, expDesc
                                            FROM Experiment JOIN SpecificPhenotype USING (orgId,expName)
@@ -60,9 +62,10 @@ my $js =  q[<script type="text/javascript" src="../images/jquery-1.11.3.min.js">
         });
     });
     $('tr.header3').click(function(){
-        // click on header3 to hide it and turn off elements until next header, but why show *all* header2s ?
+        // click on header3 to hide it and turn off elements until next header. show the previous row (header2)
         $(this).toggle();
-        $('tr.header2').show();
+        $(this).closest('tr').prev().show();
+        // $('tr.header2').show();
         $(this).nextUntil('tr.header').css('display', function(i,v){
             return this.style.display === 'table-row' ? 'none' : 'table-row';
         });
@@ -172,7 +175,7 @@ foreach my $og (@OGs) {
     @$og = sort { ($b->{gene} ne "") <=> ($a->{gene} ne "") } @$og; # sort them so the ones with gene names come up first 
     foreach my $gene (@$og) {
         if (scalar(@$og) == 1 and $singletonHead == 0) {
-            push @trows, qq[<tr class="header2"><th colspan="8"><center>Singletons</center></th></tr>];
+            push @trows, qq[<th colspan="8"><center>Singletons</center></th>];
             $singletonHead = 1;
         }
         if ($row == 3 and scalar(@$og) > 4) {
@@ -187,6 +190,17 @@ foreach my $og (@OGs) {
     $group++;
     $row = 0;
 }
+
+if ($help == 1) {
+        print qq[<BR><BR><div class="helpbox">
+        <b><u>About this page:</u></b><BR><ul>
+        <li>View genes involved the $expGroup experiments in $condition1 in all organisms. </li>
+        <li>To get to this page, search for any experiment and click on the link at the bottom to view specific phenotypes across organisms.</li> 
+        <li>Click on the summary rows to expand each section.</li>
+        <li>Click on links (including the fitness values) to view more.</li>
+        </ul></div>];
+    }
+
 
 print
     p("Genes with",

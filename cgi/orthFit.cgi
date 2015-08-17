@@ -18,6 +18,7 @@
 # expGroup and condition1 -- these specify the condition.
 #	Note that condition1 may be empty but it must still be present
 #	(and is used to choose which to show, i.e. matchingon empty condition1).
+# Optional: help -- 1 if on help/tutorial mode
 
 use strict;
 
@@ -37,6 +38,7 @@ my $locusId = $cgi->param('locusId') || die "no locusId parameter";
 my $expGroup = $cgi->param('expGroup') || die "no expGroup parameter";
 my $condition1 = $cgi->param('condition1');
 die "no condition1 parameter" unless defined $condition1;
+my $help = $cgi->param('help') || "";
 
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
@@ -65,24 +67,37 @@ print header,
 	# -style => {-code => $style},
 	# -author=>'Morgan Price',
 	# -meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
-    h2($title),
+    h2($title);
     # div({-style => "float: right; vertical-align: top;"},
 	# a({href => "help.cgi#ortholog"}, "Help")),
-    div({-style => "clear: right"});
 
-my @headings = ('&nbsp;', a({title=>"score ratio for ortholog: blast_score_of_alignment / self_score"},'Ratio'),
+if ($help == 1) {
+        print qq[<div class="helpbox">
+        <b><u>About this page:</u></b><BR><ul>
+        <li>View the orthologs associated with a gene involved the $expGroup experiments in $condition1 in all organisms. </li>
+        <li>To get to this page, search for any experiment, view specific phenotypes across organisms, and click on a fitness value.</li> 
+        <li>Click on links (including the fitness values) to view more.</li>
+        </ul></div><BR><BR>];
+    }
+
+
+    print div({-style => "clear: right"});
+
+my @headings = (a({title=>"score ratio for ortholog: blast_score_of_alignment / self_score"},'Ratio'),
 		 qw{Organism Gene Name Description Experiment Fitness t} );
 my @trows = ( $cgi->Tr({ -valign=> 'top', -align => 'center'},
 		       map { th($_) } @headings) );
 my $nSkipOrth = 0;
-my $number = 0;
+# my $number = 0;
+my $shade = 0;
 foreach my $o (@genes) {
     my $data = $dbh->selectall_arrayref(qq{SELECT * from Experiment JOIN GeneFitness USING  (orgId,expName)
                                            WHERE orgId=? AND locusId=? AND expGroup=? AND condition_1=? ORDER BY fit},
 					{ Slice => {} }, $o->{orgId}, $o->{locusId}, $expGroup, $condition1);
     $nSkipOrth++ if @$data == 0 && $o->{orgId} ne $orgId;
     my $first = 1;
-	$number += 1;
+	# $number += 1;
+	$shade += 1;
     foreach my $row (@$data) {
 		my $ratio = $o->{orgId} eq $orgId ? "&mdash;" : sprintf("%.2f",$o->{ratio});
 		my $orgShort = "";
@@ -94,8 +109,8 @@ foreach my $o (@genes) {
 		    $orgShort = a({href => "org.cgi?orgId=$o->{orgId}", title => $d->{genome}}, $short);
 		    # $border = '-style="background-color: 1px black;"';
 		}
-		push @trows, $cgi->Tr({ -valign => 'top', -align => 'left',},
-				  td($first ? $number : ""),
+		push @trows, $cgi->Tr({ -valign => 'top', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF" },
+				  # td($first ? $number : ""),
 			      td($first ?  $ratio : ""),
 			      td($orgShort),
 			      td($first ? a({href => "myFitShow.cgi?orgId=$o->{orgId}&gene=$o->{locusId}"}, #style => "color: rgb(0,0,0)"},

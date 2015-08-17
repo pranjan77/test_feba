@@ -9,6 +9,7 @@
 #######################################################
 #
 # Required parameters: orgId, locusId, hitId
+# Optional: help -- 1 if on help/tutorial mode
 
 use strict;
 use CGI qw(:standard Vars);
@@ -26,6 +27,7 @@ print $cgi->header;
 my $orgId = $cgi->param('orgId') || die "no orgId";
 my $locusId = $cgi->param('locusId') || die "no locusId";
 my $hitId = $cgi->param('hitId') || die "no hitId";
+my $help = $cgi->param('help') || "";
 
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
@@ -93,10 +95,23 @@ print
 	# -style => {-code => $style},
 	# -author=>'morgannprice@yahoo.com',
 	# -meta=>{'copyright'=>'copyright 2015 UC Berkeley'} ),
-    h2($title),
+    h2($title);
  #    div({-style => "float: right; vertical-align: top;"},
 	# a({href => "help.cgi#ortholog"}, "Help")),
-    h3("$nBoth genomes with putative orthologs of both genes"),
+
+if ($help == 1) {
+        print qq[<div class="helpbox">
+        <b><u>About this page:</u></b><BR><ul>
+        <li>View the cofitness between two genes in all organisms. </li>
+        <li>To get to this page, search for any experiment, view specific phenotypes across organisms, and click on a fitness value.</li> 
+        <li>Click on links to view more.</li>
+        <li>To make a comparative heatmap of the genes in that row, click on the fitness values.</li>
+        </ul></div>];
+    }
+
+
+
+    print h3("$nBoth genomes with putative orthologs of both genes"),
     table({-cellspacing => 0, cellpadding => 3}, @trows);
 print p("Not shown: $n1only genomes with orthologs for $show1 only; $n2only genomes with orthologs for $show2 only");
 

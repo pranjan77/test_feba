@@ -14,6 +14,7 @@
 # Optional: tsv -- use tsv=1 to fetch the data instead
 #	outlier -- list outlying genes (xlow, xhigh, ylow, or yhigh)
 #       with minabs -- minimum |abs| on selected axis.
+# help -- 1 if on help/tutorial mode
 
 use strict;
 use CGI qw(:standard Vars -nosticky);
@@ -33,6 +34,7 @@ my $locus2 = $cgi->param('locus2');
 my $query1 = $cgi->param('query1');
 my $query2 = $cgi->param('query2');
 my $tsv = $cgi->param('tsv') ? 1 : 0;
+my $help = $cgi->param('help') || "";
 my $outlier = $cgi->param('outlier');
 die "Must specify orgId" unless defined $orgId && $orgId ne "";
 die "Must specify locus1 or query1"
@@ -236,6 +238,16 @@ if ($error ne "") {
 }
 
 
+if ($help == 1) {
+    print qq[<div class="helpbox">
+    <b><u>About this page:</u></b><BR><ul>
+    <li>View the fitness values between two genes in this organism. </li>
+    <li>To get to this page, search for any gene and click on the "Cofit" tab, then click on a cofitness value.</li> 
+    <li>Change or flip the axes using the respective buttons and click on genes in the chart to add them to the table. Click on experiment names in the table to see more.</li>
+    <li>To view the fitness heatmap for the two genes, click on the link below on the right hand side.</li>
+    </ul></div>];
+  }
+
 
 print <<END
 
@@ -261,12 +273,14 @@ Please try another browser if this message remains
 <input type="hidden" name="orgId" value="$orgId" />
 <input type="hidden" name="locus2" value="$locus2" />
 Change x axis: <input type="text" name="query1"  size="20" maxlength="100" />
+<button type='submit'>Go</button>
 </form>
 
 <form method="get" action="compareGenes.cgi" enctype="multipart/form-data" name="input">
 <input type="hidden" name="orgId" value="$orgId" />
 <input type="hidden" name="locus1" value="$locus1" />
 Change y axis: <input type="text" name="query2"  size="20" maxlength="100" />
+<button type='submit'>Go</button>
 </form>
 
 <form method="get" action="compareGenes.cgi" enctype="multipart/form-data" name="input">
@@ -277,7 +291,7 @@ Change y axis: <input type="text" name="query2"  size="20" maxlength="100" />
 </form>
 </p>
 
-<P>Click on experiments to add them to the table:
+  <P><b>Click on experiments to add them to the table:</b>
 
 <TABLE id="genesel" cellspacing=0 cellpadding=3 >
 <tr><th>Name</th><th>Group</th><th>Description</th><th>x</th><th>y</th><th>&nbsp;</th></tr>

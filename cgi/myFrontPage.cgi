@@ -72,20 +72,20 @@ div({-id=>"ntcontent"},
     table({class=>"frontpage"},
       Tr(
         th("Genes"),
-        td(a({href=>"myFitShow.cgi?orgId=Keio&gene=18086"},"Top Phenotypes<BR>", img({src=>"../images/heatmap1.png"}))),
-        td(a({href=>"cofit.cgi?orgId=Keio&locusId=18086"},"Top Cofitness<BR>", img({src=>"../images/cofit.png"}))),
-        td(a({href=>"genesFit.cgi?orgId=Keio&showAll=0&locusId=18086&locusId=14904&addgene=uvrC"},"Compare Genes<BR>", img({src=>"../images/heatmapN.png"})))
+        td(a({href=>"myFitShow.cgi?orgId=Keio&gene=18086&help=1"},"Top Phenotypes<BR>", img({src=>"../images/heatmap1.png"}))),
+        td(a({href=>"cofit.cgi?orgId=Keio&locusId=18086&help=1"},"Top Cofitness<BR>", img({src=>"../images/cofit.png"}))),
+        td(a({href=>"genesFit.cgi?orgId=Keio&showAll=0&locusId=18086&locusId=14904&addgene=uvrC&help=1"},"Compare Genes<BR>", img({src=>"../images/heatmapN.png"})))
 
       ), Tr(
         th("Experiments"),
-        td(a({href=>"exp.cgi?orgId=Keio&expName=set2IT043&show=specific"},"Specific Phenotypes<BR>", img({src=>"../images/cofit.png"}))),
-        td(a({href=>"compareExps.cgi?orgId=Keio&expName2=set2IT043&expName1=set2IT045&Go=Go"},"Compare Experiments<BR>", img({src=>"../images/CmpExps.png"}))),
-        td(a({href=>"compareExps.cgi?orgId=Keio&expName1=set2IT045&expName2=set2IT043&outlier=lowy&minabs=1&submit=Go"},"Outliers<BR>", img({src=>"../images/outliers.png"})))
+        td(a({href=>"exp.cgi?orgId=Keio&expName=set2IT043&show=specific&help=1"},"Specific Phenotypes<BR>", img({src=>"../images/cofit.png"}))),
+        td(a({href=>"compareExps.cgi?orgId=Keio&expName2=set2IT043&expName1=set2IT045&Go=Go&help=1"},"Compare Experiments<BR>", img({src=>"../images/CmpExps.png"}))),
+        td(a({href=>"compareExps.cgi?orgId=Keio&expName1=set2IT045&expName2=set2IT043&outlier=lowy&minabs=1&submit=Go&help=1"},"Outliers<BR>", img({src=>"../images/outliers.png"})))
       ), Tr(
         th("Multi-Organism"),
-        td(a({href=>"orthCond.cgi?expGroup=stress&condition1=Cisplatin"},"Overview of a Condition<BR>", img({src=>"../images/cond_overview.png"}))),
-        td(a({href=>"orthFit.cgi?orgId=Keio&locusId=14904&expGroup=stress&condition1=Cisplatin"},"Conserved Phenotypes<BR>", img({src=>"../images/CmpFit.png"}))),
-        td(a({href=>"cofitCons.cgi?orgId=Keio&locusId=14904&hitId=18086"},"Conserved Cofitness<BR>", img({src=>"../images/CmpCofit.png"})))
+        td(a({href=>"orthCond.cgi?expGroup=stress&condition1=Cisplatin&help=1"},"Overview of a Condition<BR>", img({src=>"../images/cond_overview.png"}))),
+        td(a({href=>"orthFit.cgi?orgId=Keio&locusId=14904&expGroup=stress&condition1=Cisplatin&help=1"},"Conserved Phenotypes<BR>", img({src=>"../images/CmpFit.png"}))),
+        td(a({href=>"cofitCons.cgi?orgId=Keio&locusId=14904&hitId=18086&help=1"},"Conserved Cofitness<BR>", img({src=>"../images/CmpCofit.png"})))
       )
     ),
   h6(q(Developed by Victoria Lo, Wenjun Shao, and

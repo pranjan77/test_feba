@@ -600,6 +600,16 @@ g.click {
 	cursor: pointer;
 }
 
+.helpbox {
+	margin: 0 auto;
+	border: 1px black solid;
+	border-radius: 10px;
+	padding: 10px;
+	max-width: 1200px;
+	background-color: rgba(227,241,236,0.7);
+}
+
+
 /*to handle heatmap button on cofit pages*/
 .floatbox2 {
 	float: right; 

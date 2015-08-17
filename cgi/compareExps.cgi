@@ -8,12 +8,13 @@
 ## Morgan Price
 #######################################################
 #
-# Key parameeters: orgId, expName1 or query1, expName2 or query2
+# Key parameters: orgId, expName1 or query1, expName2 or query2
 #	If query1 is set, expName1 is ignored, and similarly for query2
 #	Cannot query on both simultaneously, however
 # Optional: tsv -- use tsv=1 to fetch the data instead
 #	outlier -- list outlying genes (xlow, xhigh, ylow, or yhigh)
 #       with minabs -- minimum |abs| on selected axis.
+# help -- 1 if on help/tutorial mode
 
 use strict;
 use CGI qw(:standard Vars -nosticky);
@@ -33,6 +34,7 @@ my $expName2 = $cgi->param('expName2');
 my $query1 = $cgi->param('query1');
 my $query2 = $cgi->param('query2');
 my $tsv = $cgi->param('tsv') ? 1 : 0;
+my $help = $cgi->param('help') || "";
 my $outlier = $cgi->param('outlier');
 die "Must specify orgId" unless defined $orgId && $orgId ne "";
 die "Must specify expName1 or query1"
@@ -213,10 +215,22 @@ my $start = Utils::start_page("Outlier genes from $orginfo->{$orgId}{genome}");
     print $start, '<div id="ntcontent">',
 	# start_html( -title => "Outlier genes from $orginfo->{$orgId}{genome}", -style => {-code => $style},
 		    # -author => 'Morgan Price', -mata => {'copyright'=>'copyright 2015 UC Berkeley'} ),
-	h2("Outlier genes from $orginfo->{$orgId}{genome}"),
+	h2("Outlier genes from $orginfo->{$orgId}{genome}");
 	# div({-style => "float: right; vertical-align: top;"},
 	    # a({href => "help.cgi#fitness"}, "Help")),
-	h3($outlierCode),
+
+if ($help == 1) {
+    print qq[<div class="helpbox">
+    <b><u>About this page:</u></b><BR><ul>
+    <li>View the outlier genes in the two experiments in this organism ($orginfo->{$orgId}{genome}). </li>
+    <li>To get to this page, select the outlier options when viewing the scatterplot comparing two genes.</li> 
+    <li>To make a comparative heatmap, add genes to compare with by selecting checkboxes and clicking "Make heatbox" below.</li>
+    <li>To view the heatmap for the top genes or the scatterplot again, click the link at the bottom.</li>
+    </ul></div>];
+  }
+
+
+	print h3($outlierCode),
 	p(qq{<i>x</i> is fitness in <A HREF="exp.cgi?orgId=$orgId&expName=$expName1">$expName1</A>: $exp1->{expDescLong} }
 	  . "<BR>"
 	  . qq{<i>y</i> is fitness in <A HREF="exp.cgi?orgId=$orgId&expName=$expName2">$expName2</A>: $exp2->{expDescLong} }),
@@ -273,6 +287,16 @@ my $start = Utils::start_page("$title");
 # <style>
 # $style
 # </style>
+my $helptext = "";
+if ($help == 1) {
+    $helptext = qq[<div class="helpbox">
+    <b><u>About this page:</u></b><BR><ul>
+    <li>View the fitness values between two genes in this organism ($orginfo->{$orgId}{genome}). </li>
+    <li>To get to this page, search for any experiment and add another experiment to compare to near the top.</li> 
+    <li>Change or flip the axes or filter out for outliers using the respective buttons. Click on genes in the chart to add them to the table. Click on gene names or values in the table to see more.</li>
+    <li>To view the fitness heatmap for all currently-selected genes, click on the link below the  table.</li>
+    </ul></div>];
+  }
 
 print <<END
 $start
@@ -286,6 +310,8 @@ $start
 <i>x</i> axis <A HREF="exp.cgi?orgId=$orgId&expName=$expName1">$expName1</A>: $exp1->{expDescLong}</H3>
 <BR>
 <i>y</i> axis <A HREF="exp.cgi?orgId=$orgId&expName=$expName2">$expName2</A>: $exp2->{expDescLong}
+
+$helptext
 
 <TABLE width=100% style="border: none;">
 <TR class="reset">
