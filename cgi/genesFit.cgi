@@ -203,9 +203,10 @@ print "</P></div></div>";
 if ($help == 1) {
         print qq[<div class="helpbox">
         <b><u>About this page:</u></b><BR><ul>
-        <li>View the top 30 experiments in the selected genes for this organism ($orginfo->{$orgId}{genome}). (You can also choose to view all phenotypes with the link below.)</li>
-        <li>To get to this page, search for any gene and add genes to compare with using the "Fitness" tab. 
-        <li>Add genes to compare with using the "Add gene" box above.</li>
+        <li>Show the experiments with the strongest phenotypes for the specified genes. (You can also choose to view all phenotypes with the link below.)</li>
+        <li>To get to this page, search for any gene, visit the "Fitness" tab, and add genes to compare to.
+        <li>Add more genes to compare to using the "Add gene" box at the top (try "uvrD").</li>
+        <li>Or click on a "plot" link at the bottom to see a scatterplot.</li>
         <li>Hover over blue links for more information.</li>
         </ul></div>];
     }
@@ -293,10 +294,10 @@ if (@genes > 0) {
 
     if ($around and ($centralId != $gene->{locusId})) {
         $compare = "compareGenes.cgi?orgId=$orgId&locus1=$centralId&locus2=" . $gene->{locusId};
-        $compare = "<BR>" . $cgi->a({href=>$compare}, "compare");
+        $compare = "<BR>" . $cgi->a({href=>$compare}, "plot");
     } elsif (!$around and ($firstGene != $gene->{locusId}) or ($firstGene ne $gene->{locusId})) {
         $compare = "compareGenes.cgi?orgId=$orgId&locus1=$firstGene&locus2=" . $gene->{locusId};
-        $compare = "<BR>" . $cgi->a({href=>$compare}, "compare");
+        $compare = "<BR>" . $cgi->a({href=>$compare}, "plot");
     }
     else {
         $compare = "";
