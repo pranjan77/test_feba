@@ -102,10 +102,9 @@ print
 if ($help == 1) {
         print qq[<div class="helpbox">
         <b><u>About this page:</u></b><BR><ul>
-        <li>View the cofitness between two genes in all organisms. </li>
-        <li>To get to this page, search for any experiment, view specific phenotypes across organisms, and click on a fitness value.</li> 
-        <li>Click on links to view more.</li>
-        <li>To make a comparative heatmap of the genes in that row, click on the fitness values.</li>
+        <li>See if two genes have similar fitness patterns (high <A HREF="help.cgi#cofitness">cofitness</A>) across organisms. </li>
+        <li>To get to this page, search for a gene, visit the "Cofit" tab, and click on "compare".</li>
+        <li>To see the actual fitness patterns in one organism, click on the cofitness value. On that page, you can request a scatterplot.</li>
         </ul></div>];
     }
 

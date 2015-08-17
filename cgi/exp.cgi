@@ -96,12 +96,11 @@ print $start, $tabs,
 if ($help == 1) {
         print qq[<div class="helpbox">
         <b><u>About this page:</u></b><BR><ul>
-        <li>View the top specific phenotypes in this experiment. </li>
+        <li>View the genes that had strong and specific phenotypes in this experiment. </li>
         <li>To get to this page, search for any experiment and click on the "Specific" tab.</li> 
-        <li>To compare to another experiment via scatterplot, add another experiment using the box above.</li>
-        <li>To make a comparative heatmap, add genes to compare with by selecting checkboxes and clicking "Top fitness" below.</li>
-        <li>To view a scatterplot of average strain fitness per gene, click on a gene fitness value.</li>
-        <li>To view specific phenotypes for $exp->{expGroup} experiments with $exp->{condition_1}, click the link at the bottom.</li>
+        <li>To compare to another experiment via scatterplot, add another experiment using the box above. (Try "cisplatin".)</li>
+        <li>To make a comparative heatmap, check the genes of interest and click the "Heatmap" link at the bottom.</li>
+        <li>For more about how we define a specific phenotype, see the <A HREF="help.cgi#specific">help page</A>.
         </ul></div>];
     }
 
@@ -212,7 +211,7 @@ if (@fit > 0) { # show the table
 		     $cgi->th(['&nbsp;', 'gene','name','fitness','t score','description', '&nbsp;']),
 		     @trows) ),
 	"<BR><BR>",
-	submit(-name => 'Top fitness of selected genes'),
+	submit(-name => 'Heatmap of selected genes'),
 	end_form;
 } elsif ($show eq "quality") {
     my @trows = ();

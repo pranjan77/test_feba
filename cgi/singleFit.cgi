@@ -147,10 +147,11 @@ if (@$hits == 0) {
 	if ($help == 1) {
 		print qq[<div class="helpbox">
 		<b><u>About this page:</u></b><BR><ul>
-		<li>View the top 20 phenotypes in all experiments for this gene ($gene->{gene}) in this organism ($orginfo->{$orgId}{genome}). (You can also choose to view all phenotypes with the link below.)</li>
+		<li>View the experiments that have the strongest phenotypes for this gene. (Or choose to view all phenotypes with the link below.)</li>
 		<li>To get to this page, search for any gene and click on the "Fitness" tab.</li>
-		<li>Add genes to compare with using the "Add gene" box above.</li>
+		<li>Use the "Add gene box" above to compare this gene's fitness to another one (try "uvrB").</li>
 		<li>Hover over blue links for more information.</li>
+                <li>For more about fitness values, see the <A HREF="help.cgi#fitness">help page</A>.
 		</ul></div>];
 	}
 

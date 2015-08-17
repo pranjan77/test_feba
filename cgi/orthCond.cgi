@@ -194,10 +194,11 @@ foreach my $og (@OGs) {
 if ($help == 1) {
         print qq[<BR><BR><div class="helpbox">
         <b><u>About this page:</u></b><BR><ul>
-        <li>View genes involved the $expGroup experiments in $condition1 in all organisms. </li>
+        <li>View genes with <A HREF="help.cgi#specific">specific and strong phenotypes</A> in $condition1 $expGroup, across all organisms.</li>
+        <li>These genes are grouped by <A HREF="ortholog">orthology</A>, and larger ortholog groups are shown first.</li>
         <li>To get to this page, search for any experiment and click on the link at the bottom to view specific phenotypes across organisms.</li> 
-        <li>Click on the summary rows to expand each section.</li>
-        <li>Click on links (including the fitness values) to view more.</li>
+        <li>Click on "+" to expand each section.</li>
+        <li>Click on a fitness value to see all of the fitness values for that gene and its orthologs in $condition1 $expGroup.
         </ul></div>];
     }
 

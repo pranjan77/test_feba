@@ -74,8 +74,9 @@ print header,
 if ($help == 1) {
         print qq[<div class="helpbox">
         <b><u>About this page:</u></b><BR><ul>
-        <li>View the orthologs associated with a gene involved the $expGroup experiments in $condition1 in all organisms. </li>
-        <li>To get to this page, search for any experiment, view specific phenotypes across organisms, and click on a fitness value.</li> 
+        <li>View all of the fitness data for a gene and its orthologs in a given condition. </li>
+        <li>To get to this page, search for a gene, visit the "Fitness" tab, and click on the "compare" link for a condition of interest.</li> 
+        <li>Or, search for an experiment, visit the "Specific" tab, and click on the "compare" link for a gene of interest.</li>
         <li>Click on links (including the fitness values) to view more.</li>
         </ul></div><BR><BR>];
     }

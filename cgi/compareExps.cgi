@@ -222,10 +222,10 @@ my $start = Utils::start_page("Outlier genes from $orginfo->{$orgId}{genome}");
 if ($help == 1) {
     print qq[<div class="helpbox">
     <b><u>About this page:</u></b><BR><ul>
-    <li>View the outlier genes in the two experiments in this organism ($orginfo->{$orgId}{genome}). </li>
-    <li>To get to this page, select the outlier options when viewing the scatterplot comparing two genes.</li> 
-    <li>To make a comparative heatmap, add genes to compare with by selecting checkboxes and clicking "Make heatbox" below.</li>
-    <li>To view the heatmap for the top genes or the scatterplot again, click the link at the bottom.</li>
+    <li>View genes that have different fitness in the two experiments: they are important for fitness in $exp2->{expDesc} but not in $exp1->{expDesc}.</li>
+    <li>The most important genes in $exp2->{expDesc} are shown first.
+    <li>To get to this page, use the outlier button when viewing the scatterplot comparing two experiments.</li> 
+    <li>You can also view a heatmap of the top genes (link at bottom).</li>
     </ul></div>];
   }
 
@@ -291,10 +291,10 @@ my $helptext = "";
 if ($help == 1) {
     $helptext = qq[<div class="helpbox">
     <b><u>About this page:</u></b><BR><ul>
-    <li>View the fitness values between two genes in this organism ($orginfo->{$orgId}{genome}). </li>
-    <li>To get to this page, search for any experiment and add another experiment to compare to near the top.</li> 
-    <li>Change or flip the axes or filter out for outliers using the respective buttons. Click on genes in the chart to add them to the table. Click on gene names or values in the table to see more.</li>
-    <li>To view the fitness heatmap for all currently-selected genes, click on the link below the  table.</li>
+    <li>Each point shows the fitness of a gene in the two experiments</A>
+    <li>To get to this page, search for any experiment and add another experiment to compare to.</li> 
+    <li>Hover on a point to see what gene it is, or click to add the gene to the table.</li>
+    <li>Or make a table of all the genes that are outliers, i.e., use "Low y" to list genes that are only important in $exp2->{expDesc}.</li>
     </ul></div>];
   }
 

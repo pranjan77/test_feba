@@ -39,7 +39,8 @@ my ($genus,$species,$strain) = $dbh->selectrow_array("SELECT genus,species,strai
 Utils::fail($cgi, "No species information for $orgId") unless defined $species;
 
 my $showId = $sysName || $locusId;
-my $start = Utils::start_page("Cofitness for $sysName ($genus $species $strain");
+my $showName = $geneName || $showId;
+my $start = Utils::start_page("Cofitness for $showName ($genus $species $strain");
 my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusId,0,$type,"cofit");
 
 print
@@ -64,10 +65,11 @@ print
 if ($help == 1) {
 		print qq[<BR><BR><div class="helpbox">
 		<b><u>About this page:</u></b><BR><ul>
-		<li>View the top cofit genes in all experiments for this gene ($showId) in this organism. </li>
+		<li>Show the genes with the most similar fitness patterns as this gene. </li>
 		<li>To get to this page, search for any gene and click on the "Cofit" tab.</li> 
-		<li>To make a comparative heatmap, add genes to compare with by selecting checkboxes and clicking "Make heatbox" below.</li>
-		<li>To view a scatterplot of cofit genes, click on the corresponding cofitness value.</li>
+		<li>To view a scatterplot of the fitness patterns, click on a cofitness value.</li>
+		<li>To make a heatmap, checkmark genes of interest and click the "Heatmap" button at the bottom.</li>
+                <li>For more about cofitness, see the <A HREF="help.cgi#cofitness">help page</A>.
 		</ul></div>];
 	}
 
@@ -124,7 +126,7 @@ if (@$cofitResults == 0) {
 	# submit(-class=>"heatmap", -name=>"heatmap with $name"),
 	# qq[</div></div>],
 	table( {cellpadding => 3, cellspacing => 0 }, @trows ),
-	p(submit(-class=>"heatmap", -name=>"Make heatmap of $name with selected genes")),
+	p(submit(-class=>"heatmap", -name=>"Heatmap of $name with selected genes")),
 	# "<BR>Compare selected genes to $showId $geneName: " . 
 	end_form,
 	"<BR><BR>";
