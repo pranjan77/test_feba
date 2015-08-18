@@ -232,12 +232,12 @@ foreach my $row (@$rows) {
 
 if ($tsv == 1) { # tab delimited values, not a page
 
-    print join("\t", qw{position strand gene fit})."\n";
+    print join("\t", qw{position strand gene locusId fit})."\n";
     my $ind = 0;
     foreach my $row (@$rows) {
         # next unless exists $gene->{x} && exists $gene->{y};
         my $displayName = $genesh{$row->{locusId}}{gene} || $genesh{$row->{locusId}}{sysName};
-        print join("\t", $row->{pos}, $row->{strand}, $displayName, $avgFits[$ind])."\n";
+        print join("\t", $row->{pos}, $row->{strand}, $displayName, $row->{locusId}, $avgFits[$ind])."\n";
         $ind += 1;
     }
     exit 0;
@@ -409,10 +409,11 @@ var tooltip = d3.select("body").append("div")
     .attr("class", "tooltip")
     .style("opacity", 0.0);
 
+
   svg.selectAll(".dot")
       .data(data)
     .enter().append("circle")
-    .filter(function(d) { return d.gene != "" })
+    .filter(function(d) { return d.locusId != "" })
       .attr("class", "dot")
       .attr("r", 5)
       .attr("cx", function(d) { return x(d.position); })
@@ -425,7 +426,7 @@ var tooltip = d3.select("body").append("div")
           tooltip.transition()
                .duration(200)
                .style("opacity", .9);
-          tooltip.html(d.gene + ", at position " + (+d.position)+ " on " + d.strand + " strand, with fitness " + (+d.fit).toFixed(1))
+          tooltip.html((d.gene||d.sysName||d.locusId) + ", at position " + (+d.position)+ " on " + d.strand + " strand, with fitness " + (+d.fit).toFixed(1))
                .style("left", (d3.event.pageX + 5) + "px")
                .style("top", (d3.event.pageY - 28) + "px");
       })
@@ -439,7 +440,7 @@ var tooltip = d3.select("body").append("div")
   svg.selectAll("dot")
         .data(data)
       .enter().append("circle")
-      .filter(function(d) { return d.gene == "" })
+      .filter(function(d) { return d.locusId == "" })
         .style("fill", "gray")
         .attr("r", 3.5)
         .attr("cx", function(d) { return x(d.position); })
