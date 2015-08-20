@@ -26,8 +26,6 @@ use lib "../lib";
 use Utils;
 
 my $cgi=CGI->new;
-# my $style = Utils::get_style();
-
 
 my $orgSpec = $cgi->param('orgId') || "";
 my $geneSpec = $cgi->param('gene');
@@ -114,7 +112,6 @@ foreach my $gene (@$descs) {
 }
 
 my @trows = ();
-# $count = 0;
     if (@$descs >= 1) {
     	print h3(b("Match by description for $geneSpec:"));
     	push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},

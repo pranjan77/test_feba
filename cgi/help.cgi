@@ -25,13 +25,8 @@ my $start = Utils::start_page("Help for Fitness Browser");
 
 print header,
 	$start, 
-    # start_html(-title =>"Help for Fitness Browser", -style => {-code => $style},
-	   #     -author=>'Morgan Price',
-	   #     -meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
     h2("Help for Fitness Browser");
- #    div({-style => "float: right; vertical-align: top;"},
-	# a({href => "myFrontPage.cgi"}, "Go back to front page"));
-	
+
 
 my $helpcontent = <<END
 

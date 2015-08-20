@@ -20,7 +20,6 @@ use lib "../lib";
 use Utils;
 
 my $cgi=CGI->new;
-# my $style = Utils::get_style();
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
 my @orgOptions = ("");
@@ -33,15 +32,7 @@ foreach my $hash (@orginfo) {
 }
 my $start = Utils::start_page("Fitness Browser - Exp Search");
 
-print header, $start,
- #    start_html(
- #      $start,
-	# -title =>"Fitness Browser",
-	# # -style => {-code => $style},
-	# -author=>'wjshaoATberkeley.edu, victorialoATberkeley.edu',
-	# -meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
-
-    
+print header, $start,    
 div({-id=>"ntcontent"},
   h2("Search Experiments or Conditions"),
   h5(q{Browse <i>unpublished</i> fitness experiments from the
@@ -78,8 +69,6 @@ div({-id=>"ntcontent"},
 	  "or",
 	  a({ href => "cond.cgi?expGroup=stress" }, "stresses" )),
         end_form,
-    # div({-style => "clear: right"}),
-    # )
 
 
     # h3(qq(Search by Gene Sequence)),

@@ -110,14 +110,11 @@ if (@$hits == 0) {
 	my $tabs = Utils::tabsGene($dbh,$cgi,$orgSpec,$locusId,$showAll,$gene->{type},"fit");
 
 	print
-	   #  start_html( -title => $title, -style => {-code => $style}, -author=>'wjshaoATberkeley.edu',
-			 # -meta=>{'copyright'=>'copyright 2015 UC Berkeley'} ),
 		$start, $tabs,
 	    h2("Fitness data for $idShow in " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
 	    # corner compare box
 	    qq[<div style="position: relative;"><div class="floatbox">],
 	    start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
-	    # "<P><center><b>Compare</b></center> 
 	    "<br>Add gene: ",
 	    hidden( -name => 'orgId', -value => $orgId, -override => 1 ),
 	    hidden( -name => 'showAll', -value => $showAll, -override => 1  ),
@@ -127,8 +124,6 @@ if (@$hits == 0) {
     	"<button type='submit'>Go</button>",
 	    end_form,
 	    qq[</P></div></div>],
-	 #    div({-style => "float: right; vertical-align: top;"},
-		# a({href => "help.cgi#fitness"}, "Help")),
 	    h3("$idShow $gene->{gene}: $gene->{desc}");
 
 	    # Option to add a gene (links to genesFit.cgi)
@@ -184,6 +179,8 @@ if (@$hits == 0) {
 	    my $expName = $fitrow->{expName};
 	    my $exp = $expinfo->{$expName};
 	    my $group = $exp->{expGroup};
+	    my $strainUrl = "strainTable.cgi?orgId=$orgId&locusId=$locusId&expName=$expName";
+	    $strainUrl .= "&help=1" if $help == 1;
 	    push @out, join(" ",
 			    td($group eq $lastGroup ? "" : $group),
 			    td(a({ 
@@ -192,7 +189,7 @@ if (@$hits == 0) {
 					       href => "exp.cgi?orgId=$orgId&expName=$expName" },
 					       $exp->{expDesc})),
 			    td( { -bgcolor => Utils::fitcolor($fitrow->{fit}) },
-                                a({ -href => "strainTable.cgi?orgId=$orgId&locusId=$locusId&expName=$expName",
+                                a({ -href => $strainUrl,
                                     -title => "per-strain data",
                                     -style => "color:rgb(0,0,0)" },
                                   sprintf("%.1f", $fitrow->{fit}) ) ),
@@ -212,8 +209,6 @@ if (@$hits == 0) {
 	    $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
 		     $cgi->th( [ 'group', 'condition','fitness','t score', '&nbsp;' ] ) ),
             $cgi->Tr({-align=>'left',-valign=>'top',-style=>"font-size: $relsize"}, \@out ) );
-
-	
 
 	# links
 # 	if ($showAll == 0) {

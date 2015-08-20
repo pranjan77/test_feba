@@ -33,7 +33,6 @@ my $cgi=CGI->new;
 my $style = Utils::get_style();
 
 # read the input information
-
 my $query = $cgi->param('query') || "";
 my $qtype = $cgi->param('qtype') || "protein";
 my $numHit = $cgi->param('numHit') || 20;
@@ -56,13 +55,6 @@ if (defined $orgId and $locusSpec) {
 
 
 print $cgi->header, $start, $tabs;
-# print $cgi->start_html(
-#     -title =>"Blast Results",
-#     -style => {-code => $style},
-#     -author=>'wjshaoATberkeley.edu',
-#     -meta=>{'copyright'=>'copyright 2015 UC Berkeley'},
-# #    -BGCOLOR=>'#fffacd'
-# );
 
 # check user input
 
@@ -205,11 +197,6 @@ $#hits = $numHit-1 if defined $numHit && $numHit > 0 && @hits > $numHit;
 if ($cnt > 0) {
 
     print $cgi->p("Top " . scalar(@hits) . " hits (E < 0.01)");
-
-    # my @td = ();
-    # foreach my $row (@hits) {
-    #     push @td, $cgi->td( $row );
-    # }
     print $cgi->table(
         { cellspacing=>0, cellpadding=>3 },
         $cgi->Tr({-align=>'left',-valign=>'top'},

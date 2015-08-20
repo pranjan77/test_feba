@@ -78,10 +78,7 @@ my $start = Utils::start_page("$title");
 print
     header,
     $start, '<div id="ntcontent">',
-  #   start_html( -title => $title, -style => { -code => $style }, -author => 'Morgan Price, Victoria Lo',
-		# -meta => { 'copyright' => 'copyright 2015 UC Berkeley' }),
     h2("$title");
-    # div({-style => "float: right; vertical-align: top;"}, a({href => "help.cgi#specific"}, "Help"));
 
 #exit if no results
 # Utils::fail($cgi, "No experiments for this organism.") if @$cond == 0;
@@ -110,9 +107,6 @@ foreach my $row (@$all) {
 print table({cellspacing => 0, cellpadding => 3}, @trows);
 print "<br><br>";
 
-# foreach my $line (@$sources) {
-#     print $line->{nCon}, "<br>";
-# }
 
 # display number of genes that have data out of total genes
 # gather number of genes and data

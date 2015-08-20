@@ -27,9 +27,6 @@ use Utils;
 
 my $cgi = CGI->new;
 
-# my $style = Utils::get_style();
-# print $cgi->header;
-
 my $orgId = $cgi->param('orgId');
 $orgId = "" if !defined $orgId;
 
@@ -47,8 +44,6 @@ my $fitness = $dbh->selectall_arrayref("SELECT locusId, expName, fit FROM GeneFi
 my %fit=();
 foreach my $frow(@$fitness) {
 	my ($locusId, $expName, $fit) = @$frow;
-	# my $expName = $frow->{expName};
-	# my $locusId = $frow->{locusId};
 	$fit{$locusId}{$expName} = $fit;
 }
 
@@ -80,7 +75,6 @@ foreach my $row (@$gene) {
 		print "\t" . $rounded;
 	};
 	print "\n";
-	# };
 };
 
 print STDERR "done\n";

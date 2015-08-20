@@ -126,12 +126,6 @@ if ($around) {
 
 
 print $cgi->header;
-# print $cgi->start_html(
-#     -title => $pageTitle,
-#     -style => {-code => $style},
-#     -author=>'Morgan Price',
-#     -meta=>{'copyright'=>'copyright 2015 UC Berkeley'},
-# );
 print $start, $tabs;
 
 Utils::fail($cgi,"None of the genes has fitness data")
@@ -163,9 +157,6 @@ if ($showAll) {
 }
 
 print h2("Fitness for " . scalar(@genes) . " genes in " . $cgi->a({href => "org.cgi?orgId=". $orginfo->{$orgId}->{orgId}}, "$genome"),);
-    # div({-style => "float: right; vertical-align: top;"},
-	# a({href => "help.cgi#fitness"}, "Help"));
-
 
 # corner box
 print
@@ -269,11 +260,13 @@ foreach my $exp (@exps) {
 	my $showId = $gene->{sysName} || $gene->{locusId};
 	my $fit = $gene->{fit}{$expName}{fit};
 	my $t = $gene->{fit}{$expName}{t};
+    my $strainUrl = "strainTable.cgi?orgId=$orgId&locusId=$gene->{locusId}&expName=$expName";
+        $strainUrl .= "&help=1" if $help == 1;
 	if (defined $fit) {
 	    my $fitShow = sprintf("%.1f",$fit);
 	    $t = sprintf("%.1f", $t);
 	    push @values, $cgi->td({ -bgcolor => Utils::fitcolor($fit) },
-                                   a({ -href => "strainTable.cgi?orgId=$orgId&locusId=$gene->{locusId}&expName=$expName",
+                                   a({ -href => $strainUrl,
                                        -title => "$showId: t = $t",
                                        -style => "color:rgb(0,0,0)" },
                                      $fitShow) );

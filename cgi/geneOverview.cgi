@@ -64,24 +64,10 @@ foreach my $gene (@$hits) {
 }
 
 if (@$hits == 0) {
- #    print $cgi->start_html(
-	# -title =>"Gene Search",
-	# -style => {-code => $style},
-	# -author=>'wjshaoATberkeley.edu',
-	# -meta=>{'copyright'=>'copyright 2015 UC Berkeley'} );
 	print $start,
     print $cgi->h3("No gene found for $geneSpec",
 		   (exists $orginfo->{$orgSpec}{genome} ? " in " . $orginfo->{$orgSpec}{genome} : ""));
 } elsif (@$hits > 1) {
- #    print $cgi->start_html(
-	# -title =>"Gene Search",
-	# -style => {-code => $style},
-	# -author=>'wjshaoATberkeley.edu',
-	# -meta=>{'copyright'=>'copyright 2015 UC Berkeley'} ),
-	# div({-style => "float: right; vertical-align: top;"},
-	#     a({href => "help.cgi"}, "Help")),
-	
-
 	print $start,
 
 	h3("Genes found for $geneSpec:");
@@ -177,7 +163,6 @@ if (@$hits == 0) {
 		my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusId,0,$gene->{type},"gene");
 		
 		print 
-			# $cgi->div({-id=>"ntcontent"},
 			$start, $tabs, 
 			h2("Gene $idShow in " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
 			$cgi->h3("$idShow $gene->{gene}: $gene->{desc} in " . $orginfo->{$gene->{orgId}}{genome}),
@@ -213,14 +198,8 @@ if (@$hits == 0) {
 
 
 		print
-		   #  start_html( -title => $title, -style => {-code => $style}, -author=>'wjshaoATberkeley.edu',
-				 # -meta=>{'copyright'=>'copyright 2015 UC Berkeley'} ),
 			$start, $tabs,
-
-			# div({-id=>"tabcontent"},
 		    h2("Gene info for $idShow in " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
-		 #    div({-style => "float: right; vertical-align: top;"},
-			# a({href => "help.cgi#fitness"}, "Help")),
 		    h3("$idShow $gene->{gene}: $gene->{desc}");
 	}
 
@@ -245,8 +224,6 @@ if (@$hits == 0) {
 	my $factor = $width/$lastTot;
 	my $xScale = 10 * $factor;
 	my $scale = 510 * $factor;
-	# print $factor;
-	# xmlns="http://www.w3.org/2000/svg" height="100" width="$width" viewBox="0 -10 $width 50"
 
 	my $svg = qq[
 	<center><svg class="arrows" viewBox="0 -30 $width 100">
@@ -295,17 +272,6 @@ if (@$hits == 0) {
 	    x1="0" y1="0" x2="100" y2="0" style="stroke:black;stroke-width:2" />
 	</svg>-->
 	];
-    
-	# 800px wide, 100 px tall, hover - locus name: description, scale bar
-
-		   	# for my $locus(@locusIds) {
-		# 	print "locus ". $locus . "<br>";
-		# }
-		# print \@genes;
-		# foreach my $gene2(@genes) {
-		# 	print $gene2->{sysName}, $gene2->{desc}, $gene2->{strand}, "<br>";
-		# 	# print $gene2->{desc};
-		# };
 
 	# my @headings = qw{Locus Name Description Strand Distance(nt) Phenotype};
 	# my @trows = ( Tr({ -valign => 'top', -align => 'center' }, map { th($_) } \@headings) );
@@ -329,7 +295,6 @@ if (@$hits == 0) {
 		my $textXAdj = $textX * $factor - 11-3;
 		my $textY = $pos - 2-3;
 		my $textYAdj = $textY + 15;
-		# $textY = $pos + 8 if $pos < 0;
 		my $posAdj = $pos + 15;
 		my $color = "black";
 		my $head = "marker-end='url(#right)'";
@@ -407,7 +372,6 @@ if (@$hits == 0) {
 
 } #  end if just 1 hit
 
-# }
 print "<br><br>";
 
 $dbh->disconnect();

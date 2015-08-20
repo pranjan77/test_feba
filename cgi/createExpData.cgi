@@ -27,9 +27,6 @@ use Utils;
 
 my $cgi = CGI->new;
 
-# my $style = Utils::get_style();
-# print $cgi->header;
-
 my $orgId = $cgi->param('orgId');
 $orgId = "" if !defined $orgId;
 
@@ -52,11 +49,7 @@ print "Content-Disposition: attachment; filename=exp_organism_$orgId.txt\n\n";
 
 # print the header row
 print STDERR "writing headers...\n";
-# print 'orgID' ."\t". 'geneName'. "\t". 'locusID' ."\t" . 'sysName';
 print "orgId" . "\t" . "expName" . "\t" . "expDesc" . "\t" . "timeZeroSet" . "\t" . "num" . "\t" . "nMapped" . "\t" . "nPastEnd" . "\t" . "nGenic" . "\t" . "nUsed" . "\t" . "gMed" . "\t" . "gMedt0" . "\t" . "gMean" . "\t" . "cor12" . "\t" . "mad12" . "\t" . "mad12c" . "\t" . "mad12c_t0" . "\t" . "opcor" . "\t" . "adjcor" . "\t" . "gccor" . "\t" . "maxFit" . "\t" . "expGroup" . "\t" . "expDescLong" . "\t" . "mutatntLibrary" . "\t" . "person" . "\t" . "dateStarted" . "\t" . "steName" . "\t" . "seqindex" . "\t" . "media" . "\t" . "temperature" . "\t" . "pH" . "\t" . "vessel" . "\t" . "aerobic" . "\t" . "liquid" . "\t" . "shaking" . "\t" . "condition_1" . "\t" . "units_1" . "\t" . "concentration_1" . "\t" . "condition_2" . "\t" . "units_2" . "\t" . "concentration_2" . "\t" . "growthPlate" . "\t" . "growthWells" . "\n";
-	# foreach my $titlerow (@$exp) {
-	# 	print "\t" . $titlerow->{expName} ." ". $titlerow->{expDesc};
-	# };
 print "\n";
 
 # print the data row by row
@@ -64,20 +57,5 @@ print STDERR "writing data...\n";
 foreach my $row(@$exp) {
 	print $row->{orgId} . "\t" . $row->{expName} . "\t" . $row->{expDesc} . "\t" . $row->{timeZeroSet} . "\t" . $row->{num} . "\t" . $row->{nMapped} . "\t" . $row->{nPastEnd} . "\t" . $row->{nGenic} . "\t" . $row->{nUsed} . "\t" . $row->{gMed} . "\t" . $row->{gMedt0} . "\t" . $row->{gMean} . "\t" . $row->{cor12} . "\t" . $row->{mad12} . "\t" . $row->{mad12c} . "\t" . $row->{mad12c_t0} . "\t" . $row->{opcor} . "\t" . $row->{adjcor} . "\t" . $row->{gccor} . "\t" . $row->{maxFit} . "\t" . $row->{expGroup} . "\t" . $row->{expDescLong} . "\t" . $row->{mutatntLibrary} . "\t" . $row->{person} . "\t" . $row->{dateStarted} . "\t" . $row->{steName} . "\t" . $row->{seqindex} . "\t" . $row->{media} . "\t" . $row->{temperature} . "\t" . $row->{pH} . "\t" . $row->{vessel} . "\t" . $row->{aerobic} . "\t" . $row->{liquid} . "\t" . $row->{shaking} . "\t" . $row->{condition_1} . "\t" . $row->{units_1} . "\t" . $row->{concentration_1} . "\t" . $row->{condition_2} . "\t" . $row->{units_2} . "\t" . $row->{concentration_2} . "\t" . $row->{growthPlate} . "\t" . $row->{growthWells} . "\n";
 }
-# foreach my $row (@$gene) {
-# 	my $locus = $row->{locusId};
-# 	# next if !exists $fit{$locus};
-# 	print $row->{orgId} ."\t" . $row->{gene} . "\t". $locus ."\t". $row->{sysName} . "\t" . ;
-# 	foreach my $subrow(@$exp) {
-# 		my $expr = $subrow->{expName};
-# 		my $rounded = "";
-# 		# if (exists $fit{$locus}{$expr}) { 
-# 			# $rounded = sprintf("%.3f", $fit{$locus}{$expr});
-# 		# };
-# 		print "\t" . $rounded;
-# 	};
-# 	print "\n";
-# 	# };
-# };
 
 print STDERR "done\n";

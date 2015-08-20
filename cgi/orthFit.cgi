@@ -31,7 +31,6 @@ use Utils;
 use URI::Escape;
 
 my $cgi=CGI->new;
-# my $style = Utils::get_style();
 
 my $orgId = $cgi->param('orgId') || die "no orgId parameter";
 my $locusId = $cgi->param('locusId') || die "no locusId parameter";
@@ -62,14 +61,7 @@ my $start = Utils::start_page("$title");
 
 print header,
 	$start, '<div id="ntcontent">',
- #    start_html(
-	# -title =>$title,
-	# -style => {-code => $style},
-	# -author=>'Morgan Price',
-	# -meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
     h2($title);
-    # div({-style => "float: right; vertical-align: top;"},
-	# a({href => "help.cgi#ortholog"}, "Help")),
 
 if ($help == 1) {
         print qq[<div class="helpbox">
@@ -89,7 +81,7 @@ my @headings = (a({title=>"score ratio for ortholog: blast_score_of_alignment / 
 my @trows = ( $cgi->Tr({ -valign=> 'top', -align => 'center'},
 		       map { th($_) } @headings) );
 my $nSkipOrth = 0;
-# my $number = 0;
+
 my $shade = 0;
 foreach my $o (@genes) {
     my $data = $dbh->selectall_arrayref(qq{SELECT * from Experiment JOIN GeneFitness USING  (orgId,expName)
@@ -97,21 +89,19 @@ foreach my $o (@genes) {
 					{ Slice => {} }, $o->{orgId}, $o->{locusId}, $expGroup, $condition1);
     $nSkipOrth++ if @$data == 0 && $o->{orgId} ne $orgId;
     my $first = 1;
-	# $number += 1;
 	$shade += 1;
     foreach my $row (@$data) {
 		my $ratio = $o->{orgId} eq $orgId ? "&mdash;" : sprintf("%.2f",$o->{ratio});
 		my $orgShort = "";
-		# my $border = "";
 
 		if ($first) {
 		    my $d = $orginfo->{$o->{orgId}};
 		    my $short = $d->{genome}; $short =~ s/^(.)[^ ]+/\1./;
 		    $orgShort = a({href => "org.cgi?orgId=$o->{orgId}", title => $d->{genome}}, $short);
-		    # $border = '-style="background-color: 1px black;"';
 		}
+		my $strainUrl = "strainTable.cgi?orgId=$o->{orgId}&locusId=$o->{locusId}&expName=$row->{expName}";
+		$strainUrl .= "&help=1" if $help == 1;
 		push @trows, $cgi->Tr({ -valign => 'top', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF" },
-				  # td($first ? $number : ""),
 			      td($first ?  $ratio : ""),
 			      td($orgShort),
 			      td($first ? a({href => "myFitShow.cgi?orgId=$o->{orgId}&gene=$o->{locusId}"}, #style => "color: rgb(0,0,0)"},
@@ -121,7 +111,7 @@ foreach my $o (@genes) {
 			      td(a({href => "exp.cgi?orgId=$o->{orgId}&expName=$row->{expName}"}, #style => "color: rgb(0,0,0)"},
 				   $row->{expDesc})),
 			      td({ -bgcolor => Utils::fitcolor($row->{fit}) },
-                                 a({ -href => "strainTable.cgi?orgId=$o->{orgId}&locusId=$o->{locusId}&expName=$row->{expName}",
+                                 a({ -href => $strainUrl,
                                      -title => "per-strain data",
                                      -style => "color:rgb(0,0,0)" },
                                    sprintf("%.1f", $row->{fit}) ) ),

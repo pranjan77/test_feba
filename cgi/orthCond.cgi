@@ -76,10 +76,7 @@ my $js =  q[<script type="text/javascript" src="../images/jquery-1.11.3.min.js">
 
 print
     header, $start, $js, '<div id="ntcontent">', #$tabs,
-  #   start_html( -title => $title, -style => { -code => $style }, -author => 'Morgan Price',
-		# -meta => { 'copyright' => 'copyright 2015 UC Berkeley' }),
     h2($title);
-    # div({-style => "float: right; vertical-align: top;"}, a({href => "help.cgi#specific"}, "Help"));
 
 Utils::fail($cgi,"no genes with specific phenotypes were found for this condition") if (@$speclist == 0);
 
@@ -179,7 +176,6 @@ foreach my $og (@OGs) {
             $singletonHead = 1;
         }
         if ($row == 3 and scalar(@$og) > 4) {
-            # my $color = $shade % 2 ? "#DDDDDD" : "#FFFFFF";
             push @trows, summaryRow($og, $shade, 4);
             push @trows, qq[<tr class="header3"><th colspan="8"><center><span>Collapse -</span></center></th></tr>];
         }
@@ -263,12 +259,9 @@ sub RowForGene($$$$) {
     my ($min,$max,$minT,$maxT) = @{ $gene->{values} };
     my $rowLabel = "";
     my $collapse = "";
-    # q[-valign => 'middle', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF"];
     if ($row == 0) {
         $rowLabel = a({style=>"color: #011B47", title=>"Ortholog group $group"},$group);
-        $collapse = 'header';
-        # q[-class=>'header', -valign => 'middle', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF"];
-    }
+        $collapse = 'header';    }
     my $orthFitURI = "orthFit.cgi?orgId=$orgId&locusId=$locusId"
         . "&expGroup=" . uri_escape($expGroup)
         . "&condition1=" . uri_escape($condition1);

@@ -46,21 +46,12 @@ if ($orgId ne "" && !defined $expGroup && ($cgi->param("All experiments") || $ex
 } elsif ($orgId eq "" && $expSpec eq "" && $expGroup eq "" && $condition1 eq "") {
   print redirect(-url=>"orgAll.cgi");
 } 
-#elsif ($orgId eq "" && $expSpec ne "") {
-  # print redirect(-url=>"cond.cgi?expGroup=$expSpec");
-# }
 
 # my $style = Utils::get_style();
 my $start = Utils::start_page("Experiments for $expSpec");
 $expSpec = "" if $cgi->param("All experiments");
 
 print $cgi->header, $start, '<div id="ntcontent">';
-# print $cgi->start_html(
-#     -title =>"Experiments for $expSpec",
-#     -style => {-code => $style},
-#     -author=>'Morgan Price',
-#     -meta=>{'copyright'=>'copyright 2015 UC Berkeley'},
-# );
 
 my $exps;
 
@@ -79,7 +70,6 @@ if (defined $expGroup && defined $orgId && !defined $condition1){
   #           { Slice => {} },
   #           $expSpec, $expSpec);
     $exps = Utils::matching_exps($dbh, "", $expSpec);
-    # die scalar(@$exps);
 } else {
     $exps = Utils::matching_exps($dbh, $orgId, $expSpec);
 }

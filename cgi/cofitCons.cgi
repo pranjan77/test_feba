@@ -90,14 +90,7 @@ my $title = "Conservation of cofitness between $show1 and $show2 in $orginfo->{$
 my $start = Utils::start_page("$title");
 print
 	$start, '<div id="ntcontent">',
- #    start_html(
-	# -title => $title,
-	# -style => {-code => $style},
-	# -author=>'morgannprice@yahoo.com',
-	# -meta=>{'copyright'=>'copyright 2015 UC Berkeley'} ),
     h2($title);
- #    div({-style => "float: right; vertical-align: top;"},
-	# a({href => "help.cgi#ortholog"}, "Help")),
 
 if ($help == 1) {
         print qq[<div class="helpbox">
@@ -107,8 +100,6 @@ if ($help == 1) {
         <li>To see the actual fitness patterns in one organism, click on the cofitness value. On that page, you can request a scatterplot.</li>
         </ul></div>];
     }
-
-
 
     print h3("$nBoth genomes with putative orthologs of both genes"),
     table({-cellspacing => 0, cellpadding => 3}, @trows);

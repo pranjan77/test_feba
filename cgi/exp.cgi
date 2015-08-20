@@ -27,7 +27,6 @@ use Utils;
 use URI::Escape;
 
 my $cgi=CGI->new;
-# my $style = Utils::get_style();
 print $cgi->header;
 
 my $orgId = $cgi->param('orgId') || die "no species identifier\n";
@@ -63,14 +62,8 @@ if ($show eq "") {
 	$tabs = Utils::tabsExp($dbh,$cgi,$orgId,$expName,$exp->{expGroup},$exp->{condition_1},"metrics");
 }
 
-# print start_html( -title =>"Experiment $expName for $orginfo->{$orgId}{genome}",
-# 		  -style => {-code => $style},
-# 		  -author=>'morgannprice@yahoo.com',
-# 		  -meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
 print $start, $tabs,
     h2("Experiment $expName for ". $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
- #    div({-style => "float: right; vertical-align: top;"},
-	# a({href => "help.cgi#fitness"}, "Help")),
 	# corner compare box
 	qq[<div style="position: relative;"><div class="floatbox">],
     start_form(-name => 'input', -method => 'GET', -action => 'compareExps.cgi'),
@@ -181,6 +174,12 @@ if (@fit > 0) { # show the table
     my @trows = ();
     foreach my $row (@fit) {
 	my $geneId = $row->{sysName} || $row->{locusId};
+    my $strainUrl = "strainTable.cgi?orgId=$orgId&locusId=$row->{locusId}&expName=$expName";
+    $strainUrl .= "&help=1" if $help == 1;
+    my $orthUrl = "orthFit.cgi?orgId=$orgId&locusId=$row->{locusId}"
+                          . "&expGroup=" . uri_escape($exp->{expGroup})
+                                              . "&condition1=" . uri_escape($exp->{condition_1});
+    $orthUrl .= "&help=1" if $help == 1;
 	push @trows, $cgi->Tr({align => 'left', valign => 'top'},
 			      td(checkbox('locusId',0,$row->{locusId},'')),
 			      td(a({href => "myFitShow.cgi?orgId=$orgId&gene=$row->{locusId}",},
@@ -188,18 +187,15 @@ if (@fit > 0) { # show the table
 						$geneId)),
 			      td($row->{gene}),
 			      td({ -bgcolor => Utils::fitcolor($row->{fit}) },
-                                 a({ -href => "strainTable.cgi?orgId=$orgId&locusId=$row->{locusId}&expName=$expName",
+                                 a({ -href => $strainUrl,
                                      -title => "per-strain data",
                                      -style => "color:rgb(0,0,0)" },
                                      sprintf("%.1f", $row->{fit})) ),
 			      td( sprintf("%.1f", $row->{t}) ),
 			      td($row->{desc}),
 			      td(a({ 
-			      	# style => "color:rgb(0,0,0)",
 				     title => "Compare to data from similar experiments or orthologs",
-				     href => "orthFit.cgi?orgId=$orgId&locusId=$row->{locusId}"
-					      . "&expGroup=" . uri_escape($exp->{expGroup})
-                                              . "&condition1=" . uri_escape($exp->{condition_1}) },
+				     href => $orthUrl},
 				 "compare")) );
     }
     print
@@ -256,12 +252,7 @@ if ($show ne "specific") {
 	print $cgi->p("No genes had specific phenotypes in this experiment.");
     }
 }
-# print $cgi->p($cgi->a({href => "exp.cgi?orgId=$orgId&expName=$expName&show=important"}, "Show important genes"))
-#     if $show ne "important";
-# print $cgi->p($cgi->a({href => "exp.cgi?orgId=$orgId&expName=$expName&show=detrimental"}, "Show detrimental genes"))
-#     if $show ne "detrimental";
-# print $cgi->p($cgi->a({href => "exp.cgi?orgId=$orgId&expName=$expName&show=quality"}, "Show quality metrics"))
-#     if $show ne "quality";
+
 
 print
     p(b(a({href => "orthCond.cgi?expGroup=" . uri_escape($exp->{expGroup})

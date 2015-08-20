@@ -25,7 +25,6 @@ use lib "../lib";
 use Utils;
 
 my $cgi=CGI->new;
-# my $style = Utils::get_style();
 print $cgi->header;
 
 my $orgId = $cgi->param('orgId');
@@ -97,9 +96,6 @@ if (scalar(@expCand) > 0) {
 
   my $start = Utils::start_page("Select experiment to compare to");
     print $start, '<div id="ntcontent">',
-	# start_html( -title => "Select experiment to compare to", -style => {-code => $style},
-	# 	    -author => 'Morgan Price', -mata => {'copyright'=>'copyright 2015 UC Berkeley'} ),
-	h2("Select experiment in $orginfo->{$orgId}{genome}"),
 	p("Selected experiment will be compared to "
 	  . a( { href => "exp.cgi?orgId=$orgId&expName=$expNameConst" }, $expConst->{expName} )
 	  . " : $expConst->{expDescLong}"),
@@ -213,11 +209,7 @@ if ($tsv) { # tab delimited values, not a page
 my $start = Utils::start_page("Outlier genes from $orginfo->{$orgId}{genome}");
     
     print $start, '<div id="ntcontent">',
-	# start_html( -title => "Outlier genes from $orginfo->{$orgId}{genome}", -style => {-code => $style},
-		    # -author => 'Morgan Price', -mata => {'copyright'=>'copyright 2015 UC Berkeley'} ),
 	h2("Outlier genes from $orginfo->{$orgId}{genome}");
-	# div({-style => "float: right; vertical-align: top;"},
-	    # a({href => "help.cgi#fitness"}, "Help")),
 
 if ($help == 1) {
     print qq[<div class="helpbox">
@@ -279,14 +271,6 @@ if ($help == 1) {
 
 my $title = "Compare Experiments for $orginfo->{$orgId}{genome}";
 my $start = Utils::start_page("$title");
-# <!DOCTYPE html>
-# <head>
-# <title>$title</title>
-# <meta name="copyright" content="copyright 2015 UC Berkeley" />
-
-# <style>
-# $style
-# </style>
 my $helptext = "";
 if ($help == 1) {
     $helptext = qq[<div class="helpbox">
@@ -325,7 +309,6 @@ Please try another browser if this message remains
 </TD>
 <TD valign="top" align="left" style="border: none;"><!-- right column -->
 <p>
-  <!--<p>Hit "enter" to proceed.</p>-->
 
 <form method="get" action="compareExps.cgi" enctype="multipart/form-data" name="input">
 <input type="hidden" name="orgId" value="$orgId" />
@@ -502,11 +485,9 @@ var tooltip = d3.select("body").append("div")
       .attr("cy", function(d) { return y(d.y); })
       .on("click", dotClick)
       .on("mouseover", function(d) {
-        // console.log("mouseover");
           tooltip.transition()
                .duration(200)
                .style("opacity", .9);
-          // console.log(d.expName + " " + d.x + " " + d.y);
           tooltip.html(d.gene + " (" + d.sysName + "): " + d.desc + "<br/> (" + (+d.x).toFixed(1) 
           + ", " + (+d.y).toFixed(1)  + ")")
                .style("left", (d3.event.pageX + 5) + "px")

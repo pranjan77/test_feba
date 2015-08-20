@@ -21,7 +21,6 @@ use lib "../lib";
 use Utils;
 
 my $cgi=CGI->new;
-# my $style = Utils::get_style();
 print $cgi->header;
 
 my $orgId = $cgi->param('orgId') || die "no species identifier\n";
@@ -45,13 +44,7 @@ my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusId,0,$type,"cofit");
 
 print
 	$start, $tabs,
-#     start_html( -title =>"Cofitness for $sysName ($genus $species $strain)",
-# 		-style => {-code => $style},
-# 		-author=>'morgannprice@yahoo.com',
-# 		-meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
     h2("Top cofit genes for $showId from " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$genus $species $strain")),
- #    div({-style => "float: right; vertical-align: top;"},
-	# a({href => "help.cgi#cofitness"}, "Help")),
 
 	# qq[<div style="position: relative;"><div class="floatbox">],
 	# start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
@@ -60,7 +53,6 @@ print
 	# qq[</div>];
 
     h3({class=>"short"},"$showId $geneName : $desc");
-#print $cgi->p(qq{<A HREF="myFitShow.cgi?orgId=$orgId&gene=$locusId">$sysName: $desc</A>});
 
 if ($help == 1) {
 		print qq[<BR><BR><div class="helpbox">
@@ -102,13 +94,15 @@ if (@$cofitResults == 0) {
 				    {}, $orgId, $locusId, $hitId);
 	my $url2 = "compareGenes.cgi?orgId=$orgId&locus1=$locusId&locus2=$hitId";
 	$url2 .= "&help=1" if $help == 1;
+	my $cofitUrl = "cofitCons.cgi?orgId=$orgId&locusId=$locusId&hitId=$hitId";
+	$cofitUrl .= "&help=1" if $help == 1;
 	push @trows, $cgi->Tr({bgcolor => $rowcolor, align => 'left', valign => 'top' },
 			      $cgi->td($rank),
 			      $cgi->td($cgi->a( {href => "myFitShow.cgi?orgId=$orgId&gene=$hitId" },
 						$showId )),
 			      $cgi->td($hitName),
 			      $cgi->td($hitDesc),
-                  $cgi->td( $cgi->a({href => "cofitCons.cgi?orgId=$orgId&locusId=$locusId&hitId=$hitId"},
+                  $cgi->td( $cgi->a({href => $cofitUrl},
 						defined $cofitCons ? sprintf("%.2f", $cofitCons) : "no") ),
                   $cgi->td($cgi->a({title=>"Compare genes via scatterplot", href => "$url2"}, $cofit)),
                   $cgi->td(checkbox('locusId',0,$hitId,'')),
@@ -127,16 +121,8 @@ if (@$cofitResults == 0) {
 	# qq[</div></div>],
 	table( {cellpadding => 3, cellspacing => 0 }, @trows ),
 	p(submit(-class=>"heatmap", -name=>"Heatmap of $name with selected genes")),
-	# "<BR>Compare selected genes to $showId $geneName: " . 
 	end_form,
 	"<BR><BR>";
 }
-# print $cgi->p($cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, "Fitness data"));
-
- #    print
-	# p(a({href => "getSeq.cgi?orgId=$orgId&locusId=$locusId"}, "Show sequence"),
-	#   "or",
-	#   a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Check homologs"))
-	# if $type == 1;
 
 Utils::endHtml($cgi);

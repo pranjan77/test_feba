@@ -20,7 +20,6 @@ use lib "../lib";
 use Utils;
 
 my $cgi=CGI->new;
-# my $style = Utils::get_style();
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
 my @orgOptions = ("");
@@ -34,13 +33,6 @@ foreach my $hash (@orginfo) {
 my $start = Utils::start_page("Fitness Browser - Gene Search");
 
 print header, $start,
- #    start_html(
- #      $start,
-	# -title =>"Fitness Browser",
-	# # -style => {-code => $style},
-	# -author=>'wjshaoATberkeley.edu, victorialoATberkeley.edu',
-	# -meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
-
     
 div({-id=>"ntcontent"},
   h2("Search by Gene Name"),
@@ -61,6 +53,7 @@ div({-id=>"ntcontent"},
 	  small(qq{examples: "Shewana3_0001", "recA", "homoserine", or "HisG_c"})),
 	p(submit("Find gene")),
 	end_form,
+	
  #    # Experiment search form
  #    div({-style => "padding-left: 10px; padding-right: 10px; float: right; vertical-align: top; background-color: rgb(240,240,240);"},
 	# h3("Find Experiments"),

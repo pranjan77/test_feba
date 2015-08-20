@@ -25,7 +25,6 @@ use lib "../lib";
 use Utils;
 
 my $cgi=CGI->new;
-# my $style = Utils::get_style();
 print $cgi->header;
 
 my $orgId = $cgi->param('orgId');
@@ -98,8 +97,6 @@ if (scalar(@geneCand) > 0) {
 
   my $start = Utils::start_page("Select experiment to compare to");
     print $start, '<div id="ntcontent">',
-  # start_html( -title => "Select experiment to compare to", -style => {-code => $style},
-  #       -author => 'Morgan Price', -mata => {'copyright'=>'copyright 2015 UC Berkeley'} ),
   h2("Select gene in $orginfo->{$orgId}{genome}"),
   p("Selected gene will be compared to "
     . a( { href => "geneOverview.cgi?orgId=$orgId&locus=$locusConst" }, $geneConst->{gene} )
@@ -112,15 +109,6 @@ if (scalar(@geneCand) > 0) {
   end_form;
     Utils::endHtml($cgi);
 }
-
-
-# expName
-# expGroup
-# expDesc
-# x
-# y
-# tx
-# ty
 
 
 # orgId + locus > Gene Fitness > orgId + expName > Experiment
@@ -148,12 +136,9 @@ if ($tsv) {
       $fitVals{$row->{locusId}}{$row->{expName}} = $row->{fit};
       $tVals{$row->{locusId}}{$row->{expName}} = $row->{t};
     }
-    # print %fitVals->, %tVals, "\n";
     my $exps = $dbh->selectall_hashref("SELECT * FROM Experiment where orgId = ?", "expName", {}, $orgId);
-    # print  $exps, "\n";
 
     die "No experiments" unless scalar(keys %$exps) > 0;
-    # die $exps;
     
     # my $found1 = 0;
     # my $found2 = 0;
@@ -179,7 +164,6 @@ $dbh->disconnect();
 
     print join("\t", qw{expName expGroup expDesc x tx y ty})."\n";
     while (my ($expName, $expData) = each %$exps) {
-      # print "$expName\n";
     	next unless exists $fitVals{$locus1} && exists $fitVals{$locus2} && exists $exps->{$expName};
     	print join("\t", $expName, $exps->{$expName}->{expGroup}, $exps->{$expName}->{expDesc},
     		   $fitVals{$locus1}{$expName}, $tVals{$locus1}{$expName},$fitVals{$locus2}{$expName}, $tVals{$locus2}{$expName})."\n";
@@ -202,16 +186,6 @@ if (Utils::gene_has_fitness($dbh,$orgId,$locus1) == 0) {
     } 
     # else {
       # d3.select("#loading").html("Sorry! Cannot load data from " + tsvUrl + "<BR>Error: " + error);
-
-# <!DOCTYPE html>
-# <head>
-# <title>$title</title>
-# <meta name="copyright" content="copyright 2015 UC Berkeley" />
-
-# <style>
-# $style
-# </style>
-
 
 my $showName1 = $gene1->{gene} || $gene1->{sysName} || $gene1->{locusId};
 my $showName2 = $gene2->{gene} || $gene2->{sysName} || $gene2->{locusId};
@@ -250,10 +224,6 @@ if ($help == 1) {
 
 
 print <<END
-
-<!-- <TABLE width=100% style="border: none> <TR class="reset">
- <TD valign="top" align="left" style="border: none; width: 500px"> left column 
- -->
 <div id="graphbox"> <div id="graphleft">
 
 
@@ -262,11 +232,8 @@ print <<END
 Please try another browser if this message remains
 </div>
 </div>
-  </div>
-<!-- </TD>
+</div>
 
- <TD valign="top" align="left" style="border: none;"> right column  
- -->
 <div id="graphright">
 <p>
 <form method="get" action="compareGenes.cgi" enctype="multipart/form-data" name="input">
@@ -324,8 +291,6 @@ and |fit| &gt; <select name="minabs" style="width: 60px;">
 <A href="genesFit.cgi?orgId=$orgId&showAll=0&locusId=$locus1&locusId=$locus2">View heatmap for 2 genes</A>
   </P></P></div>
   <div style="clear: both;"></div></div>
-<!-- </TD></TR></TABLE>
- </P>-->
 
 <script>
 var org = "$orgId";
@@ -452,11 +417,9 @@ var tooltip = d3.select("body").append("div")
       .style("z-index","1000")
       .on("click", dotClick)
       .on("mouseover", function(d) {
-        // console.log("mouseover");
           tooltip.transition()
                .duration(200)
                .style("opacity", .9);
-          // console.log(d.expName + " " + d.x + " " + d.y);
           tooltip.html(d.expDesc + ", " + d.expGroup + "<br/> (" + (+d.x).toFixed(1) 
           + ", " + (+d.y).toFixed(1)  + ")")
                .style("left", (d3.event.pageX + 5) + "px")

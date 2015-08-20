@@ -46,6 +46,7 @@ my $locusSpecShow;
 my $tsv = $cgi->param('tsv') || 0;
 my $expName = $cgi->param('expName') || "";
 my $debug = $cgi->param('debug') || "";
+my $help = $cgi->param('help') || "";
 
 if (defined $locusSpec && $locusSpec ne "") {
     my $sysName;
@@ -130,7 +131,18 @@ if ($tsv != 1) {
         h2("Strain Fitness in ",
            a({-href => "org.cgi?orgId=$orgId"}, "$genome"),
            defined $locusSpecShow ? "around " . a({-href => "singleFit.cgi?orgId=$orgId&locusId=$locusSpec"}, $locusSpecShow)
-           : " at $scaffoldId: $begComma to $endComma"),
+           : " at $scaffoldId: $begComma to $endComma");
+
+if ($help == 1) {
+        print qq[<div class="helpbox">
+        <b><u>About this page:</u></b><BR><ul>
+        <li>View the fitness of genes in various strains under a condition.</li>
+        <li> Data on + strands are colored green, data on - strands are colored red, and data not affiliated with a gene are colored gray. Hover on points or blue links to see more information. Use the buttons to navigate the genome.</li>
+        <li>To get to this page, click on the colored fitness boxes across the site (mostly on any pages relating to genes).</li> 
+        </ul></div>];
+    }
+
+    print
         start_form(-name => 'input', -method => 'GET', -action => 'strainTable.cgi'),
         hidden( -name => 'orgId', -value => $orgId, -override => 1),
         hidden( -name => 'scaffoldId', -value => $scaffoldId, -override => 1),
@@ -145,25 +157,20 @@ if ($tsv != 1) {
         p(small("Only strains with sufficient reads to estimate fitness are shown, but the strain fitness values are still rather noisy. Strains near the edge of a gene are not shown as being associated with that gene (the Gene column will be empty)."));
 
 
-    #if (defined $begin and defined $end and defined $scaffoldId) {
-        # foreach my $locusId (@locusIds) {
-            # my $genes = $dbh->selectall_arrayref("SELECT * FROM Gene WHERE orgId = ? AND scaffoldId = ? AND Gene.end >= ? AND Gene.begin <= ? ORDER by Gene.begin",
-            #                    { Slice => {} }, $orgId, $scaffoldId, $begin, $end);
-            if (@$genes == 0) {
-                print "No genes in range.";
-            } else {
-                @$genes[0]->{begin} = $begin;
-                @$genes[-1]->{end} = $end;
-                # sort @$genes;
-                if ($debug == 1) {
-                    foreach my $genea(@$genes) {
-                        print $genea->{begin} . "\t" . $genea->{end} . "\t | ";
-                    }
-                }
-                print Utils::geneArrows(\@$genes, "");
-            }
-        }
-    #}
+  if (@$genes == 0) {
+      print "No genes in range.";
+  } else {
+      @$genes[0]->{begin} = $begin;
+      @$genes[-1]->{end} = $end;
+      # sort @$genes;
+      if ($debug == 1) {
+          foreach my $genea(@$genes) {
+              print $genea->{begin} . "\t" . $genea->{end} . "\t | ";
+          }
+      }
+      print Utils::geneArrows(\@$genes, "");
+  }
+}
 
 my $tsvUrl = "strainTable.cgi?tsv=1&orgId=" . $orgId . "&scaffoldId=" . $scaffoldId . "&begin=" . $begin . "&end=" . $end . "&" . join("&", map {"expName=$_"} @expNames); #"&expName=" + expName;
 
@@ -323,7 +330,6 @@ var selectColors = [ 'red', 'green', 'blue', 'magenta', 'brown', 'orange', 'dark
 //     .attr("height",500)
 //   .append("g")
 //     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-//     // console.log(svg);
 
 var svg = d3.select("#left")
    .append("div")
@@ -339,7 +345,6 @@ var svg = d3.select("#left")
 
 d3.select("#loading").html("Fetching data...");
 var tsvUrl = "$tsvUrl"; //"strainTable.cgi?tsv=1&orgId=" + org + "&scaffoldId=" + scaffoldId + "&begin=" + begin + "&end=" + end + "&expName=" + expName;
- //console.log(tsvUrl);
 d3.tsv(tsvUrl, function(error, data) {
   if (error || data.length == 0) {
       d3.select("#loading").html("Cannot load data from " + tsvUrl + "<BR>Error: " + error);
@@ -349,7 +354,6 @@ d3.tsv(tsvUrl, function(error, data) {
   data.forEach(function(d) {
     d.position = (+d.position)/1000;
     d.fit = +d.fit;
-    //console.log(d.position, d.fit);
   });
 
   var begin2 = begin/1000;
@@ -358,11 +362,8 @@ d3.tsv(tsvUrl, function(error, data) {
   var extentX = d3.extent([begin2, end2]); //data, function(d) { return d.position; });
   var extentY = d3.extent(data, function(d) { return d.fit; });
   var extentXY = d3.extent([ extentX[0], extentX[1], extentY[0], extentY[1] ]);
-  // console.log(extentX, extentY, extentXY);
   x.domain(extentX);//.nice();
   y.domain(extentY).nice();
-  // x.domain(extentXY).nice();
-  // y.domain(extentXY).nice();
 
   svg.append("g")
       .attr("class", "x axis")
@@ -387,14 +388,6 @@ d3.tsv(tsvUrl, function(error, data) {
       .attr("y", -35)
       .style("text-anchor", "end")
       .text(yName);
-
-  // svg.append("line")
-  //      .attr("x1", x(extentXY[0]))
-  //      .attr("x2", x(extentXY[1]))
-  //      .attr("y1", y(extentXY[0]))
-  //      .attr("y2", y(extentXY[1]))
-  //      .style("stroke","darkgrey")
-  //      .style("stroke-width",1);
 
   svg.append("line")
        .attr("x1", x(extentXY[0]))
@@ -458,14 +451,6 @@ var tooltip = d3.select("body").append("div")
                .duration(500)
                .style("opacity", 0);
       });
-
-      // svg.selectAll("text")
-      //   .data(data)
-      // .enter().append("text")
-      // // .filter(function(d) { return d.strand == '-' })
-      // .text(function(d) { return d.strand; })
-      // .attr("x", function(d) { return x(d.position); })
-      // .attr("y", function(d) { return y(d.fit); });
 
   d3.select("#loading").html("");
 

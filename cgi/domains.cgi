@@ -33,7 +33,6 @@ my $cgi=CGI->new;
 my $orgId = $cgi->param('orgId') || die "No orgId parameter";
 my $locusId = $cgi->param('locusId') || die "No locusId parameter";
 
-# my $style = Utils::get_style();
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
 Utils::fail($cgi, "Unknown organism: $orgId") unless $orgId eq "" || exists $orginfo->{$orgId};
@@ -44,11 +43,9 @@ Utils::fail($cgi, "Unknown organism: $orgId") unless $orgId eq "" || exists $org
 my $cond = $dbh->selectall_arrayref(qq{SELECT domainDb, orgId, locusId, domainId, domainName, begin, end, score, evalue, definition FROM GeneDomain WHERE orgId=? AND locusId=? ORDER BY begin;},
     { Slice => {} },
     $orgId, $locusId);
-# Utils::fail($cgi, "Unknown locus: $locusId") unless $locusId eq ""; #|| exists $locusId;
 
 # gather number of genes and data
 # my $numGenes = $dbh->selectrow_array(qq{SELECT COUNT (DISTINCT locusId) FROM Gene WHERE orgId = ?;}, undef, $orgId);
-
 # my $numData = $dbh->selectrow_array(qq{SELECT COUNT (DISTINCT locusId) FROM GeneFitness WHERE orgId = ?;}, undef, $orgId);
 
 #find length of sequence
@@ -65,7 +62,6 @@ unlink($seqFile) || die "Error deleting $seqFile: $!";
 
 
 # write the title
-# my $title = scalar(@$cond) > 0 ? # : "Protein Info";
 my $title = "Protein Info for $orginfo->{$orgId}{genome} at Locus $locusId";
 my $start = Utils::start_page("$title");
 my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusId,0,1,"protein");
@@ -81,16 +77,11 @@ foreach my $grow(@$gene) {
 
 print
     header, $start, $tabs, '<div id="tabcontent">',
-    # start_html( -title => $title, -style => { -code => $style }, -author => 'Morgan Price, Victoria Lo',
-		# -meta => { 'copyright' => 'copyright 2015 UC Berkeley' }),
 	h2("Protein Info for $sys in " . $cgi->a({href => "org.cgi?orgId=$orgId"},$orginfo->{$orgId}{genome})),
 	h3("Domains");
-    # h3("Gene Domains for ". $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")." at Locus $locusId"); #$title),
-    # div({-style => "float: right; vertical-align: top;"}, a({href => "help.cgi#specific"}, "Help"));
 
 #exit if no results
 if (@$cond == 0) {
-	# Utils::fail($cgi, 
 	print "Sorry, no domains for this organism and/or locus."
 } else {
 	# sysname/locusId (gene): desc => myFitShow.cgi
@@ -123,7 +114,6 @@ if (@$cond == 0) {
 	    	td([ $row->{domainName}, #name/description
 			 	a({href => "http://pfam.xfam.org/family/$row->{domainId}"},
 			 	$row->{domainId}), #ID
-			 	# img({src=>"../images/grayHorizLine.png", height=>'7', width='200'})
 			 	a({title=>"Amino acids $begin to $row->{end} ($len) of $seqLen"}, div({class=>"line"}, img({src=>"../images/grayHorizLine.png", width=>"$newSeqLen", height=>'7'}), div({class=>"line2", style=>"left:$newBegin".'px'}, img({src=>"../images/darkcyan.png", height=>'7', width=>"$newLen"})))),#$len, # $row->{}, #length diagram: end-begin
 			 	# $row->{score}, #score
 			 	a({title=>"Score: $row->{score}"},$row->{evalue}), #evalue with hover score
@@ -165,18 +155,8 @@ $seq =~ s/(.{60})/$1\n/gs;
 # my $orginfo = Utils::orginfo($dbh);
 # my $title = "Sequence of $showId in $orginfo->{$orgId}{genome}",;
 print
-  #   start_html( -title => $title,
-		# -style => {-code => $style},
-		# -author=>'jj326ATberkeley.edu',
-		# -meta=>{'copyright'=>'copyright 2015 UC Berkeley'}),
-    # h3("Sequence of $showId in " . $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),),
-    h3("Protein Sequence"),
     qq[<div style="position: relative; margin: 0 auto; width: 59em; font-family: monospace;white-space: pre;"],
-    # "<center>",
     pre(">$sys $gene->{desc} ($orginfo->{$orgId}{genome})\n$seq"),
-    # "</center>";
-    # p(a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, "Show fitness")),
-    # p(a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Check homologs"));
     '</div></div>';
 
 #display number of genes that have data out of total genes
