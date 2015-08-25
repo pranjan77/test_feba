@@ -21,6 +21,7 @@ use strict;
 use CGI qw(:standard Vars -nosticky);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
+sub commify;
 
 use lib "../lib";
 use Utils;
@@ -203,8 +204,10 @@ if (@$hits == 0) {
 		    h3("$idShow $gene->{gene}: $gene->{desc}");
 	}
 
-   	print "Type $type: $typeName<BR>
-   	Located on scaffold $scaffold, $strand strand, nucleotides $begin - $end";
+    my $beginC = &commify($begin);
+    my $endC = &commify($end);
+    print "Type $type: $typeName<BR>
+   	Located on scaffold $scaffold, $strand strand, nucleotides $beginC to $endC";
 
 
 	my @links = ();
@@ -376,3 +379,9 @@ print "<br><br>";
 
 $dbh->disconnect();
 Utils::endHtml($cgi);
+
+sub commify($) {
+    local $_  = shift;
+    1 while s/^(-?\d+)(\d{3})/$1,$2/;
+    return $_;
+}
