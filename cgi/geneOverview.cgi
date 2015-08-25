@@ -128,7 +128,7 @@ if (@$hits == 0) {
     my $i1 = $iCentral - 5;
     $i1 = 0 if $i1 < 0;
     my $i2 = $iCentral + 5;
-    $i2 = scalar(@$scgenes) if $i2 > scalar(@$scgenes);
+    $i2 = scalar(@$scgenes)-1 if $i2 > scalar(@$scgenes);
     @locusIds = map { $scgenes->[$_]{locusId} } ($i1..$i2);
 
  # 	my @genes = ();
