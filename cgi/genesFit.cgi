@@ -88,7 +88,7 @@ if ($around) {
     my $i1 = $iCentral - $around;
     $i1 = 0 if $i1 < 0;
     my $i2 = $iCentral + $around;
-    $i2 = scalar(@$scgenes) if $i2 > scalar(@$scgenes);
+    $i2 = scalar(@$scgenes)-1 if $i2 >= scalar(@$scgenes);
     @locusIds = map { $scgenes->[$_]{locusId} } ($i1..$i2);
     foreach my $i ($i1..$i2) {
 	my $leftsep = $i == 0 ? "" : $scgenes->[$i]{begin} - $scgenes->[$i-1]{end};
