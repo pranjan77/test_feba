@@ -28,7 +28,9 @@ use lib "../lib";
 use Utils;
 
 my $cgi=CGI->new;
-print $cgi->header('text/plain');
+print $cgi->header(-type => 'text/plain',  
+		   # allow cross-site scripts to use this
+		   -access_control_allow_origin => '*');
 
 my $seq = $cgi->param('seq');
 $seq =~ s/[ \r\n]//g;
