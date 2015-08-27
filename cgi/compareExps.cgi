@@ -231,6 +231,8 @@ if ($help == 1) {
 	my @trows = ();
 	my @headings = qw{gene name description x y};
 	push @trows, $cgi->Tr({-align=>'center',-valign=>'top'}, $cgi->th(\@headings));
+        my $GroupCond1 = "expGroup=$exp1->{expGroup}&condition1=$exp1->{condition_1}";
+        my $GroupCond2 = "expGroup=$exp2->{expGroup}&condition1=$exp2->{condition_1}";
 	foreach my $gene (@genesShow) {
 	    my $colorX = Utils::fitcolor($gene->{x});
 	    my $colorY = Utils::fitcolor($gene->{y});
@@ -238,6 +240,8 @@ if ($help == 1) {
 	    my $y = sprintf("%.1f",$gene->{y});
 	    my $tx = sprintf("%.1f",$gene->{tx});
 	    my $ty = sprintf("%.1f",$gene->{ty});
+            my $orthFitBase = "orthFit.cgi?orgId=$orgId&locusId=$gene->{locusId}";
+
 	    push @trows, $cgi->Tr({-align=>'left',-valign=>'top'},
 		                  $cgi->td($cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$gene->{locusId}",
 						    style => "color:rgb(0,0,0)"},
@@ -245,10 +249,12 @@ if ($help == 1) {
 				  $cgi->td($gene->{gene}),
 				  $cgi->td($gene->{desc}),
 				  $cgi->td({ -bgcolor => Utils::fitcolor($gene->{x}) },
-					   $cgi->a({title => sprintf("t = %.1f", $gene->{tx})},
+					   $cgi->a({title => sprintf("t = %.1f. Click for conservation.", $gene->{tx}),
+                                                    href => "$orthFitBase&$GroupCond1" },
 						   sprintf("%.1f", $gene->{x}))),
 				  $cgi->td({ -bgcolor => Utils::fitcolor($gene->{y}) },
-					   $cgi->a({title => sprintf("t = %.1f", $gene->{ty})},
+					   $cgi->a({title => sprintf("t = %.1f. Click for conservation", $gene->{ty}),
+                                                    href => "$orthFitBase&$GroupCond2" },
 						   sprintf("%.1f", $gene->{y}))) );
 	}
 	my $limitString = "";
