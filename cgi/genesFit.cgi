@@ -220,7 +220,7 @@ if ($showAll) {
 print ".<br><br>";
 
 
-print Utils::geneArrows(\@genes, $centralId) if $around;
+print Utils::geneArrows(\@genes, $centralId, undef, undef) if $around;
 
 my @trows = ();
 my @headings = qw{Group Condition};
