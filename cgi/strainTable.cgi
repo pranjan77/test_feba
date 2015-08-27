@@ -126,13 +126,18 @@ my $genes = $dbh->selectall_arrayref("SELECT * FROM Gene WHERE orgId = ? AND sca
 my %genesh = map {$_->{locusId} => $_} @$genes;
 
 if ($tsv != 1) {
+    my @expShow = ();
+    foreach my $expName (@expNames) {
+        push @expShow, a({href => "exp.cgi?orgId=$orgId&expName=$expName", title => $expName}, $expinfo->{$expName}{expDesc});
+    }
     print
         Utils::start_page("Strain Fitness in $genome"),
         q{<div id="ntcontent">},
         h2("Strain Fitness in ",
            a({-href => "org.cgi?orgId=$orgId"}, "$genome"),
            defined $locusSpecShow ? "around " . a({-href => "singleFit.cgi?orgId=$orgId&locusId=$locusSpec"}, $locusSpecShow)
-           : " at $scaffoldId: $begComma to $endComma");
+           : " at $scaffoldId: $begComma to $endComma"),
+        p("Experiments: ", join(", ", @expShow));
 
 if ($help == 1) {
         print qq[<div class="helpbox">
@@ -150,12 +155,15 @@ if ($help == 1) {
         hidden( -name => 'begin', -value => $begin, -override => 1),
         hidden( -name => 'end', -value => $end, -override => 1),
         join("\n", map { hidden( -name => 'expName', -value => $_, -override => 1) } @expNames),
-        p(
-          "Add experiment(s): ",
-          textfield(-name => 'addexp', -default => "", -override => 1, -size => 20, -maxLength => 100)),
-        p({-class => "buttons", style=>"max-width:500px; line-height:40px; white-space:nowrap;"}, "Zoom:", submit('zoom','in'), submit('zoom','out'), "\tPan:", submit('pan','left'), submit('pan','right')),
+        p({-class => "buttons", style=>"align:left; white-space:nowrap; line-height:40px;"}, "Add experiment(s): ",
+           textfield(-name => 'addexp', -default => "", -override => 1, -size => 20, -maxLength => 100),
+           submit('Add','Add') ),
+        p({-class => "buttons", style=>"max-width:500px; line-height:40px; white-space:nowrap;"},
+          "Zoom:", submit('zoom','in'), submit('zoom','out'), "\tPan:", submit('pan','left'), submit('pan','right')),
         end_form,
-        p(small("Only strains with sufficient reads to estimate fitness are shown, but the strain fitness values are still rather noisy. Strains near the edge of a gene are not shown as being associated with that gene (the Gene column will be empty)."));
+        p(small(qq{Only strains with sufficient reads to estimate fitness are shown,
+                   but the strain fitness values are still rather noisy and may be biased towards zero.
+                   Strains near the edge of a gene are not shown as being associated with that gene (they are in grey).}));
 
 
   if (@$genes == 0) {
@@ -460,7 +468,7 @@ var tooltip = d3.select("body").append("div")
 END
 ;
     
-print small(table({ cellspacing => 0, cellpadding => 3, }, @trows));
+print h3("Per-strain Table"), small(table({ cellspacing => 0, cellpadding => 3, }, @trows));
 
 $dbh->disconnect();
 Utils::endHtml($cgi);
