@@ -510,15 +510,21 @@ sub tabsExp($$$$$$$) {
 
 # create svg of arrows according to locations of genes. default dimensions 800 (set by $width) x 100. assumes that genes are in order.
 # geneSpec can be an empty string if you don't want any of the arrows to be highlighted in red.
-sub geneArrows($$) {
-    my ($genes, $geneSpec) = @_;
-    $geneSpec = "" if undef;
+# begin and end can be derived from the list if they are not defined
+sub geneArrows($$$$) {
+    my ($genes, $geneSpec, $begin, $end) = @_;
+    $geneSpec = "" if !defined $geneSpec;
 
-    my $lastTot = (@$genes[-1]->{end} - @$genes[0]->{begin});
+    # need extra space for the arrow heads because the are shown slightly past the actual binaries of the gene
+    $begin = $genes->[0]->{begin} - 20 if !defined $begin;
+    $end = $genes->[-1]->{end} + 20 if !defined $end;
+    return "" if $begin > $end;
+    my $widthNt = $end - $begin + 1;
     my $width = 800; #'100%'; #input the max-width according to the .arrow class in css
-    my $factor = $width/$lastTot;
+    my $factor = $width/$widthNt;
     my $xScale = 50 * $factor;
     my $scale = 550 * $factor;
+    my $xScaleMid = ($xScale+$scale)/2;
     # print $factor;
     # xmlns="http://www.w3.org/2000/svg" height="100" width="$width" viewBox="0 -10 $width 50"
 
@@ -561,29 +567,17 @@ sub geneArrows($$) {
         marker-start='url(#scaleEnd)'
         marker-end='url(#scaleEnd)'
         x1="$xScale" y1="55" x2="$scale" y2="55" style="stroke:black;stroke-width:2" />
-    <text x="10" y="53" font-family="Verdana" font-size="10" fill="black">500 nt</text>
+    <text x="$xScaleMid" y="50" font-family="Verdana" font-size="10" fill="black" text-anchor="middle">500 nt</text>
     ];
   
-    my $diff = "";
-    my $prevrow;
-    my $total = 0;
-    my $newDist = 0;
-    my $newDistAdj = 0;
-    my $totalAdj = 0;
-    my $num = "15";
-    my $pos = 0;
+    my $pos = 0; # which of 3 rows to put it in
     foreach my $row (@$genes) {
-        $diff = $row->{begin} - $prevrow->{end} if defined $prevrow;        # $prevrow->{end} = 0 if !defined $prevrow;
-        $newDist = $total + $diff;
-        $total = $newDist + ($row->{end} - $row->{begin});
-        $newDistAdj = $newDist * $factor;
-        $totalAdj = $total * $factor;
-        my $textX = $newDist + ($total - $newDist)/2;
-        my $textXAdj = $textX * $factor - 11-3;
-        my $textY = $pos - 2-3;
-        my $textYAdj = $textY + 15;
-        # $textY = $pos + 8 if $pos < 0;
-        my $posAdj = $pos + 15;
+        my $xLeft = ($row->{begin} - $begin) * $factor;
+        my $xRight = ($row->{end} - $begin) * $factor;
+        my $textX = ($xLeft+$xRight)/2;
+        my $textXAdj = $textX - 11-3;
+        my $lineY = ($pos+0.1)* 20;
+        my $textY = $lineY - 6;
         my $color = "black";
         my $text = "#00A8C6";
         my $head = "marker-end='url(#rightarrow)'";
@@ -603,17 +597,10 @@ sub geneArrows($$) {
         $label2 = $row->{sysName}. ": " . $label2 if $row->{sysName};
 
         $svg .= qq[
-        <g class="click" onclick="window.location.href='singleFit.cgi?orgId=$row->{orgId}&locusId=$row->{locusId}'"><title>$label2 - $row->{desc}, $row->{begin} - $row->{end}</title><line id='arrow-line' $head x1="$newDistAdj" y1="$posAdj" x2="$totalAdj" y2="$posAdj" style="stroke:$color;stroke-width:2" />
-        <text x="$textXAdj" y="$textYAdj" font-family="Verdana" font-size="13" fill="$text" onmouseover="this.style.fill='#CC0024'" onmouseout="this.style.fill='#00A8C6'">$label3</text></g>];
+        <g class="click" onclick="window.location.href='singleFit.cgi?orgId=$row->{orgId}&locusId=$row->{locusId}'"><title>$label2 - $row->{desc}, at $row->{begin} to $row->{end}</title><line id='arrow-line' $head x1="$xLeft" y1="$lineY" x2="$xRight" y2="$lineY" style="stroke:$color;stroke-width:2" />
+        <text x="$textXAdj" y="$textY" font-family="Verdana" font-size="13" fill="$text" onmouseover="this.style.fill='#CC0024'" onmouseout="this.style.fill='#00A8C6'">$label3</text></g>];
 
-        $prevrow = $row;
-        if ($pos == 0) {
-            $num = $num * -1;
-            $pos = $num;
-
-        } else {
-            $pos = 0;
-        }
+        $pos = ($pos+1) % 3;
     }
     $svg .= "</svg></center>";
     return $svg;
