@@ -376,18 +376,16 @@ sub gene_fit_string($$$) {
     my ($minFit,$maxFit,$minT,$maxT) = $dbh->selectrow_array(qq{ SELECT min(fit), max(fit), min(t), max(t)
                                                                  FROM GeneFitness WHERE orgId = ? AND locusId = ? ; },
 							     {}, $orgId, $locusId);
-    return ("no data", "no fitness data for this gene ") if !defined $minFit;
+    return ("no data", "No fitness data for this gene ") if !defined $minFit;
     my $tip = sprintf("fit = %.1f to +%.1f (t = %.1f to +%.1f)", $minFit, $maxFit, $minT, $maxT);
     my ($maxCofit) = $dbh->selectrow_array(qq{ SELECT cofit FROM Cofit WHERE orgId = ? AND locusId = ? AND rank = 1 LIMIT 1; },
 					   {}, $orgId, $locusId);
     $tip .= sprintf(", max(cofit) = %.2f", $maxCofit) if defined $maxCofit;
-    return ("strong",$tip) if ($minT < -5 && $minFit < -2) || ($maxT > 5 && $maxFit > 2);
-    return ("cofit",$tip) if defined $maxCofit && $maxCofit > 0.75;
-    return ("sig.",$tip) if ($minT < -4 && $minFit < -1) || ($maxT > 4 && $maxFit > 1);
-    return ("weak", $tip);
+    return ("strong","Strong phenotype: $tip") if ($minT < -5 && $minFit < -2) || ($maxT > 5 && $maxFit > 2);
+    return ("cofit","Strong cofitness: $tip") if defined $maxCofit && $maxCofit > 0.75;
+    return ("sig.","Significant phenotype: $tip") if ($minT < -4 && $minFit < -1) || ($maxT > 4 && $maxFit > 1);
+    return ("insig.", "No significant phenotype: $tip");
 }
-
-
 
 sub tabsGene($$$$$$$) {
     my($dbh,$cgi,$orgId,$locusId,$showAll,$type,$curr) = @_;
