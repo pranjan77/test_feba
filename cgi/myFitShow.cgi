@@ -21,6 +21,7 @@ use strict;
 use CGI qw(:standard Vars -nosticky);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
+use IO::Handle;
 
 use lib "../lib";
 use Utils;
@@ -98,7 +99,10 @@ if (scalar(@$hits) > 0) {
 		}
 	}
 	print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
+        print "\n"; # to allow flushing
 }
+
+autoflush STDOUT 1; # so preliminary results appear
 
 # make table for description matches if total matches < 100 so far, filtering for repeats
 my $descs;
@@ -133,6 +137,7 @@ my @trows = ();
 	    	} 
 	}
 	print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
+        print "\n"; # to allow flush
 }
 
 # make table for domain matches if total matches < 100 so far, filtering for repeats
