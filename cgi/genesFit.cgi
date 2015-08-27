@@ -49,11 +49,12 @@ my $help = $cgi->param('help') || "";
 my $addgene_error = undef;
 if ($addgene) {
     $addgene =~ s/ +$//;
+    $addgene =~ s/^ +//;
     if ($addgene !~ m/^[A-Za-z90-9_-]*$/) {
 	$addgene_error = "Invalid gene to add";
     } else {
 	my ($locusId) = $dbh->selectrow_array(qq{ SELECT locusId FROM Gene WHERE orgId = ?
-                                                  AND (locusId = ? OR sysName = ? OR gene = ?) LIMIT 1 },
+                                                  AND (locusId = ? OR sysName = ? OR gene = ? COLLATE NOCASE) LIMIT 1 },
 					      {}, $orgId, $addgene, $addgene, $addgene);
 	if (defined $locusId) {
 	    if (sum(map { $_ eq $locusId } @locusIds) > 0) {
