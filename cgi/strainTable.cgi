@@ -55,7 +55,8 @@ if (defined $locusSpec && $locusSpec ne "") {
         {}, $orgId, $locusSpec);
     die "Unknown locus $locusSpec in $orgId" if !defined $end;
     $locusSpecShow = $sysName || $locusSpec;
-    my $widen = int(1 + 0.2 * ($end-$begin+1));
+    # my $widen = int(1 + 0.2 * ($end-$begin+1));
+    my $widen = 1000;
     $begin -= $widen;
     $end += $widen;
 } elsif (defined $scaffoldId && defined $begin && defined $end) {
@@ -89,7 +90,7 @@ unless ($begin < $end) {
     print $cgi->header;
     Utils::fail($cgi, "Invalid begin/end $begin $end")
 }
-my $maxWidth = 25*1000;
+my $maxWidth = 40*1000;
 if ($end - $begin >= $maxWidth) {
     print $cgi->header;
     Utils::fail($cgi, "Too wide, the limit is to show a range of " . &commify($maxWidth) . " nucleotides");
@@ -160,15 +161,13 @@ if ($help == 1) {
   if (@$genes == 0) {
       print "No genes in range.";
   } else {
-      @$genes[0]->{begin} = $begin;
-      @$genes[-1]->{end} = $end;
       # sort @$genes;
       if ($debug == 1) {
           foreach my $genea(@$genes) {
               print $genea->{begin} . "\t" . $genea->{end} . "\t | ";
           }
       }
-      print Utils::geneArrows(\@$genes, "");
+      print Utils::geneArrows(\@$genes, $locusSpec, $begin, $end);
   }
 }
 
