@@ -48,7 +48,11 @@ if ($orgId ne "" && !defined $expGroup && ($cgi->param("All experiments") || $ex
 } 
 
 # my $style = Utils::get_style();
-my $start = Utils::start_page("Experiments for $expSpec");
+my $specShow = $expSpec;
+if ($specShow eq "") {
+    $specShow = join(" ", $expGroup, $condition1);
+}
+my $start = Utils::start_page("Experiments for $specShow");
 $expSpec = "" if $cgi->param("All experiments");
 
 print $cgi->header, $start, '<div id="ntcontent">';
@@ -83,7 +87,11 @@ if (@$exps == 0) {
 } else {
   my $heading = "Experiments";
   $heading .= " in ". $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}") if $orgId ne "";
-  $heading .= qq{ matching "$expSpec"} if $expSpec ne "";
+  if ($expSpec ne "") {
+      $heading .= qq{ matching "$expSpec"};
+  } elsif ($specShow ne "") {
+      $heading .= " for $specShow";
+  }
   print $cgi->h2($heading);
 
   my $exp1 = $exps->[0];
