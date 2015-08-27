@@ -128,9 +128,6 @@ if ($around) {
 print $cgi->header;
 print $start, $tabs;
 
-Utils::fail($cgi,"None of the genes has fitness data")
-    if (sum(map { $_->{nExps} > 0 ? 1 : 0} @genes) == 0);
-
 my @exps = values %$expinfo;
 if ($showAll) {
     @exps = sort Utils::CompareExperiments @exps;
@@ -221,6 +218,9 @@ print ".<br><br>";
 
 
 print Utils::geneArrows(\@genes, $centralId, undef, undef) if $around;
+
+Utils::fail($cgi,"None of the genes has fitness data")
+    if (sum(map { $_->{nExps} > 0 ? 1 : 0} @genes) == 0);
 
 my @trows = ();
 my @headings = qw{Group Condition};
