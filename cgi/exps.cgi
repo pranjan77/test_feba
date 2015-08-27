@@ -59,8 +59,7 @@ print $cgi->header, $start, '<div id="ntcontent">';
 
 my $exps;
 
-if (defined $expGroup && defined $orgId && !defined $condition1){
-    # $exps = Utils::matching_exps_strict($dbh, $orgId, $expSpec, $expGroup);
+if (defined $expGroup && !defined $condition1){
     $exps = $dbh->selectall_arrayref(qq{SELECT * from Experiment WHERE expGroup = ? AND orgId = ? GROUP BY expGroup, condition_1, expName},
             { Slice => {} },
             $expGroup, $orgId);
@@ -69,10 +68,7 @@ if (defined $expGroup && defined $orgId && !defined $condition1){
 				    { Slice => {} },
 				    $expGroup, $condition1);
     Utils::fail($cgi, "No experiments for specified group and condition") if scalar(@$exps) == 0;
-} elsif (($orgId eq "" or !defined $orgId) && defined $expSpec) {
-  # $exps = $dbh->selectall_arrayref(qq{SELECT * from Experiment WHERE expGroup = ? OR condition_1 = ? GROUP BY expGroup, condition_1, expName},
-  #           { Slice => {} },
-  #           $expSpec, $expSpec);
+} elsif ($orgId eq "" && defined $expSpec) {
     $exps = Utils::matching_exps($dbh, "", $expSpec);
 } else {
     $exps = Utils::matching_exps($dbh, $orgId, $expSpec);
@@ -81,6 +77,12 @@ if (defined $expGroup && defined $orgId && !defined $condition1){
 # Make sure both parameters are safe
 my $orginfo = Utils::orginfo($dbh);
 Utils::fail($cgi, "Unknown organism: $orgId") unless $orgId eq "" || exists $orginfo->{$orgId};
+
+# sort experiments by organism
+if ($orgId eq "") {
+    my @exps = sort { $orginfo->{$a->{orgId}}{genome} cmp $orginfo->{$b->{orgId}}{genome} } @$exps;
+    $exps = \@exps;
+}
 
 if (@$exps == 0) {
    print $cgi->h3(qq{No experiment found matching "$expSpec"});
