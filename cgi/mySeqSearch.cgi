@@ -86,7 +86,7 @@ if ($query =~ m/[A-Za-z]/) {
 
     foreach (@lines) {
         s/[ \t]//g;
-        s/^[0-9]+//;
+        s/^[0-9]+//; # leading digit/whitespace occurs in UniProt format
         Utils::fail($cgi,"Error: more than one sequence was entered.") if m/^>/;
         Utils::fail($cgi,"Unrecognized characters in $_") unless m/^[a-zA-Z*]*$/;
         s/[*]/X/g;
@@ -128,7 +128,7 @@ if ($query =~ m/[A-Za-z]/) {
     system($blast,'-p','blastp','-e','1e-2','-d',$myDB,'-i',$seqFile,'-o',$blastOut,'-m','8')==0 || die "Error running blastp: $!";
 
 } else {
-    print $cgi->p("No sequence or gene specified!");
+    Utils::fail($cgi, "No sequence or gene specified!");
 }
 
 # parse and report the blast result:
@@ -152,43 +152,33 @@ while(<RES>) {
     $percIdentity = sprintf("%.1f", $percIdentity);
 
     my ($sys,$geneName,$desc) = $dbh->selectrow_array("SELECT sysName,gene,desc FROM Gene WHERE orgId = ? AND locusId = ?",
-						     undef, $orgId, $locusId);
+                                                      undef, $orgId, $locusId);
 
     if (!defined $desc) {
 	print "Warning! Unknown hit $orgId:$locusId<BR>";
 	next;
     }
-
+    
 
     my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $orgId, $locusId);
     my @hit = ($cgi->a({href => "org.cgi?orgId=$orgId"},$orginfo->{$orgId}->{genome}),
-        $cgi->a({href => "geneOverview.cgi?orgId=$orgId&gene=$locusId"},$sys || $locusId),
-        $cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, $geneName),
-        $desc,
-	    $cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId", title => $fittitle }, $fitstring ),
-        $cgi->a({title=>"evalue: $eVal ($bitScore bits)"},$percIdentity),
-        $cgi->a({title=>"evalue: $eVal ($bitScore bits)"},$cov));
-    # @hit = map td($_), @hit;
-
-    my $tr;
+               $cgi->a({href => "geneOverview.cgi?orgId=$orgId&gene=$locusId"},$sys || $locusId),
+               $cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, $geneName),
+               $desc,
+               $cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId", title => $fittitle }, $fitstring ),
+               $cgi->a({title=>"evalue: $eVal ($bitScore bits)"},$percIdentity),
+               $cgi->a({title=>"evalue: $eVal ($bitScore bits)"},$cov));
+    
     if (defined $orgId and $locusSpec) {
-        if (exists $orth->{$orgId}) { #and $orth->{$orgId} == $locusId) {
+        # add ortholog indicator
+        if (exists $orth->{$orgId}) {
             unshift @hit, '<center><a title="ortholog">o</a></center>';
-            @hit = map td($_), @hit;
-            $tr = $cgi->Tr({ -align => 'left', -valign => 'top', bgcolor=>'white' }, @hit );
         } else {
             unshift @hit, ' ';
-            @hit = map td($_), @hit;
-            $tr = $cgi->Tr({ -align => 'left', -valign => 'top' }, @hit );
         }
-    } else {
-        unshift @hit, ' ';
-        @hit = map td($_), @hit;
-        $tr = $cgi->Tr({ -align => 'left', -valign => 'top' }, @hit );
     }
-        
-        push @hits, $tr;
-        # die $tr;
+    @hit = map td($_), @hit;
+    push @hits, $cgi->Tr({ -align => 'left', -valign => 'top', bgcolor=>'white' }, @hit );
     $cnt++;
 }
 close(RES) || die "Error reading $blastOut";
@@ -197,16 +187,18 @@ $#hits = $numHit-1 if defined $numHit && $numHit > 0 && @hits > $numHit;
 if ($cnt > 0) {
 
     print $cgi->p("Top " . scalar(@hits) . " hits (E < 0.01)");
+    my @header = ('Ortholog?', 'Species','Gene ID','Name','Description','Fitness','Identity %','Coverage %');
+    shift @header if $query;
     print $cgi->table(
         { cellspacing=>0, cellpadding=>3 },
         $cgi->Tr({-align=>'left',-valign=>'top'},
-		 $cgi->th( ['Ortholog?', 'Species','Gene ID','Name','Description','Fitness','Identity %','Coverage %'])),#,'E Value','Bit Score' ] ) ),
+		 $cgi->th( \@header )),
             # $cgi->Tr({ -align => 'left', -valign => 'top' }, \@td), 
             @hits
     );
 
 } else {
-    print $cgi->p("No hit found!");
+    print $cgi->p("No hits found!");
 }
 
     print qq[<br><a href="http://www.microbesonline.org/cgi-bin/seqsearch.cgi?qtype=protein&query=$seq">Search for homologs in MicrobesOnline</a><BR><BR>];
