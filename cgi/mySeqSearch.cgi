@@ -87,6 +87,7 @@ if ($query =~ m/[A-Za-z]/) {
     foreach (@lines) {
         s/[ \t]//g;
         s/^[0-9]+//; # leading digit/whitespace occurs in UniProt format
+        next if $_ eq "//";
         Utils::fail($cgi,"Error: more than one sequence was entered.") if m/^>/;
         Utils::fail($cgi,"Unrecognized characters in $_") unless m/^[a-zA-Z*]*$/;
         s/[*]/X/g;
@@ -161,13 +162,15 @@ while(<RES>) {
     
 
     my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $orgId, $locusId);
+    my $showId = $sys || $locusId;
+    my $seqlen = length($seq);
     my @hit = ($cgi->a({href => "org.cgi?orgId=$orgId"},$orginfo->{$orgId}->{genome}),
-               $cgi->a({href => "geneOverview.cgi?orgId=$orgId&gene=$locusId"},$sys || $locusId),
+               $cgi->a({href => "geneOverview.cgi?orgId=$orgId&gene=$locusId"},$showId),
                $cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, $geneName),
                $desc,
                $cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId", title => $fittitle }, $fitstring ),
                $cgi->a({title=>"evalue: $eVal ($bitScore bits)"},$percIdentity),
-               $cgi->a({title=>"evalue: $eVal ($bitScore bits)"},$cov));
+               $cgi->a({title=>"Query $queryStart..$queryEnd of $seqlen aligns to $showId $subjectStart..$subjectEnd"},$cov));
     
     if (defined $orgId and $locusSpec) {
         # add ortholog indicator
