@@ -9,6 +9,7 @@ use DBI;
 
 my $metadir = "$Bin/../metadata";
 my $gdir = "g";
+my $xrefs = "img.xrefs";
 my $usage = <<END
 Usage: db_setup.pl [ -db db_file_name ]
         -orth orth_table -orginfo orginfo
@@ -18,6 +19,7 @@ Other optional arguments:
     -outdir out_directory
     -metadir $metadir
     -gdir $gdir
+    -xrefs $xrefs (from IMGXRefs.pl, or use an empty argument to skip it)
 
     Sets up the cgi_data/ directory, especially the sqlite database, by reading from
     the html directories indir/nickname1 ... indir/nicknameN
@@ -74,7 +76,8 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
                 'indir=s' => \$indir,
                 'metadir=s' => \$metadir,
                 'gdir=s' => \$gdir,
-                'outdir=s' => \$outdir )
+                'outdir=s' => \$outdir,
+                'xrefs=s' => \$xrefs )
      && defined $indir && defined $orgfile && defined $orthfile)
         || die $usage;
     my @orgs = @ARGV;
@@ -85,6 +88,7 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
     die "No such file: $orthfile" unless -e $orthfile;
     die "No such file: $secretsfile" if defined $secretsfile && ! -e $secretsfile;
     die "No organism nicknames specified\n" if scalar(@orgs) < 1;
+    die "No such file: $xrefs" if $xrefs ne "" && ! -e $xrefs;
     if (!defined $outdir && defined $dbfile) {
         if ($dbfile =~ m|/|) {
             $outdir = $dbfile;
@@ -535,6 +539,8 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
         print STDERR "Moved db.StrainFitness.* into $outdir\n";
     }
 
+    push @workCommands, ".import $xrefs LocusXref" if $xrefs ne "";
+
     # load the other data into sqlite3
     if (defined $dbfile) {
 
@@ -596,6 +602,7 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
         my @formatcmd = ($formatexe, "-p", "T", "-o", "T", "-i", $blastdb);
         system(@formatcmd) == 0 || die "Error running\n".join(" ",@formatcmd)."\n: $!";
     }
+
     print STDERR "Success\n";
 }        
 

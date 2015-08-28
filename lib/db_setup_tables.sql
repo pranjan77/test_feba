@@ -163,3 +163,11 @@ CREATE TABLE MediaComponents(
         units TEXT
 );
 CREATE INDEX 'MediaComponentsByMedia' on MediaComponents('media' ASC);
+
+CREATE TABLE LocusXref(
+       orgId TEXT NOT NULL,
+       locusId TEXT NOT NULL,
+       xrefDb TEXT NOT NULL,
+       xrefId TEXT NOT NULL);
+CREATE INDEX 'LocusXrefByLocus' on LocusXref ('orgId', 'locusId', 'xrefDb');
+

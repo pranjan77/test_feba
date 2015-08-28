@@ -225,6 +225,13 @@ if (@$hits == 0) {
     push @links, $cgi->a({href => "http://www.ncbi.nlm.nih.gov/gene/?term=$gene->{sysName}#see-all"}, "NCBI")
         if $gene->{type} == 1 && $gene->{sysName} ne "" && $orginfo->{$orgId}{taxonomyId} ne "";
 
+    # Use LocusXRef to try to link to IMG
+    my $imgBase = "https://img.jgi.doe.gov/cgi-bin/m/main.cgi?section=GeneDetail&page=geneDetail&gene_oid=";
+    my ($imgId) = $dbh->selectrow_array(qq{SELECT xrefId FROM LocusXref
+                                           WHERE orgId=? AND locusId=? AND xrefDb='IMG' LIMIT 1},
+                                        {}, $orgId, $locusId);
+    push @links, $cgi->a({href => $imgBase . $imgId}, "IMG") if defined $imgId;
+
     print $cgi->p("Links: " . join(", ", @links)) if (@links > 0);
 
     print $cgi->h3({style=>'text-align:center'},"Nearby Genes");

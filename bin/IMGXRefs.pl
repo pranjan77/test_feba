@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
+use Getopt::Long;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use FEBA_Utils; # for ReadTable()
@@ -34,9 +35,30 @@ END
     my $nSuccess = 0;
     print join("\t", qw{orgId locusId xrefDb xrefId})."\n";
     foreach my $org (@orgs2) {
-        my $genes = ReadTable("$gdir/$org/genes.tab",qw{locusId sysName type});
-        my $img = ReadTable("$gdir/$org/IMG.tab","gene_oid","Locus Tag");
-        $nSuccess++;
+        my @genes = &ReadTable("$gdir/$org/genes.tab",qw{locusId sysName type});
+        my %sysNameToLocusId = ();
+        foreach my $gene (@genes) {
+            $sysNameToLocusId{$gene->{sysName}} = $gene->{locusId} if $gene->{type} eq "1";
+        }
+        my @img = &ReadTable("$gdir/$org/IMG.tab",("gene_oid","Locus Tag"));
+        my $nMatch = 0;
+        my $lastid = "";
+        foreach my $row (@img) {
+            my $locustag = $row->{"Locus Tag"};
+            next if $locustag eq $lastid;
+            $lastid = $locustag;
+            my $locusId = $sysNameToLocusId{$locustag};
+            if ($locustag ne "" && defined $locusId && $row->{gene_oid} =~ m/^\d+$/) {
+                die "$org $locustag empty locusId" if $locusId eq "";
+                print join("\t", $org, $locusId, "IMG", $row->{gene_oid})."\n";
+                $nMatch++;
+            }
+        }
+        if ($nMatch > 0) {
+            $nSuccess++;
+        } else {
+            print STDERR "No matches by locus tag for $org\n";
+        }
     }
     print STDERR "Found matches for $nSuccess of " . scalar(@orgs2) . " genomes with IMG.tab files\n";
 }
