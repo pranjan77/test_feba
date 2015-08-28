@@ -48,8 +48,8 @@ my $help = $cgi->param('help') || "";
 
 my $addgene_error = undef;
 if ($addgene) {
-    $addgene =~ s/ +$//;
-    $addgene =~ s/^ +//;
+    $addgene =~ s/[ \t]+$//;
+    $addgene =~ s/^[ \t]+//;
     if ($addgene !~ m/^[A-Za-z90-9_-]*$/) {
 	$addgene_error = "Invalid gene to add";
     } else {
