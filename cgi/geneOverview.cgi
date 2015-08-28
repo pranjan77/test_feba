@@ -210,17 +210,24 @@ if (@$hits == 0) {
    	Located on scaffold $scaffold, $strand strand, nucleotides $beginC to $endC";
 
 
-	my @links = ();
-	if ($gene->{locusId} =~ m/^\d+$/) {
+    my @links = ();
+    if ($gene->{locusId} =~ m/^\d+$/) {
 	push @links, $cgi->a({href => "http://www.microbesonline.org/cgi-bin/fetchLocus.cgi?locus=$gene->{locusId}"},
 			     "MicrobesOnline");
-	}
-	if ($orgId eq "Keio" && $gene->{sysName} =~ m/^b\d+$/) {
+    }
+    if ($orgId eq "Keio" && $gene->{sysName} =~ m/^b\d+$/) {
 	push @links, $cgi->a({href => "http://ecocyc.org/ECOLI/search-query?type=GENE&gname=$gene->{sysName}"}, "EcoCyc");
-	}
-	print $cgi->p("Links: " . join(", ", @links)) if (@links > 0);
+    }
 
-	print $cgi->h3({style=>'text-align:center'},"Nearby Genes");
+    # Linking to NCBI is tricky -- for example, Cupriavidus basilensis 4G11 is in NCBI but the locus tags are not indexed yet.
+    # Similarly PS417_05815 from P. fluorescens WCS417 -- hits P. simaie recA instead if search Protein, wierd.
+    # So assume that it will work if the genome has an NCBI taxonomyId. This is a hack.
+    push @links, $cgi->a({href => "http://www.ncbi.nlm.nih.gov/gene/?term=$gene->{sysName}#see-all"}, "NCBI")
+        if $gene->{type} == 1 && $gene->{sysName} ne "" && $orginfo->{$orgId}{taxonomyId} ne "";
+
+    print $cgi->p("Links: " . join(", ", @links)) if (@links > 0);
+
+    print $cgi->h3({style=>'text-align:center'},"Nearby Genes");
 
     print Utils::geneArrows(\@genes, $locusId, undef, undef);
 
