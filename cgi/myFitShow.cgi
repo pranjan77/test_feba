@@ -37,8 +37,8 @@ my $orginfo = Utils::orginfo($dbh);
 my $orgTitle = $cgi->param('orgId') ? "in $orginfo->{$orgSpec}{genome}" : "";
 my $start = Utils::start_page("Genes matching $geneSpec $orgTitle");
 
-$geneSpec =~ s/ *$//;
-$geneSpec =~ s/^ *//;
+$geneSpec =~ s/[ \t]*$//;
+$geneSpec =~ s/^[ \t]*//;
 
 # if no gene or locus specified
 if (!defined $geneSpec || $geneSpec eq "") {
