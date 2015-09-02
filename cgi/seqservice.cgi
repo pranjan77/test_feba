@@ -11,7 +11,10 @@
 # Required parameters: seq -- the protein sequence to look for matches to.
 # Optional parameters: maxhits -- default is 20. Cannot be raised above 50.
 # debug -- write lines starting with # to output to record status
+#
 # Must start the ublast service first with bin/start_ublast_service.pl
+# Returns a tab-delimited table of FastBLAST hits, or, a simple table with
+# Error and the error (or "no hits").
 #
 # For an example of a page that uses this service see
 # ../images/fitblast_example.html
@@ -103,6 +106,11 @@ unlink("$dir.q");
 unlink("$dir/faa");
 unlink("$dir/done.q");
 rmdir("$dir");
+
+# d3.tsv treats an empty table as an error, so instead, return an actual useful error code
+if (@rows == 0) {
+    print "Error\nNo hits\n";
+}
 
 print join("\t", qw{orgId organism locusId sysName name description identity coverage evalue bits minfit maxfit minT maxT maxcofit})."\n";
 my $orginfo = Utils::orginfo($dbh);
