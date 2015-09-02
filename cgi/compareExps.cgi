@@ -344,13 +344,15 @@ Change y axis: <input type="text" name="query2"  size="20" maxlength="100" />
 <tr><th>gene</th><th>name</th><th>description</th><th>x</th><th>y</th><th>&nbsp;</th></tr>
 </TABLE>
 </P>
+<P>
+<A href="#" onclick="geneList()">Heatmap for selected genes</A>
 
 <P>
 <form method="get" action="compareExps.cgi" enctype="multipart/form-data" name="input">
 <input type="hidden" name="orgId" value="$orgId" />
 <input type="hidden" name="expName1" value="$expName1" />
 <input type="hidden" name="expName2" value="$expName2" />
-Or list outliers with
+<b>Or see outliers with
 <select name="outlier">
    <option value="lowx">Low <i>x</i></option>
    <option value="lowy">Low <i>y</i></option>
@@ -363,12 +365,10 @@ and |fit| &gt; <select name="minabs" style="width: 60px;">
     <option value="2">2.0</option>
     <option value="2.5">2.5</option>
     <option value="3">3.0</option>
-</select>
+</select></b>
 <input type="submit" name="submit" value="Go">
 </form>
 
-<P>
-<A href="#" onclick="geneList()">View heatmap for selected genes</A>
 </TD></TR></TABLE>
 </P>
 
