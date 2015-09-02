@@ -28,6 +28,7 @@ use Bio::SeqIO;
 
 use lib "../lib";
 use Utils;
+use IO::Handle;
 
 my $cgi=CGI->new;
 my $style = Utils::get_style();
@@ -40,26 +41,7 @@ my $locusSpec = $cgi->param('locusId') || "";
 my $orgId = $cgi->param('orgId') || "";
 my $dbh = Utils::get_dbh();
 
-my $start = Utils::start_page("Blast Results");
-my $tabs = "";
-my $orth;
-if (defined $orgId and $locusSpec) {
-    $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusSpec,0,1,"homo");
-    $orth = $dbh->selectall_hashref("SELECT * FROM Ortholog WHERE orgId1 = ? AND locusId1 = ?",
-                             'orgId2',{Slice=>{}}, $orgId, $locusSpec);
-    my $orginfo = Utils::orginfo($dbh);
-    $start = Utils::start_page("Orthologs for locus $locusSpec ($orginfo->{$orgId}{genome})");
-} else {
-    $tabs = '<div id = "ntcontent">';
-}
-
-
-print $cgi->header, $start, $tabs;
-
-# check user input
-
-Utils::fail($cgi,qq($locusSpec is invalid. Please enter correct gene name!)) unless ($locusSpec =~ m/^[A-Za-z0-9_]*$/);
-
+# set up $seq and $seqFile
 my $procId = $$;
 my $timestamp = int (gettimeofday * 1000);
 my $filename = $procId . $timestamp;
@@ -70,13 +52,12 @@ my $myDB = Utils::blast_db();
 my $blastOut = "$tmpDir/$filename.blast.out";
 my $blastSort = "$tmpDir/$filename.blast.sort";
 my $seq;
+my $locusShow;
 
-# blast query sequence from the front page
+print $cgi->header; # must be printed before using fail()
 
 if ($query =~ m/[A-Za-z]/) {
-
     # parse and write the input sequence
-
     $seq = "";
     my @lines = split /[\r\n]+/, $query;
     my $def = "";
@@ -98,38 +79,53 @@ if ($query =~ m/[A-Za-z]/) {
     open(FAA,">",$seqFile) || die "Cannot write fasta file";
     print FAA Utils::formatFASTA($id,$seq);
     close(FAA) || die "Error writing fasta file";    
-
-    # run blast
-
-    if ($qtype eq "nucleotide") {
-        Utils::fail($cgi,qq($query is invalid. Please enter nucleotide sequence or choose sequence type as protein!)) unless ($seq =~ m/^[ATCGatcg]*$/);
-        system($blast,'-p','blastx','-e','1e-2','-d',$myDB,'-i',$seqFile,'-o',$blastOut,'-m','8')==0 || die "Error running blastx: $!";
-    } elsif ($qtype eq "protein") {
-        Utils::fail($cgi,qq($query is invalid. Please enter correct protein sequence!)) unless ($seq =~ m/^[A-Za-z]*$/);
-        system($blast,'-p','blastp','-e','1e-2','-d',$myDB,'-i',$seqFile,'-o',$blastOut,'-m','8')==0 || die "Error running blastp: $!";
-    }
-
-# check homologs
-
 } elsif ($locusSpec ne "") {
+    Utils::fail($cgi,qq($locusSpec is invalid. Please enter correct gene name!)) unless ($locusSpec =~ m/^[A-Za-z0-9_]*$/);
 
     # extract sequence for the given gene
-
     my $gene = $dbh->selectrow_hashref("SELECT * from Gene where orgId=? AND locusId=?", {}, $orgId, $locusSpec);
     Utils::fail($cgi, "no such gene: $locusSpec in $orgId") unless defined $gene->{locusId};
     Utils::fail($cgi, "homology search is only available for protein-coding genes") unless $gene->{type} == 1;
-
     my $id = join(":",$orgId,$locusSpec);
+    $locusShow = $gene->{gene} || $gene->{sysName} || $gene->{locusId};
     my $fastacmd = '../bin/blast/fastacmd';
     system($fastacmd,'-d',$myDB,'-s',$id,'-o',$seqFile)==0 || die "Error running $fastacmd -d $myDB -s $id -o $seqFile -- $!";
-
     my $in = Bio::SeqIO->new(-file => $seqFile,-format => 'fasta');
     $seq = $in->next_seq()->seq;
-
-    system($blast,'-p','blastp','-e','1e-2','-d',$myDB,'-i',$seqFile,'-o',$blastOut,'-m','8')==0 || die "Error running blastp: $!";
-
 } else {
     Utils::fail($cgi, "No sequence or gene specified!");
+}
+
+# print start of page
+my $orginfo = Utils::orginfo($dbh);
+my $title = "";
+my $tabs = "";
+my $orth;
+if (defined $orgId and $locusSpec) {
+    $title = "Homologs of $locusShow from $orginfo->{$orgId}{genome}";
+    $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusSpec,0,1,"homo");
+    $orth = $dbh->selectall_hashref("SELECT * FROM Ortholog WHERE orgId1 = ? AND locusId1 = ?",
+                             'orgId2',{Slice=>{}}, $orgId, $locusSpec);
+} else {
+    my $qlen = length($query);
+    my $qchar = $qtype eq "protein" ? "a.a." : "nt.";
+    $title = "Blast Results for " . substr($seq,0,20) . "... ($qlen $qchar)";
+    $tabs = '<div id = "ntcontent">';
+}
+my $start = Utils::start_page($title);
+
+print $start, $tabs, $cgi->h2($title), "\n";
+autoflush STDOUT 1; # so header shows while blast is being run
+
+# run blast
+if ($qtype eq "nucleotide") {
+    Utils::fail($cgi,qq($query is invalid. Please enter nucleotide sequence or choose sequence type as protein!)) unless ($seq =~ m/^[ATCGatcg]*$/);
+    system($blast,'-p','blastx','-e','1e-2','-d',$myDB,'-i',$seqFile,'-o',$blastOut,'-m','8')==0 || die "Error running blastx: $!";
+} elsif ($qtype eq "protein") {
+    Utils::fail($cgi,qq($query is invalid. Please enter correct protein sequence!)) unless ($seq =~ m/^[A-Za-z]*$/);
+    system($blast,'-p','blastp','-e','1e-2','-d',$myDB,'-i',$seqFile,'-o',$blastOut,'-m','8')==0 || die "Error running blastp: $!";
+} else {
+    die "Unknown query type $qtype";
 }
 
 # parse and report the blast result:
@@ -139,9 +135,6 @@ system('sort','-k1,1','-k12,12gr','-k11,11g','-k3,3gr',$blastOut,'-o',$blastSort
 
 # output blast result
 
-print $cgi->h2("Blast Result");
-
-my $orginfo = Utils::orginfo($dbh);
 open(RES,$blastSort) || die "Error reading $blastSort";
 my $cnt = 0;
 my @hits = ();
@@ -190,7 +183,7 @@ $#hits = $numHit-1 if defined $numHit && $numHit > 0 && @hits > $numHit;
 if ($cnt > 0) {
 
     print $cgi->p("Top " . scalar(@hits) . " hits (E < 0.01)");
-    my @header = ('Ortholog?', 'Species','Gene ID','Name','Description','Fitness','Identity %','Coverage %');
+    my @header = ('Orth?', 'Species','Gene','Name','Description','Fitness', '%Identity', '%Coverage');
     shift @header if $query;
     print $cgi->table(
         { cellspacing=>0, cellpadding=>3 },
@@ -204,7 +197,7 @@ if ($cnt > 0) {
     print $cgi->p("No hits found!");
 }
 
-    print qq[<br><a href="http://www.microbesonline.org/cgi-bin/seqsearch.cgi?qtype=protein&query=$seq">Search for homologs in MicrobesOnline</a><BR><BR>];
+    print qq[<br><a href="http://www.microbesonline.org/cgi-bin/seqsearch.cgi?qtype=protein&query=$seq">Search for homologs in MicrobesOnline</a><BR><BR>] unless $qtype eq "nucleotide";
 $dbh->disconnect();
 unlink($seqFile) || die "Error deleting $seqFile: $!";
 unlink($blastOut) || die "Error deleting $blastOut: $!";
