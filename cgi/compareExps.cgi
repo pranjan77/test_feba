@@ -297,9 +297,9 @@ $start
 <H2>$title</H2>
 
 <P>
-<i>x</i> axis <A HREF="exp.cgi?orgId=$orgId&expName=$expName1">$expName1</A>: $exp1->{expDescLong}</H3>
+<i>x</i> axis: Fitness in <A HREF="exp.cgi?orgId=$orgId&expName=$expName1">$expName1</A>, $exp1->{expDescLong}
 <BR>
-<i>y</i> axis <A HREF="exp.cgi?orgId=$orgId&expName=$expName2">$expName2</A>: $exp2->{expDescLong}
+<i>y</i> axis: Fitness in <A HREF="exp.cgi?orgId=$orgId&expName=$expName2">$expName2</A>, $exp2->{expDescLong}
 
 $helptext
 
