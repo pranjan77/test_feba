@@ -168,8 +168,6 @@ END
             $exp->{Group} = lc($exp->{Group}) unless $exp->{Group} eq "pH" || $exp->{Group} eq "Time0";
         }
 
-        print join("\t",$exp->{SetName}, $exp->{Group}, $exp->{Condition_1})."\n" if $exp->{Condition_1} =~ m/ring/;
-
         # Clean up condition_1,2,3 and warn if not a known compound -- but skip this for Time0 samples
         # as sometimes they have condition set to Time0
         foreach my $field (qw{Condition_1 Condition_2 Condition_3}) {
