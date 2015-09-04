@@ -78,9 +78,13 @@ if (defined $expGroup && !defined $condition1){
 my $orginfo = Utils::orginfo($dbh);
 Utils::fail($cgi, "Unknown organism: $orgId") unless $orgId eq "" || exists $orginfo->{$orgId};
 
-# sort experiments by organism
+# sort experiments by organism, or by lc(condition)
 if ($orgId eq "") {
     my @exps = sort { $orginfo->{$a->{orgId}}{genome} cmp $orginfo->{$b->{orgId}}{genome} } @$exps;
+    $exps = \@exps;
+}
+if ($orgId && defined $expGroup) {
+    my @exps = sort { lc($a->{condition_1}) cmp lc($b->{condition_1}) } @$exps;
     $exps = \@exps;
 }
 
