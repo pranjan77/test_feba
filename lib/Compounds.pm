@@ -137,7 +137,7 @@ sub LoadMedia($) {
 
             # check if compound is known, and replace synonyms
             my $compound = FindCompound($compoundSyn);
-            if ($compound eq "") {
+            if (!defined $compound || $compound eq "") {
                 $compound = $compoundSyn;
                 $unknownComponents{$compoundSyn} = 1;
             }
