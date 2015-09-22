@@ -5,10 +5,13 @@ use Getopt::Long;
 my $minQuality = 10;
 
 my $usage = <<END
-Usage: MultiCodes.pl [ -debug ] [ -dntag ] [ -limit maxReads ] [ -minQuality $minQuality ]
-          [ -index name | -primers PrimerIndexTable ]
-          [ -preseq CAGCGTACG -postseq AGAGACCTC -nPreExpected 9 ]
- -out out_prefix < fastq
+Usage: MultiCodes.pl -out out_prefix -index name < fastq
+Or, if not yet multiplexed,
+       MultiCodes.pl -out out_prefix -primers PrimerIndexTable < fastq
+Optional arguments:
+    [ -debug ] [ -dntag ] [ -limit maxReads ] [ -minQuality $minQuality ]
+    [ -preseq CAGCGTACG -postseq AGAGACCTC -nPreExpected 9 ]
+   
     PrimerIndexTable should be tab-delimited with multiplex name and a primer like nACGACG
     The fastq file should be fastq with phred+33 ("sanger") encoding of quality scores
     (as in MiSeq or 2012+ HiSeq)

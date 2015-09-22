@@ -14,7 +14,10 @@ Usage: BarSeqTest.pl -org organism -index S1:S2:S3 -desc Time0:Lactate:Glucose
 Assumes that g/organism includes all the typical files, including a pool.n10
 or pool file, and writes to g/organism/barseqtest by default.
 
-The fastq directory should include file(s) named _index_*gz for each index
+The fastq directory should include file(s) named _index_*gz for each
+index. BarSeqTest looks in subdirectories, not just in the directory
+itself.
+
 END
     ;
 
