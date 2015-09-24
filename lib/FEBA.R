@@ -378,16 +378,20 @@ FEBA_Fit = function(expsUsed, all, genes,
 	if (length(unique(all$locusId[strainsUsed])) < 10) stop("strainsUsed is nearly empty");
 	if(is.null(genesUsed)) {
 		t0_gN_used = aggregate(t0tot[strainsUsed,], list(locusId=all$locusId[strainsUsed]), sum);
-		genesUsed = t0_gN_used$locusId[ rowMeans(t0_gN_used[,-1,drop=F]) >= minT0Gene ];
+                n0 = rowMeans(t0_gN_used[,-1,drop=F]);
+                cat(sprintf("Time0 reads per gene: mean %.1f median %.1f ratio %.2f\n",
+			mean(n0), median(n0), mean(n0)/median(n0)));
+		genesUsed = t0_gN_used$locusId[ n0 >= minT0Gene ];
+		cat("Genes with enough Time0 reads: ",length(genesUsed),"\n");
 	}
 	genesPerScaffold = table(genes$scaffoldId[genes$locusId %in% genesUsed]);
 	smallScaffold = names(genesPerScaffold)[genesPerScaffold < minGenesPerScaffold];
-	if (length(smallScaffold) > 0) cat("Ignoring genes on small scaffolds ",smallScaffold,"\n");
 	genesUsed = genesUsed[!genesUsed %in% genes$locusId[genes$scaffoldId %in% smallScaffold]];
+	if (length(smallScaffold) > 0) cat("Ignoring genes on small scaffolds ",smallScaffold,"\ngenes left: ",length(genesUsed),"\n");
+	if(length(genesUsed) < 100 || !all(genesUsed %in% genes$locusId)) stop("Less than 100 genes left!");
 
 	if(length(strainsUsed) != nrow(all)) stop("Invalid strainsUsed");
 	cat("Using ",sum(strainsUsed)," of ",sum(has_gene2)," genic strains\n");
-	if(length(genesUsed) < 100 || !all(genesUsed %in% genes$locusId)) stop("Invalid genesUsed");
 
 	cat("Using ",length(genesUsed)," of ",length(unique(all$locusId[has_gene2]))," genes with data\n");
 
