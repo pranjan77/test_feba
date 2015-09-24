@@ -152,7 +152,7 @@ END
     my %unknownCompound = ();
     foreach my $exp (@exps) {
         # ignore lines not filled out or dropped
-        next if ($exp->{Index} eq "" && $exp->{SetName} eq "") || $exp->{Drop} eq "TRUE";
+        next if ($exp->{Index} eq "" && $exp->{SetName} eq "") || (defined $exp->{Drop} && $exp->{Drop} eq "TRUE");
 
         # Clean up media and warn if not a known media
         if (defined $exp->{Media}) {
