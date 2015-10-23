@@ -296,6 +296,7 @@ FEBA_Fit = function(expsUsed, all, genes,
 			       # ignore those below this threshold, unless ignore is set
 			       minSampleReads = getenv_numeric_or_default("FEBA_MIN_SAMPLE_READS", 200*1000),
 			       debug=FALSE, computeCofit=TRUE,
+                               dir=".",
 			       ...) {
 
 
@@ -366,6 +367,7 @@ FEBA_Fit = function(expsUsed, all, genes,
         t0_gN_list = mclapply(names(t0tot), function(n) tapply(t0tot[has_gene2,n], indexBy, sum));
         names(t0_gN_list) = names(t0tot);
         t0_gN = data.frame(locusId=names(t0_gN_list[[1]]), t0_gN_list, check.names=F);
+        writeDelim(t0_gN, paste(dir,"/t0_gN",sep="")); # for debugging
 
 	cat("Central Reads per t0set, in millions:\n");
 	print(colSums(t0_gN[,-1,drop=F])/1e6, digits=2);
@@ -402,6 +404,8 @@ FEBA_Fit = function(expsUsed, all, genes,
 	     		   list(locusId=all$locusId[strainsUsed & all$f >= 0.5]), sum);
 	    genesUsed12 = intersect(d1$locusId[ MyRowMin(d1[,-1,drop=F]) >= minT0GeneSide],
 		      		    d2$locusId[ MyRowMin(d2[,-1,drop=F]) >= minT0GeneSide]);
+	    if (length(genesUsed12) < 100) stop(sprintf("genesUsed12 has just %d entries -- check %s/t0_gN",
+            			                        length(genesUsed12), dir));
 	}
         cat("For cor12, using ",length(genesUsed12),"genes\n");
 

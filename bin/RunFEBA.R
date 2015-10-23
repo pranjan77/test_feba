@@ -66,7 +66,7 @@ RunFEBA = function(args = commandArgs(trailingOnly=TRUE)) {
 	exps$name = expNamesNew;
 
 	options(width=100);
-	fit = FEBA_Fit(exps, all, genes);
+	fit = FEBA_Fit(exps, all, genes, dir=dir);
 	FEBA_Save_Tables(fit, genes, org, expsU=exps, dir=dir, FEBAdir=FEBAdir);
 	write(date(), paste(dir,"/.FEBA.success", sep="")); # report success to BarSeqR.pl
 }
