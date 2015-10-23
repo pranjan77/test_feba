@@ -156,6 +156,9 @@ my $debug = undef;
 		     || $name =~ m/_Index(\d+)_[ACGT][ACGT][ACGT][ACGT][ACGT][ACGT]_/i) {
 		# e.g. FEBA_BS_60_10_TAGCTT_L001_R1_001.fastq.gz
 		$index = sprintf("IT%03d", $1);
+            } elsif ($name =~ m/_(\d+)_S\d+_L\d+_/) {
+                # e.g. FEBA_BS_117_24_S120_L002_R1_001.fastq.gz is IT024
+                $index = sprintf("IT%03d", $1);
 	    } elsif ($name =~ m/undetermined/i) {
 		print STDERR "Skipping $name\n";
 		next;
