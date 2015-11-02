@@ -79,8 +79,8 @@ div({-id=>"ntcontent"},
       ), Tr(
         th("Experiments"),
         td(a({href=>"exp.cgi?orgId=Keio&expName=set2IT043&show=specific&help=1"},"Specific Phenotypes<BR>", img({src=>"../images/cofit.png"}))),
-        td(a({href=>"compareExps.cgi?orgId=Keio&expName2=set2IT043&expName1=set2IT045&Go=Go&help=1"},"Compare Experiments<BR>", img({src=>"../images/CmpExps.png"}))),
-        td(a({href=>"compareExps.cgi?orgId=Keio&expName1=set2IT045&expName2=set2IT043&outlier=lowy&minabs=1&submit=Go&help=1"},"Outliers<BR>", img({src=>"../images/outliers.png"})))
+        td(a({href=>"compareExps.cgi?orgId=Keio&expName2=set1IT031&expName1=set1IT003&Go=Go&help=1"},"Compare Experiments<BR>", img({src=>"../images/CmpExps.png"}))),
+        td(a({href=>"compareExps.cgi?orgId=Keio&expName2=set1IT031&expName1=set1IT003&outlier=lowy&minabs=1&submit=Go&help=1"},"Outliers<BR>", img({src=>"../images/outliers.png"})))
       ), Tr(
         th("Multi-Organism"),
         td(a({href=>"orthCond.cgi?expGroup=stress&condition1=Cisplatin&help=1"},"Overview of a Condition<BR>", img({src=>"../images/cond_overview.png"}))),
