@@ -13,7 +13,16 @@ The stages in creating fitness estimates are:
 Processing TnSeq data with MapTnSeq.pl and DesignRandomPool.pl
 
 Processing BarSeq data with MultiCodes.pl, combineBarSeq.pl, and
-BarSeqR.pl.
+BarSeqR.pl or BarSeqtest.pl.
+
+For web server code to browse the results, see the cgi/ subdirectory,
+especially cgi/README and cgi/SETUP.
+
+This is research software that has undergone limited testing. Be careful.
+
+Morgan Price, Lawrence Berkeley Lab, October 2014
+
+DETAILS ON USING THE SCRIPTS
 
 MapTnSeq.pl identifies the random barcode, the junction between the
 transposon and the genome, and maps the remainder of the read to the
@@ -50,6 +59,20 @@ requires metadata about the experiments (usually FEBA_BarSeq.tsv) and
 information about the GC content of each gene (genes.GC -- this can be
 produced from a normal genes table with RegionGC.pl).
 
+In FEBA_BarSeq.tsv, the Date_pool_expt_started field specifies what
+date the experiment was started on, and experiment(s) with
+Description=Time0 are the control sample(s) for that set of
+experiments. If you need to set up your controls in a different way,
+use a different Date_pool_expt_started (any character string is
+allowed) or use BarSeqTest.pl. SetName and Index indicate which reads
+correspond to that sample.
+
+If you want to use the cgi scripts to view the results, then the
+metadata table must include all of these fields: SetName
+Date_pool_expt_started Person "Mutant Library" Description Index Media
+"Growth Method" Group Condition_1 Units_1 Concentration_1 Condition_2
+Units_2 Concentration_2.
+
 BarSeqTest.pl is a wrapper to analyze barseq reads and run
 BarSeqR.pl. It is intended for small test runs and does not require a
 metadata table.
@@ -69,10 +92,7 @@ RunBarSeqLocal.pl processes a large BarSeq run in parallel by running
 MultiCodes.pl on each piece separately and then running
 combineBarSeq.pl to combine the results.
 
-You can also see examples of using this code and of the resulting mini
-web sites at
-
-http://genomics.lbl.gov/supplemental/rbarseq/
+SETTING UP A GENOME
 
 The files that these scripts depend on (genome.fna, genes.tab,
 genes.GC, aaseq) can be set up from a genbank file or a JGI assembly
@@ -82,12 +102,39 @@ you will need to place the genbank2gff.pl script from
 https://github.com/ihh/gfftools/
 in the bin/ subdirectory.
 
-For web server code to browse the results, see the cgi/ directory,
-especially cgi/README and cgi/SETUP.
+OTHER DEPENDENCIES
 
-This is research software that has undergone limited testing. Be careful.
+The read mapping (MapTnSeq.pl) depends on UCSC's blat, which is freely available for non-commercial use at
 
-Morgan Price, Lawrence Berkeley Lab, October 2014
+http://hgdownload.soe.ucsc.edu/downloads.html#source_downloads
+
+It should be straigthforward to modify MapTnSeq.pl to use bowtie 2 or
+megablast or ublast instead, but some minor changes to the parsing
+code would be required.
+
+RUNNING ON MacOS
+
+I have only tested the scripts on Linux, but Victor Chubukov at LBL
+reports that the scripts work if you make for these suggestions.)
+
+RunTnSeqLocal.pl or RunBarSeqLocal.pl run jobs in parallel using feba/bin/submitter.pl,
+which does not work on MacOS. You may be able to get it to work by overriding the default
+#cores (near the top of the code), i.e.
+
+     my $nCPUs = `sysctl -n machdep.cpu.core_count`
+
+Various scripts depend on /usr/bin/Rscript. If it does not exist, then
+you need to set up the symlink or modify the scripts. (RunBarSeqR.pl
+or BarSeqTest.pl invoke an R script bin/RunFEBA.R which invokes
+lib/FEBA.R. DesignRandomPool.pl invokes an R script
+lib/PoolStats.R. bin/db_setup.pl invokes lib/TopCofit.R)
+
+EXAMPLES
+
+You can also see examples of using this code and of the resulting mini
+web sites at
+
+http://genomics.lbl.gov/supplemental/rbarseq/
 
 
 --- LEGALESE ---
