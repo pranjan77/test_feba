@@ -588,6 +588,13 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	cat("Wrote fitness for ",sum(fit$q$u), " successful experiments to ", nameToPath("fit_logratios_good.tab"),"\n",
 	    file=stderr());
 
+	d = genes[genes$locusId %in% fit$g, c("locusId","sysName","desc")];
+	d$comb = paste(d$sysName, d$desc); # for MeV
+        d = merge(d, cbind(locusId=fit$g, fit$tot));
+        names(d)[-(1:4)] = paste(fit$q$name,fit$q$short);
+	writeDelim(d, nameToPath("gene_counts.tab"));
+        wroteName("gene_counts.tab");
+
 	d = merge(genes[,c("locusId","sysName","desc")], cbind(locusId=fit$g,fit$t));
 	names(d)[-(1:3)] = paste(fit$q$name,fit$q$short);
 	writeDelim(d, nameToPath("fit_t.tab"));
