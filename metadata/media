@@ -1073,7 +1073,21 @@ p-aminobenzoic acid	5	ug/L
 lipoic acid	5	ug/L
 choline chloride	200	ug/L
 
-### As yet undefined
+BG11
+NaNO3	1.5	g/L
+K2HPO4	0.04	g/L
+MgSO4 7H2O	0.075	g/L
+CaCl2 2H2O	0.036	g/L
+Citric acid	0.006	g/L
+Ferric ammonium citrate	0.006	g/L
+EDTA (disodium salt)	0.001	g/L
+Na2CO3	0.02	g/L
+H3BO3	2.86	mg/L
+MnCl2 4H2O	1.81	mg/L
+ZnSO4 7H2O	0.222	mg/L
+Na2MoO4 2H2O	0.39	mg/L
+CuSO4 5H2O	0.079	mg/L
+Co(NO3)2 6H2O	0.049	mg/L
 
+# Not yet defined
 R2A
-BG11 # asked Kelly
