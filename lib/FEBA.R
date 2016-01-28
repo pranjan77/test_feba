@@ -2,7 +2,8 @@
 #
 # Uses mclapply() from the R parallel package to analyze experiments in parallel --
 # set MC_CORES to control the #CPUs used (default is 2).
-#
+library(parallel);
+
 # The key routines are:
 #
 # FEBA_Fit() -- analyze many fitness experiments with AvgStrainFitness() and NormalizeByScaffold()
@@ -18,6 +19,7 @@
 #
 # Limitations:
 # High memory usage (~10GB to process 200K strains x 500 experiments)
+
 
 # GeneFitness():
 # genes -- must include locusId, scaffoldId, and begin
@@ -39,9 +41,6 @@
 # se (estimated standard error of measurement), and t (the test statistic),
 # as well as some other values from AvgStrainFitness(), notably sdNaive,
 # which is a different (best-case) estimate of the standard error.
-
-library(parallel);
-
 GeneFitness = function(genes, strainInfo, countCond, countT0,
 	    	    strainsUsed, genesUsed, genesUsed12,
 		    use1 = strainInfo$f < 0.5,
