@@ -18,6 +18,8 @@
       table.fitblast { border-collapse: collapse; }
       table.fitblast tr {border: 1px solid grey; }
       table.fitblast tr:hover td { background-color: rgb(200,200,200); }
+      table.fitblast tr:hover td { background-color: rgb(200,200,200); }
+      table.fitblast td { padding: 3px; }
 
     </style>
     <!-- These javascript libraries are required -->
@@ -26,7 +28,13 @@
 </head>
 <body>
 
-<H2>Short Results</H2>
+<H2>Fitness BLAST Example</H2>
+
+For a specified protein sequence, Fitness BLAST shows homologs that have <A HREF="../cgi-bin/help.cgi">fitness data</A>.
+
+<H3>Short Results</H2>
+
+<p>The short result shows up to two hits. It always includes the top hit with fitness data (if there is one). It may show another hit if the top hit does not have a significant phenotype or cofitness but another hit does.</p>
 
 <TABLE class="fitblast">
 <TR><TH>E. coli gene</TH><TH>Short fitness BLAST result</TH></TR>
@@ -36,14 +44,14 @@
 <TR><TD valign="top">csrA</TD><TD valign="top" id="fitblast_short_csrA"> </TD>
 </TABLE>
 
-<H2>Fitness BLAST table</H2>
+<H3>Long Results for UvrC</H2>
 
 <!-- Note use of id -- the id tells fitblast_load_table() where to write  -->
 <DIV id="fitblast_table_uvrC"></DIV>
 
 <script>
-/* this would be replaced by the root of the server being used for Fitness BLAST */
-var server_root = "../";
+/* The root of the server being used for Fitness BLAST. Should end with '/' */
+var server_root = "http://fit.genomics.lbl.gov/";
 
 /* this would be replaced by the protein sequence of interest */
 var uvrC ="MSDQFDAKAFLKTVTSQPGVYRMYDAGGTVIYVGKAKDLKKRLSSYFRSNLASRKTEALVAQIQQIDVTVTHTETEALLLEHNYIKLYQPRYNVLLRDDKSYPFIFLSGDTHPRLAMHRGAKHAKGEYFGPFPNGYAVRETLALLQKIFPIRQCENSVYRNRSRPCLQYQIGRCLGPCVEGLVSEEEYAQQVEYVRLFLSGKDDQVLTQLISRMETASQNLEFEEAARIRDQIQAVRRVTEKQFVSNTGDDLDVIGVAFDAGMACVHVLFIRQGKVLGSRSYFPKVPGGTELSEVVETFVGQFYLQGSQMRTLPGEILLDFNLSDKTLLADSLSELAGRKINVQTKPRGDRARYLKLARTNAATALTSKLSQQSTVHQRLTALASVLKLPEVKRMECFDISHTMGEQTVASCVVFDANGPLRAEYRRYNITGITPGDDYAAMNQVLRRRYGKAIDDSKIPDVILIDGGKGQLAQAKNVFAELDVSWDKNHPLLLGVAKGADRKAGLETLFFEPEGEGFSLPPDSPALHVIQHIRDESHDHAIGGHRKKRAKVKNTSSLETIEGVGPKRRQMLLKYMGGLQGLRNASVEEIAKVPGISQGLAEKIFWSLKH";
@@ -59,5 +67,6 @@ fitblast_load_short("fitblast_short_csrA", server_root, csrA);
 fitblast_load_table("fitblast_table_uvrC", server_root, uvrC);
 </script>
 
+<p><small>Developed by <A HREF="http://morgannprice.org/">Morgan Price</A>. Please report any problems to <A HREF="mailto:funwithwords26@gmail.com">Morgan</A>.</small></p>
 </body>
 </html>
