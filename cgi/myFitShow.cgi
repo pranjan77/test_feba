@@ -25,6 +25,7 @@ use IO::Handle;
 
 use lib "../lib";
 use Utils;
+sub end;
 
 my $cgi=CGI->new;
 
@@ -39,26 +40,16 @@ my $start = Utils::start_page("Genes matching $geneSpec $orgTitle");
 
 $geneSpec =~ s/[ \t]*$//;
 $geneSpec =~ s/^[ \t]*//;
-
+    
 # if no gene or locus specified
 if (!defined $geneSpec || $geneSpec eq "") {
-	print $cgi->header;
-	print $start,'<div id="ntcontent">';
+    print $cgi->header;
+    print $start,'<div id="ntcontent">';
     Utils::fail($cgi, "you must enter the gene name or locus tag");
 }
 
 # match for exact gene or locus ID
 my $hits = Utils::matching_exact($dbh, $orgSpec, $geneSpec);
-
-my %used; # org -> locusId -> 1 for genes that have been shown already
-my $count = 0; 
-# index results to avoid duplicates
-foreach my $gene (@$hits) {
-	next if (exists $used{$gene->{locusId}});
-    $gene->{has_fitness} = Utils::gene_has_fitness($dbh,$gene->{orgId},$gene->{locusId});
-    $used{$gene->{orgId}}{$gene->{locusId}} = 1;
-}
-
 
 if (scalar(@$hits) == 1) {
     # just 1 hit, redirect
@@ -73,38 +64,151 @@ if (scalar(@$hits) == 1) {
 
 }
 
+my $orgDescriptor = exists $orginfo->{$orgSpec}{genome} ? " in " . $orginfo->{$orgSpec}{genome} : "";
+
 #start page
 print $cgi->header, $start,'<div id="ntcontent">';
 
+my %used = (); # org -> locusId -> 1 for genes that have been shown already
+my $count = 0; 
+
 # make table for exact gene/locus matches
 if (scalar(@$hits) > 0) {
-	my @trows = ();
-	print h3(b("Match by gene/locus for $geneSpec:"));
-	push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
-		  $cgi->th( [ 'Gene ID','Gene Name','Description','Genome','Fitness' ] ) );
+    my @trows = ();
+    print h3(b("Match by gene/locus for $geneSpec:"));
+    push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
+                          $cgi->th( [ 'Gene ID','Gene Name','Description','Genome','Fitness' ] ) );
+
+    
 
     foreach my $gene (@$hits) {
     	if ($count < 100) {
-			my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
+            $count++;
+            $used{$gene->{orgId}}{$gene->{locusId}} = 1;
+            $gene->{has_fitness} = Utils::gene_has_fitness($dbh,$gene->{orgId},$gene->{locusId});
+            my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
 			my @trow = map $cgi->td($_), (
-				a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"}, $gene->{sysName}||$gene->{locusId}), 
-				# $gene->{sysName}, 
-				$gene->{gene}, 
-				$gene->{desc},
-						      $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
-						      a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
-							 $fitstring));
-			push @trows, $cgi->Tr(@trow);
-			$count += 1;
-		}
-	}
-	print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
-        print "\n"; # to allow flushing
+                            a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"},
+                               $gene->{sysName}||$gene->{locusId}), 
+                            $gene->{gene}, 
+                            $gene->{desc},
+                            $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
+                            a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
+                               $fitstring));
+            push @trows, $cgi->Tr(@trow);
+        }
+    }
+    print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
+    print "\n"; # to allow flushing
 }
 
 autoflush STDOUT 1; # so preliminary results appear
 
-# make table for description matches if total matches < 100 so far, filtering for repeats
+# Handle queries like ko:K14333 to search for a KEGG ortholog group
+if ($geneSpec =~ m/^ko:(K\d+)$/i) {
+    my $kgroup = uc($1);
+    print p("Searching for members of KEGG ortholog group $kgroup");
+    my $hits = Utils::matching_kgroup($dbh, $orgSpec, [ $kgroup ]);
+    @$hits = grep { !exists $used{$_->{orgId}}{$_->{locusId}} } @$hits;
+    if (@$hits > 0) {
+        my @trows = ();
+        my ($kgroupDesc) = $dbh->selectrow_array("SELECT desc from KgroupDesc WHERE kgroup = ?",
+                                                 {}, $kgroup);
+        $kgroupDesc =~ s/ +$//;
+        print h3(b("Members of $kgroup ($kgroupDesc)", $orgDescriptor));
+        push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
+                              $cgi->th( [ 'Gene ID','Gene Name','Description','Genome','Fitness' ] ) );
+        foreach my $gene (@$hits) {
+            if ($count < 100) {
+                $count++;
+                $gene->{has_fitness} = Utils::gene_has_fitness($dbh,$gene->{orgId},$gene->{locusId});
+                my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
+                my @trow = map $cgi->td($_), (
+                    a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"},
+                       $gene->{sysName}||$gene->{locusId} ), 
+                       $gene->{gene}, 
+                       $gene->{desc},
+                       $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}},
+                               "$orginfo->{$gene->{orgId}}->{genome}"),
+                       a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
+                          $fitstring));
+                push @trows, $cgi->Tr(@trow);
+            }
+        }
+        print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
+    }
+    &end();
+}
+
+# Handle queries like EC:1.4.3.1
+if ($geneSpec =~ m/^ec:([0-9.-]+)$/i) {
+    my $ecnum = $1;
+    print p("Searching for Enyzme Commission number $ecnum (by TIGRFam and then by KEGG ortholog group)");
+    my $hits1 = Utils::matching_domain_ec($dbh, $orgSpec, $ecnum);
+    @$hits1 = grep { !exists $used{ $_->{orgId} }{ $_->{locusId} } } @$hits1;
+    if (@$hits1 > 0) {
+        print h3(b("Match by TIGRFam's EC number for $ecnum"));
+        my @trows = ();
+        push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
+			      $cgi->th( [ 'Gene ID','Gene Name','Description','Genome', 'Domain ID', 'Fitness' ] ) );
+        foreach my $gene (@$hits1) {
+            next if exists $used{ $gene->{orgId} }{ $gene->{locusId} };
+            $used{ $gene->{orgId} }{ $gene->{locusId} } = 1;
+            next if $count >= 100;
+            $count++;
+            my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
+            my @trow = map $cgi->td($_), (
+                a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"},
+                   $gene->{sysName}||$gene->{locusId}), 
+                $gene->{gene}, 
+                $gene->{desc},
+                $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
+                $gene->{domainId},
+                # $gene->{domainName}, # always the same as the id for TIGR
+                a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
+                   $fitstring));
+            push @trows, $cgi->Tr(@trow);
+        }
+        print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
+    }
+    &end() if $count >= 100;
+    my $kgroups = $dbh->selectcol_arrayref("SELECT kgroup FROM KgroupEC WHERE ecnum = ?", {}, $ecnum);
+    my $hits2 = Utils::matching_kgroup($dbh, $orgSpec, $kgroups);
+    @$hits2 = grep { !exists $used{ $_->{orgId} }{ $_->{locusId} } } @$hits2;
+    if (@$hits2 > 0) {
+        print h3(b("Match by KEGG's EC number for $ecnum"));
+        my @trows = ();
+        push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
+			  $cgi->th( [ 'Gene ID','Gene Name','KO','KO Description','Genome','Fitness' ] ) );
+
+        my $kgroupSpec = join(",", map {"'".$_."'"} map {$_->{kgroup}} @$hits2);
+        my $kgroupDesc = $dbh->selectall_hashref("SELECT * from KgroupDesc WHERE kgroup IN ($kgroupSpec)",
+                                                 "kgroup");
+        foreach my $gene (@$hits2) {
+            next if exists $used{ $gene->{orgId} }{ $gene->{locusId} };
+            $used{ $gene->{orgId} }{ $gene->{locusId} } = 1;
+            next if $count >= 100;
+            $count++;
+            my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
+            my @trow = map $cgi->td($_), (
+                a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}",
+                    title => $gene->{desc}}, $gene->{sysName}||$gene->{locusId}), 
+                $gene->{gene},
+                a( {href => "http://www.kegg.jp/dbget-bin/www_bget?ko:".$gene->{kgroup} },
+                   $gene->{kgroup}),
+                $kgroupDesc->{$gene->{kgroup}}{desc},
+                $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
+                a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
+                   $fitstring));
+            push @trows, $cgi->Tr(@trow);
+        }
+        print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
+    }
+    &end();
+}
+
+
+# match by description
 my $descs;
 $descs = Utils::matching_descs($dbh, $orgSpec, $geneSpec) if $count < 100;
 @$descs = grep { !exists $used{ $_->{orgId} }{ $_->{locusId} } } @$descs;
@@ -203,24 +307,20 @@ if (@$domains >= 1) {
                    $fitstring));
             push @trows, $cgi->Tr(@trow);
             $used{$gene->{locusId}} = 1;
-            $count += 1;
         }
     }
     print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
 }
 
-if ($count >= 100) {
+&end();
+
+sub end {
+    if ($count >= 100) {
 	print "<BR> Only the first 100 results are shown. <br>";
+    } elsif ($count == 0) {
+        print $cgi->h3("No gene found for $geneSpec", $orgDescriptor);
+    }
+    $dbh->disconnect();
+    Utils::endHtml($cgi);
+    exit(0);
 }
-
-# if no hits
-if (@$hits == 0 and @$descs == 0 and @$domains == 0) {
-    print $cgi->h3("No gene found for $geneSpec",
-		   (exists $orginfo->{$orgSpec}{genome} ? " in " . $orginfo->{$orgSpec}{genome} : ""));
-
-} 
-
-print qq[<br><br>];
-
-$dbh->disconnect();
-Utils::endHtml($cgi);
