@@ -44,10 +44,7 @@ print header, $start,
     
 div({-id=>"ntcontent"},
   h2("Fitness Browser"),
-  h5(q{Browse <i>unpublished</i> fitness experiments from the
-     <A HREF="http://pbd.lbl.gov/scientists/adam-deutschbauer/">Deutschbauer lab</A>,
-     the <A HREF="http://genomics.lbl.gov/">Arkin lab</A>,
-     and collaborators. Contact <A HREF="mailto:AMDeutschbauer.lbl.gov">Adam Deutschbauer</A> for more information.}),
+  Utils::site_intro_text(),
   h3("Search"),
   table({class=>"frontpage"}, 
     $cgi->Tr(
