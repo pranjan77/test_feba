@@ -251,9 +251,9 @@ sub matching_exps($$$) {
     my ($dbh,$orgId,$expSpec) = @_;
     die if !defined $dbh || !defined $orgId || !defined $expSpec;
     # make the query safe to include in SQL
+    $expSpec =~ s/^ +//;
     $expSpec =~ s/ +$//;
-    $expSpec =~ s/^ +$//;
-    $expSpec =~ s/[\'\"\n\r]//g;
+    $expSpec =~ s/[\"\n\r]//g;
 
     my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
     my $sql = qq{SELECT * from Organism JOIN Experiment USING (orgId)
@@ -273,9 +273,9 @@ sub matching_genes($$$) {
     my ($dbh,$orgId,$geneSpec) = @_;
     die if !defined $dbh || !defined $orgId || !defined $geneSpec;
     # make the query safe to include in SQL
+    $geneSpec =~ s/^ +//;
     $geneSpec =~ s/ +$//;
-    $geneSpec =~ s/^ +$//;
-    $geneSpec =~ s/[\'\"\n\r]//g;
+    $geneSpec =~ s/[\"\n\r]//g;
 
     my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
     my $sql = qq{SELECT * from Organism JOIN Gene USING (orgId)
@@ -293,10 +293,10 @@ sub matching_genes($$$) {
 sub matching_exact($$$) {
     my ($dbh,$orgId,$geneSpec) = @_;
     die if !defined $dbh || !defined $orgId || !defined $geneSpec;
-    # make the query safe to include in SQL
-    $geneSpec =~ s/ +$//;
+    # make the query safe to include in SQL, remove leading/trailing space
     $geneSpec =~ s/^ +$//;
-    $geneSpec =~ s/[\'\"\n\r]//g;
+    $geneSpec =~ s/ +$//;
+    $geneSpec =~ s/[\"\n\r]//g;
 
     my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
     my $sql = qq{SELECT * from Organism JOIN Gene USING (orgId)
@@ -315,9 +315,9 @@ sub matching_descs($$$) {
     my ($dbh,$orgId,$geneSpec) = @_;
     die if !defined $dbh || !defined $orgId || !defined $geneSpec;
     # make the query safe to include in SQL
+    $geneSpec =~ s/^ +//;
     $geneSpec =~ s/ +$//;
-    $geneSpec =~ s/^ +$//;
-    $geneSpec =~ s/[\'\"\n\r]//g;
+    $geneSpec =~ s/[\"\n\r]//g;
 
     my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
     my $sql = qq{SELECT * from Organism JOIN Gene USING (orgId)
@@ -336,13 +336,43 @@ sub matching_descs($$$) {
     return $dbh->selectall_arrayref($sql, { Slice => {} });
 }
 
+sub matching_kgroup_descs($$$) {
+    my ($dbh,$orgId,$geneSpec) = @_;
+    die if !defined $dbh || !defined $orgId || !defined $geneSpec;
+    # make the query safe and removing leading and trailing space
+    $geneSpec =~ s/^ +//;
+    $geneSpec =~ s/ +$//;
+    $geneSpec =~ s/[\"\n\r]//g;
+
+    my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
+    my $kgroups = $dbh->selectcol_arrayref(
+        qq{ SELECT kgroup from KgroupDesc
+           WHERE (desc LIKE "% $geneSpec" OR desc LIKE "$geneSpec %" OR desc LIKE "% $geneSpec %"
+                OR desc LIKE "$geneSpec-%" OR desc LIKE "$geneSpec-"
+                OR desc LIKE "% $geneSpec-%" OR desc LIKE "%-$geneSpec %"
+                OR desc LIKE "$geneSpec/%" OR desc LIKE "%/$geneSpec"
+                OR desc LIKE "% $geneSpec/%" OR desc LIKE "%/$geneSpec %"
+                OR desc LIKE "$geneSpec,%" OR desc LIKE "% $geneSpec,%") });
+    return [] if scalar(@$kgroups) == 0;
+    my $kgroupSpec = join(",", map {"'".$_."'"} @$kgroups);
+
+    my $sql = qq{SELECT * from Organism
+                 JOIN Gene USING (orgId)
+                 JOIN BestHitKEGG USING (orgId,locusId)
+                 JOIN KEGGMember USING (keggOrg,keggId)
+                 WHERE kgroup IN ( $kgroupSpec )
+                 $orgClause
+                 LIMIT 100;};
+    return $dbh->selectall_arrayref($sql, { Slice => {} });
+}
+
 sub matching_domains($$$) {
     my ($dbh,$orgId,$geneSpec) = @_;
     die if !defined $dbh || !defined $orgId || !defined $geneSpec;
     # make the query safe to include in SQL
     $geneSpec =~ s/ +$//;
     $geneSpec =~ s/^ +$//;
-    $geneSpec =~ s/[\'\"\n\r]//g;
+    $geneSpec =~ s/[\"\n\r]//g;
 
     my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
     my $sql = qq{SELECT DISTINCT genus, species, strain, orgId, locusId, sysName, gene, domainId, domainName, desc from Gene JOIN Organism USING (orgId) JOIN GeneDomain USING (orgId, locusId)
