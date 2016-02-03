@@ -336,26 +336,12 @@ sub matching_descs($$$) {
     return $dbh->selectall_arrayref($sql, { Slice => {} });
 }
 
-sub matching_kgroup_descs($$$) {
-    my ($dbh,$orgId,$geneSpec) = @_;
-    die if !defined $dbh || !defined $orgId || !defined $geneSpec;
-    # make the query safe and removing leading and trailing space
-    $geneSpec =~ s/^ +//;
-    $geneSpec =~ s/ +$//;
-    $geneSpec =~ s/[\"\n\r]//g;
-
-    my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
-    my $kgroups = $dbh->selectcol_arrayref(
-        qq{ SELECT kgroup from KgroupDesc
-           WHERE (desc LIKE "% $geneSpec" OR desc LIKE "$geneSpec %" OR desc LIKE "% $geneSpec %"
-                OR desc LIKE "$geneSpec-%" OR desc LIKE "$geneSpec-"
-                OR desc LIKE "% $geneSpec-%" OR desc LIKE "%-$geneSpec %"
-                OR desc LIKE "$geneSpec/%" OR desc LIKE "%/$geneSpec"
-                OR desc LIKE "% $geneSpec/%" OR desc LIKE "%/$geneSpec %"
-                OR desc LIKE "$geneSpec,%" OR desc LIKE "% $geneSpec,%") });
-    return [] if scalar(@$kgroups) == 0;
+# third argument is an arrayref of KEGG ortholog groups, i.e. K14333
+sub matching_kgroup($$$) {
+    my ($dbh,$orgId,$kgroups) = @_;
+    return [] if @$kgroups == 0;
     my $kgroupSpec = join(",", map {"'".$_."'"} @$kgroups);
-
+    my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
     my $sql = qq{SELECT * from Organism
                  JOIN Gene USING (orgId)
                  JOIN BestHitKEGG USING (orgId,locusId)
@@ -366,6 +352,27 @@ sub matching_kgroup_descs($$$) {
     return $dbh->selectall_arrayref($sql, { Slice => {} });
 }
 
+# third argument is a description to do text search on against KgroupDesc.desc
+sub matching_kgroup_descs($$$) {
+    my ($dbh,$orgId,$geneSpec) = @_;
+    die if !defined $dbh || !defined $orgId || !defined $geneSpec;
+    # make the query safe and removing leading and trailing space
+    $geneSpec =~ s/^ +//;
+    $geneSpec =~ s/ +$//;
+    $geneSpec =~ s/[\"\n\r]//g;
+
+    my $kgroups = $dbh->selectcol_arrayref(
+        qq{ SELECT kgroup from KgroupDesc
+           WHERE (desc LIKE "% $geneSpec" OR desc LIKE "$geneSpec %" OR desc LIKE "% $geneSpec %"
+                OR desc LIKE "$geneSpec-%" OR desc LIKE "$geneSpec-"
+                OR desc LIKE "% $geneSpec-%" OR desc LIKE "%-$geneSpec %"
+                OR desc LIKE "$geneSpec/%" OR desc LIKE "%/$geneSpec"
+                OR desc LIKE "% $geneSpec/%" OR desc LIKE "%/$geneSpec %"
+                OR desc LIKE "$geneSpec,%" OR desc LIKE "% $geneSpec,%") });
+    return &matching_kgroup($dbh, $orgId, $kgroups);
+}
+
+# third argument is a family identifier or gene name to match against the GeneDomain table
 sub matching_domains($$$) {
     my ($dbh,$orgId,$geneSpec) = @_;
     die if !defined $dbh || !defined $orgId || !defined $geneSpec;
@@ -384,6 +391,21 @@ sub matching_domains($$$) {
          LIMIT 100;};
          # die $sql;
     return $dbh->selectall_arrayref($sql, { Slice => {} });
+}
+
+# third argument is an ec number to match against the GeneDomain table (TIGRFam only)
+sub matching_domain_ec($$$) {
+    my ($dbh,$orgId,$ecnum) = @_;
+    die if !defined $dbh || !defined $orgId || !defined $ecnum;
+
+    my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
+    my $sql = qq{SELECT DISTINCT genus, species, strain, orgId, locusId, sysName, gene, domainId, domainName, desc
+                 FROM Gene JOIN Organism USING (orgId) JOIN GeneDomain USING (orgId, locusId)
+                 WHERE ec = ?
+                 $orgClause
+                 ORDER BY genus, species, strain, locusId, sysName, gene, domainId, domainName
+                 LIMIT 100;};
+    return $dbh->selectall_arrayref($sql, { Slice => {} }, $ecnum);
 }
 
 
@@ -632,6 +654,13 @@ sub geneArrows($$$$) {
     }
     $svg .= "</svg></center>";
     return $svg;
+}
+
+sub site_intro_text {
+    return CGI::h5(q{Browse thousands of <i>mostly unpublished</i> fitness experiments from the
+     <A HREF="http://pbd.lbl.gov/scientists/adam-deutschbauer/">Deutschbauer lab</A>,
+     the <A HREF="http://genomics.lbl.gov/">Arkin lab</A>,
+     and collaborators. Contact <A HREF="mailto:AMDeutschbauer.lbl.gov">Adam Deutschbauer</A> for more information.});
 }
 
 #END 
