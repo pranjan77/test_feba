@@ -174,7 +174,7 @@ if (defined $bhKEGG->{keggId}) {
             a({-href => "http://www.kegg.jp/dbget-bin/www_bget?$keggOrg:$keggId"},
               "$keggOrg:$keggId"));
 } else {
-    print p("No potential ortholog at 30% similarity in KEGG");
+    print p("No potential ortholog at 30% similarity in KEGG (June 2011 release)");
 }
 
 # print sequence
