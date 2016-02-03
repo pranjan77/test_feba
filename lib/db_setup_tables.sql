@@ -136,6 +136,7 @@ CREATE TABLE GeneDomain(
 CREATE INDEX 'orgLocus' on GeneDomain ('orgId' ASC, 'locusId' ASC);
 CREATE INDEX 'domainDbId' on GeneDomain ('domainDb' ASC, 'domainId' ASC);
 CREATE INDEX 'domainDbName' on GeneDomain ('domainDb' ASC, 'domainName' ASC);
+CREATE INDEX 'domain_ec' on GeneDomain ('ec' ASC, 'orgId' ASC);
 
 /* For each kilobase on each scaffold, shows the seek position into db.StrainFitness.orgId
    This arrangement is used because the StrainFitness tables are so large.
