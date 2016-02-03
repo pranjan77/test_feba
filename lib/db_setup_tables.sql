@@ -171,3 +171,38 @@ CREATE TABLE LocusXref(
        xrefId TEXT NOT NULL);
 CREATE INDEX 'LocusXrefByLocus' on LocusXref ('orgId', 'locusId', 'xrefDb');
 
+/* For each protein in our genomes, its best hit in KEGG, if a good one exists */
+CREATE TABLE BestHitKEGG(
+       orgId TEXT NOT NULL,
+       locusId TEXT NOT NULL,
+       keggOrg TEXT NOT NULL, /* i.e., ajs from ajs:Ajs_1688 */
+       keggId TEXT NOT NULL, /* i.e. Ajs_1688 */
+       identity REAL NOT NULL, /* i.e., 99.0% amino acid identity */
+       PRIMARY KEY (orgId,locusId)
+);
+CREATE INDEX 'KEGGToHits' on BestHitKEGG (keggOrg,keggId,orgId,locusId);
+
+/* A KEGG gene may belong to more than one kgroup. Only information about hits is stored */
+CREATE TABLE KEGGMember(
+	keggOrg TEXT NOT NULL,
+        keggId TEXT NOT NULL,
+        kgroup TEXT NOT NULL, /* like K13522 */
+        PRIMARY KEY (keggOrg,keggId,kgroup)
+);
+CREATE INDEX 'KEGGMemberByGroup' on KEGGMember (kgroup,keggOrg,keggId);
+
+/* Description of each KEGG orthology group */
+CREATE TABLE KgroupDesc(
+       kgroup TEXT NOT NULL,
+       desc TEXT NOT NULL,
+       PRIMARY KEY (kgroup)
+);
+
+/* A kgroup may have more than one EC number. Only information relevant to hits is stored */
+CREATE TABLE KgroupEC(
+       kgroup TEXT NOT NULL,
+       ecnum TEXT NOT NULL,
+       PRIMARY KEY (kgroup,ecnum)
+);
+CREATE INDEX 'KgroupECByEcnum' on KgroupEC ('ecnum', 'kgroup');
+
