@@ -21,7 +21,7 @@ use Utils;
 my $cgi=CGI->new;
 my $style = Utils::get_style();
 my $dbh = Utils::get_dbh();
-my $start = Utils::start_page("Help for Fitness Browser");
+my $start = Utils::start_page("Help for the Fitness Browser");
 
 print header,
 	$start, 
