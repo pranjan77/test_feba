@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+# A helper script for db_setup.pl -- populates KEGG related tables from besthit.kegg
 use Getopt::Long;
 use strict;
 
@@ -28,10 +29,10 @@ my %keggSeen = (); # kegg org => kegg id => 1 if already output
 my %kgroupSeen = (); # kegg group => 1 if already output
 
 open(HITS, "<", $kegghits) || die "Cannot read $kegghits";
-open(BH, ">", "$dir/BestHitKEGG") || die "Cannot write to $dir/BestHitKEGG";
-open(MEMBER, ">", "$dir/KEGGMember") || die "Cannot write to $dir/KEGGMember";
-open(DESC, ">", "$dir/KgroupDesc") || die "Cannot write to $dir/KgroupDesc";
-open(EC, ">", "$dir/KgroupEC") || die "Cannot write to $dir/KgroupEC";
+open(BH, ">", "$dir/db.BestHitKEGG") || die "Cannot write to $dir/db.BestHitKEGG";
+open(MEMBER, ">", "$dir/db.KEGGMember") || die "Cannot write to $dir/db.KEGGMember";
+open(DESC, ">", "$dir/db.KgroupDesc") || die "Cannot write to $dir/db.KgroupDesc";
+open(EC, ">", "$dir/db.KgroupEC") || die "Cannot write to $dir/db.KgroupEC";
 
 while(<HITS>) {
     chomp;
@@ -69,24 +70,24 @@ while(<HITS>) {
 }
 
 close(HITS) || die "Error reading $kegghits";
-close(BH) || die "Error writing to $dir/BestHitKEGG";
-close(MEMBER) || die "Error writing to $dir/KEGGMember";
-close(DESC) || die "Error writing to $dir/KgroupDesc";
-close(EC) || die "Error writing to $dir/KgroupEc";
+close(BH) || die "Error writing to $dir/db.BestHitKEGG";
+close(MEMBER) || die "Error writing to $dir/db.KEGGMember";
+close(DESC) || die "Error writing to $dir/db.KgroupDesc";
+close(EC) || die "Error writing to $dir/db.KgroupEc";
 
-print STDERR "Wrote temporary files in $dir/:\nBestHitKEGG KEGGMember KgroupDesc KgroupEc\n";
+print STDERR "Wrote temporary files in $dir/:\ndb.BestHitKEGG db.KEGGMember db.KgroupDesc db.KgroupEc\n";
 
 open(SQLITE, "|-", "sqlite3", $db) || die "Cannot run sqlite3 on $db";
 print SQLITE ".mode tabs\n";
 
 foreach my $table (qw{BestHitKEGG KEGGMember KgroupDesc KgroupEC}) {
     print SQLITE "DELETE from $table;\n";
-    print SQLITE ".import $dir/$table $table\n";
+    print SQLITE ".import $dir/db.$table $table\n";
 }
 close(SQLITE) || die "Error running sqlite3 on db";
 
 print STDERR "Done, removing temporary files\n";
 foreach my $table (qw{BestHitKEGG KEGGMember KgroupDesc KgroupEC}) {
-    unlink($table);
+    unlink("db.$table");
 }
 

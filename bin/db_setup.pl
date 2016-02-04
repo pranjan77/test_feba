@@ -10,6 +10,7 @@ use DBI;
 my $metadir = "$Bin/../metadata";
 my $gdir = "g";
 my $xrefs = "img.xrefs";
+my $kegghits = "besthit.kegg";
 my $usage = <<END
 Usage: db_setup.pl [ -db db_file_name ]
         -orth orth_table -orginfo orginfo
@@ -20,11 +21,12 @@ Other optional arguments:
     -metadir $metadir
     -gdir $gdir
     -xrefs $xrefs (from IMGXRefs.pl, or use an empty argument to skip it)
+    -kegghits $kegghits (or use '-' to skip loading KEGG hits)
 
     Sets up the cgi_data/ directory, especially the sqlite database, by reading from
     the html directories indir/nickname1 ... indir/nicknameN
     (created by BarSeqR.pl)
-    Also sets up the BLAST database.
+    Also sets up the BLAST database (cgi_data/aaseqs).
 
     The orginfo file should include all of the columns for the Orginfo
     table, but may contain organisms that are not included in the
@@ -77,7 +79,8 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
                 'metadir=s' => \$metadir,
                 'gdir=s' => \$gdir,
                 'outdir=s' => \$outdir,
-                'xrefs=s' => \$xrefs )
+                'xrefs=s' => \$xrefs,
+                'kegghits=s' => \$kegghits)
      && defined $indir && defined $orgfile && defined $orthfile)
         || die $usage;
     my @orgs = @ARGV;
@@ -109,6 +112,9 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
     my $formatexe = "$Bin/blast/formatdb";
     die "formatdb not found in $Bin/blast" unless -e $formatexe;
 
+    if (defined $dbfile && $kegghits ne '-') {
+        die "No such file: $kegghits\n" unless -e $kegghits;
+    }
 
     print STDERR "Reading " . scalar(@orgs) . " organisms from $indir\n";
 
@@ -581,10 +587,17 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
         foreach my $file (@workFiles) {
             unlink($file);
         }
+
+        if ($kegghits ne '-') {
+            system("$Bin/db_setup_kegg.pl", "-db", $dbfile, "-kegghits", $kegghits, "-dir", $outdir) == 0
+                || die "db_setup_kegg.pl on $kegghits failed";
+        } else {
+            print STDERR "Skipping kegg hits\n";
+        }
     }
 
     # Load the media information
-    my @mediacmd = ("$Bin/make_media_table.pl", "-metadir", $metadir);
+    my @mediacmd = ("$Bin/make_media_table.pl", "-metadir", $metadir, "-out", $outdir);
     if (defined $dbfile) {
         push @mediacmd, ("-db", $dbfile);
     } elsif (defined $outdir) {
