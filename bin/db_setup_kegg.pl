@@ -84,10 +84,10 @@ foreach my $table (qw{BestHitKEGG KEGGMember KgroupDesc KgroupEC}) {
     print SQLITE "DELETE from $table;\n";
     print SQLITE ".import $dir/db.$table $table\n";
 }
-close(SQLITE) || die "Error running sqlite3 on db";
+close(SQLITE) || die "Error running sqlite3 on $db";
 
 print STDERR "Done, removing temporary files\n";
 foreach my $table (qw{BestHitKEGG KEGGMember KgroupDesc KgroupEC}) {
-    unlink("db.$table");
+    unlink("$dir/db.$table");
 }
 
