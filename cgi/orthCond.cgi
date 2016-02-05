@@ -234,5 +234,9 @@ sub CompareOG($$) {
     return $cmp if $cmp;
     my @genomesA = sort map { $orginfo->{ $_->{orgId} }{genome} } @$la;
     my @genomesB = sort map { $orginfo->{ $_->{orgId} }{genome} } @$lb;
-    return $genomesA[0] cmp $genomesB[0];
+    $cmp = $genomesA[0] cmp $genomesB[0];
+    return $cmp if $cmp;
+    $cmp = ($la->[0]{sysName} || $la->[0]{locusId}) cmp 
+           ($lb->[0]{sysName} || $lb->[0]{locusId});
+    return $cmp;
 }
