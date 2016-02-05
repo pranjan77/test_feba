@@ -45,7 +45,8 @@ div({-id=>"ntcontent"},
       textfield( -name      => 'gene', -size => 20, -maxlength => 100 ),
       br(),
       small("examples:",
-            map { a({href => "myFitShow.cgi?gene=$_"}, $_) } qw{Shewana3_0001 recA homoserine HisG_c ec:3.2.1.21 ko:K05350})
+            map { a({href => "myFitShow.cgi?gene=$_"}, $_) }
+            qw{Shewana3_0001 recA homoserine HisG_c ec:5.5.1.2 ko:K05350} )
     ),
     p(submit("Find gene")),
     end_form,
