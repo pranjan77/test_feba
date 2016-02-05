@@ -2,9 +2,10 @@
 package FEBA_Utils;
 require Exporter;
 use strict;
+use File::stat;
 our (@ISA,@EXPORT);
 @ISA = qw(Exporter);
-@EXPORT = qw( ReadTable ReadColumnNames ReadFasta );
+@EXPORT = qw( ReadTable ReadColumnNames ReadFasta NewerThan );
 
 # filename and list of required fields => list of hashes, each with field->value
 sub ReadTable($*) {
@@ -60,6 +61,14 @@ sub ReadFasta ($) {
     }
     close(IN) || die "Error reading $filename";
     return(\%seqs);
+}
+
+sub NewerThan($$) {
+    my ($file1, $file2) = @_;
+    die "Invalid arguments to NewerThan" unless defined $file1 && defined $file2;
+    die "No such file: $file2" unless -e $file2;
+    return 0 unless -e $file1;
+    return stat($file1)->mtime >= stat($file2)->mtime ? 1 : 0;
 }
 
 1;
