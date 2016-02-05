@@ -30,17 +30,17 @@ my $locusId = $cgi->param('locusId') || die "No locusId parameter";
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
 Utils::fail($cgi, "Unknown organism: $orgId") unless $orgId eq "" || exists $orginfo->{$orgId};
+my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId=? AND locusId=?",
+				   {}, $orgId, $locusId);
 
+Utils::fail($cgi,"unknown gene") unless defined $gene->{locusId};
+Utils::fail($cgi,"sequence information is only available for protein-coding genes.") unless $gene->{type} == 1;
 
-# main table
+# domains table
 # gather data and slice it into an array of hashes
 my $cond = $dbh->selectall_arrayref(qq{SELECT domainDb, orgId, locusId, domainId, domainName, begin, end, score, evalue, definition FROM GeneDomain WHERE orgId=? AND locusId=? ORDER BY begin;},
     { Slice => {} },
     $orgId, $locusId);
-
-# gather number of genes and data
-# my $numGenes = $dbh->selectrow_array(qq{SELECT COUNT (DISTINCT locusId) FROM Gene WHERE orgId = ?;}, undef, $orgId);
-# my $numData = $dbh->selectrow_array(qq{SELECT COUNT (DISTINCT locusId) FROM GeneFitness WHERE orgId = ?;}, undef, $orgId);
 
 #find length of sequence
 my $tmpDir = Utils::tmp_dir();
@@ -60,34 +60,18 @@ my $title = "Protein Info for $orginfo->{$orgId}{genome} at Locus $locusId";
 my $start = Utils::start_page("$title");
 my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusId,0,1,"protein");
 
-my $gene = $dbh->selectall_arrayref(qq(SELECT sysName,locusId,gene,desc FROM Gene where orgid = ? and locusId = ?;),
-		{ },
-	    $orgId, $locusId);
-my $sys;
-foreach my $grow(@$gene) {
-		my ($sysName, $locusId, $geneName, $desc) = @$grow;
-		$sys = $sysName || $locusId;
-}
+my $sys = $gene->{sysName} || $gene->{locusId};
 
 print
     header, $start, $tabs, '<div id="tabcontent">',
-	h2("Protein Info for $sys in " . $cgi->a({href => "org.cgi?orgId=$orgId"},$orginfo->{$orgId}{genome})),
-	h3("Domains");
+    h2("Protein Info for $sys in " . $cgi->a({href => "org.cgi?orgId=$orgId"},$orginfo->{$orgId}{genome})),
+    p("Description:", $gene->{desc}),
+    h3("Domains");
 
 if (@$cond == 0) {
 	print "Sorry, no domains for this organism and/or locus."
 } else {
-	# sysname/locusId (gene): desc => myFitShow.cgi
-	foreach my $grow(@$gene) {
-		my ($sysName, $locusId, $geneName, $desc) = @$grow;
-		my $sys = $sysName || $locusId;
-		my $name = $geneName || "";
-		my $d = $cgi->a({href=>"myFitShow.cgi?orgId=$orgId&gene=$locusId"}, $desc);
-		print $cgi->p($cgi->b("$sys $name: $d"));
-	}
-
-
-	#create table
+	#create domains table
 	my @headings = qw{Family ID Coverage EValue}; # Begin End};
 	my @trows = ( Tr({ -valign => 'top', -align => 'center' }, map { th($_) } \@headings) );
 	foreach my $row (@$cond) {
@@ -136,9 +120,30 @@ print br(),
     p(a({-href => "http://www.ncbi.nlm.nih.gov/Structure/cdd/wrpsb.cgi?seqinput=>${sys}%0A$seq"},
 	(@$cond > 0 ? "Or see" : "See") . " Conserved Domains Database"));
 
-# KEGG information
+# UniProt information, if any
+my $bhSprot = $dbh->selectrow_hashref("SELECT * from BestHitSwissProt
+                                         JOIN SwissProtDesc USING (sprotAccession,sprotId)
+                                         WHERE orgId = ? AND locusId = ?",
+                                      {}, $orgId, $locusId);
+if (defined $bhSprot->{sprotAccession}) {
+    my $acc = $bhSprot->{sprotAccession};
+    print
+        h3("SwissProt"),
+        p(
+            sprintf("%.0f%% similar to", $bhSprot->{identity}),
+            a({ href => "http://www.uniprot.org/uniprot/$acc",
+                title => $bhSprot->{sprotAccession} },
+              $bhSprot->{sprotId} ) . ":",
+            $bhSprot->{desc},
+            $bhSprot->{geneName} ? "($bhSprot->{geneName})" : "",
+            br(),
+            "from",
+            $bhSprot->{organism} );
+}
+print "\n";
 
-print h3("KEGG");
+# KEGG information, if any
+
 my $bhKEGG = $dbh->selectrow_hashref("SELECT * from BestHitKEGG where orgId = ? AND locusId = ?",
                                      {}, $orgId, $locusId);
 if (defined $bhKEGG->{keggId}) {
@@ -147,9 +152,8 @@ if (defined $bhKEGG->{keggId}) {
     my $ko = $dbh->selectall_arrayref("SELECT * from KEGGMember JOIN KgroupDesc USING (kgroup)
                                        WHERE keggOrg = ? AND keggId = ?",
                                       { Slice => {} }, $keggOrg, $keggId);
-    if (@$ko == 0) {
-        print p("No ortholog group");
-    } else {
+    print h3("KEGG");
+    if (@$ko > 0) {
         foreach my $row (@$ko) {
             my $ecs = $dbh->selectcol_arrayref("SELECT ecnum FROM KgroupEC WHERE kgroup = ?",
                                                {}, $row->{kgroup});
@@ -169,45 +173,23 @@ if (defined $bhKEGG->{keggId}) {
                     $row->{desc} || "(no description)",
                     $ecdesc );
         }
+    } else {
+        print p("No KEGG ortholog group");
     }
-    print p(sprintf("inferred from %.0f%% similarity to ", $bhKEGG->{identity}),
+    print p(sprintf("(inferred from %.0f%% similarity to ", $bhKEGG->{identity}),
             a({-href => "http://www.kegg.jp/dbget-bin/www_bget?$keggOrg:$keggId"},
-              "$keggOrg:$keggId"));
-} else {
-    print p("No potential ortholog at 30% similarity in KEGG (June 2011 release)");
+              "$keggOrg:$keggId").")");
 }
 
-# print sequence
-my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId=? AND locusId=?",
-				   {}, $orgId, $locusId);
-Utils::fail($cgi,"unknown gene") unless defined $gene->{locusId};
-Utils::fail($cgi,"sequence information is only available for protein-coding genes.") unless $gene->{type} == 1;
 
+# print sequence
 $seq =~ s/(.{60})/$1\n/gs;
 
-# my $showId = $gene->{sysName} || $gene->{locusId};
-# my $orginfo = Utils::orginfo($dbh);
-# my $title = "Sequence of $showId in $orginfo->{$orgId}{genome}",;
 print
     h3("Protein Sequence"),
     qq[<div style="position: relative; margin: 0 auto; width: 59em; font-family: monospace;white-space: pre;"],
     pre(">$sys $gene->{desc} ($orginfo->{$orgId}{genome})\n$seq"),
     '</div></div>';
-
-#display number of genes that have data out of total genes
-# print $cgi->p("Fitness data for $numData genes of $numGenes genes.");
-
-
-#display taxonomic information and link
-# if ((defined $orginfo->{$orgId}{taxonomyId}) && ($orginfo->{$orgId}{taxonomyId} ne "")) {
-	# print $cgi->p($cgi->a({href => "http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=$orginfo->{$orgId}{taxonomyId}"}, "NCBI Taxonomy"));
-# }
-
-#file of experimental data - generated by createExpData.cgi
-# my $data = `./createExpData.cgi orgId=$orgId`;
-# print $cgi->p($cgi->a({href => "download.cgi?orgId=$orgId"}, "Download experimental data"), " - Note: May take a minute or so to load once clicked.");
-# print $cgi->p($cgi->a({href => "createExpData.cgi?orgId=$orgId"}, "Download experimental data"), " - Note: May take a few seconds to load once clicked.");
-
 
 $dbh->disconnect();
 Utils::endHtml($cgi);
