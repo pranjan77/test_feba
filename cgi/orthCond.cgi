@@ -8,8 +8,8 @@
 ## Morgan Price
 #######################################################
 #
-# Given a group and condition, identify all specific sick genes,
-# group them into ad hoc ortholog groups, and show the groups.
+# Given a group and condition, all specific-sick genes,
+# grouped into ad hoc ortholog groups
 #
 # Required CGI parameters: expGroup and condition1 (condition1 can be empty, but requires exact match)
 # Optional: help -- 1 if on help/tutorial mode
@@ -23,10 +23,11 @@ use DBI;
 use lib "../lib";
 use Utils;
 use URI::Escape;
-use Time::HiRes qw(gettimeofday tv_interval);
 
 sub RowForGene($$$$); # gene object, shade or not, which row (0 indexed) => the row
 sub summaryRow($$$); # ortholog group, shade, first to include (1 indexed)
+sub CompareOG($$); # a comparator for sorting OGs (lists of genes)
+sub OrderGenesInOG; # a comparator for sorting genes within an OG
 
 my $cgi=CGI->new;
 my $style = Utils::get_style();
@@ -41,11 +42,10 @@ my $debug = $cgi->param('debug');
 my $start_time = gettimeofday() if $debug;
 my $help = $cgi->param('help') || "";
 
-my $speclist = $dbh->selectall_arrayref(qq{SELECT DISTINCT orgId, locusId, expName, expDesc
-                                           FROM Experiment JOIN SpecificPhenotype USING (orgId,expName)
-					   WHERE Experiment.expGroup = ? AND Experiment.condition_1 = ?},
-					   {}, $expGroup, $condition1);
-print STDERR sprintf("Specific sicks: %.3f seconds\n", tv_interval([$start_time])) if $debug;
+my $speclist = $dbh->selectall_arrayref(qq{SELECT ogId,orgId,locusId,minFit,maxFit,minT,maxT,sysName,gene,desc
+                                           FROM SpecOG JOIN Gene USING (orgId,locusId)
+					   WHERE expGroup = ? AND condition = ?},
+					   { Slice => {} }, $expGroup, $condition1);
 
 my $title = "Specific Genes for $expGroup Experiments in $condition1 Across Organisms";
 $title = "No Specific Genes" if (@$speclist == 0);
@@ -75,108 +75,35 @@ my $js =  q[<script type="text/javascript" src="../images/jquery-1.11.3.min.js">
     </script>];
 
 print
-    header, $start, $js, '<div id="ntcontent">', #$tabs,
+    header, $start, $js, '<div id="ntcontent">',
     h2($title);
 
-Utils::fail($cgi,"no genes with specific phenotypes were found for this condition") if (@$speclist == 0);
+Utils::fail($cgi,"No genes with specific phenotypes were found for this condition") if (@$speclist == 0);
 
-my %genes = (); # orgId => locusId => attributes from a row in the Gene table
-# gene object also includes
-# 'orth' => orgId => orthId
-# 'fit' => expName => hash with fit, t
-my %expDesc = (); # orgId => expName => expDesc
-foreach my $row (@$speclist) {
-	my ($orgId,$locusId,$expName,$expDesc) = @$row;
-	die "Invalid $orgId" unless exists $orginfo->{$orgId};
-	if (!exists $genes{$orgId}{$locusId}) {
-	    my $gene = $dbh->selectrow_hashref(qq{SELECT * from Gene WHERE orgId = ? AND locusId = ?}, {}, $orgId, $locusId);
-	    $gene->{orth} = Utils::get_orths($dbh,$orgId,$locusId);
-	    $genes{$orgId}{$locusId} = $gene;
-	}
-	$expDesc{$orgId}{$expName} = $expDesc; # overwriting is OK
+# Group the results by ogId and sort the OGs by how many members they have
+my %og = (); # ogId => list of rows
+foreach my $spec (@$speclist) {
+    push @{ $og{$spec->{ogId}} }, $spec;
 }
-
-print STDERR sprintf("Fetch genes and orths: %.3f seconds\n", tv_interval([$start_time])) if $debug;
-
-# Fetch the actual fitness values
-while (my ($orgId, $geneHash) = each %genes) {
-    my @expNames = keys %{ $expDesc{$orgId} };
-    die if @expNames == 0;
-    my $expNameSpec = join(",", map { "'" . $_ . "'" } @expNames);
-    while (my ($locusId, $gene) = each %$geneHash) {
-	$gene->{values} = $dbh->selectrow_arrayref(qq{ SELECT min(fit), max(fit), min(t), max(t) FROM GeneFitness
-                                                       WHERE orgId = ? AND locusId = ? AND expName IN ($expNameSpec) },
-                                                       {}, $orgId, $locusId);
-        die "No fitness data for $orgId $locusId $expGroup $condition1" unless defined $gene->{values}[0];
-    }
-}
-
-print STDERR sprintf("Fetch fitness: %.3f seconds\n", tv_interval([$start_time])) if $debug;
-
-# Now, sort the genes to show by ortholog groups
-# Put first the ones that have the most orthologs in this set.
-# Then, put them with whatever is an ortholog of theirs.
-#
-# The first step is to count the orthologs in the nOrth field of each gene
-my @genes = ();
-while (my ($orgId, $geneHash) = each %genes) {
-    while (my ($locusId, $gene) = each %$geneHash) {
-	my $orth = $gene->{orth};
-	my $nOrth = 0;
-	while (my ($orthTax,$orthObj) = each %$orth) {
-            # avoid a subtle bug -- exists $genes{$orthTax}{$orthId} would silently create
-            # $genes{$orthTax} and screw up the each %genes loop so that an organism
-            # could get processed twice.
-	    $nOrth++ if exists $genes{$orthTax} && exists $genes{$orthTax}{$orthObj->{locusId}};
-	}
-	$gene->{nOrth} = $nOrth;
-	push @genes, $gene;
-    }
-}
-@genes = sort { $b->{nOrth} <=> $a->{nOrth} } @genes;
-
-print STDERR sprintf("Fetch orthology: %.3f seconds\n", tv_interval([$start_time])) if $debug;
-
-# And make ortholog groups
-my @OGs = ();
-my %og = (); # orgId => locusId => which OG if gene is in there
-foreach my $gene (@genes) {
-    my $orth = $gene->{orth};
-    my $iOG = undef;
-    # strictly speaking, this should be based on which is most similar, or #hits, in case of conflicts b/w OGs
-    # punt on that for now
-    while (my ($orthTax,$orthObj) = each %$orth) {
-	   $iOG = $og{$orthTax}{$orthObj->{locusId}};
-	   last if defined $iOG;
-    }
-    if (defined $iOG) {
-        push @{ $OGs[$iOG] }, $gene;
-    } else {
-	   $iOG = scalar(@OGs);
-	   push @OGs, [ $gene ];
-    }
-    $og{$gene->{orgId}}{$gene->{locusId}} = $iOG;
-}
-
-print STDERR sprintf("Make OGs: %.3f seconds\n", tv_interval([$start_time])) if $debug;
+my @ogInOrder = sort { CompareOG($og{$a}, $og{$b}) } (keys %og);
 
 my @headings = ['&nbsp', 'Organism', 'Gene', 'Name', 'Description', 'Fitness (Lower)', 'Fitness (Upper)'];  #Experiment
 my @trows = ( $cgi->Tr({ -valign => 'middle', -align => 'center' }, map { th($_) } @headings ) );
 
 my $shade = 0;
 my $group = 1;
-my $row = 0;
 my $singletonHead = 0;
 
-foreach my $og (@OGs) {
-    @$og = sort { ($b->{gene} ne "") <=> ($a->{gene} ne "") } @$og; # sort them so the ones with gene names come up first 
-    foreach my $gene (@$og) {
-        if (scalar(@$og) == 1 and $singletonHead == 0) {
+foreach my $ogId (@ogInOrder) {
+    my @sorted = sort OrderGenesInOG @{ $og{$ogId} };
+    my $row = 0;
+    foreach my $gene (@sorted) {
+        if (scalar(@sorted) == 1 and $singletonHead == 0) {
             push @trows, qq[<th colspan="8"><center>Singletons</center></th>];
             $singletonHead = 1;
         }
-        if ($row == 3 and scalar(@$og) > 4) {
-            push @trows, summaryRow($og, $shade, 4);
+        if ($row == 3 and scalar(@sorted) > 4) {
+            push @trows, summaryRow(\@sorted, $shade, 4);
             push @trows, qq[<tr class="header3"><th colspan="8"><center><span>Collapse -</span></center></th></tr>];
         }
         push @trows, RowForGene($gene, $shade, $singletonHead == 1 ? "" : $group, $row);
@@ -184,7 +111,6 @@ foreach my $og (@OGs) {
     }
     $shade++;
     $group++;
-    $row = 0;
 }
 
 if ($help == 1) {
@@ -256,7 +182,6 @@ sub RowForGene($$$$) {
     $genomeShort =~ s/^(.)\S+/$1./;
     my $locusId = $gene->{locusId};
 
-    my ($min,$max,$minT,$maxT) = @{ $gene->{values} };
     my $rowLabel = "";
     my $collapse = "";
     if ($row == 0) {
@@ -273,19 +198,41 @@ sub RowForGene($$$$) {
         td( a({ -href => "myFitShow.cgi?orgId=$orgId&gene=$locusId" }, $showId)),
         td( $gene->{gene}),
         td( $gene->{desc}),
-        td( { -bgcolor => Utils::fitcolor($min), -style=>'text-align: center;' },
-            a( { -title => sprintf("Click to compare (t = %.1f to %.1f)",$minT,$maxT),
+        td( { -bgcolor => Utils::fitcolor($gene->{minFit}), -style=>'text-align: center;' },
+            a( { -title => sprintf("Click to compare (t = %.1f to %.1f)",$gene->{minT},$gene->{maxT}),
                  -style => "color: rgb(0,0,0)",
                  -onMouseOver=>"this.style.color='#CC0024'",
                  -onMouseOut=>"this.style.color='#000000'",
                  -href => $orthFitURI },
-               sprintf("%.1f",$min) ) ),
-        td( { -bgcolor => Utils::fitcolor($max), -style=>'text-align: center;' },
-            a( { -title => sprintf("Click to compare (t = %.1f to %.1f)",$minT,$maxT),
+               sprintf("%.1f",$gene->{minFit}) ) ),
+        td( { -bgcolor => Utils::fitcolor($gene->{maxFit}), -style=>'text-align: center;' },
+            a( { -title => sprintf("Click to compare (t = %.1f to %.1f)",$gene->{minT},$gene->{maxT}),
                  -style => "color: rgb(0,0,0)",
                  -onMouseOver=>"this.style.color='#CC0024'",
                  -onMouseOut=>"this.style.color='#000000'",
                  -href => $orthFitURI },
-               sprintf("%.1f",$max) ) )
+               sprintf("%.1f",$gene->{maxFit}) ) )
 	    );
+}
+
+# sort them so the ones with gene names come up first;
+# else put E. coli first; else sort by genome name
+sub OrderGenesInOG {
+    my $cmp = ($b->{gene} ne "") <=> ($a->{gene} ne "");
+    return $cmp if $cmp;
+    $cmp = ($b->{orgId} eq "Keio") <=> ($a->{orgId} eq "Keio");
+    return $cmp if $cmp;
+    my $genomeA = $orginfo->{ $a->{orgId} }{genome};
+    my $genomeB = $orginfo->{ $b->{orgId} }{genome};
+    return $genomeA cmp $genomeB;
+}
+
+# larger OGs first. Break ties by the lowest genome name
+sub CompareOG($$) {
+    my ($la,$lb) = @_; # each is a list
+    my $cmp = scalar(@$lb) <=> scalar(@$la);
+    return $cmp if $cmp;
+    my @genomesA = sort map { $orginfo->{ $_->{orgId} }{genome} } @$la;
+    my @genomesB = sort map { $orginfo->{ $_->{orgId} }{genome} } @$lb;
+    return $genomesA[0] cmp $genomesB[0];
 }

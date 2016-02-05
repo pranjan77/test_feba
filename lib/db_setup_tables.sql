@@ -96,6 +96,12 @@ CREATE TABLE GeneFitness(
    PRIMARY KEY (orgId,locusId,expName)
 );
 
+/* There is also, for each organism, a table
+   FitByExp_org with fields expName,locusId,fit,t
+   It is stored by experiment so it is fast to look
+   up all the data for an experiment this way.
+*/
+
 /* Most cofit genes for each gene.
    Genes in organisms that have relatively few experiments will not be included.
 */
@@ -207,3 +213,23 @@ CREATE TABLE KgroupEC(
 );
 CREATE INDEX 'KgroupECByEcnum' on KgroupEC ('ecnum', 'kgroup');
 
+/* An auxiliary table to speed up ortholog conditions page, with
+   pre-selected ortholog groups of genes that have a specific phenotype
+   in each condition and are BBHs of each other. Ideally, all genes in
+   an OG would be BBHs of each other, but in practice, these are
+   computed by clustering the BBHs.
+*/
+CREATE TABLE SpecOG(
+       ogId INT NOT NULL,       /* arbitrary, unique for each ortholog group */
+       expGroup TEXT NOT NULL,
+       condition TEXT NOT NULL,
+       orgId TEXT NOT NULL,
+       locusId TEXT NOT NULL,
+       minFit REAL NOT NULL,
+       maxFit REAL NOT NULL,
+       minT REAL NOT NULL,
+       maxT REAL NOT NULL,
+       PRIMARY KEY (expGroup, condition, orgId, locusId)
+);
+CREATE INDEX 'SpecOGByLocus' on SpecOG ('orgId','locusId');
+CREATE INDEX 'SpecOGByOG' on SpecOG ('ogId');

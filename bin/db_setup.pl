@@ -577,7 +577,29 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
         die "Invalid values of locusId1 in Ortholog table: $nOrthRows != $nOrthRows1" unless $nOrthRows == $nOrthRows1;
         die "Invalid values of locusId2 in Ortholog table: $nOrthRows != $nOrthRows1" unless $nOrthRows == $nOrthRows2;
 
+        # Create the FitByExp_org table for each organism
+        foreach my $org (@orgs) {
+            my $tab = "'" . "FitByExp_" . $org . "'";
+            my $create_statement = $dbh->prepare(qq{CREATE TABLE $tab
+                                                (expName TEXT NOT NULL,
+                                                 locusId TEXT NOT NULL,
+                                                 fit REAL NOT NULL,
+                                                 t REAL NOT NULL,
+                                                 PRIMARY KEY (expName,locusId)); });
+            $create_statement->execute() || die "Cannot create $tab";
+            my $insert_statement = $dbh->prepare(qq{INSERT INTO $tab SELECT expName,locusId,fit,t
+                                                FROM GeneFitness where orgId = ? ORDER BY expName; });
+            $insert_statement->execute($org) || die "Cannot fill data into $tab";
+            print STDERR "Filled $tab\n";
+        }
+
         $dbh->disconnect();
+
+        
+
+        # Build the SpecOG table
+        system("$Bin/db_setup_specOG.pl", "-db", $tmpdbfile, "-dir", $outdir) == 0
+            || die "db_setup_specOG.pl failed";
 
         system("mv",$tmpdbfile,$dbfile) == 0 || die "mv $tmpdbfile $dbfile failed: $!";
         die "mv $tmpdbfile $dbfile failed" unless -e $dbfile;

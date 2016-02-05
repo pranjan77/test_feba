@@ -128,8 +128,8 @@ if ($tsv || $outlier) {
     # Tried adding an index to GeneFitness so we could look up by orgId and expName but it did not really
     # speed things up. Probably the rows are in gene order so the whole part of the table for that orgId has to
     # be scanned anyway. Do one query for both experiments so that it is scanned once not twice.
-    my $fit = $dbh->selectall_arrayref("SELECT * FROM GeneFitness WHERE orgId = ? AND expName IN (?,?)",
-				       { Slice => {} }, $orgId, $expName1, $expName2);
+    my $fit = $dbh->selectall_arrayref("SELECT * FROM FitByExp_${orgId} WHERE expName IN (?,?)",
+				       { Slice => {} }, $expName1, $expName2);
     my $found1 = 0;
     my $found2 = 0;
     foreach my $row (@$fit) {
