@@ -25,7 +25,7 @@ aaseq2 file versus KEGG, from a command like
 rapsearch -q g/org/aaseq2 -t a -e -2 -b 30 -v 30 -d kegg.rap -o g/blast_results/KEGG_org
 
 Writes a tab-delimited file (no header) with fields
-orgId, locusId, keggId, K group numbers, K group descriptions
+orgId:locusId, keggId, identity, K group numbers, K group descriptions
 
 where K group numbers (if more than 1) are joined by ","
 and K group descriptions are joined by "; "
