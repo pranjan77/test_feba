@@ -213,6 +213,24 @@ CREATE TABLE KgroupEC(
 );
 CREATE INDEX 'KgroupECByEcnum' on KgroupEC ('ecnum', 'kgroup');
 
+CREATE TABLE 'BestHitSwissProt' (
+       orgId TEXT NOT NULL,
+       locusId TEXT NOT NULL,
+       sprotAccession TEXT NOT NULL,
+       sprotId TEXT NOT NULL,
+       identity REAL NOT NULL,
+       PRIMARY KEY(orgId,locusId)
+);
+
+CREATE TABLE 'SwissProtDesc' (
+       sprotAccession TEXT NOT NULL,
+       sprotId TEXT NOT NULL,
+       geneName TEXT NOT NULL, /* will be empty if not available */
+       desc TEXT NOT NULL,
+       organism TEXT NOT NULL,
+       PRIMARY KEY(sprotAccession)
+);
+
 /* An auxiliary table to speed up ortholog conditions page, with
    pre-selected ortholog groups of genes that have a specific phenotype
    in each condition and are BBHs of each other. Ideally, all genes in

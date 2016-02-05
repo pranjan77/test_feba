@@ -11,6 +11,7 @@ my $metadir = "$Bin/../metadata";
 my $gdir = "g";
 my $xrefs = "img.xrefs";
 my $kegghits = "besthit.kegg";
+
 my $usage = <<END
 Usage: db_setup.pl [ -db db_file_name ]
         -orth orth_table -orginfo orginfo
@@ -108,6 +109,8 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
             die "Missing file: $indir/$org/$file" unless -e "$indir/$org/$file";
         }
         die "No aaseq2 file for $org in $gdir/$org/aaseq2" unless -e "$gdir/$org/aaseq2";
+        die "No swissprot hits for $org in $gdir/blast_results/sprot_$org.m8"
+            unless -e "$gdir/blast_results/sprot_$org.m8";
     }
     my $formatexe = "$Bin/blast/formatdb";
     die "formatdb not found in $Bin/blast" unless -e $formatexe;
@@ -535,6 +538,32 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
         close(OUT) || die "Error writing to db.StrainFitness.$org";
         print STDERR "Wrote db.StrainFitness.$org\n";
     } # end loop over orgs
+
+    # Load SwissProt hits, or just use the existing files
+    if (defined $outdir) {
+        my $bhfile = "$outdir/db.BestHitSwissProt";
+        my $swfile = "$outdir/db.SwissProtDesc";
+        my $toRun = 1; # need to rerun BestHitSwissProt.pl
+        if (-e $bhfile && -e $swfile) {
+            $toRun = 0;
+            # are they up to date for each organism?
+            foreach my $org (@orgs) {
+                my $hitsFile = "$gdir/blast_results/sprot_$org.m8";
+                die "No such file: $hitsFile" unless -e $hitsFile;
+                $toRun = 1 unless NewerThan($bhfile, $hitsFile) && NewerThan($swfile, $hitsFile);
+            }
+        }
+        if ($toRun) {
+            print STDERR "Running SprotBestHit.pl\n";
+            system("$Bin/SprotBestHit.pl","-gdir",$gdir,"-out",$outdir,@orgs) == 0
+                || die "SprotBestHit.pl failed";
+            die if ! -e $bhfile && -e $swfile;
+        } else {
+            print STDERR "Using pre-existing files db.BestHitSwissProt, db.SwissProtDesc in $outdir\n";
+        }
+        push @workCommands, ".import $bhfile BestHitSwissProt";
+        push @workCommands, ".import $swfile SwissProtDesc";
+    }
 
     # rename the strain fitness files
     if (defined $outdir && $outdir ne ".") {
