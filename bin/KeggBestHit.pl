@@ -1,8 +1,9 @@
 #!/usr/bin/perl -w
 use strict;
 use Getopt::Long;
-use File::stat;
-sub NewerThan($$); # file1 exists and is newer than file2?
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+use FEBA_Utils; # for NewerThan
 
 my $kegg = "kegg.faa";
 my $gdir = "g";
@@ -161,11 +162,3 @@ foreach my $org (@orgs) {
     }
 }
 print STDERR "Processed " . scalar(@orgs) . " organisms\n";
-
-sub NewerThan($$) {
-    my ($file1, $file2) = @_;
-    die "Invalid arguments to NewerThan" unless defined $file1 && defined $file2;
-    die "No such file: $file2" unless -e $file2;
-    return 0 unless -e $file1;
-    return stat($file1)->mtime >= stat($file2)->mtime ? 1 : 0;
-}

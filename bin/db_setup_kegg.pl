@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # A helper script for db_setup.pl -- populates KEGG related tables from besthit.kegg
-use Getopt::Long;
 use strict;
+use Getopt::Long;
 
 my $db;
 my $kegghits = "besthit.kegg";

@@ -3,9 +3,9 @@
 use strict;
 use Getopt::Long;
 use FindBin qw($Bin);
-use File::stat;
+use lib "$Bin/../lib";
+use FEBA_Utils; # for NewerThan
 sub AddOrgName($$$); # Convert aaseq file to aaseq2
-sub NewerThan($$); # file1 exists and is newer than file2?
 
 {
     my $blastdir = "$Bin/blast";
@@ -135,12 +135,4 @@ sub AddOrgName($$$) {
     close(IN) || die "Error reading $file";
     close(OUT) || die "Error writing to $file2";
     print STDERR "Wrote $file2\n";
-}
-
-sub NewerThan($$) {
-    my ($file1, $file2) = @_;
-    die "Invalid arguments to NewerThan" unless defined $file1 && defined $file2;
-    die "No such file: $file2" unless -e $file2;
-    return 0 unless -e $file1;
-    return stat($file1)->mtime >= stat($file2)->mtime ? 1 : 0;
 }
