@@ -124,10 +124,7 @@ if ($tsv || $outlier) {
     # fetch the data
     $genes = $dbh->selectall_hashref("SELECT * FROM Gene where orgId = ?", "locusId", {}, $orgId);
     die "No genes" unless scalar(keys %$genes) > 0;
-
-    # Tried adding an index to GeneFitness so we could look up by orgId and expName but it did not really
-    # speed things up. Probably the rows are in gene order so the whole part of the table for that orgId has to
-    # be scanned anyway. Do one query for both experiments so that it is scanned once not twice.
+    # these tables are ordered by experiment, so faster than using GeneFitness
     my $fit = $dbh->selectall_arrayref("SELECT * FROM FitByExp_${orgId} WHERE expName IN (?,?)",
 				       { Slice => {} }, $expName1, $expName2);
     my $found1 = 0;
