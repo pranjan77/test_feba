@@ -170,8 +170,14 @@ my $save_ignore = 0; # make a file of ignored lines (out.codes.ignored) ?
 
     open(COUNT, ">", "$out.poolcount") || die "Cannot write to $out.poolcount";
     print COUNT join("\t", "barcode", "rcbarcode", "scaffold", "strand", "pos", @indexes)."\n";
-    while (my ($rcbarcode, $strainrow) = each %pool) {
-	my ($barcode,$scaffold,$strand,$pos) = @$strainrow;
+    # Note -- BarSeqR.pl expects the ordering to be the same across runs.
+    # Older versions of the code used the perl hash order, which was risky.
+    # In perl 5.18 hash ordering is randomized and this broke.
+    # So, now we explicitly sort the barcodes
+    # However, if you analyze results from old and new combineBarSeq.pl runs
+    # then they will collide.
+    foreach my $rcbarcode (sort keys %pool) {
+	my ($barcode,$scaffold,$strand,$pos) = @{ $pool{$rcbarcode} };
 	my $counts = $counts{$rcbarcode};
 	my @out = ($barcode,$rcbarcode,$scaffold,$strand,$pos);
 	if (defined $counts) {
