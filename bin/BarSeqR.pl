@@ -366,7 +366,8 @@ END
 		    } else {
 			foreach my $i (0..($nmeta-1)) {
 			    die "Non-matching $meta[$i] = $metaThis[$i] in $set line $nLine, expected $metavalues[$i]\n"
-                                . "You may need to rerun combineBarSeq.pl so that all the poolcount files are in the same order\n"
+                                . "You may need to rerun combineBarSeq.pl with the new pool\n"
+                                . "or use bin/resortPoolCount.pl to make it match\n"
 				unless $metavalues[$i] eq $metaThis[$i];
 			}
 		    }
