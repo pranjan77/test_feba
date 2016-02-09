@@ -176,7 +176,14 @@ my $save_ignore = 0; # make a file of ignored lines (out.codes.ignored) ?
     # So, now we explicitly sort the barcodes
     # However, if you analyze results from old and new combineBarSeq.pl runs
     # then they will collide.
-    foreach my $rcbarcode (sort keys %pool) {
+    my @sorted = sort { my ($bc1,$sc1,$strand1,$pos1) = @{ $pool{$a} };
+                        my ($bc2,$sc2,$strand2,$pos2) = @{ $pool{$b} };
+                        $sc1 cmp $sc2
+                            || ($sc1 eq "pastEnd" ? 0 : $pos1 <=> $pos2)
+                            || $strand1 cmp $strand2
+                            || $bc1 cmp $bc2;
+    } keys %pool;
+    foreach my $rcbarcode (@sorted) {
 	my ($barcode,$scaffold,$strand,$pos) = @{ $pool{$rcbarcode} };
 	my $counts = $counts{$rcbarcode};
 	my @out = ($barcode,$rcbarcode,$scaffold,$strand,$pos);
