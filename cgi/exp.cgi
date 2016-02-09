@@ -246,8 +246,11 @@ if (@fit > 0) { # show the table
 
 if ($show ne "specific") {
     if (@$spec > 0) {
-	print $cgi->p($cgi->a({href => "exp.cgi?orgId=$orgId&expName=$expName&show=specific"},
-			      "See specific phenotypes for " . scalar(@$spec). " genes"));
+	print p(a({href => "exp.cgi?orgId=$orgId&expName=$expName&show=specific"},
+			      "Specific phenotypes for " . scalar(@$spec). " genes in this experiment"));
+        print p(a({href => "spec.cgi?orgId=$orgId&expGroup=".uri_escape($exp->{expGroup})."#".$exp->{condition_1} },
+                  "Specific phenotypes for $exp->{expGroup} $exp->{condition_1} in $orginfo->{$orgId}{genome}"))
+            if $exp->{expGroup} && $exp->{condition_1};
     }  else {
 	print $cgi->p("No genes had specific phenotypes in this experiment.");
     }
@@ -255,9 +258,9 @@ if ($show ne "specific") {
 
 
 print
-    p(b(a({href => "orthCond.cgi?expGroup=" . uri_escape($exp->{expGroup})
+    p(a({href => "orthCond.cgi?expGroup=" . uri_escape($exp->{expGroup})
          . "&condition1=" . uri_escape($exp->{condition_1})},
-	"Specific phenotypes for $exp->{expGroup} $exp->{condition_1} across organisms")));
+	"Specific phenotypes for $exp->{expGroup} $exp->{condition_1} across organisms"));
     
 $dbh->disconnect();
 Utils::endHtml($cgi);

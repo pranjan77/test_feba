@@ -194,7 +194,8 @@ sub RowForGene($$$$) {
     return $cgi->Tr(
         { -class=> $collapse, -valign => 'middle', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF" },
         td($rowLabel),
-        td( a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId},  -title => $genome },  $genomeShort)),
+        td( a({href => "spec.cgi?orgId=$gene->{orgId}&expGroup=" . uri_escape($expGroup) . "#" . $condition1 },
+              $genomeShort)),
         td( a({ -href => "myFitShow.cgi?orgId=$orgId&gene=$locusId" }, $showId)),
         td( $gene->{gene}),
         td( $gene->{desc}),

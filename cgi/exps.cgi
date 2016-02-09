@@ -130,10 +130,12 @@ if (defined $expGroup && defined $orgId && !defined $condition1){
   }
 }
 
-  print table({cellspacing => 0, cellpadding => 3}, @trows);
-  
-
-print "<br><br>";
+print table({cellspacing => 0, cellpadding => 3}, @trows),
+    "<br><br>";
+print p("Or see all specific phenotypes in ",
+        a({href => "spec.cgi?orgId=$orgId&expGroup=" . uri_escape($expGroup)}, $expGroup),
+        " experiments for $orginfo->{$orgId}{genome}")
+    if defined $expGroup && @$exps > 0;
 
 $dbh->disconnect();
 Utils::endHtml($cgi);
