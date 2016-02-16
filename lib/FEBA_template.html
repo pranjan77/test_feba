@@ -28,22 +28,27 @@
 </UL>
 
 <P><B>Tables</B>
+
 <UL>
+
 <LI>Experiments
 <UL>
 <LI><A HREF="fit_quality.tab">Experiments and quality scores</A>
 <LI><A HREF="expsUsed">Detailed metadata for experiments</A>
 </UL>
+
 <LI>Genes
 <UL>
 <LI><A HREF="fit_genes.tab">Gene annotations</A>
 <LI><A HREF="fit_logratios_good.tab">Gene fitness</A> (normalized log2 ratios for successful experiments )
+
 <UL>
 <LI>or for <A HREF="fit_logratios.tab">all</A> experiments</LI>
+<LI>(To see why experiments were not successful or were "ignored" and not analyzed, check the <A HREF="log">log</A>.)
 <LI><A HREF="fit_logratios_unnormalized.tab">Unnormalized logratios</A>
 <LI><A HREF="fit_logratios_unnormalized_naive.tab">Naive unnormalized logratios</A>
-<LI><A HREF="gene_counts.tab">Counts per gene per sample</A> (#reads, summed over strains)
 </UL>
+
 <LI><A HREF="fit_t.tab">t-like test statistic</A> (based on consistency of measurements for the gene)
 <UL>
 <LI>Or <A HREF="fit_standard_error_obs.tab">estimated standard error</A> (based on variation across strains)
@@ -52,18 +57,32 @@
 </UL>
 <LI><A HREF="cofit">Top cofitness hits</A>
 <LI><A HREF="specific_phenotypes">Specific phenotypes</A>
+<LI><A HREF="gene_counts.tab">Counts per gene per sample</A> (#reads, summed over strains)
 </UL>
-<LI>Strains</LI>
+
+<LI>Strains
 <UL>
 <LI><A HREF="all.poolcount">BarSeq count for each strain by each sample</A> (large)
 <LI><A HREF="strain_fit.tab">Strain fitness</A> (log2 ratios, normalized, large)
 </UL>
+
 </UL>
+
 
 <P><B>R</B>
 <UL>
 <LI><A HREF="fit.image">R image</A> (large)
 <LI><A HREF="log">Log file from processing in R</A>
+<UL>
+<LI>At the top, "Ignoring" lists which samples were not analyzed at all. Either Drop=TRUE in the metadata or there were too few reads for the sample. These samples are not included in any of the tables.
+<LI>At the bottom, the log lists which experiments were considered not successful and why:
+<UL>
+<LI>"low_count" -- there were not enough reads for the median gene (gMed &lt; 50). There were too few cells or something went wrong during DNA extraction or PCR. Or, there might be strong positive selection, i.e. gMean &gt; 50, gMean &gt;&gt; gMed and maxFit &gt;&gt; 1. If there was strong positive selection then there might be useful biological information in the genes with the strong positive fitness values. Check the <A HREF="fit_quality.tab">quality metrics</A> table and then the table of gene fitness for all experiments (not just successful ones).
+<LI>"high_mad12" -- the fitness estimates from the two halves of a gene were not very consistent (mad12 &gt; 0.5). This could result from variable lag or if only a small subset of cells were able to grow.
+<LI>"low_cor12" -- the rank correlation of the fitness values for the two halves of a gene was too low (cor12 &lt; 0.1). In other words, there wasn't much biological signal. This could be a sign that the cells did not grow enough or that the condition is too similar to the condition that the pool was made under (so that all sick strains are gone). If you have replicates then you might still be able to get high quality results by averaging them.
+<LI>"high_adj_gc_cor" -- Suspicious correlations indicate a problem with GC bias or with normalization (|gccor| &gt; 0.2 or |adjcor| &gt; 0.25).
+</UL>
+</UL>
 <LI>Source code: see bin/RunFEBA.R and lib/FEBA.R in the dev branch of the <A HREF="https://bitbucket.org/berkeleylab/feba">FEBA BitBucket repository</A>
 <LI>Input files for RunFEBA.R: <A HREF="genes">genes</A>, <A HREF="exps">exps</A>, <A HREF="all.poolcount">all.poolcount</A> (large!)
 <LI>Also see the <A HREF="pool">pool</A>
@@ -99,8 +118,8 @@ If the treated and Time0 samples were growing at different rates,
 then the there will be variable recovery of barcodes near the origin which does
 not relate to the fitness of the genes. This is plotted for each
 experiment in the chromosome bias plots (note that the y axis is the
-unnormalized fitness). To remove this effect, we use a smooth local
-regression of fitness versus position.  Then, a constant is added so
+unnormalized fitness). To remove this effect, we subtract the running median
+of fitness (the line in those plots).  Then, a constant is added so
 that the mode (the peak of the distribution of gene fitness values) is
 zero.
 
