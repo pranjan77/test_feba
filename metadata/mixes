@@ -1,0 +1,80 @@
+Media	Wolfe's mineral mix	
+Description	Standard 100X mineral solution (based on Wolfe's formulation)	
+X	100	
+Controlled vocabulary	Concentration	Units
+Magnesium Sulfate Heptahydrate	3	g/L
+Nitrilotriacetic acid	1.5	g/L
+Sodium Chloride	1	g/L
+Manganese (II) sulfate monohydrate	0.5	g/L
+Cobalt chloride hexahydrate	0.1	g/L
+Zinc sulfate heptahydrate	0.1	g/L
+Calcium Chloride Dihydrate	0.1	g/L
+Iron (II) sulfate heptahydrate	0.1	g/L
+Nickel (II) chloride hexahydrate	0.025	g/L
+Aluminum potassium sulfate dodecahydrate	0.02	g/L
+Copper (II) sulfate pentahydrate	0.01	g/L
+Boric Acid	0.01	g/L
+Sodium Molybdate Dihydrate	0.01	g/L
+Sodium selenite pentahydrate	0.3	mg/L
+		
+Media	Wolfe's vitamin mix	
+Description	Standard 100X vitamin solution (based on Wolfe's formulation)	
+X	100	
+Controlled vocabulary	Concentration	Units
+pyridoxine HCl	10	mg/L
+4-Aminobenzoic acid	5	mg/L
+Lipoic acid	5	mg/L
+Nicotinic Acid	5	mg/L
+Riboflavin	5	mg/L
+thiamine HCl	5	mg/L
+calcium pantothenate	5	mg/L
+biotin	2	mg/L
+Folic Acid	2	mg/L
+Cyanocobalamin	0.1	mg/L
+		
+Media	Trace metal mix A5	
+Description	1000X trace metal solution for Synechococcus elongatus PCC 7942	
+X	1000	
+Controlled vocabulary	Concentration	Units
+Boric Acid	2.86	g/L
+Manganese (II) chloride tetrahydrate	1.81	g/L
+Zinc sulfate heptahydrate	0.222	g/L
+Sodium Molybdate Dihydrate	0.39	g/L
+Copper (II) sulfate pentahydrate	0.079	g/L
+Cobalt(II) nitrate hexahydrate	49.4	mg/L
+		
+Media	Sulfur free mineral mix	
+Description	100X mineral solution for minus sulfur experiments	
+X	100	
+Controlled vocabulary	Concentration	Units
+Magnesium chloride hexahydrate	3	g/L
+Nitrilotriacetic acid disodium salt	1.5	g/L
+Sodium Chloride	1	g/L
+Manganese (II) chloride tetrahydrate	0.5	g/L
+Cobalt chloride hexahydrate	0.1	g/L
+Zinc chloride	0.13	g/L
+Calcium Chloride Dihydrate	0.1	g/L
+Iron (II) chloride tetrahydrate	0.1	g/L
+Nickel (II) chloride hexahydrate	0.025	g/L
+Potassium aluminum chloride	0.02	g/L
+copper (II) chloride dihydrate	0.01	g/L
+Boric Acid	0.01	g/L
+Sodium Molybdate Dihydrate	0.01	g/L
+Sodium selenite pentahydrate	0.3	mg/L
+Sodium tungstate dihydrate	0.25	mg/L
+		
+Media	Thauer's vitamin mix	
+Description	1000X vitamin solution (based on Thauer's formulation)	
+X	1000	
+Controlled vocabulary	Concentration	Units
+pyridoxine HCl	10	mg/L
+4-Aminobenzoic acid	5	mg/L
+Lipoic acid	5	mg/L
+Nicotinic Acid	5	mg/L
+Riboflavin	5	mg/L
+thiamine HCl	5	mg/L
+calcium pantothenate	5	mg/L
+biotin	2	mg/L
+Folic Acid	2	mg/L
+Cyanocobalamin	0.1	mg/L
+Choline chloride	200	mg/L

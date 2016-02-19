@@ -167,7 +167,8 @@ CREATE TABLE MediaComponents(
 	media TEXT NOT NULL,
         compound TEXT NOT NULL,
         concentration REAL,
-        units TEXT
+        units TEXT,
+        mix TEXT                /* which mix this component came from, or empty */
 );
 CREATE INDEX 'MediaComponentsByMedia' on MediaComponents('media' ASC);
 

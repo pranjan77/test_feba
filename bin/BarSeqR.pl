@@ -150,15 +150,18 @@ END
     # check the exps that are under consideration
     my %unknownMedia = ();
     my %unknownCompound = ();
+    my @noMedia = ();
     foreach my $exp (@exps) {
         # ignore lines not filled out or dropped
         next if ($exp->{Index} eq "" && $exp->{SetName} eq "") || (defined $exp->{Drop} && $exp->{Drop} eq "TRUE");
 
         # Clean up media and warn if not a known media
-        if (defined $exp->{Media}) {
+        if (defined $exp->{Media} && $exp->{Media} ne "") {
             $exp->{Media} =~ s/^ +//;
             $exp->{Media} =~ s/ +$//;
             $unknownMedia{ $exp->{Media} } = 1 if !defined GetMediaComponents( $exp->{Media} );
+        } else {
+            push @noMedia, $exp->{SetName}.".".$exp->{Index};
         }
 
         # Clean up Group
@@ -176,6 +179,7 @@ END
                 $exp->{$field} =~ s/^ +//;
                 $exp->{$field} =~ s/ +$//;
                 $exp->{$field} = "" if lc($exp->{$field}) eq "none";
+                $exp->{$field} = "" if $exp->{$field} eq "NA";
                 if ($exp->{$field} ne "") {
                     my $compound = FindCompound($exp->{$field});
                     if (!defined $compound) {
@@ -187,6 +191,7 @@ END
             }
         }
     }
+    print STDERR join("\t","No media for",@noMedia)."\n" if scalar(@noMedia) > 0;
     print STDERR join("\t","Unknown media", sort keys %unknownMedia)."\n" if scalar(keys %unknownMedia) > 0;
     print STDERR join("\t","Unknown compound", sort keys %unknownCompound)."\n" if scalar(keys %unknownCompound) > 0;
 

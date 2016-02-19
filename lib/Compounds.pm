@@ -1,12 +1,12 @@
 # Compounds.pm -- utilities for reading the media and compounds metadata from (by default)
-# feba/metadata/FEBA_COMPOUND_sheet and feba/metadata/media.
+# feba/metadata/Compounds.tsv, feba/metadata/media, feba/metadata/mixes
 #
 # It maintains a lot of state in global variables.
 
 package Compounds;
 require Exporter;
 use strict;
-use FEBA_Utils;
+use FEBA_Utils; # for ReadTable(), ReadColumnNames()
 
 our (@ISA,@EXPORT);
 @ISA = qw(Exporter);
@@ -17,11 +17,19 @@ our (@ISA,@EXPORT);
              LoadMedia
              GetMedias GetMediaComponents GetUndefMedia GetUnknownComponents WarnReusedComponents);
 
-sub LoadCompounds($); # compound directory, no return value
+sub LoadCompounds($); # metadata directory; no return value
 sub FindCompound($); # compound or synonym => compound or undef
 sub GetCompoundCAS($); # compound => CAS or ""
 sub GetCompoundMW($); # compound => MW or ""
 sub GetCompoundList(); # returns the list of compounds
+
+sub LoadMedia($); # metadata directory; no return value
+sub GetMedias(); # returns list of media names that have definitions
+sub GetUndefMedia(); # returns list of media names that lack definitions
+sub GetMediaAttributes($); # media name => hash of attributes such as Description or Minimal
+sub GetMediaComponents($); # for each component, a list of [ compound, concentration, units, mix ]
+#	where mix indicates which mix it was from (if any)
+sub WarnReusedComponents(); # report to STDOUT on components that are in a medium more than once
 
 # From a compound name or synonym to a key to look up.
 # Only alphanumeric characters, +, or - are considered -- everything else is removed. Also, case is ignored.
@@ -36,29 +44,29 @@ my %synonyms = (); # processed synonym (from SynToKey) => compound name
 
 # Local variables for media information
 my %media = (); # media => list of [ compound_id, number, units ]
+my %mediaAttr = (); # media => Description or Minimal => value
+my %mix = (); # mix => list of [ compound_id, number, units ]
+my %mixAttr = (); # mix => Description or X => value
 my %unknownComponents = (); # media components with no match in the compounds table
 my @undefMedia = (); # media with no definition
 my %reuseComponents = (); # component => media => 1 if it is reused
 
 sub LoadCompounds($) {
     my ($compoundsDir) = @_;
-    my $compoundsFile = "$compoundsDir/FEBA_COMPOUND_sheet";
-    my @compounds = FEBA_Utils::ReadTable($compoundsFile, qw{Synonyms});
-    my @headers = FEBA_Utils::ReadColumnNames($compoundsFile);
+    my $compoundsFile = "$compoundsDir/Compounds.tsv";
+    my @req = qw{Compound CAS FW Synonyms};
+    my @compounds = &ReadTable($compoundsFile, @req);
+    my @headers = &ReadColumnNames($compoundsFile);
     die "No rows in $compoundsFile" unless @compounds > 0;
-    die "Not enough fields in $compoundsFile" unless @headers >= 5;
-    my $keycol = $headers[0];
-    my $cascol = $headers[1];
-    my $mwcol = $headers[4];
 
     foreach my $row (@compounds) {
-        my $compound = $row->{$keycol};
+        my $compound = $row->{"Compound"};
         die "Duplicate compound id $compound" if exists $compounds{$compound};
-        my $mw = $row->{$mwcol};
+        my $mw = $row->{"FW"};
         $mw = "" if $mw eq "NA";
         die "Invalid weight $mw for compound $compound in $compoundsFile\n"
             unless $mw eq "" || $mw =~ m/^[0-9]+[.]?[0-9]*$/;
-        my $cas = $row->{$cascol};
+        my $cas = $row->{"CAS"};
         $cas =~ s/ +$//;
         $cas =~ s/^ +//;
         $cas = "" if $cas eq "NA";
@@ -69,12 +77,11 @@ sub LoadCompounds($) {
         my @syns = $compound;
         push @syns, split /, /, $row->{Synonyms};
         foreach my $syn (@syns) {
-            $syn = SynToKey($syn);
-            next if $syn eq "";
-            die "Conflicting synonyms for $syn in $compoundsFile\n"
-                . " after lower-casing and stripping whitespace and special characters: $compound vs. $synonyms{$syn}"
-                if exists $synonyms{$syn} && $synonyms{$syn} ne $compound;
-            $synonyms{$syn} = $compound;
+            my $key = SynToKey($syn);
+            next if $key eq "";
+            print "Warning: non-unique synonym $syn: $compound or $synonyms{$key}\n"
+                if exists $synonyms{$key} && $synonyms{$key} ne $compound;
+            $synonyms{$key} = $compound;
         }
     }
 }
@@ -109,83 +116,171 @@ sub SynToKey($) {
 
 ### Media functions
 
+# Returns two hashes:
+# media => list of components
+# media => attributes
+# Handles both the media file and the mixes file
+# Does NOT look up compound synonyms or otherwise check the results
 sub LoadMedia($) {
     my ($metadir) = @_;
     my $mediaFile = "$metadir/media";
+    my $mixFile = "$metadir/mixes";
+    die "No such file: $mediaFile\n" unless -e $mediaFile;
+    die "No such file: $mixFile\n" unless -e $mixFile;
+    my ($mediaC,$mediaA) = ParseMediaFile($mediaFile);
+    my ($mixC,$mixA) = ParseMediaFile($mixFile);
+    %media = %$mediaC;
+    %mediaAttr = %$mediaA;
+    %mix = %$mixC;
+    %mixAttr = %$mixA;
+
+    # Validation:
+    # Each media must have a Description
+    # media should not also be mixes
+    while (my ($media, $attr) = each %mediaAttr) {
+        die "No Description for media $media" unless exists $attr->{Description} && $attr->{Description} ne "";
+        die "Media $media is also a mix" if exists $mix{$media};
+    }
+    # Each mix must have a Description and a numeric X value
+    # mixes should not also be media
+    while (my ($mix, $attr) = each %mixAttr) {
+        die "No Description for mix $mix" unless exists $attr->{Description} && $attr->{Description} ne "";
+        die "Invalid X for mix $mix" unless exists $attr->{X} && $attr->{X} =~ m/^[0-9]+[.]?[0-9]*$/;
+        die "Mix $mix is also a media" if exists $media{$mix};
+    }
+    # Replace compound synonyms with compounds, and record any that are not known or are duplicates
+    while (my ($media, $list) = each %media) {
+        SetupComponentList($media, $list);
+    }
+    while (my ($mix, $list) = each %mix) {
+        SetupComponentList($mix, $list);
+    }
+}
+
+sub SetupComponentList($$) {
+    my ($media, $list) = @_;
+    my $isMedia = exists $media{$media};
+    my $isMix = exists $mix{$media};
+    die "Unknown $media" unless $isMedia || $isMix;
+
+    my $COMPOUND = 0;
+    # transfer synonyms or record that it is unknown
+    foreach my $row (@$list) {
+        my ($orig,$undef,$units) = @$row;
+        if ($isMedia && exists $mix{$orig}) {
+            # leave as is, but check that X is specified
+            die "Mix must be included with X units" unless $units eq "X";
+        } else {
+            my $compound = FindCompound($orig);
+            if (defined $compound) {
+                $row->[$COMPOUND] = $compound;
+            } else {
+                $unknownComponents{$row->[$COMPOUND]} = 1;
+            }
+        }
+    }
+    # record repeat entries
+    my %seen = ();
+    foreach my $row (@$list) {
+        my $compound = $row->[$COMPOUND];
+        $reuseComponents{$compound}{$media} = 1 if exists $seen{$compound};
+        $seen{$compound} = 1;
+    }
+}
+
+sub ParseMediaFile($) {
+    my ($mediaFile) = @_;
+    my %comp = ();
+    my %attr = ();
     open(MEDIA, "<", $mediaFile) || die "Cannot read $mediaFile";
     my ($COMPOUND,$NUMBER,$UNITS) = 0..2;
 
     my %validUnits = map { $_ => 1 } ListValidUnits();
+    my %validAttr = map { $_ => 1 } qw{Description Minimal X};
 
     my $curMedia = undef;
+    my $readingCompounds = 0;
     while(my $line = <MEDIA>) {
-        chomp $line;
-        $line =~ s/#.*$//; # strip comments
+        $line =~ s/[\r\n]+$//; # handle DOS mode files
         $line =~ s/\t+$//; # strip trailing fields that are empty (note this means units *must* be present)
         my @F = split /\t/, $line;
         
         if (scalar(@F) == 0) {
-            next;
-        } elsif (scalar(@F) == 1) {
-            $curMedia = $F[0];
-            $curMedia =~ s/ +$//;
-            die "Duplicate media entry for $curMedia" if exists $media{$curMedia};
-            $media{$curMedia} = [];
+            $curMedia = undef; # blank lines end media descriptions
+        } elsif ($F[0] =~ m/^#/) {
+            # skip comment line
+            ;
+        } elsif (scalar(@F) == 2) {
+            my ($attr,$value) = @F;
+            if ($attr eq "Media") {
+                $curMedia = $F[1];
+                $curMedia =~ s/ +$//;
+                die "Duplicate media entry for $curMedia" if exists $comp{$curMedia};
+                $comp{$curMedia} = [];
+                $attr{$curMedia} = {};
+                $readingCompounds = 0;
+            } elsif (exists $validAttr{$attr}) {
+                die "No media id yet at line:\n$line\nin $mediaFile" if !defined $curMedia;
+                die "Duplicate attr $attr for media $curMedia" if exists $attr{$curMedia}{$attr};
+                $attr{$curMedia}{$attr} = $value;
+            } else {
+                die "Invalid media attribute $F[0]";
+            }
         } elsif (scalar(@F) == 3) {
             die "No media id yet at line:\n$line\nin $mediaFile" if !defined $curMedia;
-            my ($compoundSyn, $concentration, $units) = @F;
-
-            # check if compound is known, and replace synonyms
-            my $compound = FindCompound($compoundSyn);
-            if (!defined $compound || $compound eq "") {
-                $compound = $compoundSyn;
-                $unknownComponents{$compoundSyn} = 1;
+            if ($F[0] =~ m/^Controlled/ && $F[1] eq "Concentration" && $F[2] eq "Units") {
+                $readingCompounds = 1;
+            } else {
+                die "No compounds header for $curMedia at\n$line\n..." unless $readingCompounds == 1;
+                my ($compound, $concentration, $units) = @F;
+                $compound =~ s/ +$//; # remove trailing spaces
+                $concentration =~ s/^ +//;
+                $concentration =~ s/ +$//;
+                $concentration eq "" || $concentration =~ m/^\d+$/
+                    || $concentration =~ m/^\d+[.]\d*$/
+                    || $concentration =~ m/^\d+[.]?\d*[eE][+-]\d+$/
+                    || die "Invalid concentration $concentration in line\n$line\nfor $curMedia\nin $mediaFile";
+                $units =~ s/^ +//;
+                $units =~ s/ +$//;
+                die $line if $units eq "";
+                die "Invalid unit $units for\n$line\nin $curMedia, $mediaFile"
+                    unless exists $validUnits{$units};
+                push @{ $comp{$curMedia} }, [ $compound, $concentration, $units ];
             }
-
-            $concentration =~ s/^ +//;
-            $concentration =~ s/ +$//;
-            $concentration eq "" || $concentration =~ m/^\d+$/
-                || $concentration =~ m/^\d+[.]\d*$/
-                || $concentration =~ m/^\d+[.]?\d*e[+-]\d+$/
-                || die "Invalid concentration $concentration in line\n$line\nfor $curMedia\nin $mediaFile";
-
-            # validate units
-            $units =~ s/^ +//;
-            $units =~ s/ +$//;
-            die $line if $units eq "";
-            die "Invalid unit $units for\n$line\nin $curMedia, $mediaFile"
-                unless exists $validUnits{$units};
-
-            # check for duplicate entries
-            foreach my $row (@{ $media{$curMedia} }) {
-                if ($row->[$COMPOUND] eq $compound) {
-                    $reuseComponents{$compound}{$curMedia} = 1;
-                    last;
-                }
-            }
-
-            push @{ $media{$curMedia} }, [ $compound, $concentration, $units ];
         } else {
             die "Wrong number of fields in\n$line\n";
         }
     }
     close(MEDIA) || die "Error reading $mediaFile";
-
-    while (my ($media,$components) = each %media) {
-        if (scalar(@$components) == 0) {
-            push @undefMedia, $media;
-        }
-    }
+    return (\%comp, \%attr);
 }
 
 sub GetMedias() {
     return sort keys %media;
 }
 
-# returns undef for unknown media; otherwise, a reference to a list of [compound,concentration,units]
+# returns undef for unknown media; otherwise, a reference to a list of [compound,concentration,units,mix]
+# where mix is empty (not undefined) unless the compound was included indirectly via a mix
 sub GetMediaComponents($) {
     my ($media) = @_;
-    return $media{$media};
+    return undef if !exists $media{$media};
+    my $out = [];
+    foreach my $row (@{ $media{$media} }) {
+        my ($comp,$conc,$units) = @$row;
+        if (exists $mix{$comp}) {
+            die "Units for mix $comp in media $media are not X" unless $units eq "X";
+            die "No X value for mix $comp" unless exists $mixAttr{$comp}{"X"};
+            my $rel = $conc / $mixAttr{$comp}{"X"};
+            die "Invalid relative X $rel for $comp in $media" unless $rel > 0 && $rel < 1e4;
+            foreach my $row2 (@{ $mix{$comp} }) {
+                my ($comp2, $conc2, $units2) = @$row2;
+                push @$out, [ $comp2, $conc2 * $rel, $units2, $comp ];
+            }
+        } else {
+            push @$out, [ $comp, $conc, $units, "" ];
+        }
+    }
+    return $out;
 }
 
 sub GetUnknownComponents() {
@@ -208,7 +303,7 @@ sub WarnReusedComponents() {
 }
 
 sub ListValidUnits() {
-    return qw{g/L mg/L ug/L M mM uM % ml/L};
+    return qw{g/L mg/L ug/L M mM uM vol% ml/L X};
 }
 
 1;

@@ -73,9 +73,9 @@ END
     foreach my $media (GetMedias) {
         my $list = GetMediaComponents($media);
         foreach my $row (@$list) {
-            my ($compound,$concentration,$units) = @$row;
+            my ($compound,$concentration,$units,$mix) = @$row;
             # database schema allows for concentration or units to be missing, but this script does not
-            print COMPONENTS join("\t", $media, $compound, $concentration, $units)."\n";
+            print COMPONENTS join("\t", $media, $compound, $concentration, $units, $mix)."\n";
         }
     }
     close(COMPONENTS) || die "Error writing to $DbComponentsFile";
