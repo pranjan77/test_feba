@@ -125,19 +125,25 @@ if ($show eq "") {
     my @pieces = ("Media: $media", join(", ",@culture), "By: $exp->{person} on $exp->{dateStarted}");
     
     my $mediaComponents = $dbh->selectall_arrayref(qq{SELECT * from MediaComponents LEFT JOIN Compounds USING (compound)
-                                                          WHERE media = ?},
+                                                          WHERE media = ? },
                                                    { Slice => {} },
                                                    $exp->{media});
     if (@$mediaComponents > 0) {
-        my @compStrings = ();
+        my %compStrings = (); # mix => list of components; note mix = "" for most
         foreach my $row (@$mediaComponents) {
             my $compString = $row->{CAS} ?
                 a({-href => "http://commonchemistry.org/ChemicalDetail.aspx?ref=$row->{CAS}"}, $row->{compound})
                 :  $row->{compound};
             $compString = "$row->{concentration} $row->{units} $compString" if $row->{concentration} && $row->{units};
-            push @compStrings, $compString;
+            $row->{mix} = "" if !defined $row->{mix};
+            push @{ $compStrings{$row->{mix}} }, $compString;
         }
-        push @pieces, "Media components: " . small(join(", ", @compStrings));
+        my $comp = "Media components: " . join(", ", @{ $compStrings{""} });
+        foreach my $mix (sort keys %compStrings) {
+            next if $mix eq "";
+            $comp .= ", $mix " . small("(" . join(", ", @{ $compStrings{$mix} }) . ")");
+        }
+        push @pieces, $comp;
     }
     if ($exp->{growthPlate} ne "" && $exp->{growthWells} ne "") {
         push @pieces, "Growth plate: $exp->{growthPlate} $exp->{growthWells}";
