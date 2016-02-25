@@ -9,6 +9,7 @@ sub AddOrgName($$$); # Convert aaseq file to aaseq2
 
 {
     my $blastdir = "$Bin/blast";
+    my $outdir = ".";
     my $datadir = "html"; # where to find the fit_logratios_good.tab files
     my $gdir = "g"; # where to find the amino acid sequence files
     my $nCPU = undef;
@@ -16,6 +17,7 @@ sub AddOrgName($$$); # Convert aaseq file to aaseq2
 Usage: MakeBBH.pl [ -datadir $datadir]
                   [ -gdir $gdir ]
 		  [ -nCPU nCPU]
+                  [ -outdir $outdir ]
                   nickname1 nickname2 ... nicknameN
 
 MakeBBH.pl runs BLASTp and then computes bidirectional best hits and
@@ -39,10 +41,18 @@ To avoid recomputing all pairs when adding another genome,
 stores the results for each pair of genomes in
 g/blast_results/blastp_nickname1_vs_nickname2
 
+Results:
+
+outdir/aaseqs.bbh -- table of all orthologs for each gene, with 1 row per gene
+outdir/aaseqs.scores -- one row per pair of orthologs
+outdir/aaseqs.para -- one row per pair of paralogs
+
+(Also uses outdir/aaseqs.blastp as a temporary file)
 END
     ;
 
     die $usage unless GetOptions('datadir=s' => \$datadir,
+                                 'outdir=s' => \$outdir,
 				 'gdir=s' => \$gdir,
 				 'nCPU=i' => \$nCPU );
     my @orgs = @ARGV;
@@ -101,7 +111,7 @@ END
     }
 
     # Verify that all files exist and combine them
-    my $combfile = "$jobdir/aaseqs.blastp";
+    my $combfile = "$outdir/aaseqs.blastp";
     open(OUT, ">", $combfile) || die "Cannot write to $combfile";
     foreach my $org1 (@orgs) {
 	foreach my $org2 (@orgs) {
@@ -116,8 +126,9 @@ END
     close(OUT) || die "Error writing to $combfile";
 
     print STDERR "Wrote $combfile\n";
-    system("$Bin/bbh.pl -blastp $combfile -out aaseqs") == 0 || die "bbh.pl failed";
-    system("$Bin/paralogs.pl $combfile > aaseqs.para") == 0 || die "paralogs.pl failed";
+    system("$Bin/bbh.pl -blastp $combfile -out $outdir/aaseqs") == 0 || die "bbh.pl failed";
+    system("$Bin/paralogs.pl $combfile > $outdir/aaseqs.para") == 0 || die "paralogs.pl failed";
+    unlink($combfile);
     print STDERR "Wrote aaseqs.bbh aaseqs.scores aaseqs.para\n";
 }
 
