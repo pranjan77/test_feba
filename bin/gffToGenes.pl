@@ -25,9 +25,15 @@ use strict;
 	next unless exists $types{$type}; # skip gene, exon, etc. lines
 	die "Cannot parse phase $phase" unless $phase =~ m/^-?1$/ || $phase eq "+" || $phase eq "-";
 	unless ($begin < $end) {
-	    print STDERR "Warning: skipping GFF entry because begin >= end: " . join(" ", $scaffold, $begin, $end, $phase, $attributes)."\n";
+	    print STDERR "Warning: skipping GFF entry because begin >= end: "
+                . join(" ", $scaffold, $begin, $end, $phase, $attributes)."\n";
 	    next;
 	}
+        if (abs($begin - $end) > 50000) {
+            print STDERR "Warning: skipping huge GFF entry (possibly a wraparound ORF): "
+                . join(" ", $scaffold, $begin, $end, $phase, $attributes)."\n";
+            next;
+        }
 	$nGFF++;
 	my $strand = $phase;
 	$strand = "+"if $phase eq "1";
