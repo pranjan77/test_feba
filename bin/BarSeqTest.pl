@@ -59,7 +59,8 @@ my $test = undef; # check for files, but do no work
 
     # find the fastq files
     my %fastqFiles = (); # index => list of matching files within $fastqdir
-    my @files = `find $fastqdir -name '*.fastq.gz'`;
+    # -H means follow symbolic link if it is the argument
+    my @files = `find -H $fastqdir -name '*.fastq.gz'`;
     foreach my $file (@files) {
 	chomp $file;
 	foreach my $index (@indexes) {
