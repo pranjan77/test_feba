@@ -107,7 +107,7 @@ if (defined $orgId and $locusSpec) {
     $orth = $dbh->selectall_hashref("SELECT * FROM Ortholog WHERE orgId1 = ? AND locusId1 = ?",
                              'orgId2',{Slice=>{}}, $orgId, $locusSpec);
 } else {
-    my $qlen = length($query);
+    my $qlen = length($seq);
     my $qchar = $qtype eq "protein" ? "a.a." : "nt.";
     $title = "Blast Results for " . substr($seq,0,20) . "... ($qlen $qchar)";
     $tabs = '<div id = "ntcontent">';
