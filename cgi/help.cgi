@@ -130,6 +130,21 @@ that the BLAST alignment cover 80% of each protein.</P>
 
 <P>Many of these "orthologs" actually have different functions. If either gene has a strong fitness pattern, you may be able to use conserved phenotypes or conserved cofitness to confirm that the genes have conserved functions and are truly functional orthologs.</P>
 
+<H3><A name="links">Linking to the Fitness Browser</A></H3>
+
+Most of the genomes in this web site were taken
+from NCBI (i.e., gene identifiers are locus tags and scaffolds are Genbank accessions)
+or from MicrobesOnline (i.e., gene identifiers and scaffold identifiers are numbers).
+These identifiers should be stable over
+time, so URLs from the web site should continue to work in the long run.
+For example, to link to the fitness data for <i>endA</i> from
+<i>E. coli</i>, you can use
+<pre>
+<A HREF="http://fit.genomics.lbl.gov/cgi-bin/singleFit.cgi?orgId=Keio&locusId=17024&showAll=0">http://fit.genomics.lbl.gov/cgi-bin/singleFit.cgi?orgId=Keio&locusId=17024&showAll=0</A>
+</pre>
+
+<P>Or, you can use <A HREF="../images/fitblast_example.html">Fitness BLAST</A> to link from any protein sequence to the homologs that have fitness data. You can incorporate this into your web page with just a few lines of <A HREF="../images/fitblast_example.html#code">code</A>.
+
 <div style="height:50px">&nbsp;</div>
 
 <P><center><small>Page by <A HREF="http://morgannprice.org/">Morgan Price</A>.
