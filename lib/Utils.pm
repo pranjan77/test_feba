@@ -25,7 +25,7 @@ sub tabsExp($$$$$$$);
 sub fail($$);
 sub formatFASTA($$);
 sub crc64($);
-sub get_color($);
+sub fitcolor($);
 sub get_dbh(); # open the sqlite db and return the resulting database handle
 sub blast_db();
 sub tmp_dir();
