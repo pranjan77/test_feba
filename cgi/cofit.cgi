@@ -112,10 +112,9 @@ if (@$cofitResults == 0) {
     my $name = $geneName || $showId;
     print
 	start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
+	p("Select other genes to include in heatmap"),
 	hidden('orgId', $orgId),
 	hidden('locusId', $locusId),
-	'<br>',
-	p("Select other genes you would like to make a comparative heatmap with $name with and click the button below."),
 	# qq[<br><div style="position: relative;"><div class="floatbox floatbox2">],
 	# submit(-class=>"heatmap", -name=>"heatmap with $name"),
 	# qq[</div></div>],
