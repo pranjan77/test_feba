@@ -119,15 +119,7 @@ if (-d $dir) {
     my $usearch = "../bin/usearch";
     die "No executable in $usearch" unless -x $usearch;
 
-    my $dbfile = "../cgi_data/aaseqs";
-
-    die "No such file: $dbfile" unless -e $dbfile;
     my $udbfile = "../cgi_data/aaseqs.udb";
-    if (!-e $udbfile) {
-        system("$usearch -makeudb_ublast $dbfile -output $udbfile.$$.tmp") == 0
-            || die "Failed to make the udb file";
-        rename("$udbfile.$$.tmp",$udbfile);
-    }
     die "No such file: $udbfile" unless -e $udbfile;
     my $code = system("nice $usearch -threads 16 -ublast $faa -db $udbfile -maxhits 50 -maxaccepts 50 -blast6out $dir/hits -evalue 0.001 >& $dir/usearch.log");
     if ($code != 0) {

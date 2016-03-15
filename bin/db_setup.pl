@@ -665,6 +665,16 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
         print STDERR "Formatting $blastdb\n";
         my @formatcmd = ($formatexe, "-p", "T", "-o", "T", "-i", $blastdb);
         system(@formatcmd) == 0 || die "Error running\n".join(" ",@formatcmd)."\n: $!";
+
+        # and make the udb database
+        my $udbfile = "$outdir/aaseqs.udb";
+        my $usearch = "$Bin/usearch";
+        if (-x $usearch) {
+            system("$usearch -makeudb_ublast $blastdb -output $udbfile") == 0
+                || die "Failed to make the udb file";
+        } else {
+            print STDERR "Warning: skipped making aaseqs.udb:\n$usearch is not an executable\n";
+        }
     }
 
     print STDERR "Success\n";
