@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #######################################################
-## myFitShow.cgi
+## geneOverview.cgi
 ##
 ## Copyright (c) 2015 University of California
 ##

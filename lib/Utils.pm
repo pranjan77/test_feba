@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#
 #######################################################
 ## Utils.pm -- for cgi code
 ##
@@ -188,7 +188,7 @@ sub fractioncolor($) {
 
 sub get_dbh() {
     my $database = "../cgi_data/feba.db";
-    return DBI->connect("dbi:SQLite:dbname=$database","","",{ RaiseError => 1 }) || die $DBI::errostr;
+    return DBI->connect("dbi:SQLite:dbname=$database","","",{ RaiseError => 1 }) || die $DBI::errstr;
 }
 
 sub blast_db() {
