@@ -11,6 +11,7 @@
 # Required parameters: seq -- the protein sequence to look for matches to.
 # Optional parameters: maxhits -- default is 20. Cannot be raised above 50.
 # debug -- write lines starting with # to output to record status
+# html -- return HTML code (with no wrappers) for the result, instead of a table
 #
 # Must start the ublast service first with bin/start_ublast_service.pl
 # Returns a tab-delimited table of FastBLAST hits, or, a simple table with
@@ -107,13 +108,21 @@ unlink("$dir/faa");
 unlink("$dir/done.q");
 rmdir("$dir");
 
+my $html = $cgi->param('html');
 # d3.tsv treats an empty table as an error, so instead, return an actual useful error code
-if (@rows == 0) {
-    print "Error\nNo hits\n";
+if (@rows == 0 ) {
+    if ($html) {
+        print "No hits";
+    } else {
+        print "Error\nNo hits\n";
+    }
+    exit(0);
 }
 
-print join("\t", qw{orgId organism locusId sysName name description identity coverage evalue bits minfit maxfit minT maxT maxcofit})."\n";
+
+print join("\t", qw{orgId organism locusId sysName name description identity coverage evalue bits minfit maxfit minT maxT maxcofit})."\n" unless $html;
 my $orginfo = Utils::orginfo($dbh);
+my @save = ();
 foreach my $row (@rows) {
     my ($query,$locusspec,$identity,$alnlen,$mm,$gap,$qBeg,$qEnd,$lBeg,$lEnd,$evalue,$bits) = @$row;
     my ($orgId,$locusId) = split /:/, $locusspec;
@@ -134,12 +143,65 @@ foreach my $row (@rows) {
 	$maxCofit = $dbh->selectrow_array(qq{ SELECT cofit FROM Cofit WHERE orgId = ? AND locusId = ? AND rank = 1 LIMIT 1; },
 					  {}, $orgId, $locusId);
     }
-    print join("\t",$orgId, $orginfo->{$orgId}{genome},
-	       $locusId, $sysName, $name, $desc,
-	       $identity,$alnlen/length($seq),$evalue,$bits,
-	       $minFit,$maxFit,$minT,$maxT,$maxCofit)."\n";
+    my $coverage = $alnlen/length($seq);
+    if ($html) {
+        push @save, [ $orgId, $orginfo->{$orgId}{genome}, $locusId, $sysName, $name, $desc,
+                      $identity, $coverage,
+                      $minFit, $maxFit, $minT, $maxT, $maxCofit ];
+    } else {
+        print join("\t",$orgId, $orginfo->{$orgId}{genome},
+                   $locusId, $sysName, $name, $desc,
+                   $identity,$coverage,$evalue,$bits,
+                   $minFit,$maxFit,$minT,$maxT,$maxCofit)."\n";
+    }
 }
 
 $dbh->disconnect();
+
+if ($html) {
+    my $base_url = url();
+    $base_url =~ s!/[a-zA-Z_.]+$!!;
+    # mimic fitblast_short() from fitblast.js
+    my $mincoverage = 0.75; # hits below this coverage are ignored
+    my $mincloseid = 80; # %identity to be considered a close hit
+    my $minabsstrong = 2.0;
+    # a hit is considered likely to be useful if either
+    # cofitness is above threshold or (both absfit and absT are above thresholds)
+    my $mincofit = 0.75;
+    my $minabsfit = 1.0;
+    my $minabsT = 4.0;
+    my @pieces = (); # pieces of HTML, 1 for item shown so far
+
+    foreach my $row (@save) {
+        my ($orgId, $orgName, $locusId, $sysName, $name, $desc,
+            $identity, $coverage, $minFit, $maxFit, $minT, $maxT, $maxCofit) = @$row;
+        next unless $coverage >= $mincoverage;
+        my $close = $identity >= $mincloseid;
+        my $hascofit = $maxCofit >= $mincofit;
+        my $hassig = ($minFit <= -$minabsfit && $minT <= $minabsT)
+            || ($maxFit >= $minabsfit && $maxT >= $minabsT);
+        my $hasstrong = $hassig && ($minFit <= -$minabsstrong || $maxFit >= $minabsstrong);
+        my $useful = $hascofit || $hassig;
+        if (($close && scalar(@pieces) == 0) || $useful) {
+            my $sigstring = $hasstrong ? "strong phenotype" :
+                ($hassig ? "has phenotype" : ($minFit ne "" ? "has data" : "no data"));
+            if ($minFit ne "") {
+                $sigstring = sprintf(qq{<A TITLE="fitness %.1f to %.1f" HREF="$base_url/singleFit.cgi?orgId=%s&locusId=%s">%s</A>},
+                                     $minFit, $maxFit, $orgId, $locusId, $sigstring);
+            }
+            if ($hascofit) {
+                $sigstring = sprintf(qq{%s, <A TITLE="top cofitness %.2f" HREF="$base_url/cofit.cgi?orgId=%s&locusId=%s">cofit</A>},
+                                     $sigstring, $maxCofit, $orgId, $locusId);
+            }
+            push @pieces, sprintf(qq{%d%% id. to <A HREF="$base_url/singleFit.cgi?orgId=%s&locusId=%s">%s</A> from %s: %s\n},
+                                  int($identity+0.5), $orgId, $locusId,
+                                  $name eq "" ? ($sysName eq "" ? $locusId : $sysName) : $name,
+                                  $orgName, $sigstring);
+        }
+        last if $useful;
+    }
+    print join("<BR>",@pieces);
+}
+
 exit(0);
 
