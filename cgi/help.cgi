@@ -154,13 +154,22 @@ For example, to link to the fitness data for <i>endA</i> from
 
 <P>Or, you can use <A HREF="../images/fitblast_example.html">Fitness BLAST</A> to link from any protein sequence to the homologs that have fitness data. You can incorporate this into your web page with just a few lines of <A HREF="../images/fitblast_example.html#code">code</A>.
 
-<div style="height:50px">&nbsp;</div>
+<H3><A name="code">Code Availability</A></H3>
+
+<p>The code for this web site is <A HREF="https://bitbucket.org/berkeleylab/feba/src">freely available at bitbucket.org</A>.
+
+<H3><A name="ack">Acknowledgements</A></H3>
+
+<p>This site was developed by <A HREF="http://enigma.lbl.gov">
+ENIGMA - Ecosystems and Networks Integrated with Genes
+and Molecular Assemblies</A>, a Scientific Focus
+Area Program at Lawrence Berkeley National Laboratory, and
+supported by the U.S. Department of Energy, Office of Science,
+Office of Biological &amp; Environmental Research under contract number
+DE-AC02-05CH11231.
 
 END
     ;
 
-
-print div({-id=>"ntcontent"}, $helpcontent),
-    p(qq{<center>The code for this web site is <A HREF="https://bitbucket.org/berkeleylab/feba/src">freely available at bitbucket.org</A>});
-
+print div({-id=>"ntcontent"}, $helpcontent);
 Utils::endHtml($cgi);
