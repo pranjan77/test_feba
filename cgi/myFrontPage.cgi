@@ -85,8 +85,8 @@ div({-id=>"ntcontent"},
         td(a({href=>"cofitCons.cgi?orgId=Keio&locusId=14904&hitId=18086&help=1"},"Conserved Cofitness<BR>", img({src=>"../images/CmpCofit.png"})))
       )
     ),
-  h6(q(Developed by Victoria Lo, Wenjun Shao, and
-         <A HREF="http://morgannprice.org/">Morgan Price</A>.
+  h6(q(Developed by <A HREF="http://morgannprice.org/">Morgan Price</A>, Victoria Lo, and Wenjun Shao
+         in the <A HREF="http://genomics.lbl.gov">Arkin lab</A>.
          Please report any bugs to <A HREF="mailto:funwithwords26@gmail.com">Morgan</A>.)),
   );
 

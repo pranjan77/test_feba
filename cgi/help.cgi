@@ -25,10 +25,19 @@ my $start = Utils::start_page("Help for the Fitness Browser");
 
 print header,
 	$start, 
-    h2("Help for Fitness Browser");
-
+    h2("Help for the Fitness Browser");
 
 my $helpcontent = <<END
+
+<h5>The <i>Fitness Browser</i> includes thousands of genome-wide fitness assays from the
+Deutschbauer lab, the <A HREF="http://genomics.lbl.gov/">Arkin lab</A>,
+and collaborators.
+Contact <A HREF="mailto:AMDeutschbauer.lbl.gov">Adam Deutschbauer</A> for more information about the data.
+The code was written by
+<A HREF="http://morgannprice.org/">Morgan Price</A>, Victoria Lo, and Wenjun Shao
+in the <A HREF="http://genomics.lbl.gov">Arkin lab</A>.
+</h5>
+
 
 <H3><A NAME="technology">How it works</A></H3>
 
@@ -58,9 +67,9 @@ advantage.
 phenotype that might be statistically significant (see <A HREF="#t">t
 scores</A>) but will probably be difficult to interpret. Fitness &lt;
 -2 or fitness &gt; 2 are strong fitness effects.
-In the typical experiment, the pool of mutants doubles 4-6 times,
+In the typical experiment, the pool of mutants doubles 4-8 times,
 so in principle, a conditionally essential gene should have fitness of
--4 to -6. However, it is not possible to tell the difference between
+-4 to -8. However, it is not possible to tell the difference between
 little or no growth with a pooled assay. (Also, very low fitness
 values are more noisy because they are based on a log<sub>2</sub>
 ratio with a small numerator &ndash; in the typical experiment, a
@@ -101,7 +110,7 @@ Alternatively, if two genes in the same organism have similar fitness patterns, 
 
 <P>If two genes have similar fitness patterns (cofitness &gt; 0.75), and they are among the most cofit genes (rank = 1 or rank = 2), then they are likely to function in the same pathway. For genes with strong fitness patterns, often the most cofit genes are other genes in the same operon, so we look a little farther down the list to find genes that may have related functions.</P>
 
-<P>Conserved cofitness: If two genes have cofitness &gt; 0.7, and their orthologs have cofitness &gt 0.7, then this is stronger evidence of a functional relationship.
+<P>Conserved cofitness: If two genes have cofitness &gt; 0.6, and their orthologs have cofitness &gt 0.6, then this is stronger evidence of a functional relationship.
 
 <P>If we have relatively little data for an organism, then cofitness results will not be available for any of its genes.
 
@@ -147,18 +156,11 @@ For example, to link to the fitness data for <i>endA</i> from
 
 <div style="height:50px">&nbsp;</div>
 
-<P><center><small>Page by <A HREF="http://morgannprice.org/">Morgan Price</A>.
-Please email questions to <A HREF="mailto:funwithwords26\@gmail.com">Morgan</A>.
-The code for this web site is available <A HREF="https://bitbucket.org/berkeleylab/feba/src">here</A>.
-</small></center>
-
-<div style="height:50px">&nbsp;</div>
-
 END
     ;
 
 
-print div({-id=>"ntcontent"}, $helpcontent);
-
+print div({-id=>"ntcontent"}, $helpcontent),
+    p(qq{<center>The code for this web site is <A HREF="https://bitbucket.org/berkeleylab/feba/src">freely available at bitbucket.org</A>});
 
 Utils::endHtml($cgi);

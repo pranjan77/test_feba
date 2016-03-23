@@ -53,7 +53,7 @@ sub start_page($) {
     <body>
     <div id="page">
     <div id="nav"> <div class="box">
-        <li class="header">Fitness Browser</li>
+        <li class="header"><A style="color: gold;" TITLE="The Fitness Browser: fitness data from the Deutschbauer lab, the Arkin lab, and collaborators" HREF="myFrontPage.cgi">Fitness Browser</A></li>
         <li><a href="myFrontPage.cgi">Home</a></li>
         <li><a href="geneSearch.cgi">Find Gene</a></li>
         <li><a href="blastSearch.cgi">BLAST</a></li>
@@ -658,7 +658,7 @@ sub geneArrows($$$$) {
 
 sub site_intro_text {
     return CGI::h5(q{Browse thousands of <i>mostly unpublished</i> fitness experiments from the
-     <A HREF="http://pbd.lbl.gov/scientists/adam-deutschbauer/">Deutschbauer lab</A>,
+     Deutschbauer lab,
      the <A HREF="http://genomics.lbl.gov/">Arkin lab</A>,
      and collaborators. Contact <A HREF="mailto:AMDeutschbauer.lbl.gov">Adam Deutschbauer</A> for more information.});
 }
