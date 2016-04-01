@@ -18,7 +18,7 @@ The aaseqs has the proteins that queries were compared to.
 The feba.db is the main database for the CGI scripts
 (which is produced by db_setup.pl)
 
-Create the job.db database in that directory
+Creates the job.db database in that directory
 END
     ;
 
