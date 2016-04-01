@@ -570,8 +570,9 @@ breaksUse = function(scale=2)
 
 # blue to yellow
 myHeatColors = function () {
-    c(rgb(0, 0, seq(1, 1/12, -1/12)), rgb(seq(1/12, 1, 1/12), 
-        seq(1/12, 1, 1/12), 0));
+    dn = seq(1, 1/12, -1/12);
+    up = seq(1/12, 1, 1/12);
+    c(rgb(dn*0.2, dn*0.2, dn), rgb(up, up, 0));
 }
 
 # all_cofitness(org, genes) -- compute cofitness of average profile of genes with all
