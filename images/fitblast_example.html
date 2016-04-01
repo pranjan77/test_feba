@@ -30,7 +30,7 @@
 
 <H2>Fitness BLAST Example</H2>
 
-For a specified protein sequence, Fitness BLAST shows homologs that have <A HREF="../cgi-bin/help.cgi">fitness data</A>.
+For a specified protein sequence, Fitness BLAST shows homologs that have <A HREF="../cgi-bin/help.cgi">fitness data</A>, as identified by <A HREF="http://www.drive5.com/usearch/">usearch</A>.
 
 <H3>Short Results</H2>
 
@@ -94,6 +94,16 @@ fitblast_load_table("fitblast_table_uvrC", server_root, uvrC);
 </pre>
 
 <p>You can also look at the HTML source for this page. If you use fitness_load_table(), note that the table it creates will be of class fitblast, so you set table.fitblast styles in cascading style sheets to modify how it is formatted.
+
+<P>You can also use inline frames with URLs of the form
+
+<pre><font color="blue">http://fit.genomics.lbl.gov/html=1&amp;seq=PROTEINSEQUENCE</font></pre>
+
+as seen <A HREF="http://fit.genomics.lbl.gov/cgi-bin/seqservice.cgi?html=1&seq=MSSLQRIVLIDTHLPGVVELALDGHTNICGTNASGKTTLQRLVPVFYGEYPSRVVPSTRDSFERWYLPHDSSYIIYEYRRGDGMLYQAVLSSNGDGKGISYRFIAKGFELDDYVKARNGDS">here</A>.
+
+<H3><A NAME="genomes">Fitness BLAST for Genomes</A></H3>
+
+As an alternative, you can pre-compute best hits for all genes in a genome at once (<A HREF="http://fit.genomics.lbl.gov/cgi-bin/batch_blast.cgi">link</A>).
 
 <p><small>Developed by <A HREF="http://morgannprice.org/">Morgan Price</A>. Please report any errors to <A HREF="mailto:funwithwords26@gmail.com">Morgan</A>.</small></p>
 </body>

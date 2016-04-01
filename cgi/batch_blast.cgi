@@ -34,9 +34,9 @@ my $nThreads = 12;
 if (!defined $file) {
     print
         header,
-        Utils::start_page('Fitness BLAST - Submit Sequences'),
+        Utils::start_page('Fitness BLAST for Genomes - Submit Sequences'),
         '<div id="ntcontent">',
-        h2("Submit Sequences for Fitness BLAST"),
+        h2("Submit Sequences to Fitness BLAST for Genomes"),
         p("Fitness BLAST takes just 30 seconds to run on the typical bacterial genome.",
           "To run it, upload a file of protein sequences in FASTA format.",
           "Please limit your input to at most 20,000 sequences.",
@@ -46,6 +46,19 @@ if (!defined $file) {
         p(submit( { -style => 'position: absolute; text-align: left; float: none; display:inline;' , -name => "Upload" })),
         p(" &nbsp; "),
         end_form();
+    my $exampleId = "27feb3f720f0536e0fbb1408512c8741";
+    my $exampleName = "Pseudomonas putida KT2440";
+    if (-e "../job_data/$exampleId/job.db") {
+        print p(br(), 
+                "To see what the output will be like, see the",
+                a({-href => "batch_overview.cgi?jobId=$exampleId"}, "results for $exampleName,"),
+                "including a list of",
+                a({-href => "batch_genes.cgi?jobId=$exampleId&hypo=Hypotheticals&link=Either"},
+                  "hypothetical proteins with functional links.")
+            );
+    }
+    print p(small("Fitness BLAST for genomes is powered by",
+            a({-href=>"http://www.drive5.com/usearch"}, "usearch.")));
     Utils::endHtml($cgi);
     exit(0);
 }

@@ -29,15 +29,10 @@ print header,
 
 my $helpcontent = <<END
 
-<h5>The <i>Fitness Browser</i> includes thousands of genome-wide fitness assays from the
-Deutschbauer lab, the <A HREF="http://genomics.lbl.gov/">Arkin lab</A>,
-and collaborators.
-Contact <A HREF="mailto:AMDeutschbauer.lbl.gov">Adam Deutschbauer</A> for more information about the data.
-The code was written by
-<A HREF="http://morgannprice.org/">Morgan Price</A>, Victoria Lo, and Wenjun Shao
-in the <A HREF="http://genomics.lbl.gov">Arkin lab</A>.
-</h5>
-
+<p>The Fitness Browser was developed by the <A HREF="http://genomics.lbl.gov">Arkin lab</A>.
+It displays thousands of genome-wide fitness assays from the
+<A HREF="mailto:AMDeutschbauer.lbl.gov">Deutschbauer</A> lab, the Arkin lab,
+and collaborators.</p>
 
 <H3><A NAME="technology">How it works</A></H3>
 
@@ -47,7 +42,7 @@ in the <A HREF="http://genomics.lbl.gov">Arkin lab</A>.
 
 <P>For details, see our <A HREF="http://mbio.asm.org/content/6/3/e00306-15.full">methods paper</A> (Wetmore et al, mBio 2015).
 
-<H3><A NAME="fitness">Fitness</A></H3>
+<H3><A NAME="fitness">Gene fitness</A></H3>
 
 <P>Fitness values are log<sub>2</sub> ratios that describe the change
 in abundance of mutants in that gene during the experiment.  For most of
@@ -90,14 +85,14 @@ in copy number along the chromosome.
 For a survival assay, the cells are stressed or starved for a period of time; then, to distinguish viable cells from dead cells,
 all cells are transferred to a rich medium and recovered for a few generations.
 
-<H3><A name="t">t score</A></H3>
+<H3><A name="t"><i>t</i> scores</A></H3>
 
-The t-like test statistic indicates how reliably a gene fitness in an
-experiment is different from zero. Ideally, they are on the same scale
-as z scores or t scores. However, since there are thousands of genes
+The t-like test statistic indicates how reliably a gene fitness values is
+different from zero. Ideally, they are on the same scale
+as <i>z</i> scores or <i>t</i> scores. However, since there are thousands of genes
 in each experiment, and there can be hundreds of fitness experiments
 for a gene, a higher threshold is needed. We usually ignore any
-fitness effects with |t| &lt; 4. In most cases, you can gain
+fitness effects with <i>|t| &lt; 4</i>. In most cases, you can gain
 confidence in a fitness effect by comparing the phenotype of a gene in
 replicate experiments, or in similar experiments (such as different
 concentrations of the same inhibitory compound), or for <A
@@ -154,19 +149,28 @@ For example, to link to the fitness data for <i>endA</i> from
 
 <P>Or, you can use <A HREF="../images/fitblast_example.html">Fitness BLAST</A> to link from any protein sequence to the homologs that have fitness data. You can incorporate this into your web page with just a few lines of <A HREF="../images/fitblast_example.html#code">code</A>.
 
-<H3><A name="code">Code Availability</A></H3>
+<P>Or, you can use <A HREF="batch_blast.cgi">Fitness BLAST for genomes</A> to identify orthologs in our data set for an entire genome at once. It takes less than a minute and we plan to store the results indefinitely.</A>
+
+<P>(Both Fitness BLAST and Fitness BLAST for genomes are powered by
+<A HREF="http://www.drive5.com/usearch/">usearch</A>,
+not BLAST. However, <A HREF="blastSearch.cgi">single sequence search</A> and the homologs page rely on BLAST.)
+
+<H3><A name="code">About the code</A></H3>
 
 <p>The code for this web site is <A HREF="https://bitbucket.org/berkeleylab/feba/src">freely available at bitbucket.org</A>.
+The code was written by <A HREF="http://morgannprice.org/">Morgan Price</A>, Victoria Lo, and Wenjun Shao
+in the <A HREF="http://genomics.lbl.gov">Arkin lab</A>.</p>
 
 <H3><A name="sources">References</A></H3>
 
 <UL>
 <LI><A HREF="http://genomics.lbl.gov/supplemental/rbarseq/">Wetmore et al 2015</A> -- carbon source experiments for <i>Escherichia coli</i> BW25113, <i>Shewanella oneidensis</I> MR-1, <I>Shewanella amazonensis</I> SB2B, <i>Phaeobacter inhibens</i> BS107, and Pseudomonas stutzeri</i> RCH2
+<LI><A HREF="http://www.pnas.org/content/early/2015/10/26/1519220112.abstract">Rubin et al 2015</A> -- the mutant library for <i>Synechococcus elongatus</i> PCC 7942
 </ul>
 
-<p>Most of the data is not published.
+<p>Most of the data is not published. Contact <A HREF="mailto:AMDeutschbauer.lbl.gov">Adam Deutschbauer</A> for more information about the unpublished data.
 
-<H3><A name="ack">Acknowledgements</A></H3>
+<H3><A name="ack">Funding</A></H3>
 
 <p>This site was developed by <A HREF="http://enigma.lbl.gov">
 ENIGMA - Ecosystems and Networks Integrated with Genes
