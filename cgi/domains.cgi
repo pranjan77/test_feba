@@ -69,7 +69,7 @@ print
     h3("Domains");
 
 if (@$cond == 0) {
-	print "Sorry, no domains for this organism and/or locus."
+	print "No PFam or TIGRFam domains were found in this protein."
 } else {
 	#create domains table
 	my @headings = qw{Family ID Coverage EValue}; # Begin End};
@@ -116,9 +116,14 @@ if (@$cond == 0) {
 }
 
 # %0A encodes "\n" so that it looks like fasta input.
-print br(),
-    p(a({-href => "http://www.ncbi.nlm.nih.gov/Structure/cdd/wrpsb.cgi?seqinput=>${sys}%0A$seq"},
-	(@$cond > 0 ? "Or see" : "See") . " Conserved Domains Database"));
+print
+    br(),
+    p(@$cond > 0 ? "Or search" : "Search",
+      a({-href => "http://www.ncbi.nlm.nih.gov/Structure/cdd/wrpsb.cgi?seqinput=>${sys}%0A$seq"},
+	"Conserved Domains Database"),
+      "or",
+      a({-href => "http://core.theseed.org/FIG/seedviewer.cgi?page=FigFamViewer&fasta_seq=>${sys}%0A$seq"},
+        "FIGfams"));
 
 # UniProt information, if any
 my $bhSprot = $dbh->selectrow_hashref("SELECT * from BestHitSwissProt
@@ -187,9 +192,8 @@ $seq =~ s/(.{60})/$1\n/gs;
 
 print
     h3("Protein Sequence"),
-    qq[<div style="position: relative; margin: 0 auto; width: 59em; font-family: monospace;white-space: pre;"],
     pre(">$sys $gene->{desc} ($orginfo->{$orgId}{genome})\n$seq"),
-    '</div></div>';
+    '</div>';
 
 $dbh->disconnect();
 Utils::endHtml($cgi);
