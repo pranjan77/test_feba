@@ -158,6 +158,14 @@ For example, to link to the fitness data for <i>endA</i> from
 
 <p>The code for this web site is <A HREF="https://bitbucket.org/berkeleylab/feba/src">freely available at bitbucket.org</A>.
 
+<H3><A name="sources">References</A></H3>
+
+<UL>
+<LI><A HREF="http://genomics.lbl.gov/supplemental/rbarseq/">Wetmore et al 2015</A> -- carbon source experiments for <i>Escherichia coli</i> BW25113, <i>Shewanella oneidensis</I> MR-1, <I>Shewanella amazonensis</I> SB2B, <i>Phaeobacter inhibens</i> BS107, and Pseudomonas stutzeri</i> RCH2
+</ul>
+
+<p>Most of the data is not published.
+
 <H3><A name="ack">Acknowledgements</A></H3>
 
 <p>This site was developed by <A HREF="http://enigma.lbl.gov">
