@@ -36,7 +36,12 @@ sub get_orths($$$);
 
 sub start_page($) {
     my ($title) = @_;
+    my $url = CGI::url();
+    my $public = $url =~ m/fit.genomics/;
+    my $site_name = $public  ? "Fitness Browser" : "Private Fitness";
+    my $color = $public ? "gold" : "white";
     my $header = <<"EOT";
+
     <!DOCTYPE html>
     <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US">
     <head>
@@ -53,7 +58,7 @@ sub start_page($) {
     <body>
     <div id="page">
     <div id="nav"> <div class="box">
-        <li class="header"><A style="color: gold;" TITLE="The Fitness Browser: fitness data from the Deutschbauer lab, the Arkin lab, and collaborators" HREF="myFrontPage.cgi">Fitness Browser</A></li>
+        <li class="header"><A style="color: $color;" TITLE="$site_name: fitness data from the Deutschbauer lab, the Arkin lab, and collaborators" HREF="myFrontPage.cgi">$site_name</A></li>
         <li><a href="myFrontPage.cgi">Home</a></li>
         <li><a href="geneSearch.cgi">Find Gene</a></li>
         <li><a href="blastSearch.cgi">BLAST</a></li>
@@ -657,6 +662,13 @@ sub geneArrows($$$$) {
 }
 
 sub site_intro_text {
+    if (-e "../motd") {
+        open(MOTD, "<", "../motd");
+        my @lines = <MOTD>;
+        close(MOTD);
+        return join("",@lines) if @lines > 0;
+    }
+    #else
     return CGI::h5(q{Browse thousands of <i>mostly unpublished</i> fitness experiments from the
      Deutschbauer lab,
      the <A HREF="http://genomics.lbl.gov/">Arkin lab</A>,

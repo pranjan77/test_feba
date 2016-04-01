@@ -38,6 +38,10 @@ The other dependencies are perl modules:
 The front page for the web site is:
 	cgi/myFrontPage.cgi
 
+You can modify the text at the top of the home page by creating a file
+named "motd" (message of the day) in the main directory (the directory
+the contains cgi/).
+
 If setting up fitness blast -- see images/fitblast_example.html,
 cgi/seqservice.cgi, and bin/start_ublast_service.pl. You'll need to
 create bin/usearch6. Also, images/fitblast.js uses URLs of the form
