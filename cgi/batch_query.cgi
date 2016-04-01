@@ -71,7 +71,10 @@ END
         print p("Sorry, no good hits for this protein");
     } else {
         my @headings = (th("Orth"),th("Identity"),th("Organism"),th("Description"),
-                        th({-colspan=>2}, "Fitness"), th("Specific"), th("Cofit"));
+                        th({-colspan=>2},
+                           a({-title=>"range of values"}, "Fitness")),
+                        th("Specific"),
+                        th(a({-title=>"Maximum cofitness"}, "Cofit")));
         my @trows = ( $cgi->Tr({ -valign => 'middle', -align => 'center' }, @headings) );
         foreach my $row (@$besthits) {
             my $orgId = $row->{orgId};
