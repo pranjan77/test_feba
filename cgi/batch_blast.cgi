@@ -26,12 +26,37 @@ use Batch;
 
 my $cgi=CGI->new;
 my $file = $cgi->param('file');
+my $jobId = $cgi->param('jobId');
+my $confirm = $cgi->param('confirm');
 
 my $maxBytes = 1e7;
 my $maxSeq = 20000;
 my $nThreads = 12;
 
-if (!defined $file) {
+sub ProcessJob($); # requires that the query.faa file already be set up
+
+if (defined $jobId && !defined $confirm) {
+    print
+        header,
+        Utils::start_page("Fitness BLAST for Genomes - Confirmation"),
+        h2("Fitness BLAST for Genomes - Confirmation"),
+        '<div id="ntcontent">',
+        p("Do you really want to rerun the analysis? It may take a minute. If so, click",
+          a({-href=>"batch_blast.cgi?jobId=$jobId&confirm=1"}, "here."));
+} elsif (defined $jobId) { # Rerun the job
+    $jobId =~ m/^[0-9a-zA-Z_:-]+$/ || die "Invalid jobId $jobId";
+    my $dir = "../job_data/$jobId";
+    die "Unknown job $jobId" unless -d $dir;
+    die "No query file for this job" unless -e "$dir/query.faa";
+    my $bdb = Batch::get_batch_dbh($jobId);
+    my $jobname = Batch::get_job_name($jobId,$bdb);
+    print
+        header,
+        Utils::start_page("Fitness BLAST for Genomes - Rerunning $jobname"),
+        '<div id="ntcontent">',
+        h2("Rerunning analysis of $jobname");
+    ProcessJob($jobId);
+} elsif (!defined $file) {
     print
         header,
         Utils::start_page('Fitness BLAST for Genomes - Submit Sequences'),
@@ -60,55 +85,64 @@ if (!defined $file) {
     print p(small("Fitness BLAST for genomes is powered by",
             a({-href=>"http://www.drive5.com/usearch"}, "usearch.")));
     Utils::endHtml($cgi);
-    exit(0);
-}
-# else process input file
-die "Not a file upload as expected" unless ref($file) eq "Fh";
-
-autoflush STDOUT 1; # so preliminary results appear
-print
-    header,
-    Utils::start_page('Fitness BLAST - Processing Your Submission'),
-    h2('Fitness BLAST - Processing Your Submission'),
-    p("This should take less than 1 minute"),
-    p("Checking uploaded file..."), "\n";
-
-my $nSeq = 0;
-my $bytes = 0;
-my @lines = ();
-while(my $line = <$file>) {
-    $bytes += length($line);
-    $nSeq++ if $line =~ m/^>/;
-    if ($nSeq > $maxSeq) {
-        print "Sorry, too many sequences. The limit is $maxSeq sequences\n";
-        exit(0);
-    }
-    if ($bytes > $maxBytes) {
-        print "Sorry, the input file is too large. The limit is 10 MB\n";
-        exit(0);
-    }
-    push @lines, $line;
-}
-print p("Read $nSeq sequences, ", sprintf("%.2f", $bytes/1e6), " MB"), "\n";
-
-my $jobId = md5_hex(@lines);
-my $dir = "../job_data/$jobId";
-if (-d $dir) {
-    print p("This file has been processed by Fitness BLAST already!");
-    if (! -e "$dir/job.db") {
-        print ("But the results are not ready yet. This may be a duplicate submission.",
-               "If the link below fails, try it again in 30 seconds or so");
-    }
 } else {
-    my $faa = "$dir/query.faa";
-    mkdir("../job_data/$jobId");
-    system("chmod","a+w",$dir);
-    open(FAA, ">", $faa) || die "Cannot write to $faa";
-    foreach my $line (@lines) {
-        print FAA $line."\n";
+    # else process input file
+    die "Not a file upload as expected" unless ref($file) eq "Fh";
+
+    print
+        header,
+        Utils::start_page('Fitness BLAST - Processing Your Submission'),
+        h2('Fitness BLAST - Processing Your Submission'),
+        p("This should take less than 1 minute"),
+        p("Checking uploaded file..."), "\n";
+
+    my $nSeq = 0;
+    my $bytes = 0;
+    my @lines = ();
+    while(my $line = <$file>) {
+        $bytes += length($line);
+        $nSeq++ if $line =~ m/^>/;
+        if ($nSeq > $maxSeq) {
+            print "Sorry, too many sequences. The limit is $maxSeq sequences\n";
+            exit(0);
+        }
+        if ($bytes > $maxBytes) {
+            print "Sorry, the input file is too large. The limit is 10 MB\n";
+            exit(0);
+        }
+        push @lines, $line;
     }
-    close(FAA) || die "Error writing to $faa";
-    
+    print p("Read $nSeq sequences, ", sprintf("%.2f", $bytes/1e6), " MB"), "\n";
+
+    $jobId = md5_hex(@lines);
+    my $dir = "../job_data/$jobId";
+    if (-d $dir) {
+        print p("This file has been processed by Fitness BLAST already!");
+        if (! -e "$dir/job.db") {
+            print ("But the results are not ready yet. This may be a duplicate submission.",
+                   "If the link below fails, try it again in 30 seconds or so");
+        }
+        print p(a({-href => "batch_overview.cgi?jobId=$jobId"}, "Job results"));
+    } else {
+        # compute results
+        my $faa = "$dir/query.faa";
+        mkdir("../job_data/$jobId");
+        system("chmod","a+w",$dir);
+        open(FAA, ">", $faa) || die "Cannot write to $faa";
+        foreach my $line (@lines) {
+            print FAA $line."\n";
+        }
+        close(FAA) || die "Error writing to $faa";
+
+        ProcessJob($jobId);
+    }
+}
+
+sub ProcessJob($) {
+    autoflush STDOUT 1; # so preliminary results appear
+    my ($jobId) = @_;
+    my $dir = "../job_data/$jobId";    
+    my $faa = "$dir/query.faa";
     my %parse = ReadFastaDesc($faa);
     if (exists $parse{error}) {
         print p("Error parsing the input file: $parse{error}");
@@ -134,13 +168,16 @@ if (-d $dir) {
 
     my $udbfile = "../cgi_data/aaseqs.udb";
     die "No such file: $udbfile" unless -e $udbfile;
-    my $code = system("nice $usearch -threads 16 -ublast $faa -db $udbfile -maxhits 50 -maxaccepts 50 -blast6out $dir/hits -evalue 0.001 >& $dir/usearch.log");
+    my $code = system("nice $usearch -threads 16 -ublast $faa -db $udbfile -maxhits 50 -maxaccepts 50 -blast6out $dir/hits.tmp -evalue 0.001 >& $dir/usearch.log");
     if ($code != 0) {
         print p("Sorry, usearch failed. Please check your input file");
         exit(0);
     }
     
     print p("usearch succeeded, now building a database..."),"\n";
+    rename("$dir/hits.tmp","$dir/hits");
+    # This script rewrites the new db to a temporary file and then renames it, so do not have to worry about
+    # other requests seeing the incomplete database
     $code = system("nice ../bin/batch_setup_tables.pl -db ../cgi_data/feba.db -dir $dir -aaseqs ../cgi_data/aaseqs >& $dir/setup.log");
     if ($code != 0) {
         print p("Sorry, building the database failed for $jobId.",
@@ -149,15 +186,15 @@ if (-d $dir) {
         exit(0);
     }
     p("Fitness BLAST succeeded.");
-}
 
-my $url = url();
-$url =~ s!/[a-zA-Z_.]+$!!;
-my $rel = "batch_overview.cgi?jobId=$jobId";
-$url = $url . "/" . $rel;
-print
-    p("See results at", br(),
-      b(a({-href => $url }, $url))),
-    p("Please remember to save the URL. But you can always get back to the results by re-uploading the file.");
+    my $url = url();
+    $url =~ s!/[a-zA-Z_.]+$!!;
+    my $rel = "batch_overview.cgi?jobId=$jobId";
+    $url = $url . "/" . $rel;
+    print
+        p("See results at", br(),
+          b(a({-href => $url }, $url))),
+        p("Please remember to save the URL. But you can always get back to the results by re-uploading the fasta file.");
+}
 Utils::endHtml($cgi);
 exit(0);
