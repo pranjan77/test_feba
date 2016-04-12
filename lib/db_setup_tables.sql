@@ -232,14 +232,17 @@ CREATE TABLE 'SwissProtDesc' (
        PRIMARY KEY(sprotAccession)
 );
 
-/* An auxiliary table to speed up ortholog conditions page, with
-   pre-selected ortholog groups of genes that have a specific phenotype
-   in each condition and are BBHs of each other. Ideally, all genes in
-   an OG would be BBHs of each other, but in practice, these are
-   computed by clustering the BBHs.
+/* Ortholog groups of all genes that have conserved specific phenotypes.
+
+   Ideally, all genes in an OG would be BBHs of each other, but in
+   practice, these are computed by clustering the BBHs.
+
+   Only genes with a specific phenotype in the same expGroup & condition are included in this table.
+
+   Genes may be in the same OG if they have specific phenotypes of opposite signs.
 */
 CREATE TABLE SpecOG(
-       ogId INT NOT NULL,       /* arbitrary, unique for each ortholog group */
+       ogId INT NOT NULL,       /* arbitrary, and unique for each ortholog group */
        expGroup TEXT NOT NULL,
        condition TEXT NOT NULL,
        orgId TEXT NOT NULL,
@@ -248,6 +251,7 @@ CREATE TABLE SpecOG(
        maxFit REAL NOT NULL,
        minT REAL NOT NULL,
        maxT REAL NOT NULL,
+       nInOG INT NOT NULL,      /* number of genes (or rows in SpecOG) with this ogId */
        PRIMARY KEY (expGroup, condition, orgId, locusId)
 );
 CREATE INDEX 'SpecOGByLocus' on SpecOG ('orgId','locusId');

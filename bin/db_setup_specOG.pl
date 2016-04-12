@@ -6,10 +6,11 @@ use DBI;
 
 my $db;
 my $dir = ".";
-my $usage = "Usage: db_setup_specOG.pl -db feba.db [ -dir $dir ]\n";
+my $noupdate;
+my $usage = "Usage: db_setup_specOG.pl -db feba.db [ -dir $dir ] [ -noupdate ]\n";
 
 die $usage
-    unless GetOptions('db=s' => \$db, 'dir=s' => \$dir)
+    unless GetOptions('db=s' => \$db, 'dir=s' => \$dir, 'noupdate' => \$noupdate)
     && defined $db
     && @ARGV == 0;
 
@@ -74,15 +75,23 @@ while (my ($expGroup, $condHash) = each %specGene) {
         @pairs = sort { $b->[2] <=> $a->[2] } @pairs;
         # Go through the genes, assigning them to an OG if possible
         my %og = (); # orgId => locusId => nOG
+        my %ogSize = (); # ogId => #members
         foreach my $pair (@pairs) {
             my ($orgId,$locusId,undef) = @$pair;
-            $og{$orgId}{$locusId} = $nOG++ unless exists $og{$orgId}{$locusId};
+            unless (exists $og{$orgId}{$locusId}) {
+                $og{$orgId}{$locusId} = $nOG;
+                $ogSize{$nOG} = 1;
+                $nOG++;
+            }
             # and assign each BBH *that is relevant* to this OG
             my $bbhs = $bbh{$orgId}{$locusId};
             if (defined $bbhs) {
                 while (my ($org2,$locus2) = each %{ $bbh{$orgId}{$locusId}}) {
                     next unless exists $orgHash->{$org2}{$locus2};
-                    $og{$org2}{$locus2} = $og{$orgId}{$locusId} unless exists $og{$org2}{$locus2};
+                    unless (exists $og{$org2}{$locus2}) {
+                        $og{$org2}{$locus2} = $og{$orgId}{$locusId};
+                        $ogSize{ $og{$orgId}{$locusId} }++;
+                    }
                 }
             }
         }
@@ -113,22 +122,27 @@ while (my ($expGroup, $condHash) = each %specGene) {
                 die "No data for $orgId $locusId $expGroup $condition" unless defined $minfit;
                 print SPECOG join("\t", $og{$orgId}{$locusId}, $expGroup, $condition,
                                   $orgId, $locusId,
-                                  $minfit,$maxfit,$minT,$maxT)."\n"; # no real fitness values yet
+                                  $minfit,$maxfit,$minT,$maxT,
+                                  $ogSize{$og{$orgId}{$locusId}} )."\n";
             }
         }
     }
 }
 close(SPECOG) || die "Error writing to $outfile";
 
-print STDERR "Wrote temporary file: $outfile\n";
-$dbh->disconnect();
-open(SQLITE, "|-", "sqlite3", $db) || die "Cannot run sqlite3 on $db";
-print SQLITE <<END
+if (defined $noupdate) {
+    print STDERR "Wrote to $outfile\n";
+} else {
+    print STDERR "Wrote temporary file: $outfile\n";
+    $dbh->disconnect();
+    open(SQLITE, "|-", "sqlite3", $db) || die "Cannot run sqlite3 on $db";
+    print SQLITE <<END
 .mode tabs
 DELETE from SpecOG;
 .import $outfile SpecOG
 END
     ;
-close(SQLITE) || die "Error running sqlite3 on $db";
-print STDERR "Database updated, removing temporary file\n";
-unlink($outfile);
+    close(SQLITE) || die "Error running sqlite3 on $db";
+    print STDERR "Database updated, removing temporary file\n";
+    unlink($outfile);
+}
