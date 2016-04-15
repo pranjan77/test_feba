@@ -174,6 +174,16 @@ if ($show eq "") {
     $header = "Quality Metrics:";
 }
 
+my %cons = (); # locusId => nInOG if it has a specific phenotype in this condition
+if ($exp->{condition_1} ne "") {
+    my $specOG = $dbh->selectall_arrayref("SELECT locusId,nInOG from SpecOG WHERE orgId = ? AND expGroup = ? AND condition = ?",
+                                          {}, $orgId, $exp->{expGroup}, $exp->{condition_1});
+    foreach my $row (@$specOG) {
+        my ($locusId,$nInOG) = @$row;
+        $cons{$locusId} = $nInOG;
+    }
+}
+
 print $cgi->h3($header) if defined $header;
 
 if (@fit > 0) { # show the table
@@ -202,7 +212,8 @@ if (@fit > 0) { # show the table
 			      td(a({ 
 				     title => "Compare to data from similar experiments or orthologs",
 				     href => $orthUrl},
-				 "compare")) );
+				 exists $cons{$row->{locusId}} && $cons{$row->{locusId}} > 1?
+                                   "<i>conserved</i>" : "compare")) );
     }
     print
 	start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
@@ -259,14 +270,22 @@ if ($show ne "specific") {
             if $exp->{expGroup} && $exp->{condition_1};
     }  else {
 	print $cgi->p("No genes had specific phenotypes in this experiment.");
+        if ($exp->{expGroup}) {
+            print
+                p(a({href => "spec.cgi?orgId=$orgId&expGroup=" . uri_escape($exp->{expGroup})
+                         . ($exp->{condition_1} eq "" ? "" : "#" . uri_escape($exp->{condition_1}))},
+                    "Specific phenotypes for $orginfo->{$orgId}{genome} in $exp->{expGroup} experiments"));
+        }
     }
 }
 
 
-print
-    p(a({href => "orthCond.cgi?expGroup=" . uri_escape($exp->{expGroup})
-         . "&condition1=" . uri_escape($exp->{condition_1})},
-	"Specific phenotypes for $exp->{expGroup} $exp->{condition_1} across organisms"));
+if ($exp->{condition_1} ne "") {
+    print
+        p(a({href => "orthCond.cgi?expGroup=" . uri_escape($exp->{expGroup})
+                 . "&condition1=" . uri_escape($exp->{condition_1})},
+            "Specific phenotypes for $exp->{expGroup} $exp->{condition_1} across organisms"));
+}
     
 $dbh->disconnect();
 Utils::endHtml($cgi);

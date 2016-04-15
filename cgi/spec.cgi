@@ -68,30 +68,27 @@ print
     h2($title2);
 
 my $spec = $dbh->selectall_arrayref(
-    qq{SELECT condition_1, locusId, sysName, gene, desc,
-              min(fit) AS minFit, max(fit) AS maxFit, avg(fit) AS avgFit, count(*) as n
-       FROM SpecificPhenotype
-       JOIN Experiment USING (orgId,expName)
+    qq{SELECT condition, locusId, sysName, gene, desc,
+              minFit, maxFit, nInOG
+       FROM SpecOG
        JOIN Gene USING (orgId,locusId)
-       JOIN GeneFitness USING (orgId,locusId,expName)
        WHERE orgId = ? AND expGroup = ?
-       GROUP BY condition_1, locusId
-       ORDER BY condition_1, locusId },
+       ORDER BY condition, locusId },
     { Slice => {} }, $orgId, $expGroup);
 
 if (@$spec == 0) {
     print "No specific phenotypes for $expGroup experiments";
 }
 my @headings = ("Condition", "Gene", "Description",
-                a({ -title => "Average fitness in experiments showing the specific phenotype" }, "Fitness"),
-                a({ -title => "Number of experiments showing the specific phenotype"}, "#Experiments")
+                a({ -title => "The strongest fitness among experiments with the specific phenotype" }, "Fitness"),
+                a({ -title => "Does an ortholog have a specific phenotype in this condition?"}, "Cons.")
     );
 my @trows = ();
 push @trows, Tr({ -valign => 'top', -align => 'left' }, map { th($_) } \@headings);
 
 my $lastCond = "";
 foreach my $row (@$spec) {
-    my $cond = $row->{condition_1};
+    my $cond = $row->{condition};
     my $first = $cond ne $lastCond;
     $lastCond = $cond;
     my $cmpURL = "orthFit.cgi?orgId=$orgId&locusId=$row->{locusId}"
@@ -103,16 +100,17 @@ foreach my $row (@$spec) {
     my $allURL = "orthCond.cgi?expGroup=".uri_escape($expGroup)."&condition1=".uri_escape($cond);
     my $condParams = {href => $allURL, title=>"Compare specific phenotypes across organisms"};
     $condParams->{name} = $cond if $first;
+    my $showFit = abs($row->{minFit}) > abs($row->{maxFit}) ? $row->{minFit} : $row->{maxFit};
     push @trows, Tr({ -valign => 'top', -align => 'left' },
                     td(a($condParams, $cond)),
                     td(a({href=>"singleFit.cgi?orgId=$orgId&locusId=$row->{locusId}"},
                          $row->{sysName}  || $row->{locusId})),
                     td($row->{desc}),
-                    td({ -bgcolor => Utils::fitcolor($row->{avgFit}) },
+                    td({ -bgcolor => Utils::fitcolor($showFit) },
                        a( $fitAttr, 
                           ( ($row->{minFit} < 0 && $row->{maxFit} < 0) || ($row->{minFit} > 0 && $row->{maxFit} > 0) ?
-                            sprintf("%.1f", $row->{avgFit}) : "variable" ))),
-                    td($row->{n}) );
+                            sprintf("%.1f", $showFit) : "variable" ))),
+                    td($row->{nInOG} > 1 ? "Yes" : "&nbsp;"));
 }
 print table({cellspacing => 0, cellpadding => 3}, @trows); # style=>"margin-left: 0px",
 
