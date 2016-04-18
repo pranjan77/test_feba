@@ -101,8 +101,11 @@ foreach my $row (@$all) {
 }
 
 print table({cellspacing => 0, cellpadding => 3}, @trows);
-print "<br><br>";
-
+my $nTotExps = 0;
+foreach my $row (@$all) {
+    $nTotExps += $total->{$row->{orgId}}->{nExp};
+}
+print p("Total experiments: ", Utils::commify($nTotExps));
 
 # display number of genes that have data out of total genes
 # gather number of genes and data
