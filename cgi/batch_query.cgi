@@ -18,6 +18,7 @@ use CGI qw(:standard Vars -nosticky);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
 use HTML::Entities;
+use IO::Handle; # for autoflush
 
 use lib "../lib";
 use Utils;
@@ -65,6 +66,7 @@ END
     print p("Or see", a({-href=>"batch_query.cgi?jobId=$jobId&queryId=$queryId"}, "best hits"));
 
 } else { # regular mode not FastBLAST mode
+    autoflush STDOUT 1; # so preliminary results appear
     my $besthits = $bdb->selectall_arrayref("SELECT * from BestHit WHERE queryId=? ORDER BY bits DESC",
                                             { Slice => {} }, $queryId);
     if (@$besthits == 0) {
@@ -135,7 +137,7 @@ END
                 }
             }
             push @trows, $cgi->Tr( td(a({-title => $orthText}, $orthSign)),
-                                   td(sprintf("%.1f", $row->{identity})),
+                                   td(sprintf("%.0f%%", $row->{identity})),
                                    td(small($orginfo->{$orgId}{genome})),
                                    td(small(a({-href => $fitURL,
                                                -title => $locusShow},
@@ -146,9 +148,110 @@ END
         }
         print table({cellpadding => 3, cellspacing => 0}, @trows);
     }
+    print "\n"; # so preliminary results appear
+    if ($qinfo->{hasCofitCons}) {
+        # First, list the BBHs
+        my %qOrth = (); # orgId => orthId
+        my %qOrthBits = (); # orgId => bits
+        my %qOrthId = (); # orgId => identity
+        foreach my $row (@$besthits) {
+            next unless $row->{isBBH};
+            my $orgId = $row->{orgId};
+            my $orthId = $row->{locusId};
+            $qOrth{$orgId} = $orthId;
+            $qOrthBits{$orgId} = $row->{bits};
+            $qOrthId{$orgId} = $row->{identity};
+        }
+
+        # Then, fetch their conserved cofitness
+        my %oCofit = (); # orgId => hitId (the hit of the BBH, not the BBH itself) => cofitness, for cons cofit pairs only
+        my %bbhHits = (); # orgId => hitId => org2 => hit2
+        while (my ($orgId,$orthId) = each %qOrth) {
+            my $cons = $dbh->selectall_arrayref(qq{SELECT hitId,cofit,orth_orgId,orth_locusId,orth_hitId
+                                                   FROM ConservedCofit WHERE orgId=? AND locusId=? },
+                                                {}, $orgId, $orthId);
+            foreach my $consrow (@$cons)  {
+                my ($hitId,$cofit,$org2,$orth2,$hit2) = @$consrow;
+                next unless $qOrth{$org2} eq $orth2; # indirect cases seem problematic
+                $oCofit{$orgId}{$hitId} = $cofit;
+                $bbhHits{$orgId}{$hitId}{$org2} = $hit2;
+            }
+        }
+
+        if (scalar(keys %oCofit) > 0) {
+            print
+                h3("Conserved Cofitness"),
+                p("Grouped by ", a({-href => "help.cgi#ortholog"}, "orthology")),
+                "\n";
+
+            my %shown = (); # orgId => hitId => 1 if this has been listed already
+            # most-similar BBHs first
+            my @orgs = sort { $qOrthBits{$b} <=> $qOrthBits{$a} } (keys %qOrthBits);
+            my $nGroup = 0;
+            my @rows = (); # group number or empty, orgId, BBH, hitId, cofitness
+            foreach my $orgId (@orgs) {
+                my $hitcofit = $oCofit{$orgId};
+                my @hits = keys %$hitcofit;
+                # Highest cofitness (in the closest organism) first
+                @hits = sort {  $hitcofit->{$b} <=> $hitcofit->{$a} } @hits;
+                foreach my $hitId (@hits) {
+                    next if exists $shown{$orgId}{$hitId};
+                    $shown{$orgId}{$hitId} = 1;
+                    my @group = ();
+                    $nGroup++;
+                    push @rows, [ $nGroup, $orgId, $qOrth{$orgId}, $hitId, $oCofit{$orgId}{$hitId} ];
+                    my $ohit = $bbhHits{$orgId}{$hitId};
+                    my @orgsHit = sort { $qOrthBits{$b} <=> $qOrthBits{$a} } (keys %$ohit);
+                    foreach my $org2 (@orgsHit) {
+                        my $hit2 = $ohit->{$org2};
+                        next if exists $shown{$org2}{$hit2};
+                        $shown{$org2}{$hit2} = 1;
+                        push @rows, [ "", $org2, $qOrth{$org2}, $hit2, $oCofit{$org2}{$hit2} ];
+                    }
+                }
+            }
+            my @trows = ();
+            push @trows, $cgi->Tr(th("Group"),
+                                  th("Organism"),
+                                  th("Identity"),
+                                  th("Ortholog"),
+                                  th("Cofit With"),
+                                  th("Cofit"));
+
+            my $bgcolor = "";
+            foreach my $row (@rows) {
+                my ($group,$orgId,$orthId,$hitId,$cofit) = @$row;
+                    $bgcolor = ($group % 2 ? "#FFFFFF" : "#DDDDDD")
+                        if $group ne "";
+                my $gene1 = $dbh->selectrow_hashref(qq"SELECT * from Gene where orgId=? AND locusId=?",
+                                                    {}, $orgId, $orthId);
+                my $gene2 = $dbh->selectrow_hashref(qq"SELECT * from Gene where orgId=? AND locusId=?",
+                                                    {}, $orgId, $hitId);
+                my $id1 = $gene1->{sysName} || $orthId;
+                my $desc1 = $gene1->{desc} || $orthId;
+                my $id2 = $gene2->{sysName} || $hitId;
+                my $desc2 = $gene2->{desc} || $hitId;
+                my $url1 = "singleFit.cgi?orgId=$orgId&locusId=$orthId";
+                my $url2 = "singleFit.cgi?orgId=$orgId&locusId=$orthId";
+                my $urlCofit = "cofitCons.cgi?orgId=$orgId&locusId=$orthId&hitId=$hitId";
+                push @trows, $cgi->Tr({ -bgcolor => $bgcolor},
+                                      td($group),
+                                      td(small($orginfo->{$orgId}{genome})),
+                                      td(sprintf("%.0f%%", $qOrthId{$orgId})),
+                                      td(a({-href => $url1, -title => $id1},
+                                           encode_entities($desc1))),
+                                      td(a({-href => $url2, -title => $id2},
+                                           encode_entities($desc2))),
+                                      td(a({-href => $urlCofit, -title => "compare cofitness"},
+                                           sprintf("%.2f", $cofit))));
+            }
+            print table({cellpadding => 3, cellspacing => 0}, @trows), p("&nbsp;");
+        }
+    }
+
     print p("Or see",
             a({-href=>"batch_query.cgi?jobId=$jobId&queryId=$queryId&mode=BLAST"},
-              "all hits for this protein"));
+              "all homologs for this protein"));
 }
 
 Utils::endHtml($cgi);
