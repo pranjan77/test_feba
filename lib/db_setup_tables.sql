@@ -256,3 +256,23 @@ CREATE TABLE SpecOG(
 );
 CREATE INDEX 'SpecOGByLocus' on SpecOG ('orgId','locusId');
 CREATE INDEX 'SpecOGByOG' on SpecOG ('ogId');
+
+/* Instances of conserved cofitness.
+   These are stored in all directions for easy look-up.
+   (Alternatively, could imagine storing just self cofitness and
+   the top ortholog cofitness for each pair...)
+*/
+CREATE TABLE ConservedCofit (
+       orgId TEXT NOT NULL,
+       locusId TEXT NOT NULL,
+       hitId TEXT NOT NULL,
+       rank INT NOT NULL,
+       cofit REAL NOT NULL,
+       orth_orgId TEXT NOT NULL,
+       orth_locusId TEXT NOT NULL,
+       orth_hitId TEXT NOT NULL,
+       orth_rank INT NOT NULL,
+       orth_cofit REAL NOT NULL,
+       PRIMARY KEY (orgId,locusId,hitId,orth_orgId)
+);
+

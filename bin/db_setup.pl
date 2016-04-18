@@ -331,6 +331,7 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
     }
 
     # Create db.GeneFitness.* and, if enough experiments, db.Cofit.*
+    my %orgCofit = (); # org => 1 if organism has cofitness
     foreach my $org (@orgs) {
         my $fit_file = "$indir/$org/fit_logratios_good.tab";
         my @fitNames = &ReadColumnNames($fit_file);
@@ -374,6 +375,7 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
             print STDERR "Computing top hits for $org\n";
             my $fit_file = "db.fittab.$org";
             my $cofit_file = "db.cofit_tab.$org";
+            $orgCofit{$org} = 1;
 
             open(FIT, ">", $fit_file) || die "Error writing to $fit_file";
             print FIT join("\t","locusId",@colsKept)."\n";
@@ -576,6 +578,23 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
 
     push @workCommands, ".import $xrefs LocusXref" if $xrefs ne "";
 
+    # Build the ConservedCofit table
+    if (scalar(keys %orgCofit) >= 2) {
+        my @command = ("$Bin/conserved_cofit.pl",
+                       "-orth", $orthfile,
+                       "-out", "db.ConservedCofit",
+                       "-table",
+                       "-rank", 10,
+                       "-cor", 0.6);
+        foreach my $org (sort keys %orgCofit) {
+            push @command, $org;
+            push @command, "db.Cofit.$org";
+        }
+        system(@command) == 0
+            || die "conserved_cofit.pl failed: " . join(" ", @command) . "\n";
+        push @workCommands, ".import db.ConservedCofit.pairs ConservedCofit"; 
+    }
+
     # load the other data into sqlite3
     if (defined $dbfile) {
 
@@ -622,9 +641,7 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
             print STDERR "Filled $tab\n";
         }
 
-        $dbh->disconnect();
-
-        
+        $dbh->disconnect();    
 
         # Build the SpecOG table
         system("$Bin/db_setup_specOG.pl", "-db", $tmpdbfile, "-dir", $outdir) == 0
