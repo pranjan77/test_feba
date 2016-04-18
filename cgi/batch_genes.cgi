@@ -88,7 +88,10 @@ if (defined $searchSpec && $searchSpec =~ m/\S/) {
 }
 my $whereClause = @where > 0 ? "WHERE " . join(" AND ", @where) : "";
 my $qgenes = $bdb->selectall_arrayref(
-    "SELECT queryId, desc, hasSpecific, hasCofit FROM Query $whereClause",
+    qq{SELECT queryId, desc,
+              hasSpecific, hasSpecificStrong, hasSpecificCons,
+              hasCofit, hasCofitCons
+       FROM Query $whereClause},
     { Slice => {} });
 
 print header,
@@ -112,11 +115,25 @@ if ($index > 0 || scalar(@$qgenes) > $maxToShow) {
 my @headings = map th($_), qw{Id Description Specific Cofit};
 my @trows = ( $cgi->Tr({ -valign => 'middle', -align => 'center' }, @headings) );
 foreach my $i ($index..($maxIndex-1)) {
-    my $qg = $qgenes->[$i];
-    push @trows, $cgi->Tr(td(a({-href => "batch_query.cgi?jobId=$jobId&queryId=$qg->{queryId}"}, $qg->{queryId})),
-                          td(encode_entities($qg->{desc})),
-                          td($qg->{hasSpecific} ? "Y" : ""),
-                          td($qg->{hasCofit} ? "Y" : ""));
+    my $q = $qgenes->[$i];
+    my $specString = ($q->{hasSpecificCons} ? "Cons." :
+                      ($q->{hasSpecific} ? "Yes" : ""));
+    my $specCol = $q->{hasSpecificStrong} ? "red" : "black";
+    $specString = qq{<font color="$specCol">$specString</font>};
+    my $specTitle = ();
+    if ($q->{hasSpecific}) {
+        $specTitle = $q->{hasSpecificStrong} ? "Has a strong and specific phenotype" : "Has a specific phenotype";
+        $specTitle .= " and it is conserved" if $q->{hasSpecificCons};
+    }
+
+    my $cofitString = ($q->{hasCofitCons} ? "Cons." : ($q->{hasCofit} ? "Yes" : ""));
+    $cofitString = qq{<font color="black">$cofitString</font>};
+    my $cofitTitle = ($q->{hasCofitCons} ? "Conserved cofit" : ($q->{hasCofit} ? "Cofit (but it is not conserved)" : ""));
+
+    push @trows, $cgi->Tr(td(a({-href => "batch_query.cgi?jobId=$jobId&queryId=$q->{queryId}"}, $q->{queryId})),
+                          td(encode_entities($q->{desc})),
+                          td(a({-title => $specTitle}, $specString)),
+                          td(a({-title => $cofitTitle}, $cofitString)));
 }
 print table({cellpadding => 3, cellspacing => 0}, @trows);
 
