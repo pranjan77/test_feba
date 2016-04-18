@@ -28,7 +28,6 @@ use DBI;
 use lib "../lib";
 use Utils;
 use StrainFitness;
-sub commify($);
 
 my $cgi=CGI->new;
 my $style = Utils::get_style();
@@ -93,7 +92,7 @@ unless ($begin < $end) {
 my $maxWidth = 40*1000;
 if ($end - $begin >= $maxWidth) {
     print $cgi->header;
-    Utils::fail($cgi, "Too wide, the limit is to show a range of " . &commify($maxWidth) . " nucleotides");
+    Utils::fail($cgi, "Too wide, the limit is to show a range of " . Utils::commify($maxWidth) . " nucleotides");
 }
 
 my $addexp = $cgi->param('addexp');
@@ -115,8 +114,8 @@ foreach my $expName (@expNames) {
     die "No such experiment: $expName" unless exists $expinfo->{$expName};
 }
 
-my $begComma = &commify($begin);
-my $endComma = &commify($end);
+my $begComma = Utils::commify($begin);
+my $endComma = Utils::commify($end);
 
 #make tsv here? debate in printing first vs. running db commands
 print header;
@@ -186,7 +185,7 @@ my $tsvUrl = "strainTable.cgi?tsv=1&orgId=" . $orgId . "&scaffoldId=" . $scaffol
 my $rows = StrainFitness::GetStrainFitness("../cgi_data", $dbh, $orgId, $scaffoldId, $begin, $end);
 
 if (@$rows == 0) {
-    print "No fitness data for strains in range " . commify($begin) . " to " . commify($end) . "\n";
+    print "No fitness data for strains in range " . Utils::commify($begin) . " to " . Utils::commify($end) . "\n";
 }
 my @trows = (); # the table
 # header row
@@ -222,7 +221,7 @@ foreach my $row (@$rows) {
         $gene = $genes{$locusId};
         $locusShow = $gene->{sysName} || $gene->{locusId};
     }
-    my @row = ( a({-title => "barcode $row->{barcode}"}, &commify($row->{pos})),
+    my @row = ( a({-title => "barcode $row->{barcode}"}, Utils::commify($row->{pos})),
                 $row->{strand},
                 $genesh{$row->{locusId}}{gene},
                 $locusId eq "" ? "" : a({-title => $gene->{desc}, -href => "singleFit.cgi?orgId=$orgId&locusId=$locusId"},
@@ -472,11 +471,3 @@ print h3("Per-strain Table"), small(table({ cellspacing => 0, cellpadding => 3, 
 
 $dbh->disconnect();
 Utils::endHtml($cgi);
-
-# i.e., 1234567 => 1,234,567
-sub commify($) {
-    local $_  = shift;
-    1 while s/^(-?\d+)(\d{3})/$1,$2/;
-    return $_;
-}
-

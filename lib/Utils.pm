@@ -675,6 +675,12 @@ sub site_intro_text {
      and collaborators. Contact <A HREF="mailto:AMDeutschbauer.lbl.gov">Adam Deutschbauer</A> for more information.});
 }
 
+sub commify($) {
+    local $_  = shift;
+    1 while s/^(-?\d+)(\d{3})/$1,$2/;
+    return $_;
+}
+
 #END 
 
 return 1;
