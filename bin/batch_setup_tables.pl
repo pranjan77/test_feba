@@ -34,7 +34,10 @@ CREATE TABLE Query(
     isHypo TINYINT NOT NULL,
     aaseq TEXT NOT NULL,
     hasSpecific TINYINT NOT NULL,
-    hasCofit TINYINT NOT NULL,
+    hasSpecificStrong TINYINT NOT NULL,
+    hasSpecificCons TINYINT NOT NULL,
+    hasCofit TINYINT NOT NULL,  /* always set if hasCofitCons is set, even if is below $minCofit */
+    hasCofitCons TINYINT NOT NULL,
     PRIMARY KEY(queryId)
 );
 
@@ -116,27 +119,40 @@ END
 
     # Load all specific phenotypes
     my $specs = $dbh->selectall_arrayref("SELECT * FROM SpecOG", { Slice => {} });
-    my %spec = (); # orgId => locusId => list of [ expGroup, condition, minFit, maxFit, minT, maxT ]
+    my %spec = (); # orgId => locusId => list of [ expGroup, condition, minFit, maxFit, minT, maxT, nInOG ]
     foreach my $row (@$specs) {
         push @{ $spec{ $row->{orgId} }{ $row->{locusId} } },
-        [ $row->{expGroup}, $row->{condition}, $row->{minFit}, $row->{maxFit}, $row->{minT}, $row->{maxT} ]; 
+        [ $row->{expGroup}, $row->{condition}, $row->{minFit}, $row->{maxFit}, $row->{minT}, $row->{maxT}, $row->{nInOG} ]; 
     }
     print STDERR "Loaded specific phenotypes\n";
 
-    # Load all cofitness. (Ignore conserved for now.)
+    # Load all cofitness above $minCofit
     my $cofit = $dbh->selectall_arrayref("SELECT orgId,locusId FROM Cofit WHERE rank=1 AND cofit >= ?",
                                          {}, $minCofit);
-    my %hascofit = (); # orgId => locusId => 1 if it has cofitness
+    my %hascofit = (); # orgId => locusId => 1 if it has cofitness above threshold
     foreach my $row (@$cofit) {
         my ($orgId,$locusId) = @$row;
         $hascofit{$orgId}{$locusId} = 1;
     }
     print STDERR "Loaded cofitness\n";
 
+    my $conscofit = $dbh->selectall_arrayref("SELECT DISTINCT orgId,locusId FROM ConservedCofit",
+                                             {});
+    my %hascofitCons = (); # org => locusId => 1 if conserved
+    # Note -- the database uses a lower threshold for conserved cofitness, so
+    # hasconscofit{orgId}{locusId} may be true even if hascofit{orgId}{locusId} is not
+    foreach my $row (@$conscofit) {
+        my ($orgId,$locusId) = @$row;
+        $hascofitCons{$orgId}{$locusId} = 1;
+    }
+
     # Report all the good hits, and report if they are bbhs
     # And record functional links
     my %qspec = (); # queryId => 1 if has specific
+    my %qspecStrong = ();
+    my %qspecCons = ();
     my %qcofit = (); # queryId => 1 if has cofit
+    my %qcofitCons = ();
     my $bhFile = "$dir/db.BestHit";
     my $nBestHit = 0;
     my $nBBH = 0;
@@ -150,8 +166,19 @@ END
             $nBBH++ if $bbh;
             print OUT join("\t", $queryId, $orgId, $locusId, $identity, $coverage, $bits, $bbh)."\n";
             if ($bbh) {
-                $qspec{$queryId} = 1 if exists $spec{$orgId}{$locusId};
+                if (exists $spec{$orgId}{$locusId}) {
+                    $qspec{$queryId} = 1;
+                    foreach my $row (@{ $spec{$orgId}{$locusId} }) {
+                        my ($group,$cond,$minfit,$maxfit,$minT,$maxT,$nInOG) = @$row;
+                        $qspecStrong{$queryId} = 1 if $minfit <= -2;
+                        $qspecCons{$queryId} = 1 if $nInOG > 1;
+                    }
+                }
                 $qcofit{$queryId} = 1 if exists $hascofit{$orgId}{$locusId};
+                if (exists $hascofitCons{$orgId}{$locusId}) {
+                    $qcofit{$queryId} = 1; # always highlight conserved cofitness
+                    $qcofitCons{$queryId} = 1;
+                }
             }
         }
     }
@@ -171,9 +198,14 @@ END
             || $desc =~ m/domain protein/i
             || $desc =~ m/related protein/i
             || $desc =~ m/transporter related/i;
-        print OUT join("\t", $queryId, $desc, $hypo ? 1 : 0, $qseq->{$queryId},
+        print OUT join("\t", $queryId, $desc,
+                       $hypo ? 1 : 0,
+                       $qseq->{$queryId},
                        $qspec{$queryId} ? 1 : 0,
-                       $qcofit{$queryId} ? 1 : 0)."\n";
+                       $qspecStrong{$queryId} ? 1 : 0,
+                       $qspecCons{$queryId} ? 1 : 0,
+                       $qcofit{$queryId} ? 1 : 0,
+                       $qcofitCons{$queryId} ? 1 : 0 )."\n";
     }
     close(OUT) || die "Error writing to $qFile";
     print STDERR "Wrote " . scalar(keys %$qseq) . " queries to $qFile\n";
