@@ -112,7 +112,8 @@ if (@$cofitResults == 0) {
     my $name = $geneName || $showId;
     print
 	start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
-	p("Select other genes to include in heatmap"),
+	# p("Select other genes to include in heatmap"), # decided this was unnecessary and distracting
+        p("&nbsp;"), # need something or hidden makes the layout wierd
 	hidden('orgId', $orgId),
 	hidden('locusId', $locusId),
 	# qq[<br><div style="position: relative;"><div class="floatbox floatbox2">],
