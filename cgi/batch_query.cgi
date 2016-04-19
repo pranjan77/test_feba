@@ -214,8 +214,8 @@ END
             push @trows, $cgi->Tr(th("Group"),
                                   th("Organism"),
                                   th("Identity"),
-                                  th("Ortholog"),
-                                  th("Cofit With"),
+                                  th({-colspan=>2}, "Ortholog"),
+                                  th({-colspan=>2}, "Cofit with"),
                                   th("Cofit"));
 
             my $bgcolor = "";
@@ -232,16 +232,16 @@ END
                 my $id2 = $gene2->{sysName} || $hitId;
                 my $desc2 = $gene2->{desc} || $hitId;
                 my $url1 = "singleFit.cgi?orgId=$orgId&locusId=$orthId";
-                my $url2 = "singleFit.cgi?orgId=$orgId&locusId=$orthId";
+                my $url2 = "singleFit.cgi?orgId=$orgId&locusId=$hitId";
                 my $urlCofit = "cofitCons.cgi?orgId=$orgId&locusId=$orthId&hitId=$hitId";
                 push @trows, $cgi->Tr({ -bgcolor => $bgcolor},
                                       td($group),
                                       td(small($orginfo->{$orgId}{genome})),
                                       td(sprintf("%.0f%%", $qOrthId{$orgId})),
-                                      td(a({-href => $url1, -title => $id1},
-                                           encode_entities($desc1))),
-                                      td(a({-href => $url2, -title => $id2},
-                                           encode_entities($desc2))),
+                                      td(small(a({-href => $url1}, $id1))), 
+                                      td(small(encode_entities($desc1))),
+                                      td(small(a({-href => $url2}, $id2))),
+                                      td(small(encode_entities($desc2))),
                                       td(a({-href => $urlCofit, -title => "compare cofitness"},
                                            sprintf("%.2f", $cofit))));
             }
