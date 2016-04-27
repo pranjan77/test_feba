@@ -327,7 +327,8 @@ sub matching_descs($$$) {
     my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
     my $sql = qq{SELECT * from Organism JOIN Gene USING (orgId)
              WHERE (
-                desc LIKE "% $geneSpec" OR desc LIKE "$geneSpec %" OR desc LIKE "% $geneSpec %"
+                desc = "$geneSpec"
+                OR desc LIKE "% $geneSpec" OR desc LIKE "$geneSpec %" OR desc LIKE "% $geneSpec %"
                 OR desc LIKE "$geneSpec-%" OR desc LIKE "$geneSpec-"
                 OR desc LIKE "% $geneSpec-%" OR desc LIKE "%-$geneSpec %"
                 OR desc LIKE "$geneSpec/%" OR desc LIKE "%/$geneSpec"
@@ -337,7 +338,31 @@ sub matching_descs($$$) {
          $orgClause
          ORDER BY genus, species, strain, locusId, sysName, gene, begin, end, desc 
          LIMIT 100;};
-         # die $sql;
+    return $dbh->selectall_arrayref($sql, { Slice => {} });
+}
+
+sub matching_seed_descs($$$) {
+    my ($dbh,$orgId,$geneSpec) = @_;
+    die if !defined $dbh || !defined $orgId || !defined $geneSpec;
+    # make the query safe to include in SQL
+    $geneSpec =~ s/^ +//;
+    $geneSpec =~ s/ +$//;
+    $geneSpec =~ s/[\"\n\r]//g;
+
+    my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
+    my $sql = qq{SELECT * FROM SeedAnnotation JOIN Gene USING (orgId,locusId) JOIN Organism USING (orgId)
+             WHERE (
+                seed_desc = "$geneSpec"
+                OR seed_desc LIKE "% $geneSpec" OR seed_desc LIKE "$geneSpec %" OR seed_desc LIKE "% $geneSpec %"
+                OR seed_desc LIKE "$geneSpec-%" OR seed_desc LIKE "$geneSpec-"
+                OR seed_desc LIKE "% $geneSpec-%" OR seed_desc LIKE "%-$geneSpec %"
+                OR seed_desc LIKE "$geneSpec/%" OR seed_desc LIKE "%/$geneSpec"
+                OR seed_desc LIKE "% $geneSpec/%" OR seed_desc LIKE "%/$geneSpec %"
+                OR seed_desc LIKE "$geneSpec,%" OR seed_desc LIKE "% $geneSpec,%"
+                )
+         $orgClause
+         ORDER BY genus, species, strain, locusId, sysName, gene, begin, end, seed_desc 
+         LIMIT 100;};
     return $dbh->selectall_arrayref($sql, { Slice => {} });
 }
 
@@ -368,7 +393,8 @@ sub matching_kgroup_descs($$$) {
 
     my $kgroups = $dbh->selectcol_arrayref(
         qq{ SELECT kgroup from KgroupDesc
-           WHERE (desc LIKE "% $geneSpec" OR desc LIKE "$geneSpec %" OR desc LIKE "% $geneSpec %"
+           WHERE (desc = "$geneSpec"
+                OR desc LIKE "% $geneSpec" OR desc LIKE "$geneSpec %" OR desc LIKE "% $geneSpec %"
                 OR desc LIKE "$geneSpec-%" OR desc LIKE "$geneSpec-"
                 OR desc LIKE "% $geneSpec-%" OR desc LIKE "%-$geneSpec %"
                 OR desc LIKE "$geneSpec/%" OR desc LIKE "%/$geneSpec"
