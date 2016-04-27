@@ -276,3 +276,26 @@ CREATE TABLE ConservedCofit (
        PRIMARY KEY (orgId,locusId,hitId,orth_orgId)
 );
 
+/* Tables with SEED Annotations, and SEED-based EC or TC numbers.
+   A gene may have more than one SEED EC#
+*/
+CREATE TABLE SEEDAnnotation (
+	orgId TEXT NOT NULL,
+        locusId TEXT NOT NULL,
+        seed_desc TEXT NOT NULL,
+        PRIMARY KEY (orgId,locusId)
+);
+
+/* Enzyme Commission or Transporter Classification numbers.
+   The Transporter Classification is described at
+   http://www.tcdb.org/faq.php#tc-system
+ */
+CREATE TABLE SEEDClass (
+       orgId TEXT NOT NULL,
+       locusId TEXT NOT NULL,
+       type INT NOT NULL, /* 1 for EC numbers, 2 for TC numbers */
+       num TEXT NOT NULL,
+       PRIMARY KEY (orgId,locusId,num)
+);
+CREATE INDEX 'SEEDClassByNum' on SEEDClass ('num');
+CREATE INDEX 'SEEDClassByOrgNum' on SEEDClass ('orgId','num');

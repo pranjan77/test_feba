@@ -111,6 +111,8 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
         die "No aaseq2 file for $org in $gdir/$org/aaseq2" unless -e "$gdir/$org/aaseq2";
         die "No swissprot hits for $org in $gdir/blast_results/sprot_$org.m8"
             unless -e "$gdir/blast_results/sprot_$org.m8";
+        print STDERR "Warning, no seedanno.tab file in $gdir/$org\n"
+            unless -e "$gdir/$org/seedanno.tab";
     }
     my $formatexe = "$Bin/blast/formatdb";
     die "formatdb not found in $Bin/blast" unless -e $formatexe;
@@ -594,6 +596,12 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
             || die "conserved_cofit.pl failed: " . join(" ", @command) . "\n";
         push @workCommands, ".import db.ConservedCofit.pairs ConservedCofit"; 
     }
+
+    # Build the SEED tables
+    system("$Bin/db_setup_SEED.pl","-gdir",$gdir,@orgs) == 0
+        || die "$Bin/db_setup_SEED.pl failed";
+    push @workCommands, ".import db.SEEDAnnotation SEEDAnnotation";
+    push @workCommands, ".import db.SEEDClass SEEDClass";
 
     # load the other data into sqlite3
     if (defined $dbfile) {
