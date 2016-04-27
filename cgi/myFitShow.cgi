@@ -143,7 +143,7 @@ if ($geneSpec =~ m/^ko:(K\d+)$/i) {
 }
 
 # Handle queries like EC:1.4.3.1
-if ($geneSpec =~ m/^ec:([0-9.-]+)$/i) {
+if ($geneSpec =~ m/^ec:([0-9A-Za-z.-]+)$/i) {
     my $ecnum = $1;
     print p("Searching for Enyzme Commission number $ecnum by TIGRFam, by KEGG ortholog group, and then by SEED annotation");
     my $hits1 = Utils::matching_domain_ec($dbh, $orgSpec, $ecnum);
