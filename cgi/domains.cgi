@@ -115,15 +115,11 @@ if (@$cond == 0) {
 
 }
 
-# %0A encodes "\n" so that it looks like fasta input.
 print
     br(),
     p(@$cond > 0 ? "Or search" : "Search",
       a({-href => "http://www.ncbi.nlm.nih.gov/Structure/cdd/wrpsb.cgi?seqinput=>${sys}%0A$seq"},
-	"Conserved Domains Database"),
-      "or",
-      a({-href => "http://core.theseed.org/FIG/seedviewer.cgi?page=FigFamViewer&fasta_seq=>${sys}%0A$seq"},
-        "FIGfams"));
+	"Conserved Domains Database"));
 
 # UniProt information, if any
 my $bhSprot = $dbh->selectrow_hashref("SELECT * from BestHitSwissProt
@@ -186,6 +182,29 @@ if (defined $bhKEGG->{keggId}) {
               "$keggOrg:$keggId").")");
 }
 
+# SEED information, if any
+my ($seed_desc) = $dbh->selectrow_array("SELECT seed_desc FROM SEEDAnnotation WHERE orgId = ? AND locusId = ?",
+                                        {}, $orgId, $locusId);
+my $seed_classes = $dbh->selectall_arrayref("SELECT type,num FROM SEEDClass WHERE orgId = ? AND locusId = ?",
+                                            {}, $orgId, $locusId);
+my @show_classes = ();
+foreach my $row (@$seed_classes) {
+    my ($type,$num) = @$row;
+    my $url_pre = $type == 1 ? "http://www.kegg.jp/dbget-bin/www_bget?ec:"
+        : "http://www.tcdb.org/search/result.php?tc=";
+    my $text = ($type == 1 ? "EC " : "TC ").$num;
+    push @show_classes, ($num =~ m/-/ ? $text
+                         : a({-href => $url_pre . $num}, $text));
+}
+
+print
+    h3("The SEED"),
+    p(defined $seed_desc ?  "Annotated as: " . $seed_desc : "No annotation"),
+    @show_classes > 0 ? p(join(", ", @show_classes)) : "",
+    p("or check the current SEED with",
+      # %0A encodes "\n" so that it looks like fasta input.
+      a({-href => "http://core.theseed.org/FIG/seedviewer.cgi?page=FigFamViewer&fasta_seq=>${sys}%0A$seq"},
+        "FIGfam search"));
 
 # print sequence
 $seq =~ s/(.{60})/$1\n/gs;
