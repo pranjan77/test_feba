@@ -35,6 +35,8 @@ my $help = $cgi->param('help') || "";
 
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
+die "Illegal orgId parameter $orgSpec" if $orgSpec ne "" & !exists $orginfo->{$orgSpec};
+
 my $orgTitle = $cgi->param('orgId') ? "in $orginfo->{$orgSpec}{genome}" : "";
 my $start = Utils::start_page("Genes matching $geneSpec $orgTitle");
 
@@ -143,7 +145,7 @@ if ($geneSpec =~ m/^ko:(K\d+)$/i) {
 # Handle queries like EC:1.4.3.1
 if ($geneSpec =~ m/^ec:([0-9.-]+)$/i) {
     my $ecnum = $1;
-    print p("Searching for Enyzme Commission number $ecnum (by TIGRFam and then by KEGG ortholog group)");
+    print p("Searching for Enyzme Commission number $ecnum by TIGRFam, by KEGG ortholog group, and then by SEED annotation");
     my $hits1 = Utils::matching_domain_ec($dbh, $orgSpec, $ecnum);
     @$hits1 = grep { !exists $used{ $_->{orgId} }{ $_->{locusId} } } @$hits1;
     if (@$hits1 > 0) {
@@ -203,6 +205,38 @@ if ($geneSpec =~ m/^ec:([0-9.-]+)$/i) {
             push @trows, $cgi->Tr(@trow);
         }
         print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
+    }
+    &end() if $count >= 100;
+    my $seedquery = qq{SELECT orgId,locusId,seed_desc,sysName,gene,desc
+                       FROM SEEDClass JOIN SEEDAnnotation USING (orgId,locusId)
+                       JOIN Gene USING (orgId,locusId)
+                       WHERE num = ? };
+    $seedquery .= qq{ AND orgId = "$orgSpec" } if $orgSpec ne "";
+    my $hits3 = $dbh->selectall_arrayref($seedquery, { Slice => {} }, $ecnum);
+    @$hits3 = grep { !exists $used{ $_->{orgId} }{ $_->{locusId} } } @$hits3;
+    if (@$hits3 > 0) {
+        print h3(b("Match by SEED's EC number for $ecnum"));
+        my @trows = ();
+        push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
+                              $cgi->th( [ 'Gene ID','Gene Name', 'Seed Annotation', 'Genome','Fitness' ] ) );
+        foreach my $gene (@$hits3) {
+            next if exists $used{ $gene->{orgId} }{ $gene->{locusId} };
+            $used{ $gene->{orgId} }{ $gene->{locusId} } = 1;
+            next if $count >= 100;
+            $count++;
+            my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
+            my @trow = map td($_), (
+                a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}",
+                    title => $gene->{desc}}, $gene->{sysName} || $gene->{locusId}),
+                $gene->{gene},
+                $gene->{seed_desc},
+                a( {href => "org.cgi?orgId=$gene->{orgId}"}, $orginfo->{$gene->{orgId}}{genome}),
+                a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle},
+                   $fitstring));
+            push @trows, Tr(@trow);
+
+        }
+        print $cgi->table({ cellspacing=>0, cellpadding=>3 }, @trows);
     }
     &end();
 }
