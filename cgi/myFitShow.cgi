@@ -87,7 +87,6 @@ if (scalar(@$hits) > 0) {
     	if ($count < 100) {
             $count++;
             $used{$gene->{orgId}}{$gene->{locusId}} = 1;
-            $gene->{has_fitness} = Utils::gene_has_fitness($dbh,$gene->{orgId},$gene->{locusId});
             my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
 			my @trow = map $cgi->td($_), (
                             a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"},
@@ -121,23 +120,22 @@ if ($geneSpec =~ m/^ko:(K\d+)$/i) {
         push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
                               $cgi->th( [ 'Gene ID','Gene Name','Description','Genome','Fitness' ] ) );
         foreach my $gene (@$hits) {
-            if ($count < 100) {
-                $count++;
-                $gene->{has_fitness} = Utils::gene_has_fitness($dbh,$gene->{orgId},$gene->{locusId});
-                my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
-                my @trow = map $cgi->td($_), (
-                    a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"},
-                       $gene->{sysName}||$gene->{locusId} ), 
-                       $gene->{gene}, 
-                       $gene->{desc},
-                       $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}},
-                               "$orginfo->{$gene->{orgId}}->{genome}"),
-                       a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
-                          $fitstring));
-                push @trows, $cgi->Tr(@trow);
-            }
+            next if $count >= 100;
+            $count++;
+            my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
+            my @trow = map $cgi->td($_), (
+                a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"},
+                   $gene->{sysName}||$gene->{locusId} ), 
+                $gene->{gene}, 
+                $gene->{desc},
+                $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}},
+                        "$orginfo->{$gene->{orgId}}->{genome}"),
+                a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
+                   $fitstring));
+            push @trows, $cgi->Tr(@trow);
         }
         print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
+        print "\n";
     }
     &end();
 }
@@ -154,7 +152,6 @@ if ($geneSpec =~ m/^ec:([0-9A-Za-z.-]+)$/i) {
         push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
 			      $cgi->th( [ 'Gene ID','Gene Name','Description','Genome', 'Domain ID', 'Fitness' ] ) );
         foreach my $gene (@$hits1) {
-            next if exists $used{ $gene->{orgId} }{ $gene->{locusId} };
             $used{ $gene->{orgId} }{ $gene->{locusId} } = 1;
             next if $count >= 100;
             $count++;
@@ -172,6 +169,7 @@ if ($geneSpec =~ m/^ec:([0-9A-Za-z.-]+)$/i) {
             push @trows, $cgi->Tr(@trow);
         }
         print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
+        print "\n";
     }
     &end() if $count >= 100;
     my $kgroups = $dbh->selectcol_arrayref("SELECT kgroup FROM KgroupEC WHERE ecnum = ?", {}, $ecnum);
@@ -187,7 +185,6 @@ if ($geneSpec =~ m/^ec:([0-9A-Za-z.-]+)$/i) {
         my $kgroupDesc = $dbh->selectall_hashref("SELECT * from KgroupDesc WHERE kgroup IN ($kgroupSpec)",
                                                  "kgroup");
         foreach my $gene (@$hits2) {
-            next if exists $used{ $gene->{orgId} }{ $gene->{locusId} };
             $used{ $gene->{orgId} }{ $gene->{locusId} } = 1;
             next if $count >= 100;
             $count++;
@@ -205,6 +202,7 @@ if ($geneSpec =~ m/^ec:([0-9A-Za-z.-]+)$/i) {
             push @trows, $cgi->Tr(@trow);
         }
         print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
+        print "\n";
     }
     &end() if $count >= 100;
     my $seedquery = qq{SELECT orgId,locusId,seed_desc,sysName,gene,desc
@@ -220,7 +218,6 @@ if ($geneSpec =~ m/^ec:([0-9A-Za-z.-]+)$/i) {
         push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
                               $cgi->th( [ 'Gene ID','Gene Name', 'Seed Annotation', 'Genome','Fitness' ] ) );
         foreach my $gene (@$hits3) {
-            next if exists $used{ $gene->{orgId} }{ $gene->{locusId} };
             $used{ $gene->{orgId} }{ $gene->{locusId} } = 1;
             next if $count >= 100;
             $count++;
@@ -237,6 +234,7 @@ if ($geneSpec =~ m/^ec:([0-9A-Za-z.-]+)$/i) {
 
         }
         print $cgi->table({ cellspacing=>0, cellpadding=>3 }, @trows);
+        print "\n";
     }
     &end();
 }
@@ -257,7 +255,6 @@ if (@$descs >= 1) {
         if ($count < 100) {
             $count++;
             $used{$gene->{orgId}}{$gene->{locusId}} = 1;
-            $gene->{has_fitness} = Utils::gene_has_fitness($dbh,$gene->{orgId},$gene->{locusId});
             my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
             my @trow = map $cgi->td($_), (
                 a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"},
@@ -288,31 +285,54 @@ if (@$kegghits > 0) {
     my $kgroupDesc = $dbh->selectall_hashref("SELECT * from KgroupDesc WHERE kgroup IN ($kgroupSpec)",
                                               "kgroup");
     foreach my $gene (@$kegghits) {
-        # the same gene could have been returned more than once
-        next if exists $used{$gene->{orgId}}{$gene->{locusId}};
         $used{$gene->{orgId}}{$gene->{locusId}} = 1;
-
-        if ($count < 100) {
-            $count++;
-            $gene->{has_fitness} = Utils::gene_has_fitness($dbh,$gene->{orgId},$gene->{locusId});
-            my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
-            my @trow = map $cgi->td($_), (
-                a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}",
-                    title => $gene->{desc}}, $gene->{sysName}||$gene->{locusId}), 
-                $gene->{gene},
-                a( {href => "http://www.kegg.jp/dbget-bin/www_bget?ko:".$gene->{kgroup} },
-                   $gene->{kgroup}),
-                $kgroupDesc->{$gene->{kgroup}}{desc},
-                $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
-                a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
-                   $fitstring));
-            push @trows, $cgi->Tr(@trow);
-        }
+        next if $count >= 100;
+        $count++;
+        $count++;
+        my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
+        my @trow = map $cgi->td($_), (
+            a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}",
+                title => $gene->{desc}}, $gene->{sysName}||$gene->{locusId}), 
+            $gene->{gene},
+            a( {href => "http://www.kegg.jp/dbget-bin/www_bget?ko:".$gene->{kgroup} },
+               $gene->{kgroup}),
+            $kgroupDesc->{$gene->{kgroup}}{desc},
+            $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
+            a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
+               $fitstring));
+        push @trows, $cgi->Tr(@trow);
     }
     print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
     print "\n"; # to allow flush
 }
 
+# match by SEED description
+my $seedhits = Utils::matching_seed_descs($dbh, $orgSpec, $geneSpec) if $count < 100;
+@$seedhits = grep { !exists $used{$_->{orgId}}{$_->{locusId}} } @$seedhits;
+if (@$seedhits > 0) {
+    print h3(b("Match by SEED description for $geneSpec:"));
+    my @trows = ();
+    push @trows, $cgi->Tr({-align =>'CENTER',-valign=>'TOP'},
+                          th(['GENE ID','Gene Name','SEED Description','Genome','Fitness']));
+    foreach my $gene (@$seedhits) {
+        $used{$gene->{orgId}}{$gene->{locusId}} = 1;
+        next if $count >= 100;
+        $count++;
+        my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
+        my @trow = map td($_), (
+            a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}",
+                title => $gene->{desc}}, $gene->{sysName}||$gene->{locusId}),
+            $gene->{gene},
+            $gene->{seed_desc},
+            $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
+            a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
+               $fitstring)
+        );
+        push @trows, $cgi->Tr(@trow);
+    }
+    print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
+    print "\n"; # to allow flush
+}
 
 # make table for domain matches if total matches < 100 so far, filtering for repeats
 my $domains;
