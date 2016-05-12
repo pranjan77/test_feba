@@ -135,7 +135,7 @@ print table({cellspacing => 0, cellpadding => 3}, @trows),
 print p("Or see all specific phenotypes in ",
         a({href => "spec.cgi?orgId=$orgId&expGroup=" . uri_escape($expGroup)}, $expGroup),
         " experiments for $orginfo->{$orgId}{genome}")
-    if defined $expGroup && @$exps > 0;
+    if defined $expGroup && @$exps > 0 && $orgId ne "";
 
 $dbh->disconnect();
 Utils::endHtml($cgi);
