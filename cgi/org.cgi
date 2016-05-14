@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 #######################################################
-## orgGroup.cgi
+## org.cgi
 ##
 ## Copyright (c) 2015 University of California
 ##
