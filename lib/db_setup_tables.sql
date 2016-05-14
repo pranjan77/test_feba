@@ -299,3 +299,35 @@ CREATE TABLE SEEDClass (
 );
 CREATE INDEX 'SEEDClassByNum' on SEEDClass ('num');
 CREATE INDEX 'SEEDClassByOrgNum' on SEEDClass ('orgId','num');
+
+/* KEGG Maps */
+CREATE TABLE ECInfo (
+	ecnum TEXT NOT NULL,
+        ecdesc TEXT NOT NULL,
+        PRIMARY KEY (ecnum)
+);
+
+CREATE TABLE KEGGCompound (
+	compound TEXT NOT NULL,
+        name text NOT NULL,
+        formula TEXT, /* may be NULL */
+        mass REAL, /* may be NULL */
+        PRIMARY KEY (compound)
+);
+
+/* locations of clickable objects on KEGG maps */
+CREATE TABLE KEGGConf (
+	mapId TEXT NOT NULL,
+        objectId TEXT NOT NULL,
+        /* 0=compound; 1=ecnum; 2=map; for type 2, has a map prefix that is not in KEGGMap.mapId */
+        type INT NOT NULL,
+        url TEXT NOT NULL, /* from KEGG; obsolete I think */
+        coord TEXT NOT NULL, /* rect:x,y,x,y or circ:x,y,r or poly:x,y,... */
+        PRIMARY KEY (mapId,objectId,type,coord) /* object can be on map more than once */
+);
+
+CREATE TABLE KEGGMap (
+	mapId TEXT NOT NULL,
+        title TEXT NOT NULL,
+        PRIMARY KEY (mapId)
+);

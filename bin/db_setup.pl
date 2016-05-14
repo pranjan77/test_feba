@@ -121,6 +121,15 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
         die "No such file: $kegghits\n" unless -e $kegghits;
     }
 
+    my @keggtables = qw{ECInfo KEGGCompound KEGGConf KEGGMap};
+    foreach my $keggtab (@keggtables) {
+        my $file = "$Bin/../kegg/$keggtab";
+        die "No such file: $file" unless -e $file;
+        push @workCommands, ".import $file $keggtab";
+    }
+    push @workCommands, "UPDATE KEGGCompound SET formula = NULL WHERE formula = 'NULL';";
+    push @workCommands, "UPDATE KEGGCompound SET mass = NULL WHERE mass = 'NULL';";
+
     print STDERR "Reading " . scalar(@orgs) . " organisms from $indir\n";
 
     my $tmpdir = $ENV{TMPDIR} || "/tmp";
