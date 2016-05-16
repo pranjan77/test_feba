@@ -24,6 +24,7 @@ use CGI qw(-nosticky :standard Vars);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
 use List::Util 'sum';
+use HTML::Entities;
 
 use lib "../lib";
 use Utils;
@@ -125,7 +126,6 @@ if ($around) {
     $tabs = qq[<div id="ntcontent">];
 }
 
-
 print $cgi->header;
 print $start, $tabs;
 
@@ -155,6 +155,22 @@ if ($showAll) {
 }
 
 print h2("Fitness for " . scalar(@genes) . " genes in " . $cgi->a({href => "org.cgi?orgId=". $orginfo->{$orgId}->{orgId}}, "$genome"),);
+
+if (sum(map { $_->{nExps} > 0 ? 1 : 0} @genes) == 0) {
+    print
+        h3("No fitness data for these genes"),
+        "<ul>";
+    foreach my $gene (@genes) {
+        print li(a({href => "geneOverview.cgi?orgId=$orgId&gene=$gene->{locusId}"},
+                   $gene->{sysName} || $gene->{locusId})
+                 . " : " . encode_entities($gene->{desc}) );
+    }
+    print "</ul>";
+    $dbh->disconnect();
+    Utils::endHtml($cgi);
+    exit(0);
+}
+
 
 # corner box
 print
@@ -219,9 +235,6 @@ print ".<br><br>";
 
 
 print Utils::geneArrows(\@genes, $centralId, undef, undef) if $around;
-
-Utils::fail($cgi,"None of the genes has fitness data")
-    if (sum(map { $_->{nExps} > 0 ? 1 : 0} @genes) == 0);
 
 my @trows = ();
 my @headings = qw{Group Condition};
