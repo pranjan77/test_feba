@@ -38,7 +38,7 @@ Utils::fail($cgi,"sequence information is only available for protein-coding gene
 
 # domains table
 # gather data and slice it into an array of hashes
-my $cond = $dbh->selectall_arrayref(qq{SELECT domainDb, orgId, locusId, domainId, domainName, begin, end, score, evalue, definition FROM GeneDomain WHERE orgId=? AND locusId=? ORDER BY begin;},
+my $cond = $dbh->selectall_arrayref(qq{SELECT domainDb, orgId, locusId, domainId, domainName, begin, end, score, evalue, definition, ec FROM GeneDomain WHERE orgId=? AND locusId=? ORDER BY begin;},
     { Slice => {} },
     $orgId, $locusId);
 
@@ -68,51 +68,52 @@ print
     p("Description:", $gene->{desc}),
     h3("Domains");
 
+my %ecall = (); # ec number => 1, across all assignment methods
+
 if (@$cond == 0) {
-	print "No PFam or TIGRFam domains were found in this protein."
+    print "No PFam or TIGRFam domains were found in this protein."
 } else {
-	#create domains table
-	my @headings = qw{Family ID Coverage EValue}; # Begin End};
-	my @trows = ( Tr({ -valign => 'top', -align => 'center' }, map { th($_) } \@headings) );
-	foreach my $row (@$cond) {
-		# display result row by row
-		my $len = $row->{end}-$row->{begin}; 
-		my $begin = $row->{begin};
-		my $newBegin = $begin;
-		my $newLen = $len;
-		my $newSeqLen = $seqLen;
-		if ($seqLen > 600) {
-			$newBegin = 600*$begin/$seqLen;
-			$newLen = 600*$len/$seqLen;
-			$newSeqLen = 600;
-		}
-		if ($row->{domainDb} eq 'PFam') {
-	    	push @trows, Tr({ -valign => 'top', -align => 'left' },
-	    	td([ $row->{domainName}, #name/description
-			 	a({href => "http://pfam.xfam.org/family/$row->{domainId}"},
-			 	$row->{domainId}), #ID
-			 	a({title=>"Amino acids $begin to $row->{end} ($len) of $seqLen"}, div({class=>"line"}, img({src=>"../images/grayHorizLine.png", width=>"$newSeqLen", height=>'7'}), div({class=>"line2", style=>"left:$newBegin".'px'}, img({src=>"../images/darkcyan.png", height=>'7', width=>"$newLen"})))),#$len, # $row->{}, #length diagram: end-begin
-			 	# $row->{score}, #score
-			 	a({title=>"Score: $row->{score}"},$row->{evalue}), #evalue with hover score
-			 	# $row->{begin}, #begin
-			 	# $row->{end}, #end
-		 	]))
-		} elsif ($row->{domainDb} eq 'TIGRFam') {
-			push @trows, Tr({ -valign => 'top', -align => 'left' },
-			td([ $row->{definition} || $row->{domainName}, #name/description
-			 	a({href => "http://www.jcvi.org/cgi-bin/tigrfams/HmmReportPage.cgi?acc=$row->{domainId}"},
-			 	$row->{domainId}), #ID
-			 	a({title=>"Amino acids $begin to $row->{end} ($len) of $seqLen"}, div({class=>"line"}, img({src=>"../images/grayHorizLine.png", width=>"$newSeqLen", height=>'7'}), div({class=>"line2", style=>"left:$newBegin".'px'}, img({src=>"../images/chocolate.png", height=>'7', width=>"$newLen"})))), # $len, # $row->{}, #length diagram: end-begin
-			 	# $row->{score}, #score
-			 	a({title=>"Score: $row->{score}"},$row->{evalue}), #evalue with hover score
-			 	# $row->{begin}, #begin
-			 	# $row->{end}, #end
-			 ])),
-		}
-	}
-
-	print table({cellspacing => 0, cellpadding => 3}, @trows);
-
+    #create domains table
+    my @headings = qw{Family ID Coverage EValue}; # Begin End};
+    my @trows = ( Tr({ -valign => 'top', -align => 'center' }, map { th($_) } \@headings) );
+    foreach my $row (@$cond) {
+        # display result row by row
+        my $len = $row->{end}-$row->{begin}; 
+        my $begin = $row->{begin};
+        my $newBegin = $begin;
+        my $newLen = $len;
+        my $newSeqLen = $seqLen;
+        if ($seqLen > 600) {
+            $newBegin = 600*$begin/$seqLen;
+            $newLen = 600*$len/$seqLen;
+            $newSeqLen = 600;
+        }
+        if ($row->{domainDb} eq 'PFam') {
+            push @trows, Tr({ -valign => 'top', -align => 'left' },
+                            td([ $row->{domainName}, #name/description
+                                 a({href => "http://pfam.xfam.org/family/$row->{domainId}"},
+                                   $row->{domainId}), #ID
+                                 a({title=>"Amino acids $begin to $row->{end} ($len) of $seqLen"}, div({class=>"line"}, img({src=>"../images/grayHorizLine.png", width=>"$newSeqLen", height=>'7'}), div({class=>"line2", style=>"left:$newBegin".'px'}, img({src=>"../images/darkcyan.png", height=>'7', width=>"$newLen"})))),#$len, # $row->{}, #length diagram: end-begin
+                                 # $row->{score}, #score
+                                 a({title=>"Score: $row->{score}"},$row->{evalue}), #evalue with hover score
+                                 # $row->{begin}, #begin
+                                 # $row->{end}, #end
+                               ]));
+        } elsif ($row->{domainDb} eq 'TIGRFam') {
+            push @trows, Tr({ -valign => 'top', -align => 'left' },
+                            td([ $row->{definition} || $row->{domainName}, #name/description
+                                 a({href => "http://www.jcvi.org/cgi-bin/tigrfams/HmmReportPage.cgi?acc=$row->{domainId}"},
+                                   $row->{domainId}), #ID
+                                 a({title=>"Amino acids $begin to $row->{end} ($len) of $seqLen"}, div({class=>"line"}, img({src=>"../images/grayHorizLine.png", width=>"$newSeqLen", height=>'7'}), div({class=>"line2", style=>"left:$newBegin".'px'}, img({src=>"../images/chocolate.png", height=>'7', width=>"$newLen"})))), # $len, # $row->{}, #length diagram: end-begin
+                                 # $row->{score}, #score
+                                 a({title=>"Score: $row->{score}"},$row->{evalue}), #evalue with hover score
+                                 # $row->{begin}, #begin
+                                 # $row->{end}, #end
+                               ]));
+            $ecall{ $row->{ec} } = 1 if $row->{ec} ne "";
+        }
+    }
+    print table({cellspacing => 0, cellpadding => 3}, @trows);
 }
 
 print
@@ -165,6 +166,7 @@ if (defined $bhKEGG->{keggId}) {
                 } else {
                     push @ecdesc, a({-href => "http://www.kegg.jp/dbget-bin/www_bget?ec:$ec"}, $ec);
                 }
+                $ecall{$ec} = 1;
             }
             my $ecdesc = join(" ", @ecdesc);
             $ecdesc = "[EC: $ecdesc]" if $ecdesc ne "";
@@ -195,6 +197,7 @@ foreach my $row (@$seed_classes) {
     my $text = ($type == 1 ? "EC " : "TC ").$num;
     push @show_classes, ($num =~ m/-/ ? $text
                          : a({-href => $url_pre . $num}, $text));
+    $ecall{$num} = 1 if $type == 1;
 }
 
 print
@@ -205,6 +208,28 @@ print
       # %0A encodes "\n" so that it looks like fasta input.
       a({-href => "http://core.theseed.org/FIG/seedviewer.cgi?page=FigFamViewer&fasta_seq=>${sys}%0A$seq"},
         "FIGfam search"));
+
+if (keys(%ecall) > 0) {
+    my @ec = sort keys %ecall;
+    my @ecspec = map { "'" . $_ . "'" } @ec;
+    my $ecspec = join(",", @ecspec);
+    my $maps = $dbh->selectall_arrayref(qq{SELECT DISTINCT mapId,title
+                                           FROM KEGGConf JOIN KEGGMap USING (mapId)
+                                           WHERE type=1 AND objectId IN ( $ecspec )
+                                           ORDER BY title});
+    if (scalar(@$maps) > 0) {
+        my @rendered = ();
+        foreach my $row (@$maps) {
+            my ($mapId,$mapdesc) = @$row;
+            push @rendered, li(a({href => "keggmap.cgi?orgId=$orgId&mapId=$mapId"}, $mapdesc));
+        }
+        print
+            h3("Metabolic Maps"),
+            "<ul>",
+            join("", @rendered),
+            "</ul>";
+    }
+}
 
 # print sequence
 $seq =~ s/(.{60})/$1\n/gs;
