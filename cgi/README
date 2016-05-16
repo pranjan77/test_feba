@@ -3,8 +3,12 @@ See SETUP for instructions on the files and perl utilities that are
 required for this to work. The key directories are:
 cgi/ -- CGI scripts
 cgi_data/ -- sqlite3 database and BLAST database
+images/ -- accessory files such as images and javascript libraries
+d3js/ -- javascript library for D3.js
+lib/ -- shared functions, especially Utils.pm
+kegg/maps/ -- KEGG metabolic maps
 tmp/ -- temporary files
-lib/Utils.pm -- shared functions
+jobdata/ -- store results from batch fitness BLAST
 
 Site map:
 
