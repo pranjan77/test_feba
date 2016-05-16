@@ -102,7 +102,7 @@ if (defined $addexp && $addexp ne "") {
     my @expsNew = @{ Utils::matching_exps($dbh,$orgId,$addexp) };
     if (@expsNew == 0) {
         print header;
-        Utils::fail($cgi, qq{No experiment matching "$addexp"}); # XXX
+        Utils::fail($cgi, qq{No experiment matching "$addexp"});
     }
     # else
     my %oldExps = map { $_ => 1 } @expNames;
