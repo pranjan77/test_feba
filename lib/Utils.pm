@@ -707,6 +707,19 @@ sub commify($) {
     return $_;
 }
 
+sub OrgSelector($$) {
+    my ($orgDefault,$orginfo) = @_;
+    my $out = qq{ <SELECT name="orgId"> };
+    my %orgNames = map { $_ => $orginfo->{$_}{genome} } keys(%$orginfo);
+    my @orgs = sort { $orgNames{$a} cmp $orgNames{$b} } keys(%orgNames);
+    foreach my $orgId (@orgs) {
+        my $selected = $orgId eq $orgDefault ? "SELECTED" : "";
+        $out .= qq{ <option value="$orgId" $selected >$orgNames{$orgId}</option> };
+    }
+    $out .= "</select>";
+    return $out;
+}
+
 #END 
 
 return 1;
