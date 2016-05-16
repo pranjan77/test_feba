@@ -297,8 +297,47 @@ if ($show ne "specific") {
           a({href => "keggmap.cgi?mapId=01100&orgId=$orgId&expName=$expName"}, "overview map"),
           "or",
           a({href => "keggmaplist.cgi?orgId=$orgId&expName=$expName"}, "list of maps")."." );
+
+    if (@$spec > 0) {
+        # try to highlight useful maps that contain genes with specific phenotypes
+        my $locusIn = join(",", map "'".$_->{locusId}."'", @$spec);
+        my %specEc = (); # ec => 1 for those locusIds
+        my $ecTIGR = $dbh->selectcol_arrayref(
+            "SELECT ec FROM GeneDomain WHERE orgId = ? AND locusId IN ( $locusIn );",
+            {}, $orgId);
+        foreach my $ec (@$ecTIGR) { $specEc{$ec} = 1; }
+        my $ecKEGG = $dbh->selectcol_arrayref(
+            qq{ SELECT ecnum FROM BestHitKEGG
+                JOIN KEGGMember USING (keggOrg,keggId)
+                JOIN KgroupEC USING (kgroup)
+                WHERE orgId = ? AND locusId IN ( $locusIn ); },
+            {}, $orgId);
+        foreach my $ec (@$ecKEGG) { $specEc{$ec} = 1; }
+        my $ecSEED = $dbh->selectcol_arrayref(
+            "SELECT num FROM SEEDClass WHERE orgId = ? AND locusId IN ( $locusIn ) AND type = 1;",
+            {}, $orgId);
+        foreach my $ec (@$ecSEED) { $specEc{$ec} = 1; }
+        if (keys(%specEc) > 0) {
+            my $ecIn = join(",", map "'".$_."'", keys %specEc);
+            my $maps = $dbh->selectall_arrayref(
+                qq{ SELECT mapId, title, COUNT(DISTINCT objectId) nEc
+                    FROM KEGGConf JOIN KEGGMap USING (mapId)
+                    WHERE objectId IN ( $ecIn ) AND type=1
+                    GROUP BY mapId
+                    ORDER BY nEc DESC });
+            if (scalar(@$maps) > 0) {
+                my @mapShow = ();
+                foreach my $map (@$maps) {
+                    my ($mapId,$title,$nEc) = @$map;
+                    push @mapShow, li(a({href => "keggmap.cgi?orgId=$orgId&expName=$expName&mapId=$mapId"},
+                                        $title));
+                }
+                print p("Maps containing gene(s) with specific phenotypes:",
+                        ul(@mapShow));
+            }
+        }
+    }
 }
-    
 $dbh->disconnect();
 Utils::endHtml($cgi);
 
