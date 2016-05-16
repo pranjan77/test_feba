@@ -76,6 +76,7 @@ exp.cgi -- for an experiment, show metrics, or top genes
 		each gene => myFitShow.cgi, each cell => orthFit.cgi and strainTable.cgi
 	compare to => compareExps.cgi
 	across all organisms => orthCond.cgi
+        keggmaps => keggmap.cgi, keggmaplist.cgi
 compareExps.cgi -- interactive scatterplot to compare two experiments
 	links to exp.cgi
 	link to itself to change which experiments to show
@@ -98,7 +99,7 @@ spec.cgi -- specific phenotypes of a certain type for an organism
         [and to org.cgi]
 orgAll.cgi -- links to org.cgi and exps.cgi
 # metabolic maps
-keggmap.cgi -- show a kegg map
+keggmap.cgi -- show a kegg map and optionally color code by gene presence and fitness
 	links to organism page (if specified), list of metabolic maps (keggmaplist.cgi),
         and per-EC links: to singleFit.cgi or genesFit.cgi (if orgId)
         or else ec number search (myFitShow.cgi)
