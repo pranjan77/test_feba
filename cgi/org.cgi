@@ -91,7 +91,16 @@ my $specN = $dbh->selectall_hashref(
         GROUP BY expGroup },
     "expGroup", { Slice => {} }, $orgId);
 if (scalar(keys %$specN) > 0) {
-    print h3("Specific Phenotypes");
+    my ($nSpecGene) = $dbh->selectrow_array(
+        "SELECT COUNT(DISTINCT locusId) FROM SpecificPhenotype WHERE orgId=?",
+        {}, $orgId);
+    my ($nConsSpec) = $dbh->selectrow_array(
+        "SELECT COUNT(DISTINCT locusId) FROM SpecOG WHERE orgId=? AND nInOG > 1",
+        {}, $orgId);
+    print
+        h3("Specific Phenotypes"),
+        p("$nSpecGene genes with specific phenotypes,  and $nConsSpec with conserved-specific phenotypes.");
+    
     my @trows = ();
     push @trows, $cgi->Tr({-valign => "top"}, $cgi->th([ 'Group', '# Conditions', '# Genes' ]));
     foreach my $expGroup (sort keys %$specN) {
