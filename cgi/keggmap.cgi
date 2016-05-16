@@ -110,7 +110,8 @@ if ($orgId) {
     my $expinfo = Utils::expinfo($dbh,$orgId);
     foreach my $expName (@expNames) {
         die "No such experiment: $expName" unless exists $expinfo->{$expName};
-        push @expShow, a({href => "exp.cgi?orgId=$orgId&expName=$expName", title => $expName},
+        push @expShow, a({href => "exp.cgi?orgId=$orgId&expName=$expName",
+                          title => "$expName: $expinfo->{$expName}{expDescLong}"},
                          $expinfo->{$expName}{expDesc});
         $expspecParams .= "&expName=$expName";
     }
