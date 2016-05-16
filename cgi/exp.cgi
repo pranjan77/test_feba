@@ -262,19 +262,21 @@ if (@fit > 0) { # show the table
 }
 
 if ($show ne "specific") {
+
+    print h3("Specific Phenotypes");
     if (@$spec > 0) {
 	print p(a({href => "exp.cgi?orgId=$orgId&expName=$expName&show=specific"},
-			      "Specific phenotypes for " . scalar(@$spec). " genes in this experiment"));
+                  "For " . scalar(@$spec). " genes in this experiment"));
         print p(a({href => "spec.cgi?orgId=$orgId&expGroup=".uri_escape($exp->{expGroup})."#".$exp->{condition_1} },
-                  "Specific phenotypes for $exp->{expGroup} $exp->{condition_1} in $orginfo->{$orgId}{genome}"))
+                  "For $exp->{expGroup} $exp->{condition_1} in $orginfo->{$orgId}{genome}"))
             if $exp->{expGroup} && $exp->{condition_1};
     }  else {
-	print $cgi->p("No genes had specific phenotypes in this experiment.");
+	print $cgi->p("None in this experiment");
         if ($exp->{expGroup}) {
             print
                 p(a({href => "spec.cgi?orgId=$orgId&expGroup=" . uri_escape($exp->{expGroup})
                          . ($exp->{condition_1} eq "" ? "" : "#" . uri_escape($exp->{condition_1}))},
-                    "Specific phenotypes for $orginfo->{$orgId}{genome} in $exp->{expGroup} experiments"));
+                    "For $orginfo->{$orgId}{genome} in $exp->{expGroup} experiments"));
         }
     }
 }
@@ -284,7 +286,17 @@ if ($exp->{condition_1} ne "") {
     print
         p(a({href => "orthCond.cgi?expGroup=" . uri_escape($exp->{expGroup})
                  . "&condition1=" . uri_escape($exp->{condition_1})},
-            "Specific phenotypes for $exp->{expGroup} $exp->{condition_1} across organisms"));
+            ($show eq "specific" ? "Specific phenotypes for" : "For")
+            . " $exp->{expGroup} $exp->{condition_1} across organisms"));
+}
+
+if ($show ne "specific") {
+    print
+        h3("Metabolic Maps"),
+        p("Color code by fitness: see",
+          a({href => "keggmap.cgi?mapId=01100&orgId=$orgId&expName=$expName"}, "overview map"),
+          "or",
+          a({href => "keggmaplist.cgi?orgId=$orgId&expName=$expName"}, "list of maps")."." );
 }
     
 $dbh->disconnect();
