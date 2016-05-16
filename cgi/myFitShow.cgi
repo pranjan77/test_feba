@@ -143,7 +143,9 @@ if ($geneSpec =~ m/^ko:(K\d+)$/i) {
 # Handle queries like EC:1.4.3.1
 if ($geneSpec =~ m/^ec:([0-9A-Za-z.-]+)$/i) {
     my $ecnum = $1;
-    print p("Searching for Enyzme Commission number $ecnum by TIGRFam, by KEGG ortholog group, and then by SEED annotation");
+    my ($ecdesc) = $dbh->selectrow_array("SELECT ecdesc FROM ECInfo WHERE ecnum = ? ;", {}, $ecnum);
+    $ecdesc = "unknown" if !defined $ecdesc;
+    print p("Searching for Enyzme Commission number $ecnum ($ecdesc) by TIGRFam, by KEGG ortholog group, and then by SEED annotation");
     my $hits1 = Utils::matching_domain_ec($dbh, $orgSpec, $ecnum);
     @$hits1 = grep { !exists $used{ $_->{orgId} }{ $_->{locusId} } } @$hits1;
     if (@$hits1 > 0) {
