@@ -39,7 +39,7 @@ orthFit.cgi -- for a gene in a condition, show table of fitness across orthologs
 	each experiment => exp.cgi
 	show all homologs => mySeqSearch.cgi
 	across all organisms => orthCond.cgi
-genesFit.cgi -- show fitness of multiple genes
+genesFit.cgi -- show fitness of multiple genes or nearby genes
 	each individual gene => myFitShow.cgi
 	each experiment => exp.cgi
         fitness cell => strainTable.cgi
@@ -50,14 +50,20 @@ cofit.cgi -- top cofit hits for a gene
 	checkboxes => genesFit.cgi
 	fitness data (for query gene) => myFitShow.cgi
 	homologs => mySeqSearch.cgi
-compareGenes.cgi => geneOverview.cgi for each gene,
+domains.cgi -- the proteins page
+	includes domains (PFam/TIGRFam), SwissProt & KEGG best hits, SEED annotations,
+        metabolic maps (=> keggmap.cgi) if it has EC numbers,
+        and the protein sequence
+mySeqSearch.cgi -- a list of hits, linking to myFitShow.cgi for each (if it has data)
+	also each organism links to org.cgi
+#
+compareGenes.cgi -- compare fitness of two genes
+	=> geneOverview.cgi for each gene,
 	exp.cgi for selected experiments (in table),
 	genesFit.cgi (of the same two genes)
 	=> itself (change which comparison to show)
 	=> itself to select which of multiple matching genes to compare to
         in dynamic table, fitness values => strainTable.cgi
-mySeqSearch.cgi -- a list of hits, linking to myFitShow.cgi for each (if it has data)
-	also each organism links to org.cgi
 # experiment-wise pages
 exps.cgi -- matching experiments => exp.cgi
 	across all organisms => orthCond.cgi (if a condition query was made)
@@ -78,6 +84,20 @@ cond.cgi -- list all conditions in a group
 orthCond.cgi -- specific sick genes for a condition across all organisms
 	link to myFitShow.cgi per gene or exp.cgi per experiment
 	link to orthFit.cgi to compare a cell
+# per-organism pages
+org.cgi -- links to experiments (exps.cgi), specific phenotypes (spec.cgi),
+	metabolic maps (keggmap.cgi and keggmaplist.cgi), and downloads
+        (createFitData.cgi, createCofitData.cgi, spec.cgi, createExpData.cgi, orgSeqs.cgi)
+spec.cgi -- specific phenotypes of a certain type for an organism
+	links to condition overview comparison (orthCond.cgi), per-gene page (singleFit.cgi),
+	and comparative analysis of gene fitness in a condition (orthFit.cgi)
+        [and to org.cgi]
+orgAll.cgi -- links to org.cgi and exps.cgi
+# metabolic maps
+keggmap.cgi -- show a kegg map
+	links to organism page (if specified), list of metabolic maps (keggmaplist.cgi),
+        and per-EC links: to singleFit.cgi or genesFit.cgi (if orgId)
+        or else ec number search (myFitShow.cgi)
 
 Dead pages:
 getSeq.cgi -- sequence of gene (if it is a protein)
