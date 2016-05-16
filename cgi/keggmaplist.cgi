@@ -11,7 +11,7 @@
 #
 # Show list of KEGG maps
 #
-# optional: orgId, to specify which enzymes to mask out ans which to search for members in
+# optional: orgId, expName (multiple), which are passed on to keggmap.cgi
 
 use strict;
 use CGI qw(:standard Vars);
@@ -24,6 +24,7 @@ use Utils;
 my $cgi=CGI->new;
 my $orgId = $cgi->param('orgId');
 $orgId = "" if !defined $orgId;
+my @expName = $cgi->param('expName');
 
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
@@ -46,6 +47,9 @@ print
 
 my $URLsuffix = "";
 $URLsuffix .= "&orgId=$orgId" if $orgId;
+foreach my $expName (@expName) {
+    $URLsuffix .= "&expName=$expName";
+}
 
 my $maps = $dbh->selectall_arrayref("SELECT mapId,title FROM KEGGMap ORDER BY title");
 foreach my $row (@$maps) {
