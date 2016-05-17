@@ -38,14 +38,22 @@ my $genes = $dbh->selectall_hashref("SELECT * FROM Gene WHERE orgId = ?",
                                     "locusId", # field to index hash by
                                     {Slice => {}}, $orgId);
 die "Illegal orgId" if scalar(keys %$genes) == 0;
-my $cofitness = $dbh->selectall_arrayref("SELECT * FROM Cofit WHERE orgId = ? ORDER BY locusId,rank",
+my $cofitness = $dbh->selectall_arrayref(qq{ SELECT * FROM Cofit WHERE orgId = ? AND rank <= 20
+                                             ORDER BY locusId,rank },
                                         {Slice => {}}, $orgId);
+my $cons = $dbh->selectall_arrayref(qq{ SELECT DISTINCT locusId, hitId FROM ConservedCofit
+                                        WHERE orgId = ? },
+                                    {}, $orgId);
+my %cons = (); # locusId => hitId > 1 if conserved
+foreach my $row (@$cons) {
+    $cons{ $row->[0] }{ $row->[1] } = 1;
+}
 
 print "Content-Type:application/x-download\n";
 print "Content-Disposition: attachment; filename=cofit_organism_$orgId.txt\n\n";
 
 # print the header row
-print join("\t", qw{orgId locusId sysName name desc hitId hitSysName hitName hitDesc rank cofit})."\n";
+print join("\t", qw{orgId locusId sysName name desc hitId hitSysName hitName hitDesc rank cofit conserved})."\n";
 
 # print the data row by row
 foreach my $row (@$cofitness) {
@@ -58,5 +66,7 @@ foreach my $row (@$cofitness) {
     print join("\t", $row->{orgId},
                $locusId, $gene->{sysName}, $gene->{gene}, $gene->{desc},
                $hitId, $hit->{sysName}, $hit->{gene}, $hit->{desc},
-               $row->{rank}, $row->{cofit})."\n";
+               $row->{rank}, $row->{cofit},
+               exists $cons{$locusId}{$hitId} ? "TRUE" : "FALSE"
+        )."\n";
 }
