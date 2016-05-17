@@ -403,6 +403,8 @@ FEBA_Fit = function(expsUsed, all, genes,
 	     		   list(locusId=all$locusId[strainsUsed & all$f >= 0.5]), sum);
 	    genesUsed12 = intersect(d1$locusId[ MyRowMin(d1[,-1,drop=F]) >= minT0GeneSide],
 		      		    d2$locusId[ MyRowMin(d2[,-1,drop=F]) >= minT0GeneSide]);
+	    # Should the counts for each half of the gene (d1,d2) be saved as a diagnostic?
+            # t0_gN should be enough for now
 	    if (length(genesUsed12) < 100) stop(sprintf("genesUsed12 has just %d entries -- check %s/t0_gN",
             			                        length(genesUsed12), dir));
 	}
