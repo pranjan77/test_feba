@@ -44,12 +44,22 @@ if ($download) {
                                            WHERE orgId = ?
                                            ORDER BY expGroup, condition_1, locusId, fit },
                                          { Slice => {} }, $orgId);
+    my $cons = $dbh->selectall_arrayref(qq{SELECT locusId,expGroup,condition
+                                             FROM SpecOG
+                                             WHERE orgId = ? AND nInOG > 1 },
+                                          { Slice => {} }, $orgId);
+    my %cons = (); # expGroup => condition_1 => locusId => 1 if nInOG > 1
+    foreach my $row (@$cons) {
+        $cons{ $row->{expGroup} }{ $row->{condition} }{ $row->{locusId} } = 1;
+    }
     print ("Content-Type:application/x-download\n");
     print "Content-Disposition: attachment; filename=specific_phenotypes_$orgId.txt\n\n";
-    print join("\t", qw{expGroup expName condition_1 locusId sysName gene desc fit t})."\n";
+    print join("\t", qw{expGroup expName condition_1 locusId sysName gene desc fit t conserved})."\n";
     foreach my $row (@$spec) {
         print join("\t", $row->{expGroup}, $row->{expName}, $row->{condition_1},
-                   $row->{locusId}, $row->{sysName}, $row->{gene}, $row->{desc}, $row->{fit}, $row->{t})."\n";
+                   $row->{locusId}, $row->{sysName}, $row->{gene}, $row->{desc}, $row->{fit}, $row->{t},
+                   exists $cons{ $row->{expGroup} }{ $row->{condition_1} }{ $row->{locusId} } ? "TRUE" : "FALSE"
+            )."\n";
     }
     exit(0);
 }
