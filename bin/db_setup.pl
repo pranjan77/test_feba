@@ -10,7 +10,6 @@ use DBI;
 my $metadir = "$Bin/../metadata";
 my $gdir = "g";
 my $xrefs = "img.xrefs";
-my $kegghits = "besthit.kegg";
 
 my $usage = <<END
 Usage: db_setup.pl [ -db db_file_name ]
@@ -22,11 +21,11 @@ Other optional arguments:
     -metadir $metadir
     -gdir $gdir
     -xrefs $xrefs (from IMGXRefs.pl, or use an empty argument to skip it)
-    -kegghits $kegghits (or use '-' to skip loading KEGG hits)
 
     Sets up the cgi_data/ directory, especially the sqlite database, by reading from
     the html directories indir/nickname1 ... indir/nicknameN
     (created by BarSeqR.pl)
+    and the g directories gdir/nickname1 ... gdir/nicknameN
     Also sets up the BLAST database (cgi_data/aaseqs).
 
     The orginfo file should include all of the columns for the Orginfo
@@ -80,8 +79,7 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
                 'metadir=s' => \$metadir,
                 'gdir=s' => \$gdir,
                 'outdir=s' => \$outdir,
-                'xrefs=s' => \$xrefs,
-                'kegghits=s' => \$kegghits)
+                'xrefs=s' => \$xrefs)
      && defined $indir && defined $orgfile && defined $orthfile)
         || die $usage;
     my @orgs = @ARGV;
@@ -103,6 +101,7 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
         die "Not a directory: $outdir\n" if !-d $outdir;
     }
 
+    my $load_kegg = 1;
     foreach my $org (@orgs) {
         die "No such directory: $indir/$org" unless -d "$indir/$org";
         foreach my $file (qw{.FEBA.success genes expsUsed fit_quality.tab fit_logratios_good.tab fit_t.tab}) {
@@ -113,13 +112,14 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
             unless -e "$gdir/blast_results/sprot_$org.m8";
         print STDERR "Warning, no seedanno.tab file in $gdir/$org\n"
             unless -e "$gdir/$org/seedanno.tab";
+        if (! -e "$gdir/$org/besthit.kegg") {
+            print STDERR "Warning, no kegg besthit file for $org in $gdir/$org/besthit.kegg\n";
+            print STDERR "Skipping KEGG\n";
+            $load_kegg = 0;
+        }
     }
     my $formatexe = "$Bin/blast/formatdb";
     die "formatdb not found in $Bin/blast" unless -e $formatexe;
-
-    if (defined $dbfile && $kegghits ne '-') {
-        die "No such file: $kegghits\n" unless -e $kegghits;
-    }
 
     my @keggtables = qw{ECInfo KEGGCompound KEGGConf KEGGMap};
     foreach my $keggtab (@keggtables) {
@@ -673,9 +673,10 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
             unlink($file);
         }
 
-        if ($kegghits ne '-') {
-            system("$Bin/db_setup_kegg.pl", "-db", $dbfile, "-kegghits", $kegghits, "-dir", $outdir) == 0
-                || die "db_setup_kegg.pl on $kegghits failed";
+        if ($load_kegg) {
+            my @inputs = map "$gdir/$_/besthit.kegg", @orgs;
+            system("$Bin/db_setup_kegg.pl", "-db", $dbfile, "-dir", $outdir, @inputs) == 0
+                || die "db_setup_kegg.pl failed";
         } else {
             print STDERR "Skipping kegg hits\n";
         }
