@@ -47,7 +47,7 @@ otax orth1 orth2 orank ocofit.
     die "Must have pairs of organism cofitness_file\n" unless scalar(@ARGV) % 2 == 0;
     my %cofitfiles = @ARGV; # organism => file
 
-    # taxa: taxonomyId => locusId => 1
+    # taxa: taxonomyId or nickname => locusId => 1
     # orth: locusId => taxonomyId => orthologId if it exists
     my ($taxa,$orth) = ReadOrthTable($orthfile);
     print STDERR "Read orthologs for " . scalar(keys %$orth) . " genes in ".scalar(keys %$taxa)." genomes\n";
@@ -243,7 +243,7 @@ sub ReadCofitFile($$$$$$) {
 	    }
 	}
     }
-    print STDERR "Skipping loci for taxon $taxonomyId in $cofitfile: " . join(" ",sort keys %skip) . "\n"
-	if scalar(keys %skip) > 0;
+    print STDERR "For taxon $taxonomyId -- read cofitness for " . scalar(keys %cofit) . " with orths and "
+        . scalar(keys %skip) . " without\n";
     return \%cofit;
 }
