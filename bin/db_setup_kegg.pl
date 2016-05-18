@@ -4,12 +4,12 @@ use strict;
 use Getopt::Long;
 
 my $db;
-my $kegghits = "besthit.kegg";
 my $dir = ".";
 my $usage = <<END
-Usage: db_setup.pl -db feba.db [ -kegghits $kegghits ] [ -dir $dir ]
+Usage: db_setup.pl -db feba.db [ -dir $dir ] kegg_input_files
+	(or use standard input instead of a list of input files)
 
-Given the output of KeggBestHit.pl and a sqlite3 database, populates
+Given output file(s) from KeggBestHit.pl and a sqlite3 database, populates
 the KEGG related tables. Will delete any existing data in those
 tables, but the tables must already exist.
 
@@ -17,24 +17,20 @@ tables, but the tables must already exist.
 END
     ;
 
-die $usage unless (GetOptions('kegghits=s' => \$kegghits,
-                              'db=s' => \$db,
+die $usage unless (GetOptions('db=s' => \$db,
                               'dir=s' => \$dir)
-                   && @ARGV == 0 && defined $db);
-die "No such file: $kegghits" unless -e $kegghits;
+                   && defined $db);
 die "No such directory: $dir" unless -d $dir;
-die "No such file: $db" unless -e $db;
 
 my %keggSeen = (); # kegg org => kegg id => 1 if already output
 my %kgroupSeen = (); # kegg group => 1 if already output
 
-open(HITS, "<", $kegghits) || die "Cannot read $kegghits";
 open(BH, ">", "$dir/db.BestHitKEGG") || die "Cannot write to $dir/db.BestHitKEGG";
 open(MEMBER, ">", "$dir/db.KEGGMember") || die "Cannot write to $dir/db.KEGGMember";
 open(DESC, ">", "$dir/db.KgroupDesc") || die "Cannot write to $dir/db.KgroupDesc";
 open(EC, ">", "$dir/db.KgroupEC") || die "Cannot write to $dir/db.KgroupEC";
 
-while(<HITS>) {
+while(<>) {
     chomp;
     my ($locusSpec, $keggSpec, $identity, $kgroups, $kdescs) = split /\t/, $_, -1;
     my ($orgId,$locusId) = split /:/, $locusSpec;
@@ -69,7 +65,6 @@ while(<HITS>) {
     }
 }
 
-close(HITS) || die "Error reading $kegghits";
 close(BH) || die "Error writing to $dir/db.BestHitKEGG";
 close(MEMBER) || die "Error writing to $dir/db.KEGGMember";
 close(DESC) || die "Error writing to $dir/db.KgroupDesc";
