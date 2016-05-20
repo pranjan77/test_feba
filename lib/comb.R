@@ -589,3 +589,10 @@ all_cofitness = function(org, genes) {
 
 # split a string separated by spaces into a list of word
 words = function(s, by=" ", ...) { strsplit(s[1], by, ...)[[1]]; }
+
+# returns TRUE or FALSE indicating whether the value is repeated
+# input should be a list of values
+is.unique = function(x) {
+	counts = as.data.frame.table(table(x), dnn="x");
+	return(x %in% counts$x[counts$Freq==1]);
+}
