@@ -7,9 +7,9 @@ my $debug = 0;
 
 my $wait = 2;
 my $verbose = 0;
-my $nCPUs = (`egrep -c '^processor' /proc/cpuinfo`);
-my $maxload = $ENV{SUBMITTER_MAXLOAD} || $nCPUs+1;
-my $n = $ENV{SUBMITTER_NJOBS} || int(0.6 * ($nCPUs+1));
+my $nCPUs = $ENV{MC_CORES} || (`egrep -c '^processor' /proc/cpuinfo`);
+my $maxload = $ENV{SUBMITTER_MAXLOAD} || $ENV{MC_CORES} || $nCPUs+1;
+my $n = $ENV{SUBMITTER_NJOBS} || $ENV{MC_CORES} || int(0.6 * ($nCPUs+1));
 $n = 1 if $n < 1;
 my $shell = $ENV{SUBMITTER_SHELL} || "ssh";
 my $hosts = $ENV{SUBMITTER_HOSTS} || undef;

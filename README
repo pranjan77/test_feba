@@ -112,30 +112,50 @@ It should be straigthforward to modify MapTnSeq.pl to use bowtie 2 or
 megablast or ublast instead, but some minor changes to the parsing
 code would be required.
 
-RUNNING ON MacOS
-
-I have only tested the scripts on Linux, but Victor Chubukov at LBL
-reports that the scripts work if you make for these suggestions.)
-
-RunTnSeqLocal.pl or RunBarSeqLocal.pl run jobs in parallel using feba/bin/submitter.pl,
-which does not work on MacOS. You may be able to get it to work by overriding the default
-#cores (near the top of the code), i.e.
-
-     my $nCPUs = `sysctl -n machdep.cpu.core_count`
-
-Various scripts depend on /usr/bin/Rscript. If it does not exist, then
-you need to set up the symlink or modify the scripts. (RunBarSeqR.pl
-or BarSeqTest.pl invoke an R script bin/RunFEBA.R which invokes
-lib/FEBA.R. DesignRandomPool.pl invokes an R script
-lib/PoolStats.R. bin/db_setup.pl invokes lib/TopCofit.R)
-
 EXAMPLES
 
-You can also see examples of using this code and of the resulting mini
-web sites at
+You can see examples of using this code and of the resulting mini web
+sites at
 
 http://genomics.lbl.gov/supplemental/rbarseq/
 
+CONTROLLING HOW MANY CPUS ARE USED
+
+You can use the MC_CORES environment variable to control how many CPUs
+the scripts try to use. (If MC_CORES is not set, then for the R code,
+the default is 2 threads; for RunTnSeqLocal.pl or RunBarSeqLocal.pl,
+the default is based on the number of CPUs according to /proc/cpuinfo:
+see submitter.pl.)
+
+RUNNING ON MacOS
+
+I have only tested the scripts on Linux, but I have heard that they
+will work if you make these two changes:
+
+1. Various scripts depend on /usr/bin/Rscript. If it does not exist,
+then you need to set up the symbolic link or modify the
+scripts. (BarSeqR.pl or BarSeqTest.pl invoke an R script bin/RunFEBA.R
+which invokes lib/FEBA.R. DesignRandomPool.pl invokes an R script
+lib/PoolStats.R. bin/db_setup.pl invokes lib/TopCofit.R)
+
+2. Set MC_CORES to the number of CPUs you want the scripts to use. (By
+default, RunTnSeqLocal.pl or RunBarSeqLocal.pl run jobs in parallel
+using feba/bin/submitter.pl, which uses /proc/cpuinfo to estimate how
+many CPUs to use, but /proc/cpuinfo does not exist on MacOS.)
+
+RUNNING ON WINDOWS
+
+I have not tested the scripts on Windows, but I have heard that they
+will work. If you use BarSeqR.pl or BarSeqTest.pl to compute fitness
+values, then you will need to install cygwin and you will need to make
+sure that the cygwin directory is at the beginning of the PATH (ahead
+of the windows directory). This is so that the Unix-like version of
+find will be run. For example, a command like this
+
+find -H fastq_directory -name '*.fastq.gz'
+
+will work if cygwin and PATH are set up but will not work on standard
+windows.
 
 --- LEGALESE ---
 
