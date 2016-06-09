@@ -7,7 +7,8 @@
 use strict;
 use Getopt::Long;
 use FindBin qw($Bin);
-sub reverseComplement($);
+use lib "$Bin/../lib";
+use FEBA_Utils; # for reverseComplement
 sub Variants($); # return all 1-nt variants for a sequence
 
 my $minN = 5;
@@ -126,7 +127,7 @@ END
         if ($nPastEnd >= $nTot/2 || $nPastEnd >= $nMax) {
             $nInCategory{"PastEnd"}++;
             my $n2 = $nMax || 0; # note we do not report secondary location (doubt it matters)
-            print POOL join("\t", $barcode, reverseComplement($barcode),
+            print POOL join("\t", $barcode, &reverseComplement($barcode),
                        $nTot, $nPastEnd, "pastEnd","","",$n2,"","","",$nPastEnd)."\n";
             next;
         }
@@ -223,17 +224,4 @@ sub uniq(@) {
     my %seen = ();
     foreach my $value (@_) { $seen{$value} = 1; }
     return keys(%seen);
-}
-
-sub reverseComplement($) 
-{
-    my $seq = shift;
-    chomp $seq;
-        my $origSeq=$seq;
-
-    die "Invalid sequence \"$origSeq\" in reverseComplement" if ( ($seq =~ 
-tr/RYKMSWBDHVNATCGXrykmswbdhvnatcg-/YRMKWSVHDBNTAGCXyrmkwsvhdbntagc-/) != 
-length($seq) );
-    $seq = reverse $seq;
-    return $seq;
 }

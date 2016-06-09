@@ -5,7 +5,7 @@ use strict;
 use File::stat;
 our (@ISA,@EXPORT);
 @ISA = qw(Exporter);
-@EXPORT = qw( ReadTable ReadColumnNames ReadFasta NewerThan ReadFastaDesc );
+@EXPORT = qw( ReadTable ReadColumnNames ReadFasta NewerThan ReadFastaDesc reverseComplement );
 
 # filename and list of required fields => list of hashes, each with field->value
 sub ReadTable($*) {
@@ -107,5 +107,19 @@ sub NewerThan($$) {
     return 0 unless -e $file1;
     return stat($file1)->mtime >= stat($file2)->mtime ? 1 : 0;
 }
+
+sub reverseComplement($) 
+{
+    my $seq = shift;
+    chomp $seq;
+        my $origSeq=$seq;
+
+    die "Invalid sequence \"$origSeq\" in reverseComplement" if ( ($seq =~ 
+tr/RYKMSWBDHVNATCGXrykmswbdhvnatcg-/YRMKWSVHDBNTAGCXyrmkwsvhdbntagc-/) != 
+length($seq) );
+    $seq = reverse $seq;
+    return $seq;
+}
+
 
 1;
