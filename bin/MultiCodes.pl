@@ -145,6 +145,7 @@ my $doOff1 = undef;
 	@prefixNames = ( $iname );
     }
 
+    my $nWrongPrePos = 0;
     while(my $header = <STDIN>) {
         chomp $header;
         my $seq = <STDIN>;
@@ -160,6 +161,12 @@ my $doOff1 = undef;
         $nMulti++;
         my ($nLeading, $indexseq, $prefixName) = @{ $prefix[$iPrefix] };
         my ($barcode,$off) = FindBarcode($seq, $quality, $nLeading+length($indexseq));
+        if (!defined $barcode && defined $off && $off >= 0) {
+            $nWrongPrePos++;
+            die "Over 10% of reads have the wrong spacing to the pre-sequence ($nWrongPrePos of $nReads so far).\n".
+                "Perhaps you forget to specify -n25?\n"
+                if $nWrongPrePos >= 200 && $nWrongPrePos >= 0.1 * $nReads;
+        }
         next unless defined $barcode;
         $nOff{$off}++;
         next unless $off == 20;
@@ -172,6 +179,8 @@ my $doOff1 = undef;
     my $nOffTot = sum(values %nOff);
     my $nUniq = scalar(keys %codes);
     print STDERR "Reads $nReads Multiplexed $nMulti Usable(20) $nOff{20} fraction " . ($nOff{20}/$nReads) . " unique codes $nUniq \n" if $nReads > 0;
+    print STDERR sprintf("Wrong presequence position: %d reads (%.3f%%)\n", $nWrongPrePos, 100*$nWrongPrePos/$nReads)
+        if $nReads > 0;
     foreach my $off (18..22) {
         print STDERR sprintf("Off\t%d\t%d\t%.3f\n", $off, $nOff{$off}, $nOff{$off}/$nOffTot) if $nOffTot > 0;
     }
@@ -280,6 +289,7 @@ sub FindBarcode($$$) {
     my $prepos = index($seq2, $preseq);
     unless($prepos >= 0 && $prepos >= $nPreExpectedMin && $prepos <= $nPreExpectedMax) {
         print STDERR "seq2 $seq2 has invalid index-of-preseq $prepos\n" if $debug;
+        return (undef, $prepos) if $prepos >= 0; # report that the spacing was wrong
         return undef;
     }
     my $barcode = substr($seq2, $prepos+length($preseq), 20);
