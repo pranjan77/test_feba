@@ -10,8 +10,14 @@ Or, if not yet multiplexed,
        MultiCodes.pl -out out_prefix -primers PrimerIndexTable < fastq
 Optional arguments:
     [ -debug ] [ -dntag ] [ -limit maxReads ] [ -minQuality $minQuality ]
+    [ -n25 ]
     [ -preseq CAGCGTACG -postseq AGAGACCTC -nPreExpected 9 ]
-   
+
+    -n25 indicates 11:14 nt before the pre-sequence, corresponding to 2:5 N at start of primer,
+    as used on the HiSeq 4000.
+
+    nPreExpected can also be a range, i.e. 11:14
+
     PrimerIndexTable should be tab-delimited with multiplex name and a primer like nACGACG
     The fastq file should be fastq with phred+33 ("sanger") encoding of quality scores
     (as in MiSeq or 2012+ HiSeq)
@@ -49,6 +55,8 @@ sub sum(@); # sum of a list of values
 my $preseq = undef; # before the barcode
 my $postseq = undef; # after (for 50 nt reads this needs to be shortened to AGA)
 my $nPreExpected = 0; # nt between prefix and preseq
+my $nPreExpectedMin;
+my $nPreExpectedMax;
 my $debug = 0;
 my $dntag = 0;
 my $iname = undef;
@@ -56,6 +64,7 @@ my $doOff1 = undef;
 
 {
     my ($indexfile,$out,$nLimit);
+    my $n25;
     (GetOptions('primers=s' => \$indexfile,
 		'out=s' => \$out,
 		'index=s' => \$iname,
@@ -66,6 +75,7 @@ my $doOff1 = undef;
 		'postseq=s' => \$postseq,
                 'dntag' => \$dntag,
                 'debug' => \$debug,
+                'n25' => \$n25,
                 'off1=i' => \$doOff1)
      && defined $out)
         || die $usage;
@@ -87,6 +97,19 @@ my $doOff1 = undef;
 	    $postseq = "AGAGACCTC";
 	}
     }
+    if (defined $n25) {
+        die "Cannot specify -n25 unless -index is set\n" unless defined $iname;
+        $nPreExpected = '11:14';
+    }
+    if ($nPreExpected =~ m/^(\d+):(\d+)$/) {
+        $nPreExpectedMin = $1;
+        $nPreExpectedMax = $2;
+    } else {
+        die $usage unless $nPreExpected =~ m/^\d+$/;
+        $nPreExpectedMin = $nPreExpected - 2;
+        $nPreExpectedMax = $nPreExpected + 2;
+    }
+
     my $nReads = 0;
     my $nMulti = 0; # number with prefix identified
     my %nOff = map {$_ => 0} (18..22); # only spacings of 20 are considered; count totals
@@ -255,7 +278,7 @@ sub FindBarcode($$$) {
     my $quality2 = substr($quality, $offset);
 
     my $prepos = index($seq2, $preseq);
-    unless($prepos >= 0 && $prepos >= $nPreExpected-2 && $prepos <= $nPreExpected+2) {
+    unless($prepos >= 0 && $prepos >= $nPreExpectedMin && $prepos <= $nPreExpectedMax) {
         print STDERR "seq2 $seq2 has invalid index-of-preseq $prepos\n" if $debug;
         return undef;
     }
