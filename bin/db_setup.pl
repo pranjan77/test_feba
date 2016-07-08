@@ -100,6 +100,10 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
         }
         die "Not a directory: $outdir\n" if !-d $outdir;
     }
+    
+    # check that all @orgs are unique
+    my %orgUniq = map { $_ => 1 } @orgs;
+    die "Not all organisms are unique!\n" unless scalar(keys %orgUniq) == scalar(@orgs);
 
     my $load_kegg = 1;
     my $load_metacyc = 1;
