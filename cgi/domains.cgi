@@ -266,7 +266,7 @@ if (keys(%ecall) > 0) {
 $seq =~ s/(.{60})/$1\n/gs;
 
 print
-    h3("Protein Sequence"),
+    h3("Protein Sequence ($seqLen amino acids)"),
     pre(">$sys $gene->{desc} ($orginfo->{$orgId}{genome})\n$seq"),
     '</div>';
 
