@@ -10,7 +10,7 @@ use lib "$Bin/../lib";
 my $usage = <<END
 Usage: RunBarSeqLocal.pl  [-minQuality 0 ] [ -pieceLines 20000000 ]
 	  [-nosplit] [-debug] [ -limit 1000 ]
-          [ -indexes BarSeqPrimersH48 ]
+          [ -indexes BarSeqPrimersH48 | -n25 ]
           organism_directory setname fastq.gz_file_or_directory_with_fastq.gz_files
    e.g.:
    feba/bin/RunBarSeqLocal.pl g/Keio Keio_ML9_set1 fastq/Keio_ML9_set1
@@ -24,13 +24,16 @@ argument.  In this case it will only accept a directory as input, and
 it will assume that each fastq or fastq.gz file in that directory is
 already demultiplexed, with a code in the filename such as _IT094_ or
 _10_TAGCTT_ to indicate which sample it is from. There can be more
-than one file per sample.  For older experiments, where the primers
-have names like H01 or M01, use the -indexes argument to describe
-which primers were used.  RunBarSeq.pl will use this information to
-demultiplex the reads.  If -indexes is used, then RunBarSeq.pl can
-accept as input either a directory that contains fastq or fastq.gz
-files or a single large_fastq.gz file. Given a single fastq.gz file,
-it will split it and process each piece in parallel.
+than one file per sample. If using primers with 2:5 Ns, use the -n25
+argument.
+
+For older experiments, where the primers have names like H01 or M01,
+use the -indexes argument to describe which primers were used.
+RunBarSeq.pl will use this information to demultiplex the reads.  If
+-indexes is used, then RunBarSeq.pl can accept as input either a
+directory that contains fastq or fastq.gz files or a single
+large_fastq.gz file. Given a single fastq.gz file, it will split it
+and process each piece in parallel.
 
 The second phase aggregates the counts of these barcodes. To save
 memory, it ignores barcodes that do not match the pool file, which is
@@ -57,8 +60,10 @@ my $debug = undef;
     my $minQuality = 0;
     my $limitReads = undef;
     my $barcodes = undef;
+    my $n25;
 
     die $usage unless GetOptions('debug' => \$debug,
+                                 'n25' => \$n25,
                                  'nosplit' => \$nosplit,
                                  'minQuality=i' => \$minQuality,
                                  'pieceLines=i' => \$linesPerPiece,
@@ -134,6 +139,7 @@ my $debug = undef;
 	print STDERR "Considering part $i\n" if $debug;
 
         my $corecmd = "$Bin/MultiCodes.pl -minQuality $minQuality";
+        $corecmd .= " -n25" if defined $n25;
 	$corecmd .= " -limit $limitReads" if defined $limitReads;
 	if (defined $barcodes) {
 	    $corecmd .= " -primers $barcodes";

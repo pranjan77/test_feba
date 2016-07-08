@@ -232,6 +232,28 @@ CREATE TABLE 'SwissProtDesc' (
        PRIMARY KEY(sprotAccession)
 );
 
+/* Store best hits to the MetaCyc database (the central curated database,
+   not the per-genome pathway databases). May have many rows for 1 hit so as to make
+   searching by ec# more efficient (but there is always just 1 hit). */
+CREATE TABLE 'BestHitMetacyc' (
+       orgId TEXT NOT NULL,
+       locusId TEXT NOT NULL,
+       sprotAccession TEXT NOT NULL, /* occasionaly a TReMBL not SwissProt accession */
+       identity REAL NOT NULL,
+       rxnId TEXT NOT NULL, /* a metacyc reaction id */
+       /* If not fully qualified, metacyc EC #s are shorter instead of having trailing dashes */
+       ecnum TEXT, /* MetaCyc documentation says it may be null; not sure it happens; not handled by loading code */
+       PRIMARY KEY(orgId,locusId,rxnId)
+);
+CREATE INDEX 'BestHitMetacycByLocus' on BestHitMetacyc ('ecnum','orgId');
+
+/* Not all valid reactions have a useful description, so not all of them appear in this table */
+CREATE TABLE 'MetacycReaction' (
+       rxnId TEXT NOT NULL,
+       rxnName TEXT NOT NULL, /* may contain HTML tags or entities; may be a comment not a name */
+       PRIMARY KEY(rxnId)
+);
+
 /* Ortholog groups of all genes that have conserved specific phenotypes.
 
    Ideally, all genes in an OG would be BBHs of each other, but in

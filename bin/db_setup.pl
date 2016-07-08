@@ -102,6 +102,7 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
     }
 
     my $load_kegg = 1;
+    my $load_metacyc = 1;
     foreach my $org (@orgs) {
         die "No such directory: $indir/$org" unless -d "$indir/$org";
         foreach my $file (qw{.FEBA.success genes expsUsed fit_quality.tab fit_logratios_good.tab fit_t.tab}) {
@@ -116,6 +117,11 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
             print STDERR "Warning, no kegg besthit file for $org in $gdir/$org/besthit.kegg\n";
             print STDERR "Skipping KEGG\n";
             $load_kegg = 0;
+        }
+        if (! -e "$gdir/blast_results/metacyc_$org.m8") {
+            print STDERR "Warning, no metacyc besthit file for $org in $gdir/$org/metacyc_$org.m8\n";
+            print STDERR "Skipping MetaCyc\n";
+            $load_metacyc = 0;
         }
     }
     my $formatexe = "$Bin/blast/formatdb";
@@ -679,6 +685,11 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
                 || die "db_setup_kegg.pl failed";
         } else {
             print STDERR "Skipping kegg hits\n";
+        }
+
+        if ($load_metacyc) {
+            system("$Bin/db_setup_metacyc.pl", "-db", $dbfile, "-dir", $outdir, @orgs) == 0
+                || die "db_setup_metacyc.pl failed";
         }
     }
 

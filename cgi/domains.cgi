@@ -184,6 +184,37 @@ if (defined $bhKEGG->{keggId}) {
               "$keggOrg:$keggId").")");
 }
 
+# MetaCyc information, if any
+my $bhMetacyc = $dbh->selectall_arrayref(qq{ SELECT * FROM BestHitMetacyc
+                                             LEFT JOIN MetacycReaction USING (rxnId)
+                                             WHERE orgId = ? AND locusId = ?
+                                             ORDER BY rxnName DESC },
+                                         { Slice => {} }, $orgId, $locusId);
+if (scalar(@$bhMetacyc) > 0) {
+    my @showrxns = ();
+    my %ecSeen = ();
+    foreach my $row (@$bhMetacyc) {
+        next if exists $ecSeen{$row->{ecnum}};
+        $ecSeen{$row->{ecnum}} = 1;
+        push @showrxns,
+        a({ href => "http://metacyc.org/META/NEW-IMAGE?type=REACTION&object=" . $row->{rxnId} },
+          $row->{rxnName} || $row->{rxnId})
+            . " [EC: "
+            . a({ href => "http://metacyc.org/META/NEW-IMAGE?type=EC-NUMBER&object=EC-" . $row->{ecnum} },
+                $row->{ecnum})
+            ."]";
+    }
+    my $row = $bhMetacyc->[0];
+    my $acc = $row->{sprotAccession};
+    print
+        h3("MetaCyc"),
+        p(
+            sprintf("%.0f%% similar to", $row->{identity}),
+            a({ href => "http://www.uniprot.org/uniprot/$acc" }, $acc) . ":<BR>",
+            join(";<BR>", @showrxns)
+        );
+}
+
 # SEED information, if any
 my ($seed_desc) = $dbh->selectrow_array("SELECT seed_desc FROM SEEDAnnotation WHERE orgId = ? AND locusId = ?",
                                         {}, $orgId, $locusId);

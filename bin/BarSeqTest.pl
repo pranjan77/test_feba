@@ -6,7 +6,7 @@ use Getopt::Long;
 use FindBin qw($Bin);
 
 my $usage =<<END
-Usage: BarSeqTest.pl -org organism -index S1:S2:S3 -desc Time0:Lactate:Glucose
+Usage: BarSeqTest.pl -org organism [ -n25 ] -index S1:S2:S3 -desc Time0:Lactate:Glucose
 	    -fastqdir directory
            [ -pool g/organism/pool.n10 ]
 	   [ -outdir g/organism/barseqtest ]
@@ -26,6 +26,7 @@ my $test = undef; # check for files, but do no work
 
 {
     my ($org, $indexSpec, $descSpec, $fastqdir, $pool, $outdir);
+    my $n25;
 
     GetOptions('org=s' => \$org,
 	       'index=s' => \$indexSpec,
@@ -33,6 +34,7 @@ my $test = undef; # check for files, but do no work
 	       'fastqdir=s' => \$fastqdir,
 	       'pool=s' => \$pool,
 	       'test' => \$test,
+               'n25' => \$n25,
 	       'outdir=s' => \$outdir) || die $usage;
     @ARGV == 0 || die $usage;
     die $usage unless defined $org && defined $indexSpec && defined $descSpec && defined $fastqdir;
@@ -80,7 +82,8 @@ my $test = undef; # check for files, but do no work
 	my @filenames = @{ $fastqFiles{$index} };
 	my $pathSpec = join(" ", @filenames);
 	push @codesFiles, "$outdir/$index.codes";
-	&maybeRun("zcat $pathSpec | $Bin/MultiCodes.pl -minQuality 0 -index $index -out $outdir/$index");
+        my $n25opt = defined $n25 ? "-n25" : "";
+	&maybeRun("zcat $pathSpec | $Bin/MultiCodes.pl $n25opt -minQuality 0 -index $index -out $outdir/$index");
     }
     &maybeRun("$Bin/combineBarSeq.pl $outdir/test $pool " . join(" ", @codesFiles));
     unless (defined $test) {
