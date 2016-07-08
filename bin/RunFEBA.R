@@ -65,8 +65,28 @@ RunFEBA = function(args = commandArgs(trailingOnly=TRUE)) {
 	names(all)[-metacol] = expNamesNew;
 	exps$name = expNamesNew;
 
+        # load strains to use, if this data exists
+        strainsUsed = NULL;
+        genesUsed = NULL;
+        genesUsed12 = NULL;
+        fStrainsUsed = paste(dir,"/strainusage.barcodes",sep="");
+        fGenesUsed = paste(dir,"/strainusage.genes",sep="");
+        fGenesUsed12 = paste(dir,"/strainusage.genes12",sep="");
+        # Uses the strain usage files if they exist
+	if (file.access(fStrainsUsed, mode=4) == 0) {
+        	stopifnot(file.access(fGenesUsed,mode=4)==0);
+        	stopifnot(file.access(fGenesUsed12,mode=4)==0);
+		barcodesUsed = scan(fStrainsUsed,"");
+                strainsUsed = all$barcode %in% barcodesUsed;
+		genesUsed = scan(fGenesUsed,"");
+		genesUsed12 = scan(fGenesUsed12,"");
+                cat(sprintf("Loaded %d strains and %d genes to include in the analysis\n",
+                	    length(barcodesUsed), length(genesUsed)));
+	}
+
 	options(width=100);
-	fit = FEBA_Fit(exps, all, genes, dir=dir);
+	fit = FEBA_Fit(exps, all, genes, dir=dir,
+		strainsUsed=strainsUsed, genesUsed=genesUsed, genesUsed12=genesUsed12);
 	FEBA_Save_Tables(fit, genes, org, expsU=exps, dir=dir, FEBAdir=FEBAdir);
 	write(date(), paste(dir,"/.FEBA.success", sep="")); # report success to BarSeqR.pl
 }

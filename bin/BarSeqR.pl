@@ -422,6 +422,20 @@ END
     system("cp", $poolfile, "$outdir/pool") == 0 || die $!;
     system("cp", $genesfile, "$outdir/genes") == 0 || die $!;
 
+    # copy over the strain usage files if they exist unless FEBA_NO_STRAIN_USAGE is set
+    if (-e "$indir/strainusage.barcodes" && ! $ENV{FEBA_NO_STRAIN_USAGE}) {
+        die if ! -e "$indir/strainusage.genes";
+        die if ! -e "$indir/strainusage.genes12";
+        print STDERR "Copying over strain usage files\n";
+        system("cp",
+               "$indir/strainusage.barcodes", "$indir/strainusage.genes", "$indir/strainusage.genes12",
+               $outdir) == 0 || die $!;
+    } else {
+        unlink("$outdir/strainusage.barcodes");
+        unlink("$outdir/strainusage.genes");
+        unlink("$outdir/strainusage.genes12");
+    }
+
     my $Rcmd = "$Rscript $org $outdir $Bin/.. > $outdir/log";
     if (defined $noR) {
 	print STDERR "Skipping the R step: $Rcmd\n";

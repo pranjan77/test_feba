@@ -1107,3 +1107,15 @@ SpecificPhenotypes = function(g, exps, lrn, tval,
 	specsick$col = NULL;
 	return(merge(specsick, exps[,expsFields]));
 }
+
+# Save the which-strains-to-use components of a fit data structure to the given directory
+SaveStrainUsage = function(fit, dir=".") {
+	stopifnot(is.logical(fit$strains$used));
+	stopifnot(is.character(fit$strains$barcode));
+	stopifnot(!is.null(fit$genesUsed));
+	stopifnot(!is.null(fit$genesUsed12));
+	write(fit$strains$barcode[fit$strains$used], paste(dir,"/strainusage.barcodes",sep=""), ncol=1);
+	write(fit$genesUsed, paste(dir,"/strainusage.genes",sep=""), ncol=1);
+	write(fit$genesUsed12, paste(dir,"/strainusage.genes12",sep=""), ncol=1);
+        cat(sprintf("Wrote strain usage to %s/strainusage.*\n", dir));
+}
