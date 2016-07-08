@@ -486,7 +486,7 @@ FEBA_Fit = function(expsUsed, all, genes,
 	    if(sum(status==s) > 0) cat(s, ":", q$name[status==s],"\n");
 	}
 
-	fit$version = "1.0.3";
+	fit$version = "1.1.0";
 	fit$q = q;
 	fit$genesUsed = genesUsed;
 	fit$strainsUsed = strainsUsed;
