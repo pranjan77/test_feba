@@ -15,6 +15,8 @@ Processing TnSeq data with MapTnSeq.pl and DesignRandomPool.pl
 Processing BarSeq data with MultiCodes.pl, combineBarSeq.pl, and
 BarSeqR.pl or BarSeqtest.pl.
 
+(Unless otherwise specified, all executables are from the bin/ subdirectory.)
+
 For web server code to browse the results, see the cgi/ subdirectory,
 especially cgi/README and cgi/SETUP.
 
@@ -72,6 +74,15 @@ metadata table must include all of these fields: SetName
 Date_pool_expt_started Person "Mutant Library" Description Index Media
 "Growth Method" Group Condition_1 Units_1 Concentration_1 Condition_2
 Units_2 Concentration_2.
+
+The results of BarSeqR.pl may change as data is added, as this alters
+which strains are considered abundant enough to include in the
+analysis. You can get around this by using the SaveStrainUsage.pl
+script after you process your data. This will record which strains
+were used for an analysis, and if these files are saved to the
+organism directory, then BarSeqR.pl will use this information.  (You
+can turn this behavior of BarSeqR.pl off by setting the
+FEBA_NO_STRAIN_USAGE environment variable.)
 
 BarSeqTest.pl is a wrapper to analyze barseq reads and run
 BarSeqR.pl. It is intended for small test runs and does not require a
