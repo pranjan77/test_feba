@@ -50,6 +50,9 @@ Usage: BarSeqR.pl -org organism [ -indir g/organism ]
     Note -- the R step is parallel, use the MC_CORES environment
     variable to control it.
 
+    Note -- by default, strainusage files in the input directory are
+    used if present. Use FEBA_NO_STRAIN_USAGE=1 to turn this off.
+
 END
     ;
 
