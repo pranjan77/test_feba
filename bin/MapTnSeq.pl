@@ -30,7 +30,7 @@ my %nameToBarcode = ();
 
 my $usage = <<END
 Usage: MapTnSeq.pl [ -debug ] [ -limit maxReads ] [ -minQuality $minQuality ] [-flanking $flanking]
-            [ -minIdentity $minIdentity ] [ -minScore $minScore ]
+            [ -minIdentity $minIdentity ] [ -minScore $minScore ] [ -wobble $wobbleAllowed ]
             [-tmpdir $tmpdir ] [ -unmapped saveTo ]
             -genome fasta_file -model model_file -first fastq_file > output_file
 
@@ -87,6 +87,7 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
                 'flanking=i' => \$flanking, 'minIdentity=i' => \$minIdentity, 'minScore=i' => \$minScore,
                 'tmpdir=s' => \$tmpdir,
                 'blat=s' => \$blatcmd,
+                'wobble=s' => \$wobbleAllowed,
                 'genome=s' => \$genomeFile, 'model=s' => \$modelFile, 'first=s' => \$fastqFile)
      && @ARGV==0) || die $usage;
     die $usage unless defined $modelFile && defined $fastqFile;
