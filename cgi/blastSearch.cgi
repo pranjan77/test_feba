@@ -51,6 +51,8 @@ print header, $start,
         p("If you have many sequences to compare, try",
           a({-href => "batch_blast.cgi"}, "Fitness BLAST for genomes"),
           "instead."),
+        p("If you want to integrate the fitness data into your web site, please use",
+          a({-href => "../images/fitblast_example.html"}, "Fitness BLAST")."."),
         h6(q(Developed by Victoria Lo, Wenjun Shao, and
          <A HREF="http://morgannprice.org/">Morgan Price</A>.
          Please report any bugs to <A HREF="mailto:funwithwords26@gmail.com">Morgan</A>.)),
