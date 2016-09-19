@@ -15,7 +15,7 @@
 # or
 #	locusId -- which gene to show (by default, range is exactly the width of the gene)
 # Optional CGI parameters:
-# expName -- which experiments to show. (Can be more than one.)
+# expName -- which experiment(s) to show. (Can be more than one, or none.)
 # addexp -- additional experiments (i.e. a setname or a condition)
 # zoom -- in or out
 # pan -- left or right
@@ -136,7 +136,8 @@ if ($tsv != 1) {
            a({-href => "org.cgi?orgId=$orgId"}, "$genome"),
            defined $locusSpecShow ? "around " . a({-href => "singleFit.cgi?orgId=$orgId&locusId=$locusSpec"}, $locusSpecShow)
            : " at $scaffoldId: $begComma to $endComma"),
-        p("Experiments: ", join(", ", @expShow));
+        p("Experiments: ",
+          scalar(@expShow) > 0 ? join(", ", @expShow) : "none selected");
 
 if ($help == 1) {
         print qq[<div class="helpbox">
@@ -212,6 +213,23 @@ foreach my $locusId (keys %locusIds) {
     $genes{$locusId} = $gene;
 }
 
+# give up if no experiments specified
+if (scalar(@expNames)==0) {
+    exit 0 if $tsv==1; # empty output if tab-delimited mode
+    Utils::endHtml($cgi);
+}
+
+# add row of links for removing items
+my @remove_row = map { td("") } @base_headings; # 
+my $baseURL = "strainTable.cgi?orgId=$orgId&scaffoldId=$scaffoldId&begin=$begin&end=$end";
+foreach my $expName (@expNames) {
+    my @otherExps = grep { $_ ne $expName } @expNames;
+    my @otherExpSpec = map { "expName=$_" } @otherExps;
+    push @remove_row, td( a({ -title => "remove $expName : $expinfo->{$expName}{expDesc}",
+                              -href => join("&", $baseURL, @otherExpSpec) },
+                            "remove") );
+}
+push @trows, Tr({-align => 'CENTER', -valign=>'TOP'}, @remove_row);
 
 my @avgFits = ();
 foreach my $row (@$rows) {
@@ -239,6 +257,7 @@ foreach my $row (@$rows) {
         $ind += 1;
         push @row, td( { -bgcolor => Utils::fitcolor($fit) }, sprintf("%.1f",$fit));
     }
+    # above we give up if no experiments are specified, so this no longer causes divide by 0
     push @avgFits, $totalFit/$ind;
 
     push @trows, Tr({-align => 'CENTER', -valign=>'TOP'}, @row);
@@ -256,23 +275,6 @@ if ($tsv == 1) { # tab delimited values, not a page
     }
     exit 0;
 }
-
-
-if (scalar(@expNames) > 0) {
-    # add row of links for removing items
-    my @row = map { td("") } @base_headings; # 
-    my $baseURL = "strainTable.cgi?orgId=$orgId&scaffoldId=$scaffoldId&begin=$begin&end=$end";
-    foreach my $expName (@expNames) {
-        my @otherExps = grep { $_ ne $expName } @expNames;
-        my @otherExpSpec = map { "expName=$_" } @otherExps;
-        push @row, td( a({ -title => "remove $expName : $expinfo->{$expName}{expDesc}",
-                           -href => join("&", $baseURL, @otherExpSpec) },
-                         "remove") );
-    }
-    push @trows, Tr({-align => 'CENTER', -valign=>'TOP'}, @row);
-}
-
-
 
 print <<END
 <script src="../d3js/d3.min.js"></script>
