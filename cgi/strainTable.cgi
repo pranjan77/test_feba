@@ -160,11 +160,14 @@ if ($help == 1) {
            submit('Add','Add') ),
         p({-class => "buttons", style=>"max-width:500px; line-height:40px; white-space:nowrap;"},
           "Zoom:", submit('zoom','in'), submit('zoom','out'), "\tPan:", submit('pan','left'), submit('pan','right')),
-        end_form,
+        end_form;
+    print 
         p(small(qq{Only strains with sufficient reads to estimate fitness are shown,
                    but the strain fitness values are still rather noisy and may be biased towards zero.
-                   Strains near the edge of a gene are not shown as being associated with that gene (they are in grey).}));
-
+                   Strains near the edge of a gene are not shown as being associated with that
+                   gene (they are in grey).}))
+        if scalar(@expNames) > 0;
+    
 
   if (@$genes == 0) {
       print "No genes in range.";
