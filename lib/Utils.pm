@@ -720,6 +720,45 @@ sub OrgSelector($$) {
     return $out;
 }
 
+# dbh,orgId,locusId => undef (no information) or a hash that includes
+# orgId, locusId, keggOrg, keggId, identity, and ko (ortholog group), which is a list
+# each entry in ko is a hash of kgroup, desc, and ec, which is a list of ec numbers
+sub kegg_info($$$) {
+    my ($dbh,$orgId,$locusId) = @_;
+    die "Invalid arguments to kegg_info"
+        unless defined $dbh && defined $orgId && defined $locusId
+        && $orgId ne "" && $locusId ne "";
+    my $bhKEGG = $dbh->selectrow_hashref("SELECT * from BestHitKEGG where orgId = ? AND locusId = ?",
+                                         {}, $orgId, $locusId);
+    return undef unless defined $bhKEGG->{keggId};
+    my $keggOrg = $bhKEGG->{keggOrg};
+    my $keggId = $bhKEGG->{keggId};
+    my $ko = $dbh->selectall_arrayref("SELECT * from KEGGMember JOIN KgroupDesc USING (kgroup)
+                                       WHERE keggOrg = ? AND keggId = ?",
+                                      { Slice => {} }, $keggOrg, $keggId);
+    foreach my $row (@$ko) {
+        my $ecs = $dbh->selectcol_arrayref("SELECT ecnum FROM KgroupEC WHERE kgroup = ?",
+                                           {}, $row->{kgroup});
+        $row->{ec} = $ecs;
+    }
+    $bhKEGG->{ko} = $ko;
+    return $bhKEGG;
+}
+
+# dbh,orgId,locusId => list of seed_description (or undef), list of seed classes (EC or TC)
+sub seed_desc($$$) {
+    my ($dbh,$orgId,$locusId) = @_;
+    die "Invalid arguments to seed_desc"
+        unless defined $dbh && defined $orgId && defined $locusId
+        && $orgId ne "" && $locusId ne "";
+    my ($seed_desc) = $dbh->selectrow_array("SELECT seed_desc FROM SEEDAnnotation WHERE orgId = ? AND locusId = ?",
+                                            {}, $orgId, $locusId);
+    my $seed_classes = $dbh->selectall_arrayref("SELECT type,num FROM SEEDClass WHERE orgId = ? AND locusId = ?",
+                                                {}, $orgId, $locusId);
+    return ($seed_desc,$seed_classes);
+}
+    
+
 #END 
 
 return 1;

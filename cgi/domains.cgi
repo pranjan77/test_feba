@@ -145,20 +145,13 @@ if (defined $bhSprot->{sprotAccession}) {
 print "\n";
 
 # KEGG information, if any
-
-my $bhKEGG = $dbh->selectrow_hashref("SELECT * from BestHitKEGG where orgId = ? AND locusId = ?",
-                                     {}, $orgId, $locusId);
-if (defined $bhKEGG->{keggId}) {
-    my $keggOrg = $bhKEGG->{keggOrg};
-    my $keggId = $bhKEGG->{keggId};
-    my $ko = $dbh->selectall_arrayref("SELECT * from KEGGMember JOIN KgroupDesc USING (kgroup)
-                                       WHERE keggOrg = ? AND keggId = ?",
-                                      { Slice => {} }, $keggOrg, $keggId);
+my $kegg = Utils::kegg_info($dbh, $orgId, $locusId);
+if (defined $kegg) {
     print h3("KEGG");
-    if (@$ko > 0) {
+    my $ko = $kegg->{ko};
+    if (scalar(@{ $kegg->{ko} }) > 0) {
         foreach my $row (@$ko) {
-            my $ecs = $dbh->selectcol_arrayref("SELECT ecnum FROM KgroupEC WHERE kgroup = ?",
-                                               {}, $row->{kgroup});
+            my $ecs = $row->{ec};
             my @ecdesc = ();
             foreach my $ec (@$ecs) {
                 if ($ec =~ m/-/) {
@@ -179,7 +172,9 @@ if (defined $bhKEGG->{keggId}) {
     } else {
         print p("No KEGG ortholog group");
     }
-    print p(sprintf("(inferred from %.0f%% similarity to ", $bhKEGG->{identity}),
+    my $keggOrg = $kegg->{keggOrg};
+    my $keggId = $kegg->{keggId};
+    print p(sprintf("(inferred from %.0f%% similarity to ", $kegg->{identity}),
             a({-href => "http://www.kegg.jp/dbget-bin/www_bget?$keggOrg:$keggId"},
               "$keggOrg:$keggId").")");
 }
@@ -216,11 +211,8 @@ if (scalar(@$bhMetacyc) > 0) {
 }
 
 # SEED information, if any
-my ($seed_desc) = $dbh->selectrow_array("SELECT seed_desc FROM SEEDAnnotation WHERE orgId = ? AND locusId = ?",
-                                        {}, $orgId, $locusId);
-my $seed_classes = $dbh->selectall_arrayref("SELECT type,num FROM SEEDClass WHERE orgId = ? AND locusId = ?",
-                                            {}, $orgId, $locusId);
 my @show_classes = ();
+my ($seed_desc,$seed_classes) = Utils::seed_desc($dbh,$orgId,$locusId);
 foreach my $row (@$seed_classes) {
     my ($type,$num) = @$row;
     my $url_pre = $type == 1 ? "http://www.kegg.jp/dbget-bin/www_bget?ec:"
