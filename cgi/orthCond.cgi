@@ -24,7 +24,7 @@ use lib "../lib";
 use Utils;
 use URI::Escape;
 
-sub RowForGene($$$$); # gene object, shade or not, which row (0 indexed) => the row
+sub RowForGene($$$$$); # gene object, shade or not, which row (0 indexed) => the row
 sub summaryRow($$$); # ortholog group, shade, first to include (1 indexed)
 sub CompareOG($$); # a comparator for sorting OGs (lists of genes)
 sub OrderGenesInOG; # a comparator for sorting genes within an OG
@@ -106,7 +106,7 @@ foreach my $ogId (@ogInOrder) {
             push @trows, summaryRow(\@sorted, $shade, 4);
             push @trows, qq[<tr class="header3"><th colspan="8"><center><span>Collapse -</span></center></th></tr>];
         }
-        push @trows, RowForGene($gene, $shade, $singletonHead == 1 ? "" : $group, $row);
+        push @trows, RowForGene($dbh, $gene, $shade, $singletonHead == 1 ? "" : $group, $row);
         $row++;
     }
     $shade++;
@@ -171,8 +171,8 @@ sub summaryRow($$$) {
 }
 
 # $row is 0-indexed; $group is the ortholog group number (1-indexed)
-sub RowForGene($$$$) {
-    my ($gene,$shade,$group,$row) = @_;
+sub RowForGene($$$$$) {
+    my ($dbh,$gene,$shade,$group,$row) = @_;
    
     # my $firstForGene = 1;
     my $orgId = $gene->{orgId};
@@ -191,6 +191,7 @@ sub RowForGene($$$$) {
         . "&expGroup=" . uri_escape($expGroup)
         . "&condition1=" . uri_escape($condition1);
     $orthFitURI .= "&help=1" if $help == 1;
+
     return $cgi->Tr(
         { -class=> $collapse, -valign => 'middle', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF" },
         td($rowLabel),
@@ -198,7 +199,9 @@ sub RowForGene($$$$) {
               $genomeShort)),
         td( a({ -href => "myFitShow.cgi?orgId=$orgId&gene=$locusId" }, $showId)),
         td( $gene->{gene}),
-        td( $gene->{desc}),
+        td( a({ -title => Utils::alt_descriptions($dbh,$orgId,$locusId) || "no other information",
+                -href => "domains.cgi?orgId=$orgId&locusId=$locusId" },
+              $gene->{desc}) ),
         td( { -bgcolor => Utils::fitcolor($gene->{minFit}), -style=>'text-align: center;' },
             a( { -title => sprintf("Click to compare (t = %.1f to %.1f)",$gene->{minT},$gene->{maxT}),
                  -style => "color: rgb(0,0,0)",

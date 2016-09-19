@@ -124,6 +124,8 @@ EOT
     return $style;
 }
 
+# Print a failure notice and then exit.
+# Prints the HTML header (<HTML><TITLE> etc.) but *not* the CGI header
 sub fail($$) {
     my ($cgi, $notice) = @_;
     print Utils::start_page("Sorry!");
@@ -723,6 +725,7 @@ sub OrgSelector($$) {
 # dbh,orgId,locusId => undef (no information) or a hash that includes
 # orgId, locusId, keggOrg, keggId, identity, and ko (ortholog group), which is a list
 # each entry in ko is a hash of kgroup, desc, and ec, which is a list of ec numbers
+# Note -- ko may be empty
 sub kegg_info($$$) {
     my ($dbh,$orgId,$locusId) = @_;
     die "Invalid arguments to kegg_info"
@@ -756,6 +759,22 @@ sub seed_desc($$$) {
     my $seed_classes = $dbh->selectall_arrayref("SELECT type,num FROM SEEDClass WHERE orgId = ? AND locusId = ?",
                                                 {}, $orgId, $locusId);
     return ($seed_desc,$seed_classes);
+}
+
+# dbh,orgId,locusId => text showing alternate descriptions for the gene (or an empty string)
+sub alt_descriptions($$$) {
+    my ($dbh, $orgId, $locusId) = @_;
+    my @altdesc = ();
+    my ($seed_desc,$seed_classes) = Utils::seed_desc($dbh, $orgId, $locusId);
+    push @altdesc, "SEED: $seed_desc" if defined $seed_desc;
+    my $kegg = Utils::kegg_info($dbh, $orgId, $locusId);
+    if (defined $kegg) {
+        my @kegg_descs = map $_->{desc}, @{ $kegg->{ko} };
+        @kegg_descs = grep { $_ ne "" } @kegg_descs;
+        push @altdesc, "KEGG: " . join("; ", @kegg_descs)
+            if scalar(@kegg_descs) > 0;
+    }
+    return join("; ", @altdesc);
 }
     
 
