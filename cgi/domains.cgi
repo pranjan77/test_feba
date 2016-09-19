@@ -29,12 +29,23 @@ my $locusId = $cgi->param('locusId') || die "No locusId parameter";
 
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
-Utils::fail($cgi, "Unknown organism: $orgId") unless $orgId eq "" || exists $orginfo->{$orgId};
+die "Unknown organism" unless $orgId eq "" || exists $orginfo->{$orgId};
 my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId=? AND locusId=?",
 				   {}, $orgId, $locusId);
 
-Utils::fail($cgi,"unknown gene") unless defined $gene->{locusId};
-Utils::fail($cgi,"sequence information is only available for protein-coding genes.") unless $gene->{type} == 1;
+die "Unknown gene" unless defined $gene->{locusId};
+
+if ($gene->{type} != 1) {
+    # this can be reached by some links from gene descriptions
+    # redirect to the gene overview page if not a protein
+    print redirect(-url => "geneOverview.cgi?orgId=$orgId&gene=$locusId");
+}
+
+# write the title
+my $title = "Protein Info for $orginfo->{$orgId}{genome} at Locus $locusId";
+my $start = Utils::start_page("$title");
+
+my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusId,0,1,"protein");
 
 # domains table
 # gather data and slice it into an array of hashes
@@ -54,11 +65,6 @@ my $seq = $in->next_seq()->seq;
 my $seqLen = length($seq);
 unlink($seqFile) || die "Error deleting $seqFile: $!";
 
-
-# write the title
-my $title = "Protein Info for $orginfo->{$orgId}{genome} at Locus $locusId";
-my $start = Utils::start_page("$title");
-my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusId,0,1,"protein");
 
 my $sys = $gene->{sysName} || $gene->{locusId};
 
