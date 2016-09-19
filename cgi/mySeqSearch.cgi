@@ -167,7 +167,7 @@ while(<RES>) {
     
     if (defined $orgId and $locusSpec) {
         # add ortholog indicator
-        if (exists $orth->{$orgId}) {
+        if (exists $orth->{$orgId} && $orth->{$orgId}{locusId2} eq $locusId) {
             unshift @hit, '<center><a title="ortholog">o</a></center>';
         } else {
             unshift @hit, ' ';
