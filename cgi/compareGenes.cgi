@@ -190,6 +190,13 @@ if (Utils::gene_has_fitness($dbh,$orgId,$locus1) == 0) {
 my $showName1 = $gene1->{gene} || $gene1->{sysName} || $gene1->{locusId};
 my $showName2 = $gene2->{gene} || $gene2->{sysName} || $gene2->{locusId};
 
+my $showDesc1 = a({ -title => Utils::alt_descriptions($dbh,$orgId,$locus1) || "no other information",
+                    -href => "domains.cgi?orgId=$orgId&locusId=$locus1" },
+                  $gene1->{desc});
+my $showDesc2 = a({ -title => Utils::alt_descriptions($dbh,$orgId,$locus2) || "no other information",
+                    -href => "domains.cgi?orgId=$orgId&locusId=$locus2" },
+                  $gene2->{desc});
+
 print <<PART1
 $start
 <script src="../d3js/d3.min.js"></script>
@@ -199,9 +206,9 @@ $start
 <H2>$title2</H2>
 
 <P>
-<i>x</i> axis <A HREF="geneOverview.cgi?orgId=$orgId&gene=$locus1">$showName1</A>: $gene1->{desc}</H3>
+<i>x</i> axis <A HREF="geneOverview.cgi?orgId=$orgId&gene=$locus1">$showName1</A>: $showDesc1
 <BR>
-<i>y</i> axis <A HREF="geneOverview.cgi?orgId=$orgId&gene=$locus2">$showName2</A>: $gene2->{desc}
+<i>y</i> axis <A HREF="geneOverview.cgi?orgId=$orgId&gene=$locus2">$showName2</A>: $showDesc2
 
   <p>$error</p>
 PART1

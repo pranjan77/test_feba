@@ -208,7 +208,10 @@ if (@fit > 0) { # show the table
                                      -style => "color:rgb(0,0,0)" },
                                      sprintf("%.1f", $row->{fit})) ),
 			      td( sprintf("%.1f", $row->{t}) ),
-			      td($row->{desc}),
+                              td( a({ -title => Utils::alt_descriptions($dbh,$orgId,$row->{locusId})
+                                          || "no other information",
+                                          -href => "domains.cgi?orgId=$orgId&locusId=$row->{locusId}" },
+                                    $row->{desc}) ),
 			      td(a({ 
 				     title => "Compare to data from similar experiments or orthologs",
 				     href => $orthUrl},

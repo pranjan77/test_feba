@@ -52,7 +52,11 @@ print
 	# end_form,
 	# qq[</div>];
 
-    h3({class=>"short"},"$showId $geneName : $desc");
+    h3({class=>"short"},
+       "$showId $geneName :",
+       a({-title => Utils::alt_descriptions($dbh,$orgId,$locusId) || "no other information",
+                -href => "domains.cgi?orgId=$orgId&locusId=$locusId" },
+         $desc));
 
 if ($help == 1) {
 		print qq[<BR><BR><div class="helpbox">
@@ -101,7 +105,10 @@ if (@$cofitResults == 0) {
 			      $cgi->td($cgi->a( {href => "myFitShow.cgi?orgId=$orgId&gene=$hitId" },
 						$showId )),
 			      $cgi->td($hitName),
-			      $cgi->td($hitDesc),
+			      $cgi->td(a{ -title => Utils::alt_descriptions($dbh,$orgId,$hitId)
+                                              || "no other information",
+                                          -href => "domains.cgi?orgId=$orgId&locusId=$hitId" },
+                                       $hitDesc),
                   $cgi->td( $cgi->a({href => $cofitUrl},
 						defined $cofitCons ? sprintf("%.2f", $cofitCons) : "no") ),
                   $cgi->td($cgi->a({title=>"Compare genes via scatterplot", href => "$url2"}, $cofit)),

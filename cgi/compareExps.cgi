@@ -147,13 +147,13 @@ if ($tsv || $outlier) {
     Utils::fail($cgi, "No fitness values for $expName1 in $orgId") unless $found1 > 0;
     Utils::fail($cgi, "No fitness values for $expName2 in $orgId") unless $found2 > 0;
 }
-$dbh->disconnect();
 
 if ($tsv) { # tab delimited values, not a page
     print join("\t", qw{locusId sysName gene desc x tx y ty})."\n";
     while (my ($locusId,$gene) = each %$genes) {
 	next unless exists $gene->{x} && exists $gene->{y};
-	print join("\t", $locusId, $gene->{sysName}, $gene->{gene}, $gene->{desc},
+	print join("\t", $locusId, $gene->{sysName}, $gene->{gene},
+                   $gene->{desc},
 		   $gene->{x}, $gene->{tx}, $gene->{y}, $gene->{ty})."\n";
     }
     exit 0;
@@ -244,7 +244,10 @@ if ($help == 1) {
 						    style => "color:rgb(0,0,0)"},
 						   $gene->{sysName} || $gene->{locusId})),
 				  $cgi->td($gene->{gene}),
-				  $cgi->td($gene->{desc}),
+                                  td( a({ -title => Utils::alt_descriptions($dbh,$orgId,$gene->{locusId})
+                                              || "no other information",
+                                          -href => "domains.cgi?orgId=$orgId&locusId=$gene->{locusId}" },
+                                        $gene->{desc}) ),
 				  $cgi->td({ -bgcolor => Utils::fitcolor($gene->{x}) },
 					   $cgi->a({title => sprintf("t = %.1f. Click for conservation.", $gene->{tx}),
                                                     href => "$orthFitBase&$GroupCond1" },
@@ -268,9 +271,11 @@ if ($help == 1) {
     }
     print p(a({href => "compareExps.cgi?orgId=$orgId&expName1=$expName1&expName2=$expName2"},"Show scatterplot"));
 
+    $dbh->disconnect();
     Utils::endHtml($cgi);
 }
 # else interactive scatterplot
+$dbh->disconnect();
 
 my $title = "Compare Experiments for $orginfo->{$orgId}{genome}";
 my $start = Utils::start_page("$title");

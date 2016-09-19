@@ -115,7 +115,10 @@ foreach my $row (@$spec) {
                     td(a($condParams, $cond)),
                     td(a({href=>"singleFit.cgi?orgId=$orgId&locusId=$row->{locusId}"},
                          $row->{sysName}  || $row->{locusId})),
-                    td($row->{desc}),
+                    td( a({ -title => Utils::alt_descriptions($dbh,$orgId,$row->{locusId})
+                                || "no other information",
+                                -href => "domains.cgi?orgId=$orgId&locusId=$row->{locusId}" },
+                          $row->{desc}) ),
                     td({ -bgcolor => Utils::fitcolor($showFit) },
                        a( $fitAttr, 
                           ( ($row->{minFit} < 0 && $row->{maxFit} < 0) || ($row->{minFit} > 0 && $row->{maxFit} > 0) ?

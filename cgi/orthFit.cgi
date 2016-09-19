@@ -107,7 +107,12 @@ foreach my $o (@genes) {
 			      td($first ? a({href => "myFitShow.cgi?orgId=$o->{orgId}&gene=$o->{locusId}"}, #style => "color: rgb(0,0,0)"},
 					    $o->{sysName} || $o->{locusId}) : ""),
 			      td($first ? a({href => "myFitShow.cgi?orgId=$o->{orgId}&gene=$o->{locusId}"}, $o->{gene}) : ""),
-			      td($first ? $o->{desc} : ""),
+			      td($first ?
+                                 a({ -title => Utils::alt_descriptions($dbh,$o->{orgId},$o->{locusId})
+                                         || "no other information",
+                                     -href => "domains.cgi?orgId=$o->{orgId}&locusId=$o->{locusId}" },
+                                   $o->{desc})
+                                 : ""),
 			      td(a({href => "exp.cgi?orgId=$o->{orgId}&expName=$row->{expName}"}, #style => "color: rgb(0,0,0)"},
 				   $row->{expDesc})),
 			      td({ -bgcolor => Utils::fitcolor($row->{fit}) },

@@ -92,7 +92,10 @@ if (scalar(@$hits) > 0) {
                             a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"},
                                $gene->{sysName}||$gene->{locusId}), 
                             $gene->{gene}, 
-                            $gene->{desc},
+                            a( { -title => Utils::alt_descriptions($dbh,$gene->{orgId},$gene->{locusId})
+                                     || "no other information",
+                                 -href => "domains.cgi?orgId=$gene->{orgId}&locusId=$gene->{locusId}" },
+                              $gene->{desc} ),
                             $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
                             a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
                                $fitstring));
@@ -262,7 +265,10 @@ if (@$descs >= 1) {
                 a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"},
                    $gene->{sysName}||$gene->{locusId} ), 
                 $gene->{gene}, 
-                $gene->{desc},
+                a( { -title => Utils::alt_descriptions($dbh,$gene->{orgId},$gene->{locusId})
+                         || "no other information",
+                     -href => "domains.cgi?orgId=$gene->{orgId}&locusId=$gene->{locusId}" },
+                   $gene->{desc}),
                 $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}},
                         "$orginfo->{$gene->{orgId}}->{genome}"),
                 a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
@@ -355,7 +361,10 @@ if (@$domains >= 1) {
                 a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"},
                    $gene->{sysName}||$gene->{locusId}), 
                 $gene->{gene}, 
-                $gene->{desc},
+                a( { -title => Utils::alt_descriptions($dbh,$gene->{orgId},$gene->{locusId})
+                         || "no other information",
+                     -href => "domains.cgi?orgId=$gene->{orgId}&locusId=$gene->{locusId}" },
+                   $gene->{desc}),
                 $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
                 $gene->{domainId},
                 $gene->{domainName},

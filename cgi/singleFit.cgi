@@ -124,7 +124,10 @@ if (@$hits == 0) {
     	"<button type='submit'>Go</button>",
 	    end_form,
 	    qq[</P></div></div>],
-	    h3("$idShow $gene->{gene}: $gene->{desc}");
+	    h3("$idShow $gene->{gene}:",
+               td( a({ -title => Utils::alt_descriptions($dbh,$orgId,$locusId) || "no other information",
+                       -href => "domains.cgi?orgId=$orgId&locusId=$locusId" },
+                     $gene->{desc}) ));
 
 	    # Option to add a gene (links to genesFit.cgi)
 	# print

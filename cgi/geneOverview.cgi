@@ -200,7 +200,11 @@ if (@$hits == 0) {
 		print
 			$start, $tabs,
 		    h2("Gene info for $idShow in " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
-		    h3("$idShow $gene->{gene}: $gene->{desc}");
+		    h3("$idShow $gene->{gene}:",
+                       a({ -title => Utils::alt_descriptions($dbh,$orgId,$locusId)
+                              || "no other information",
+                           -href => "domains.cgi?orgId=$orgId&locusId=$locusId" },
+                         $gene->{desc}));
 	}
 
     my $beginC = Utils::commify($begin);
@@ -257,7 +261,10 @@ if (@$hits == 0) {
         push @trows, Tr({ -valign => 'top', -align => 'left', -bgcolor=>$bgcolor},
                         td([ a({href => "geneOverview.cgi?orgId=$orgId&gene=$row->{locusId}"},$row->{sysName}||$row->{locusId}), #locus
                              a({href => "geneOverview.cgi?orgId=$orgId&gene=$row->{locusId}"},$row->{gene} || $row->{sysName}), 
-                             $row->{desc}, 
+                             a({ -title => Utils::alt_descriptions($dbh,$orgId,$row->{locusId})
+                                     || "no other information",
+                                 -href => "domains.cgi?orgId=$orgId&locusId=$row->{locusId}" },
+                               $row->{desc}),
                              $row->{strand},
                              a({title=>"From $prevrow->{end} to $row->{begin}"},$diff), # $row->{begin},
                              a({href => "myFitShow.cgi?orgId=$orgId&gene=$row->{locusId}", title=>$tip},$phen),

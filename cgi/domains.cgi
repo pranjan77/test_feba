@@ -68,10 +68,14 @@ unlink($seqFile) || die "Error deleting $seqFile: $!";
 
 my $sys = $gene->{sysName} || $gene->{locusId};
 
+my @toplines = ();
+push @toplines, "Name: $gene->{gene}" if $gene->{gene} ne "";
+push @toplines, "Description: $gene->{desc}";
+
 print
     header, $start, $tabs, '<div id="tabcontent">',
     h2("Protein Info for $sys in " . $cgi->a({href => "org.cgi?orgId=$orgId"},$orginfo->{$orgId}{genome})),
-    p("Description:", $gene->{desc}),
+    p(join("<BR>", @toplines)),
     h3("Domains");
 
 my %ecall = (); # ec number => 1, across all assignment methods

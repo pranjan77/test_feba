@@ -160,7 +160,9 @@ while(<RES>) {
     my @hit = ($cgi->a({href => "org.cgi?orgId=$orgId"},$orginfo->{$orgId}->{genome}),
                $cgi->a({href => "geneOverview.cgi?orgId=$orgId&gene=$locusId"},$showId),
                $cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, $geneName),
-               $desc,
+               $cgi->a({ -title => Utils::alt_descriptions($dbh,$orgId,$locusId) || "no other information",
+                         -href => "domains.cgi?orgId=$orgId&locusId=$locusId"},
+                       $desc),
                $cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId", title => $fittitle }, $fitstring ),
                $cgi->a({title=>"evalue: $eVal ($bitScore bits)"},$percIdentity),
                $cgi->a({title=>"Query $queryStart..$queryEnd of $seqlen aligns to $showId $subjectStart..$subjectEnd"},$cov));
