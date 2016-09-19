@@ -191,6 +191,7 @@ my @trows = (); # the table
 # header row
 my @headings = qw{Position Strand Gene Sysname};
 push @headings, a({-title => "Fractional position within gene"}, "Fraction");
+my @base_headings = @headings;
 foreach my $expName (@expNames) {
     push @headings, a({-href => "exp.cgi?orgId=$orgId&expName=$expName", -title => $expName},
                       $expinfo->{$expName}{expDesc});
@@ -258,13 +259,13 @@ if ($tsv == 1) { # tab delimited values, not a page
 
 
 if (scalar(@expNames) > 0) {
-    # add row for removing items
-    my @row = (td(""),td(""),td(""),td(""));
+    # add row of links for removing items
+    my @row = map { td("") } @base_headings; # 
     my $baseURL = "strainTable.cgi?orgId=$orgId&scaffoldId=$scaffoldId&begin=$begin&end=$end";
     foreach my $expName (@expNames) {
         my @otherExps = grep { $_ ne $expName } @expNames;
         my @otherExpSpec = map { "expName=$_" } @otherExps;
-        push @row, td( a({ -title => "$expName : $expinfo->{$expName}{expDesc}",
+        push @row, td( a({ -title => "remove $expName : $expinfo->{$expName}{expDesc}",
                            -href => join("&", $baseURL, @otherExpSpec) },
                          "remove") );
     }
