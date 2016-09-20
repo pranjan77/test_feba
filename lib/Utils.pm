@@ -780,7 +780,7 @@ sub alt_descriptions($$$) {
     my $kegg_descs = $dbh->selectcol_arrayref("SELECT DISTINCT KgroupDesc.desc
                                                FROM BestHitKEGG JOIN KEGGMember USING (keggOrg,keggId)
                                                JOIN KgroupDesc USING (kgroup)
-                                               WHERE orgId = ? AND locusId = ?",
+                                               WHERE orgId = ? AND locusId = ? AND desc <> ''",
                                               {}, $orgId, $locusId);
 
     my @altdesc = ();
