@@ -761,20 +761,34 @@ sub seed_desc($$$) {
     return ($seed_desc,$seed_classes);
 }
 
+# Caching to speed up alt_descriptions() on pages that list a gene more than once
+my %altdesccache = (); # org => locusId => text
+
 # dbh,orgId,locusId => text showing alternate descriptions for the gene (or an empty string)
+# Uses its own queries instead of kegg_info() and seed_desc() for performance.
+# (To really speed it up I could have the option of providing locusId as a list to
+# pre-cache all those genes with just 1 query)
 sub alt_descriptions($$$) {
     my ($dbh, $orgId, $locusId) = @_;
+    die "Invalid arguments to alt_descriptions"
+        unless defined $dbh && defined $orgId && defined $locusId
+        && $orgId ne "" && $locusId ne "";
+    return "XXX: " . $altdesccache{$orgId}{$locusId} if exists $altdesccache{$orgId}{$locusId};
+
+    my ($seed_desc) = $dbh->selectrow_array("SELECT seed_desc FROM SEEDAnnotation WHERE orgId = ? AND locusId = ?",
+                                            {}, $orgId, $locusId);
+    my $kegg_descs = $dbh->selectcol_arrayref("SELECT DISTINCT KgroupDesc.desc
+                                               FROM BestHitKEGG JOIN KEGGMember USING (keggOrg,keggId)
+                                               JOIN KgroupDesc USING (kgroup)
+                                               WHERE orgId = ? AND locusId = ?",
+                                              {}, $orgId, $locusId);
+
     my @altdesc = ();
-    my ($seed_desc,$seed_classes) = Utils::seed_desc($dbh, $orgId, $locusId);
     push @altdesc, "SEED: $seed_desc" if defined $seed_desc;
-    my $kegg = Utils::kegg_info($dbh, $orgId, $locusId);
-    if (defined $kegg) {
-        my @kegg_descs = map $_->{desc}, @{ $kegg->{ko} };
-        @kegg_descs = grep { $_ ne "" } @kegg_descs;
-        push @altdesc, "KEGG: " . join("; ", @kegg_descs)
-            if scalar(@kegg_descs) > 0;
-    }
-    return join("; ", @altdesc);
+    push @altdesc, "KEGG: " . join("; ", @$kegg_descs)
+            if scalar(@$kegg_descs) > 0;
+    $altdesccache{$orgId}{$locusId} = join(": ", @altdesc);
+    return $altdesccache{$orgId}{$locusId};
 }
     
 
