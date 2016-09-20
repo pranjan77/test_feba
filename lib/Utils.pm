@@ -773,7 +773,7 @@ sub alt_descriptions($$$) {
     die "Invalid arguments to alt_descriptions"
         unless defined $dbh && defined $orgId && defined $locusId
         && $orgId ne "" && $locusId ne "";
-    return "XXX: " . $altdesccache{$orgId}{$locusId} if exists $altdesccache{$orgId}{$locusId};
+    return $altdesccache{$orgId}{$locusId} if exists $altdesccache{$orgId}{$locusId};
 
     my ($seed_desc) = $dbh->selectrow_array("SELECT seed_desc FROM SEEDAnnotation WHERE orgId = ? AND locusId = ?",
                                             {}, $orgId, $locusId);
