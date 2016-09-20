@@ -75,7 +75,8 @@ tr.reset td {
 }
 
 a {
-    color: #00A8C6;
+    /* old made text in yellow-bg tables a bit hard to read: color: #00A8C6; */
+    color: #006886;
     text-decoration: none;
     -webkit-transition: color 0.5s;
 	-moz-transition: color 0.5s ease-in-out; 	
