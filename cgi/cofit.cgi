@@ -27,7 +27,7 @@ my $orgId = $cgi->param('orgId') || die "no species identifier\n";
 my $locusId = $cgi->param('locusId') || die "no gene identifier\n";
 my $help = $cgi->param('help') || "";
 
-Utils::fail($cgi, "$orgId is invalid. Please enter correct species name!") unless ($orgId =~ m/^[A-Za-z0-9_]*$/);
+Utils::fail($cgi, "$orgId is invalid. Please enter correct species name!") unless ($orgId =~ m/^[A-Za-z0-9_-]*$/);
 Utils::fail($cgi, "$locusId is invalid. Please enter correct locusId!") unless ($locusId =~ m/^[A-Za-z0-9_]*$/);
 
 my $dbh = Utils::get_dbh();

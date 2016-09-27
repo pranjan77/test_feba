@@ -30,7 +30,7 @@ my $cgi=CGI->new;
 print $cgi->header;
 
 my $orgId = $cgi->param('orgId') || die "no species identifier\n";
-die "Invalid species name!" unless $orgId =~ m/^[A-Za-z0-9_]*$/;
+die "Invalid species name!" unless $orgId =~ m/^[A-Za-z0-9_-]*$/;
 my $expName = $cgi->param('expName') || die "no experiment identifier\n";
 die "Invalid experiment name!" unless $expName =~ m/^[A-Za-z0-9_]*$/;
 my $show = $cgi->param('show') || "";
