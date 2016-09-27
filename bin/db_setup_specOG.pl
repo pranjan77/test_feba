@@ -43,7 +43,10 @@ my %bbh = (); # org1 => locus1 => org2 => locus2
 my $nPair = 0;
 while (my ($orgId, $geneHash) = each %orgGene) {
     my @genes = keys(%$geneHash);
-    die unless @genes > 0;
+    if (@genes == 0) {
+        print STDERR "Warning: no specific phenotypes in organism $orgId\n";
+        next;
+    }
     my $geneSpec = join(",", map {"'" . $_ . "'"} @genes);
 
     my $hits = $dbh->selectall_arrayref("SELECT locusId1,orgId2,locusId2 FROM Ortholog WHERE orgId1 = ?
