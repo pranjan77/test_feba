@@ -29,9 +29,17 @@ print $cgi->header;
 
 my $orgId = $cgi->param('orgId');
 my $expName1 = $cgi->param('expName1');
+$expName1 =~ s/^[ \t]+//;
+$expName1 =~ s/[ \t\r\n]+$//;
 my $expName2 = $cgi->param('expName2');
+$expName2 =~ s/^[ \t]+//;
+$expName2 =~ s/[ \t\r\n]+$//;
 my $query1 = $cgi->param('query1');
+$query1 =~ s/^[ \t]+//;
+$query1 =~ s/[ \t\r\n]+$//;
 my $query2 = $cgi->param('query2');
+$query2 =~ s/^[ \t]+//;
+$query2 =~ s/[ \t\r\n]+$//;
 my $tsv = $cgi->param('tsv') ? 1 : 0;
 my $help = $cgi->param('help') || "";
 my $outlier = $cgi->param('outlier');
@@ -125,7 +133,8 @@ if ($tsv || $outlier) {
     $genes = $dbh->selectall_hashref("SELECT * FROM Gene where orgId = ?", "locusId", {}, $orgId);
     die "No genes" unless scalar(keys %$genes) > 0;
     # these tables are ordered by experiment, so faster than using GeneFitness
-    my $fit = $dbh->selectall_arrayref("SELECT * FROM FitByExp_${orgId} WHERE expName IN (?,?)",
+    # (Quoting is necessary in case orgId has - in it.)
+    my $fit = $dbh->selectall_arrayref("SELECT * FROM 'FitByExp_${orgId}' WHERE expName IN (?,?)",
 				       { Slice => {} }, $expName1, $expName2);
     my $found1 = 0;
     my $found2 = 0;
