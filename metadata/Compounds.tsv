@@ -413,7 +413,7 @@ Sodium pyrophosphate dibasic	7758-16-9	Sigma	P8135	221.94			yes
 Sodium pyruvate	113-24-6	Sigma	P2256	110.04				yes		
 Sodium selenate	13410-01-0	Sigma	S0882	188.94	Na2SeO4		yes			
 Sodium selenite pentahydrate	26970-82-1	Sigma	163	263.01	Na2SeO3		yes			
-Sodium silicate	6834-92-0			122.06	sodium metasilicate, sodium (meta)silicate		yes			
+Sodium metasilicate	6834-92-0			122.06	sodium silicate, sodium (meta)silicate		yes			
 Sodium succinate dibasic hexahydrate	6106-21-4	Sigma	S2378	270.14	sodium succinate			yes		
 Sodium sulfate	7757-82-6			142.04	Na2SO4, Sodium Sulfate		yes			
 Sodium sulfide nonahydrate	1313-82-2			240.18	Na2S					
@@ -477,3 +477,5 @@ Zinc Pyrithione	13463-41-7	Sigma	phr1401-5g	317.7		yes
 Zinc sulfate heptahydrate	7446-20-0	Sigma	Z0251	287.56	zinc sulfate, ZnSO4 7H2O					yes
 sodium carbonate monohydrate	5968-11-6	Sigma	S4132	124						
 Starch	9005-25-8									
+D,L-cysteine	3374-22-9	Sigma		121.16	DL-cysteine					
+D,L-histidine	4998-57-6	Sigma		155.15	DL-histidine					
