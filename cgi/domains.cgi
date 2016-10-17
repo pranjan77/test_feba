@@ -254,7 +254,9 @@ if (keys(%ecall) > 0) {
         my @rendered = ();
         foreach my $row (@$maps) {
             my ($mapId,$mapdesc) = @$row;
-            push @rendered, li(a({href => "keggmap.cgi?orgId=$orgId&mapId=$mapId"}, $mapdesc));
+            push @rendered, li(a({href => "keggmap.cgi?orgId=$orgId&mapId=$mapId&ec="
+                                      . join(",", @ec)},
+                                 $mapdesc));
         }
         print
             h3("Metabolic Maps"),

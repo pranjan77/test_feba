@@ -16,6 +16,7 @@
 #	orgId, to specify which enzymes to mask out and which to search for members in
 #	expName, to specify which experiment(s) to color code by
 #	or expquery, to search for experiments to use
+#	ec -- a comma-delimited list of EC #s to highlight
 
 use strict;
 use CGI qw(:standard Vars);
@@ -25,7 +26,7 @@ use DBI;
 use lib "../lib";
 use Utils;
 
-# dbh, kegg id => map data structure, including
+# LoadKEGGMap(dbh, kegg id) => map data structure, including
 # mapId
 # mapdesc
 # links -- a list of [coord, url] -- these are the non-enzyme links only (as they do not get shaded)
@@ -36,6 +37,8 @@ use Utils;
 sub LoadKEGGMap($$);
 
 # map data structure => outputs HTML for the map image and overlays
+#	uses the above "map" data structure
+#	also uses an optional highlight attribute for each ecnum entry
 sub DrawKEGGMap($);
 
 # dbh, orgId, ref. to list of ec numbers => hashref of ecnum to locusId => 1
@@ -46,6 +49,9 @@ my $mapId = $cgi->param('mapId');
 my $orgId = $cgi->param('orgId');
 $orgId = "" if !defined $orgId;
 my $expquery = $cgi->param('expquery');
+my $ecHighlight = $cgi->param('ec') || "";
+my @ecHighlight = split /,/, $ecHighlight;
+my %ecHighlight = map { $_ => 1 } @ecHighlight;
 
 my @expNames = $cgi->param('expName');
 
@@ -121,6 +127,7 @@ if ($orgId) {
     my $ecGenes = EcToGenes($dbh, $orgId, \@ecs);
     foreach my $row (@{ $map->{ecnums} }) {
         my $ecnum = $row->{ecnum};
+        $row->{highlight} = 1 if exists $ecHighlight{$ecnum};
         if (exists $ecGenes->{$ecnum}) {
             my @locusIds = sort keys %{ $ecGenes->{$ecnum} };
             my @locusSpecs = map "locusId=$_", @locusIds;
@@ -271,6 +278,10 @@ sub DrawKEGGMap($) {
         my $alt = $row->{ecdesc};
         my $url = $row->{url};
 
+        my $borderstyle = "";
+        $borderstyle = " border: solid red; "
+            if $row->{highlight};
+
         if ($row->{colors}) {
             my @colors = @{ $row->{colors} };
             my $n = scalar(@colors);
@@ -278,14 +289,14 @@ sub DrawKEGGMap($) {
                 my $x1 = int(0.5 + $left + ($right-$left) * $i/$n);
                 my $x2 = int(0.5 + $left + ($right-$left) * ($i+1)/$n);
                 my $xw = $x2 - $x1 + 1;
-                print qq{<A style="position:absolute; top:${top}px; left:${x1}px; width:${xw}px; height:${height}px; background-color: $colors[$i]; opacity: 0.6;" title="$alt" href="$url"></A>\n};
+                print qq{<A style="position:absolute; top:${top}px; left:${x1}px; width:${xw}px; height:${height}px; background-color: $colors[$i]; opacity: 0.6; $borderstyle" title="$alt" href="$url"></A>\n};
             }
         } else {
             my $bg = "rgba(255,255,255,0)";
             if ($row->{mask}) {
                 $bg = "rgba(0,0,0,0.3)";
             }
-            print qq{<A style="position:absolute; top:${top}px; left:${left}px; width:${width}px; height:${height}px; background-color: ${bg};" title="$alt" href="$url"></A>\n};
+            print qq{<A style="position:absolute; top:${top}px; left:${left}px; width:${width}px; height:${height}px; background-color: ${bg}; $borderstyle" title="$alt" href="$url"></A>\n};
         }
     }
     print "</DIV>\n"; # close the div that contains the image
