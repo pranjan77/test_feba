@@ -87,9 +87,12 @@ foreach my $o (@genes) {
     my $data = $dbh->selectall_arrayref(qq{SELECT * from Experiment JOIN GeneFitness USING  (orgId,expName)
                                            WHERE orgId=? AND locusId=? AND expGroup=? AND condition_1=? ORDER BY fit},
 					{ Slice => {} }, $o->{orgId}, $o->{locusId}, $expGroup, $condition1);
-    $nSkipOrth++ if @$data == 0 && $o->{orgId} ne $orgId;
+    if (@$data == 0 && $o->{orgId} ne $orgId) {
+        $nSkipOrth++;
+        next;
+    }
     my $first = 1;
-	$shade += 1;
+    $shade++;
     foreach my $row (@$data) {
 		my $ratio = $o->{orgId} eq $orgId ? "&mdash;" : sprintf("%.2f",$o->{ratio});
 		my $orgShort = "";
