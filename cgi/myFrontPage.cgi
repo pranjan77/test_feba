@@ -49,19 +49,19 @@ div({-id=>"ntcontent"},
   table({class=>"frontpage"}, 
     $cgi->Tr(
       td({class=>"searchbar"},
-        a({href=>"geneSearch.cgi"},'By Gene Name<BR>',img({src=>"http://i.imgur.com/agupF5p.png"}))
+        a({href=>"geneSearch.cgi"},'by Gene<BR>',img({src=>"../images/genesearch.png"}))
         ),
       td({class=>"searchbar"},
-        a({href=>"blastSearch.cgi"},'By Sequence<BR>',img({src=>"http://i.imgur.com/sGtB8IE.png"}))
+        a({href=>"blastSearch.cgi"},'by Sequence<BR>',img({src=>"http://i.imgur.com/agupF5p.png"}))
         ),
       td({class=>"searchbar"},
-        a({href=>"expSearch.cgi"},'By Condition<BR>',img({src=>"http://i.imgur.com/c0HPmVU.png"}))
+        a({href=>"expSearch.cgi"},'by Condition<BR>',img({src=>"http://i.imgur.com/c0HPmVU.png"}))
         ),
       td({class=>"searchbar"},
         a({href=>"orgAll.cgi"},'Organisms<BR>',img({src=>"http://i.imgur.com/QUcjMNZ.png"}))
         ),
       td({class=>"searchbar"},
-        'Browse Conditions:<BR><BR>', a({href=>"cond.cgi?expGroup=carbon%20source", title=>"Carbon Sources"},"Carbon Sources<BR>"), a({href=>"cond.cgi?expGroup=nitrogen source", title=>"Nitrogen Sources"},"Nitrogen Sources<BR>"), a({href=>"cond.cgi?expGroup=stress", title=>"Stresses"},"Stresses"),
+        'See Conditions:<BR><BR>', a({href=>"cond.cgi?expGroup=carbon%20source", title=>"Carbon Sources"},"Carbon Sources<BR>"), a({href=>"cond.cgi?expGroup=nitrogen source", title=>"Nitrogen Sources"},"Nitrogen Sources<BR>"), a({href=>"cond.cgi?expGroup=stress", title=>"Stresses"},"Stresses"),
         )
       )
     ),
