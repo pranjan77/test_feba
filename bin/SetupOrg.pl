@@ -70,7 +70,9 @@ END
             . "This script is available from Ian Holmes' gfftools repository\n"
             . "See https://github.com/ihh/gfftools\n"
             unless -x "$Bin/genbank2gff.pl";
-	system("$Bin/gbkToSeq.pl $gbkFile > $outdir/genome.fna") == 0 || die "gbkToSeq.pl failed";
+	system("$Bin/gbkToSeq.pl $gbkFile > $outdir/genome.fna") == 0
+            || system("$Bin/gbkToSeq2.pl $gbkFile > $outdir/genome.fna") == 0
+            || die "Both gbkToSeq.pl and gbkToSeq2.pl failed";
 	system("$Bin/genbank2gff.pl < $gbkFile > $outdir/genes.gff") == 0 || die "genbank2gff.pl failed";
 	system("$Bin/gffToGenes.pl -prefix $prefix < $outdir/genes.gff > $outdir/genes.tab") == 0 || die "gffToGenes.pl failed";
     }
