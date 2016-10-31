@@ -80,7 +80,9 @@ use strict;
 	# output types: 1 for protein, 2 for rRNA, 5 for tRNA, 6 for other non-coding RNA,
 	# 7 for pseudogene of protein-coding genes, 8 for pseudogene of RNA gene
 	my $out_type = $types{$type};
-	my $isPseudo = $attributes =~ m/pseudo=true/ || $attributes =~ m/partial=true/;
+	my $isPseudo = $attributes =~ m/pseudo=true/
+            || $attributes =~ m/partial=true/
+            || $attributes =~ m/pseudo=_no_value/;
 	$out_type = 7 if $isPseudo && $out_type == 1;
 	$out_type = 8 if $isPseudo && $out_type == 8;
 	# a hack to identify (most of) the JGI pseudogenes, as they are not indicated in the gff file.
