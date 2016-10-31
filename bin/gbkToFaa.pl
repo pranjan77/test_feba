@@ -18,6 +18,7 @@ use Bio::SeqIO;
     die "Missing information for sysName" unless exists $headerNames{'sysName'};
     die "Missing information for locusId" unless exists $headerNames{'locusId'};
     die "Missing information for locusId" unless exists $headerNames{'begin'};
+    die "Missing information for locusId" unless exists $headerNames{'type'};
 
     while(my $line = <GENES>) {
 	chomp $line;
@@ -25,7 +26,9 @@ use Bio::SeqIO;
 	my $locusId = $F[ $headerNames{'locusId'} ];
 	my $sysName = $F[ $headerNames{'sysName'} ];
 	my $begin = $F[ $headerNames{'begin'} ];
+	my $type = $F[ $headerNames{'type'} ];
 	next unless defined $sysName && defined $locusId && $sysName ne "";
+        next unless $type eq "1";
 	my $tag = $sysName . ":" . $begin;
 	die "Duplicate entry for $tag" if exists $tagToId{$tag};
 	$tagToId{$tag} = $locusId;
@@ -40,14 +43,14 @@ use Bio::SeqIO;
 		my $start = $feature->start;
 		my $end = $feature->end;
 		my $begin = $start < $end ? $start : $end;
-		my $aaseq = ($feature->get_tag_values("translation"))[0];
 		my $tag = $sysName . ":" . $begin;
 		print "Warning: duplicate locus $tag" if exists $locusTags{$sysName};
 		$locusTags{$tag} = 1;
 		my $locusId = $tagToId{$tag};
 		if (!defined $locusId) {
-		    print STDERR "Warning, no locusId for locustag:begin $tag (OK if wrap-around ORF)\n";
+		    print STDERR "No gene entry for locustag:begin $tag (OK if wrap-around ORF or pseudo)\n";
 		} else {
+                    my $aaseq = ($feature->get_tag_values("translation"))[0];
 		    print ">$locusId\n$aaseq\n";
 		}
 	    }
