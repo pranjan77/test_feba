@@ -8,8 +8,13 @@ our (@ISA,@EXPORT);
 @EXPORT = qw( ReadTable ReadColumnNames ReadFasta NewerThan ReadFastaDesc reverseComplement );
 
 # filename and list of required fields => list of hashes, each with field->value
+# The list can be a single name or a refernce to a list
+# (It used to be an actual list; not sure how that went wrong with perl prototypes?)
 sub ReadTable($*) {
     my ($filename,@required) = @_;
+    if (scalar(@required) == 1 && ref $required[0]) {
+        @required = @{ $required[0] };
+    }
     open(IN, "<", $filename) || die "Cannot read $filename";
     my $headerLine = <IN>;
     $headerLine =~ s/[\r\n]+$//; # for DOS
