@@ -20,7 +20,34 @@ represented constructs.
 
 Writes to g/nickname/library_magic.* -- a hiconf file with the
 high-confidence mappings, and a bias file with statistics for the
-popular constructs.
+popular constructs. Both are tab-delimited.
+
+magic_construct_barcodes should be tab-delimited with the fields
+construct and barcode (in the BarSeq orientation).
+
+In the hiconf file, barcode is the sequence in the TnSeq direction and
+rcbarcode is the sequence in the BarSeq direction. locusId is blank if
+the insertion is not in a gene.
+
+The bias file has the fields:
+name -- the construct, as in the input table
+nReads -- total reads for the constructs' barcodes (either
+          past-the-end of the transposon or mapped into genome)
+nPstEnd -- past-the-end reads for this construct
+fPstEnd -- fraction of reads for intact vector
+nLoc -- number of high-confidence insertions
+nInGene -- number of insertions within genes
+fStrAgr -- fraction of time gene strand = insertion strand
+        (for a good vector, will be very close to 50%)
+nGenesH -- number of different genes with insertions
+The remaining statistics are computed while considering only
+genes that are hit (with at least one insertion):
+meanLoc -- average of #insertions per gene
+medLoc -- median of #insertions per gene
+locBias -- mean/median #insertions per gene
+meanRd -- average of #reads per gene
+medRd -- median of #reads per gene
+rdBias -- mean/median #reads per gene
 
 Optional arguments:
    -gdir $gdir -- parent of the nickname/ directory
