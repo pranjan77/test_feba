@@ -219,7 +219,7 @@ if ($help == 1) {
 
 print $cgi->h3($addgene_error) if defined $addgene_error;
 if ($showAll) {
-    print $cgi->p("All " . scalar(@exps) . " fitness values, sorted by group and condition");
+    print $cgi->p("All " . scalar(@exps) . " experiments, sorted by group and condition");
 } else {
     print $cgi->p("Top " . scalar(@exps) . " experiments (either direction), sorted by average fitness");
 }
@@ -229,9 +229,10 @@ my $locusSpec = $around ? "locusId=$centralId" : join("&", map {"locusId=$_"} @l
 if ($showAll) {
     print $cgi->a( { href => "genesFit.cgi?orgId=$orgId&$locusSpec&around=$around" }, "strongest phenotypes" );
 } else {
-    print $cgi->a( { href => "genesFit.cgi?orgId=$orgId&$locusSpec&showAll=1&around=$around" }, "all fitness data" );
+    my $n = scalar(@exps);
+    print $cgi->a( { href => "genesFit.cgi?orgId=$orgId&$locusSpec&showAll=1&around=$around" }, "all $n experiments" );
 }
-print ".<br><br>";
+print "<br><br>";
 
 
 print Utils::geneArrows(\@genes, $centralId, undef, undef) if $around;

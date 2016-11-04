@@ -169,12 +169,13 @@ if (@$hits == 0) {
 	my $option = "Or see ";
 	if ($showAll == 0) {
         my $showAllDest = qq(singleFit.cgi?orgId=$orgId&locusId=$locusId&showAll=1);
-        $option .= qq[<a href="$showAllDest">all fitness data</a>];
+        my $n = scalar(@fit);
+        $option .= qq[<a href="$showAllDest">all $n experiments</a>];
     } else {
         my $showFewDest = qq(singleFit.cgi?orgId=$orgId&locusId=$locusId&showAll=0);
         $option .= qq[<a href="$showFewDest">strongest phenotypes</a>];
     }
-    print $option . '.';
+    print $option;
 	    
 	my @out = (); # specifiers for HTML rows for each fitness value
 	my $lastGroup = ""; # only enter the first time
