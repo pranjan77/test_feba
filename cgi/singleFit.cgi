@@ -169,8 +169,7 @@ if (@$hits == 0) {
 	my $option = "Or see ";
 	if ($showAll == 0) {
         my $showAllDest = qq(singleFit.cgi?orgId=$orgId&locusId=$locusId&showAll=1);
-        my $n = scalar(@fit);
-        $option .= qq[<a href="$showAllDest">all $n experiments</a>];
+        $option .= qq[<a href="$showAllDest">all $nTotValues experiments</a>];
     } else {
         my $showFewDest = qq(singleFit.cgi?orgId=$orgId&locusId=$locusId&showAll=0);
         $option .= qq[<a href="$showFewDest">strongest phenotypes</a>];

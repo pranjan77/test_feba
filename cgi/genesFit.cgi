@@ -130,6 +130,7 @@ print $cgi->header;
 print $start, $tabs;
 
 my @exps = values %$expinfo;
+my $nTotValues = scalar(@exps);
 if ($showAll) {
     @exps = sort Utils::CompareExperiments @exps;
 } else {
@@ -229,8 +230,8 @@ my $locusSpec = $around ? "locusId=$centralId" : join("&", map {"locusId=$_"} @l
 if ($showAll) {
     print $cgi->a( { href => "genesFit.cgi?orgId=$orgId&$locusSpec&around=$around" }, "strongest phenotypes" );
 } else {
-    my $n = scalar(@exps);
-    print $cgi->a( { href => "genesFit.cgi?orgId=$orgId&$locusSpec&showAll=1&around=$around" }, "all $n experiments" );
+    print $cgi->a( { href => "genesFit.cgi?orgId=$orgId&$locusSpec&showAll=1&around=$around" },
+                   "all $nTotValues experiments" );
 }
 print "<br><br>";
 
