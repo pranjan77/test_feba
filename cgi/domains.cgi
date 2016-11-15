@@ -126,12 +126,6 @@ if (@$cond == 0) {
     print table({cellspacing => 0, cellpadding => 3}, @trows);
 }
 
-print
-    br(),
-    p(@$cond > 0 ? "Or search" : "Search",
-      a({-href => "http://www.ncbi.nlm.nih.gov/Structure/cdd/wrpsb.cgi?seqinput=>${sys}%0A$seq"},
-	"Conserved Domains Database"));
-
 # UniProt information, if any
 my $bhSprot = $dbh->selectrow_hashref("SELECT * from BestHitSwissProt
                                          JOIN SwissProtDesc USING (sprotAccession,sprotId)
@@ -268,10 +262,41 @@ if (keys(%ecall) > 0) {
 
 # print sequence
 $seq =~ s/(.{60})/$1\n/gs;
+my $desc = $gene->{desc};
+$desc =~ s/"//g;
+my $orgtype = "bacteria";
+my $gram = "negative";
+my $newline = "%0A";
 
 print
+    h3("Sequence Analysis Tools"),
+    p("Search the",
+      a({-href => "http://www.ncbi.nlm.nih.gov/Structure/cdd/wrpsb.cgi?seqinput=>${sys}$newline$seq"},
+        "Conserved Domains Database")),
+
+    p("Predict protein localization: ",
+      a({-href => "http://psort.org/psortb/results.pl?"
+             . join("&",
+                    "organism=$orgtype",
+                    "gram=$gram",
+                    "format=html",
+                    "sendresults=display",
+                    "email=",
+                    "seqs=>${sys}$newline$seq")},
+        "PSORTb"),
+      "(Gram $gram $orgtype)"),
+
+    p("Predict transmembrane helices:",
+      a({-href => "http://www.cbs.dtu.dk/cgi-bin/webface2.fcgi?"
+             . join("&",
+                    "configfile=/usr/opt/www/pub/CBS/services/TMHMM-2.0/TMHMM2.cf",
+                    "outform=-noshort",
+                    "SEQ=>${sys}$newline$seq")},
+        "TMHMM")),
+
     h3("Protein Sequence ($seqLen amino acids)"),
     pre(">$sys $gene->{desc} ($orginfo->{$orgId}{genome})\n$seq"),
+
     '</div>';
 
 $dbh->disconnect();
