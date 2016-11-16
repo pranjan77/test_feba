@@ -255,11 +255,12 @@ CREATE TABLE 'MetacycReaction' (
 );
 
 /* Ortholog groups of all genes that have conserved specific phenotypes.
+	(If not conserved, is in there with nInOG=1)
 
    Ideally, all genes in an OG would be BBHs of each other, but in
    practice, these are computed by clustering the BBHs.
 
-   Only genes with a specific phenotype in the same expGroup & condition are included in this table.
+   Only orthologs with a specific phenotype in the same expGroup & condition are included in this table.
 
    Genes may be in the same OG if they have specific phenotypes of opposite signs.
 */
