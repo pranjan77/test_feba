@@ -270,9 +270,13 @@ my $newline = "%0A";
 
 print
     h3("Sequence Analysis Tools"),
-    p("Search the",
-      a({-href => "http://www.ncbi.nlm.nih.gov/Structure/cdd/wrpsb.cgi?seqinput=>${sys}$newline$seq"},
-        "Conserved Domains Database")),
+    p(a({-href => "http://www.ncbi.nlm.nih.gov/Structure/cdd/wrpsb.cgi?seqinput=>${sys}$newline$seq"},
+        "Search CDD"),
+      "(the Conserved Domains Database, which includes COG and superfam)"),
+
+    p(a({-href => "http://pfam.xfam.org/search/sequence?seqOpts=&ga=0&evalue=1.0&seq=$seq"},
+        "Search PFam"),
+      "(including for weak hits, up to E = 1)"),
 
     p("Predict protein localization: ",
       a({-href => "http://psort.org/psortb/results.pl?"
