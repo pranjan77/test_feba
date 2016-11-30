@@ -41,9 +41,6 @@ sub LoadKEGGMap($$);
 #	also uses an optional highlight attribute for each ecnum entry
 sub DrawKEGGMap($);
 
-# dbh, orgId, ref. to list of ec numbers => hashref of ecnum to locusId => 1
-sub EcToGenes($$$);
-
 my $cgi=CGI->new;
 my $mapId = $cgi->param('mapId');
 my $orgId = $cgi->param('orgId');
@@ -124,7 +121,7 @@ if ($orgId) {
     my $expSpec = join(",", map { "'" . $_ . "'" } @expNames);
 
     # grey out absent EC#s, color code (if @expNames), and link to actual genes if present
-    my $ecGenes = EcToGenes($dbh, $orgId, \@ecs);
+    my $ecGenes = Utils::EcToGenes($dbh, $orgId, \@ecs);
     foreach my $row (@{ $map->{ecnums} }) {
         my $ecnum = $row->{ecnum};
         $row->{highlight} = 1 if exists $ecHighlight{$ecnum};
@@ -300,35 +297,4 @@ sub DrawKEGGMap($) {
         }
     }
     print "</DIV>\n"; # close the div that contains the image
-}
-
-sub EcToGenes($$$) {
-    my ($dbh,$orgId,$ecnums) = @_;
-    return {} if @$ecnums == 0;
-    my %ecGenes = (); # ecnum => locusId => 1
-    my @ecspecs = map "'" . $_ . "'", @$ecnums;
-    my $ecspec = join(",", map "'" . $_ . "'", @$ecnums);
-    # match ECs by TIGRFam, by KEGG ortholog group, and by SEED annotation
-    my $hits1 = $dbh->selectall_arrayref(
-	qq{ SELECT ec, locusId FROM GeneDomain JOIN Gene USING (orgId,locusId)
-            WHERE orgId = ? AND ec IN ( $ecspec ); },
-        {}, $orgId);
-    my $hits2 = $dbh->selectall_arrayref(
-        qq{ SELECT ecnum, locusId FROM KgroupEC JOIN KEGGMember USING (kgroup)
-            JOIN BestHitKEGG USING (keggOrg,keggId)
-            WHERE orgId = ? AND ecnum IN ( $ecspec ); },
-        {}, $orgId);
-                                                 
-    my $hits3 = $dbh->selectall_arrayref(
-        qq{ SELECT num,locusId
-		FROM SEEDClass JOIN SEEDAnnotation USING (orgId,locusId)
-                WHERE orgId = ? AND num IN ( $ecspec ); },
-        {}, $orgId);
-    foreach my $hits ($hits1,$hits2,$hits3) {
-        foreach my $row (@$hits) {
-            my ($ec,$locusId) = @$row;
-            $ecGenes{$ec}{$locusId} = 1;
-        }
-    }
-    return \%ecGenes;
 }

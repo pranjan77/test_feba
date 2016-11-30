@@ -790,6 +790,38 @@ sub alt_descriptions($$$) {
     $altdesccache{$orgId}{$locusId} = join(": ", @altdesc);
     return $altdesccache{$orgId}{$locusId};
 }
+
+# dbh, orgId, ref. to list of ec numbers => hashref of ecnum to locusId => 1
+sub EcToGenes($$$) {
+    my ($dbh,$orgId,$ecnums) = @_;
+    return {} if @$ecnums == 0;
+    my %ecGenes = (); # ecnum => locusId => 1
+    my @ecspecs = map "'" . $_ . "'", @$ecnums;
+    my $ecspec = join(",", map "'" . $_ . "'", @$ecnums);
+    # match ECs by TIGRFam, by KEGG ortholog group, and by SEED annotation
+    my $hits1 = $dbh->selectall_arrayref(
+	qq{ SELECT ec, locusId FROM GeneDomain JOIN Gene USING (orgId,locusId)
+            WHERE orgId = ? AND ec IN ( $ecspec ); },
+        {}, $orgId);
+    my $hits2 = $dbh->selectall_arrayref(
+        qq{ SELECT ecnum, locusId FROM KgroupEC JOIN KEGGMember USING (kgroup)
+            JOIN BestHitKEGG USING (keggOrg,keggId)
+            WHERE orgId = ? AND ecnum IN ( $ecspec ); },
+        {}, $orgId);
+                                                 
+    my $hits3 = $dbh->selectall_arrayref(
+        qq{ SELECT num,locusId
+		FROM SEEDClass JOIN SEEDAnnotation USING (orgId,locusId)
+                WHERE orgId = ? AND num IN ( $ecspec ); },
+        {}, $orgId);
+    foreach my $hits ($hits1,$hits2,$hits3) {
+        foreach my $row (@$hits) {
+            my ($ec,$locusId) = @$row;
+            $ecGenes{$ec}{$locusId} = 1;
+        }
+    }
+    return \%ecGenes;
+}
     
 
 #END 
