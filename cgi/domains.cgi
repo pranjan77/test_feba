@@ -238,6 +238,7 @@ print
 
 if (keys(%ecall) > 0) {
     my @ec = sort keys %ecall;
+
     my @ecspec = map { "'" . $_ . "'" } @ec;
     my $ecspec = join(",", @ecspec);
     my $maps = $dbh->selectall_arrayref(qq{SELECT DISTINCT mapId,title
@@ -258,6 +259,22 @@ if (keys(%ecall) > 0) {
             join("", @rendered),
             "</ul>";
     }
+
+    my $ecGenes = Utils::EcToGenes($dbh, $orgId, \@ec);
+    my @links = ();
+    foreach my $ec (@ec) {
+        my @iso = keys %{ $ecGenes->{$ec} };
+        my @iso2 = grep { $_ ne $locusId } @iso;
+        if (@iso2 > 0) {
+            my @locusSpecs = map "locusId=$_", @iso;
+            push @links, a( { -href => "genesFit.cgi?orgId=$orgId&" . join("&", @locusSpecs) },
+                            $ec );
+        }
+    }
+    print
+        h3("Isozymes"),
+        scalar(@links) > 0 ? p("Compare fitness of isozymes for:", join(", ", @links))
+        : "No predicted isozymes";
 }
 
 # print sequence
