@@ -296,7 +296,7 @@ print
       "(including for weak hits, up to E = 1)"),
 
     p("Predict protein localization: ",
-      a({-href => "http://psort.org/psortb/results.pl?"
+      a({-href => "http://www.psort.org/psortb/results.pl?"
              . join("&",
                     "organism=$orgtype",
                     "gram=$gram",
