@@ -36,7 +36,7 @@ my $style = Utils::get_style();
 # read the input information
 my $query = $cgi->param('query') || "";
 my $qtype = $cgi->param('qtype') || "protein";
-my $numHit = $cgi->param('numHit') || 20;
+my $numHit = $cgi->param('numHit') || 40;
 my $locusSpec = $cgi->param('locusId') || "";
 my $orgId = $cgi->param('orgId') || "";
 my $dbh = Utils::get_dbh();
