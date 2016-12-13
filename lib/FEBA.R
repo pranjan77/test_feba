@@ -444,50 +444,27 @@ FEBA_Fit = function(expsUsed, all, genes,
 	names(fit) = sub("fitnorm","lrn",names(fit));
 	names(fit) = sub("fit","lr",names(fit));
 	if (debug) cat("Extracted fitness values\n");
+	fit$version = "1.1.1";
 
-	q_names = words("name short t0set");
-	if(!is.null(expsUsed$num)) q_names = c(q_names, "num");
-	q = expsUsed[expsUsed$name %in% names(fit$lrn), q_names];
-	nUse = as.character(q$name);
-	if(!all(nUse == names(fit$lrn))) stop("Mismatched names in fit");
-	q$nMapped = colSums(all[,nUse,drop=F]);
-	q$nPastEnd = colSums(all[all$scaffold=="pastEnd",nUse,drop=F]);
-	q$nGenic = colSums(all[has_gene2,nUse,drop=F]);
-	q$nUsed = colSums(fit$tot);
-	q$gMed = apply(fit$tot,2,median);
-	q$gMedt0 = apply(fit$tot0,2,median);
-	q$gMean = apply(fit$tot, 2, mean);
+	q_col = words("name short t0set");
+	if(!is.null(expsUsed$num)) q_col = c(q_col, "num");
+        fit$q = expsUsed[expsUsed$name %in% names(fit$lrn), q_col];
+        qnames = as.character(fit$q$name);
+	if(!all(qnames == names(fit$lrn))) stop("Mismatched names in fit");
+        if(debug) cat("Running FitReadMetrics() and FitQuality()\n");
+        fit$q = cbind(fit$q,
+			FitReadMetrics(all, qnames, has_gene2),
+                        FitQuality(fit, genes, pred));
+	if(debug) cat("Running FEBA_Exp_status\n")
+	status = FEBA_Exp_Status(fit$q, ...);
+	fit$q$u = (status == "OK");
+	fit$q$u[is.na(fit$q$u)] = FALSE;
 
-	adj = AdjacentPairs(genes);
-	adjDiff = adj[adj$strand1 != adj$strand2,];
-
-	# consistency of 1st and 2nd half; m.a.d. is median absolute difference
-	q$cor12 = mapply(function(x,y) cor(x,y,method="s",use="p"), fit$lrn1, fit$lrn2);
-	q$mad12 = apply(abs(fit$lrn1-fit$lrn2), 2, median, na.rm=T);
-
-	# consistency of log2 counts for 1st and 2nd half, for sample and for time0
-	q$mad12c = apply(abs(log2(1+fit$tot1) - log2(1+fit$tot2)), 2, median, na.rm=T);
-	q$mad12c_t0 = apply(abs(log2(1+fit$tot1_0) - log2(1+fit$tot2_0)), 2, median, na.rm=T);
-
-	# correlation of operon or adjacent different-strand pairs
-	q$opcor = apply(fit$lrn, 2, function(x) paircor(pred[pred$bOp,], fit$g, x, method="s"));
-	q$adjcor = sapply(as.character(q$name), function(x) paircor(adjDiff, fit$g, fit$lrn[[x]], method="s"));
-	# GC correlation -- a sign of PCR issues (and often associated with high adjcor)
-	# c() to make it be a vector instead of a matrix
-	q$gccor = c( cor(fit$lrn, genes$GC[ match(fit$g, genes$locusId) ], use="p") );
-
-	# experiments with very high maximum fitness may not give meaningful results for the typical gene
-	q$maxFit = apply(fit$lrn,2,max,na.rm=T);
-        status = FEBA_Exp_Status(q, ...);
-	q$u = (status == "OK");
-	q$u[is.na(q$u)] = FALSE;
 	print(table(status));
 	for(s in c("low_count","high_mad12","low_cor12","high_adj_gc_cor")) {
-	    if(sum(status==s) > 0) cat(s, ":", q$name[status==s],"\n");
+	    if(sum(status==s) > 0) cat(s, ":", fit$q$name[status==s],"\n");
 	}
 
-	fit$version = "1.1.0";
-	fit$q = q;
 	fit$genesUsed = genesUsed;
 	fit$strainsUsed = strainsUsed;
 	fit$genesUsed12 = genesUsed12;
@@ -512,21 +489,23 @@ FEBA_Fit = function(expsUsed, all, genes,
 	fit$strain_lrn = data.frame(fit$strain_lrn);
 
 	# Statistics of cofitness on pairs, top cofitness hits, specific phenotypes
-	if (computeCofit && sum(q$u) >= 20) {
-		cat("Computing cofitness with ", sum(q$u), " experiments\n", file=stderr());
-		adjDiff$rfit = cor12(adjDiff, fit$g, fit$lrn[,q$u]);
-		pred$rfit = cor12(pred, fit$g, fit$lrn[,q$u]);
+	if (computeCofit && sum(fit$q$u) >= 20) {
+		cat("Computing cofitness with ", sum(fit$q$u), " experiments\n", file=stderr());
+                adj = AdjacentPairs(genes);
+                adjDiff = adj[adj$strand1 != adj$strand2,];
+		adjDiff$rfit = cor12(adjDiff, fit$g, fit$lrn[,fit$q$u]);
+		pred$rfit = cor12(pred, fit$g, fit$lrn[,fit$q$u]);
 		fit$pairs = list(adjDiff=adjDiff, pred=pred);
 		random = data.frame(Gene1 = sample(fit$g, length(fit$g)*2, replace=T),
 		       	            Gene2 = sample(fit$g, length(fit$g)*2, replace=T));
 		random = random[as.character(random$Gene1) != as.character(random$Gene2),];
-		random$rfit = cor12(random, fit$g, fit$lrn[,q$u]);
+		random$rfit = cor12(random, fit$g, fit$lrn[,fit$q$u]);
 		fit$pairs = list(adjDiff=adjDiff, pred=pred, random=random);
 		fit$cofit = TopCofit(fit$g, fit$lrn[,fit$q$u]);
 		d = merge(fit$q[fit$q$u,], expsUsed, by=words("name short"));
-		fit$specphe = SpecificPhenotypes(fit$g, d, fit$lrn[,q$u], fit$t[,q$u]);
+		fit$specphe = SpecificPhenotypes(fit$g, d, fit$lrn[,fit$q$u], fit$t[,fit$q$u]);
 	} else {
-		cat("Only", sum(q$u),"experiments of", nrow(q)," passed quality filters!\n", file=stderr());
+		cat("Only", sum(fit$q$u),"experiments of", nrow(fit$q)," passed quality filters!\n", file=stderr());
 	}
 	return(fit);
 }
@@ -915,6 +894,37 @@ cor12 = function(pairs, genes, data, use="p", method="pearson", names=c("Gene1",
 		cor(c(data[i1[x],], recursive=T), c(data[i2[x],], recursive=T), method=method, use=use)));
 }
 
+# Compute read metrics -- nMapped, nPastEnd, nGenic, for the given data columns
+# The final argument is used to define genic
+FitReadMetrics = function(all, cols, in_gene) {
+	data.frame(nMapped  = colSums(all[, cols, drop=F]),
+                   nPastEnd = colSums(all[all$scaffold=="pastEnd", cols, drop=F]),
+                   nGenic = colSums(all[in_gene, cols, drop=F]));
+}
+
+# Compute the quality metrics from fitness values, fitness values of halves of genes, or
+# counts per gene (for genes or for halves of genes)
+FitQuality = function(fit, genes, pred=CrudeOp(genes)) {
+	adj = AdjacentPairs(genes);
+	adjDiff = adj[adj$strand1 != adj$strand2,];
+
+	data.frame(
+		nUsed = colSums(fit$tot),
+		gMed = apply(fit$tot, 2, median),
+		gMedt0 = apply(fit$tot0, 2, median),
+		gMean = apply(fit$tot, 2, mean),
+		cor12 = mapply(function(x,y) cor(x,y,method="s",use="p"), fit$lrn1, fit$lrn2),
+		mad12 = apply(abs(fit$lrn1-fit$lrn2), 2, median, na.rm=T),
+		# consistency of log2 counts for 1st and 2nd half, for sample and for time0
+		mad12c = apply(abs(log2(1+fit$tot1) - log2(1+fit$tot2)), 2, median, na.rm=T),
+		mad12c_t0 = apply(abs(log2(1+fit$tot1_0) - log2(1+fit$tot2_0)), 2, median, na.rm=T),
+		opcor = apply(fit$lrn, 2, function(x) paircor(pred[pred$bOp,], fit$g, x, method="s")),
+		adjcor = sapply(names(fit$lrn), function(x) paircor(adjDiff, fit$g, fit$lrn[[x]], method="s")),
+		gccor = c( cor(fit$lrn, genes$GC[ match(fit$g, genes$locusId) ], use="p") ),
+		maxFit = apply(fit$lrn,2,max,na.rm=T)
+	);
+}        
+        
 # Returns status of each experiment -- "OK" is a non-Time0 experiment that passes all quality metrics
 # Note -- arguably min_cor12 should be based on linear correlation not Spearman.
 # 0.1 threshold was chosen based on Marinobacter set5, in which defined media experiments with cor12 = 0.1-0.2
