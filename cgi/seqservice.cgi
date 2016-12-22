@@ -12,10 +12,12 @@
 # Optional parameters: maxhits -- default is 20. Cannot be raised above 50.
 # debug -- write lines starting with # to output to record status
 # html -- return HTML code (with no wrappers) for the result, instead of a table
+# wrap -- return HTML code with HTML tags (for testing). Must specify with html.
 #
 # Must start the ublast service first with bin/start_ublast_service.pl
-# Returns a tab-delimited table of FastBLAST hits, or, a simple table with
-# Error and the error (or "no hits").
+#
+# By default, returns a tab-delimited table of FastBLAST hits, or, a
+# simple two-line table with Error and the error (or "no hits").
 #
 # For an example of a page that uses this service see
 # ../images/fitblast_example.html
@@ -32,9 +34,13 @@ use lib "../lib";
 use Utils;
 
 my $cgi=CGI->new;
-print $cgi->header(-type => 'text/plain',  
-		   # allow cross-site scripts to use this
-		   -access_control_allow_origin => '*');
+if ($cgi->param('wrap') && $cgi->param('html')) {
+    print $cgi->header('text/html');
+} else {
+    print $cgi->header(-type => 'text/plain',  
+                       # allow cross-site scripts to use this
+                       -access_control_allow_origin => '*');
+}
 
 my $seq = $cgi->param('seq');
 $seq =~ s/[ \r\n]//g;
@@ -200,8 +206,11 @@ if ($html) {
         }
         last if $useful;
     }
-    print join("<BR>",@pieces);
+    my $blastURL = "$base_url/mySeqSearch.cgi?query=$seq";
+    print join("<BR>",@pieces) 
+        . qq{ (<A HREF="$blastURL" TITLE="view all hits">more</A>)} . "\n";
 }
+
 
 exit(0);
 
