@@ -80,14 +80,14 @@ function fitblast_load_short(id, server_root, sequence) {
 	    d.innerHTML = data[0].Error; // either "No hits" or an actual error
 	    return;
         }
-	var closeRow = null; 	// closest hit with data, if above threshold
+	var closeRow = null; 	// closest hit, if above threshold
 	var pheRow = null;	// closest useful hit
 	var i;
 	for (i = 0; i < data.length; i++) {
 	    row = data[i];
 	    if (row.coverage < mincoverage) { continue; }
 	    var useful = fitblast_usefulhit(row);
-	    if (!closeRow && row.identity >= mincloseid && row.minfit !== "") {
+	    if (!closeRow && row.identity >= mincloseid) {
 		closeRow = row;
 		if (useful) { break; }
 	    } else if (useful) {
@@ -98,8 +98,9 @@ function fitblast_load_short(id, server_root, sequence) {
 	var out = [];
 	if (closeRow) { out.push(fitblast_short(closeRow,server_root)); }
 	if (pheRow) { out.push(fitblast_short(pheRow,server_root)); }
-        if (!closeRow && !pheRow) { out.push("No hits"); }
-	d.innerHTML = out.join("<BR>");
+        if (!closeRow && !pheRow) { out.push("No hits with phenotypes"); }
+        var detailURL = server_root + 'cgi-bin/mySeqSearch.cgi?query=' + sequence;
+	d.innerHTML = out.join("<BR>") + " (<A HREF='" + detailURL + "' TITLE='view all hits'>more</A>)";
     });
 }
 
