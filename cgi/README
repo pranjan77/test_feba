@@ -95,6 +95,7 @@ orthCond.cgi -- specific sick genes for a condition across all organisms
 	link to orthFit.cgi to compare a cell
 # per-organism pages
 org.cgi -- links to experiments (exps.cgi), specific phenotypes (spec.cgi),
+        reannotations (orgReanno.cgi),
 	metabolic maps (keggmap.cgi and keggmaplist.cgi), and downloads
         (createFitData.cgi, createCofitData.cgi, spec.cgi, createExpData.cgi, orgSeqs.cgi)
 spec.cgi -- specific phenotypes of a certain type for an organism

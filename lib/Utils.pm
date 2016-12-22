@@ -775,6 +775,8 @@ sub alt_descriptions($$$) {
         && $orgId ne "" && $locusId ne "";
     return $altdesccache{$orgId}{$locusId} if exists $altdesccache{$orgId}{$locusId};
 
+    my ($reannotation) = $dbh->selectrow_array("SELECT new_annotation FROM Reannotation WHERE orgId = ? AND locusId = ?",
+                                               {}, $orgId, $locusId);
     my ($seed_desc) = $dbh->selectrow_array("SELECT seed_desc FROM SEEDAnnotation WHERE orgId = ? AND locusId = ?",
                                             {}, $orgId, $locusId);
     my $kegg_descs = $dbh->selectcol_arrayref("SELECT DISTINCT KgroupDesc.desc
@@ -784,6 +786,7 @@ sub alt_descriptions($$$) {
                                               {}, $orgId, $locusId);
 
     my @altdesc = ();
+    push @altdesc, "$reannotation" if defined $reannotation;
     push @altdesc, "SEED: $seed_desc" if defined $seed_desc;
     push @altdesc, "KEGG: " . join("; ", @$kegg_descs)
             if scalar(@$kegg_descs) > 0;

@@ -119,6 +119,15 @@ if (scalar(keys %$specN) > 0) {
 }
 print "\n";
 
+my $reanno = $dbh->selectall_arrayref("SELECT * from Reannotation WHERE orgId=?",
+                                      {}, $orgId);
+if (scalar(@$reanno) > 0) {
+    print
+        h3("Updated Annotations"),
+        a({-href => "orgReanno.cgi?orgId=$orgId"},
+          "Updated annotations for " . scalar(@$reanno) . " genes");
+}
+
 print
     h3("Metabolic Maps from KEGG"),
     p("See",

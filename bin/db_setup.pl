@@ -16,6 +16,7 @@ Usage: db_setup.pl [ -db db_file_name ]
         -orth orth_table -orginfo orginfo
         -indir htmldir nickname1 ... nicknameN
 Other optional arguments:
+    -reanno reannotation_file
     -secrets secrets_file
     -outdir out_directory
     -metadir $metadir
@@ -52,6 +53,8 @@ Other optional arguments:
         orgId Person=person
     that indicate which experiments should be removed before making the database.
     These lines can also contain comments (starting with "#") at the end.
+
+    reannotation_file is tab-delimited -- see db_update_reanno.pl for details
 END
 ;
 
@@ -70,7 +73,7 @@ sub WorkPutHash($@); # hash and list of fields to use
 sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs to exclude
 
 {
-    my ($dbfile,$indir,$outdir,$orgfile,$orthfile,$secretsfile);
+    my ($dbfile,$indir,$outdir,$orgfile,$orthfile,$secretsfile,$reannofile);
     (GetOptions('db=s' => \$dbfile,
                 'orginfo=s' => \$orgfile,
                 'orth=s' => \$orthfile,
@@ -79,7 +82,8 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
                 'metadir=s' => \$metadir,
                 'gdir=s' => \$gdir,
                 'outdir=s' => \$outdir,
-                'xrefs=s' => \$xrefs)
+                'xrefs=s' => \$xrefs,
+                'reanno=s' => \$reannofile )
      && defined $indir && defined $orgfile && defined $orthfile)
         || die $usage;
     my @orgs = @ARGV;
@@ -89,6 +93,7 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
     die "No such file: $orgfile" unless -e $orgfile;
     die "No such file: $orthfile" unless -e $orthfile;
     die "No such file: $secretsfile" if defined $secretsfile && ! -e $secretsfile;
+    die "No such file: $reannofile" if defined $reannofile && ! -e $reannofile;
     die "No organism nicknames specified\n" if scalar(@orgs) < 1;
     die "No such file: $xrefs" if $xrefs ne "" && ! -e $xrefs;
     if (!defined $outdir && defined $dbfile) {
@@ -705,6 +710,16 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
         push @mediacmd, ("-out", $outdir);
     }
     system(@mediacmd) == 0 || die "Error running\n" . join(" ",@mediacmd) . "\n: $!";
+
+    # Load the reannotation information
+    if (defined $reannofile) {
+        if (defined $dbfile) {
+            my @reannocmd = ("$Bin/db_update_reanno.pl", "-reanno", $reannofile, "-db", $dbfile);
+            system(@reannocmd) || die "Error running\n" . join(" ", @reannocmd) . "\n: $!";
+        } else {
+            print STDERR "Ignoring -reanno $reannofile because no database specified.\n";
+        }
+    }
 
     if (defined $outdir) {
         # Make the BLAST database

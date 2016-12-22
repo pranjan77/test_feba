@@ -72,6 +72,15 @@ my @toplines = ();
 push @toplines, "Name: $gene->{gene}" if $gene->{gene} ne "";
 push @toplines, "Description: $gene->{desc}";
 
+# Reannotation information, if any
+my $reanno = $dbh->selectrow_hashref("SELECT * from Reannotation WHERE orgId = ? AND locusId = ?",
+                                     {}, $orgId, $locusId);
+if ($reanno->{new_annotation}) {
+    push @toplines,
+    "Updated annotation: $reanno->{new_annotation}",
+    small("Rationale:", $reanno->{comment} );
+}
+
 print
     header, $start, $tabs, '<div id="tabcontent">',
     h2("Protein Info for $sys in " . $cgi->a({href => "org.cgi?orgId=$orgId"},$orginfo->{$orgId}{genome})),

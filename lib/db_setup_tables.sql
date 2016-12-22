@@ -354,3 +354,12 @@ CREATE TABLE KEGGMap (
         title TEXT NOT NULL,
         PRIMARY KEY (mapId)
 );
+
+/* This table contains curated reannotations */
+CREATE TABLE Reannotation (
+	orgId TEXT NOT NULL,
+        locusId TEXT NOT NULL,
+        new_annotation TEXT NOT NULL,
+        comment TEXT NOT NULL,
+        PRIMARY KEY (orgId,locusId)
+);
