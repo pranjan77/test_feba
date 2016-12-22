@@ -715,7 +715,7 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
     if (defined $reannofile) {
         if (defined $dbfile) {
             my @reannocmd = ("$Bin/db_update_reanno.pl", "-reanno", $reannofile, "-db", $dbfile);
-            system(@reannocmd) || die "Error running\n" . join(" ", @reannocmd) . "\n: $!";
+            system(@reannocmd) == 0 || die "Error running\n" . join(" ", @reannocmd) . "\n: $!";
         } else {
             print STDERR "Ignoring -reanno $reannofile because no database specified.\n";
         }
