@@ -114,11 +114,15 @@ unlink("$dir/faa");
 unlink("$dir/done.q");
 rmdir("$dir");
 
+my $base_url = url();
+$base_url =~ s!/[a-zA-Z_.]+$!!;
+my $blastURL = "$base_url/mySeqSearch.cgi?query=$seq";
+
 my $html = $cgi->param('html');
 # d3.tsv treats an empty table as an error, so instead, return an actual useful error code
 if (@rows == 0 ) {
     if ($html) {
-        print "No hits";
+        print qq{No close hits (<A HREF="$blastURL" TITLE="View more hits">more</A>)\n};
     } else {
         print "Error\nNo hits\n";
     }
@@ -165,8 +169,6 @@ foreach my $row (@rows) {
 $dbh->disconnect();
 
 if ($html) {
-    my $base_url = url();
-    $base_url =~ s!/[a-zA-Z_.]+$!!;
     # mimic fitblast_short() from fitblast.js
     my $mincoverage = 0.75; # hits below this coverage are ignored
     my $mincloseid = 80; # %identity to be considered a close hit
@@ -206,7 +208,6 @@ if ($html) {
         }
         last if $useful;
     }
-    my $blastURL = "$base_url/mySeqSearch.cgi?query=$seq";
     print join("<BR>",@pieces) 
         . qq{ (<A HREF="$blastURL" TITLE="view all hits">more</A>)} . "\n";
 }

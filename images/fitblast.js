@@ -70,6 +70,7 @@ function fitblast_load_short(id, server_root, sequence) {
     d.innerHTML = "<small>loading...</small>";
 
     var URL = server_root + "cgi-bin/seqservice.cgi?seq=" + sequence;
+    var detailURL = server_root + 'cgi-bin/mySeqSearch.cgi?query=' + sequence;
     d3.tsv(URL, function(error, data) {
         if (error || data.length == 0) {
             d.innerHTML = 'Cannot contact <A HREF="' + URL + '">server</A> data.length = ' + data.length;
@@ -77,7 +78,11 @@ function fitblast_load_short(id, server_root, sequence) {
         }
 	//else
 	if ("Error" in data[0]) {
-	    d.innerHTML = data[0].Error; // either "No hits" or an actual error
+            if (data[0].Error == "No hits") {
+                d.innerHTML = "No close hits (<A HREF='" + detailURL + "' TITLE='View more hits'>more</A>)";
+            } else {
+                d.innerHTML = data[0].Error; // an actual error
+            }
 	    return;
         }
 	var closeRow = null; 	// closest hit, if above threshold
@@ -99,8 +104,7 @@ function fitblast_load_short(id, server_root, sequence) {
 	if (closeRow) { out.push(fitblast_short(closeRow,server_root)); }
 	if (pheRow) { out.push(fitblast_short(pheRow,server_root)); }
         if (!closeRow && !pheRow) { out.push("No hits with phenotypes"); }
-        var detailURL = server_root + 'cgi-bin/mySeqSearch.cgi?query=' + sequence;
-	d.innerHTML = out.join("<BR>") + " (<A HREF='" + detailURL + "' TITLE='view all hits'>more</A>)";
+	d.innerHTML = out.join("<BR>") + " (<A HREF='" + detailURL + "' TITLE='View more hits'>more</A>)";
     });
 }
 
