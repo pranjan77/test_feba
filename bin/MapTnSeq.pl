@@ -146,12 +146,21 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
         my $name = <FASTQ>;
         (last, next) unless $name;
         chomp $name;
+        die "Sequence name line does not start with @" unless $name =~ m/^@/;
         
         my $seq = <FASTQ>;
         chomp $seq;
-        <FASTQ>;
+        die "Sequence line is empty"
+            unless defined $seq && length($seq) > 0;
+        die "Sequence line contains invalid characters: $seq"
+            unless $seq =~ m/^[A-Z]+$/;
+        my $line = <FASTQ>;
+        die "Third line does not start with +"
+            unless defined $line && $line =~ m/^[+]/;
         my $quality = <FASTQ>;
         chomp $quality;
+        die "Quality line is of wrong length"
+            unless defined $quality && length($quality) == length($seq);
 
         next if $name =~ m/^\S+ 2:/; # ignore second side of paired-end reads
         $nReads++;
