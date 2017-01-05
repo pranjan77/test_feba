@@ -213,6 +213,7 @@ my $doOff1 = undef;
     print STDERR "\n";
 
     # and look for off-by-1 cases
+    my %offby1 = (); # barcode => 1 for likely off-by-1 errors
     if ($doOff1) {
         open(CLOSE, ">", "$out.close") || die "Cannot write to $out.close";
         print CLOSE join("\t",qw{code1 count1 code2 count2})."\n";
@@ -226,6 +227,7 @@ my $doOff1 = undef;
 		    my $n1 = sum(@$count);
 		    my $n2 = sum(@{$codes{$variant}});
                     print CLOSE join("\t",$code,$n1,$variant,$n2)."\n";
+                    $offby1{ $n1 < $n2 ? $code : $variant } = 1;
                     $nCases++;
 		    $nOff1Reads += $n1 < $n2 ? $n1 : $n2;
                 }
@@ -246,6 +248,19 @@ my $doOff1 = undef;
 				 ( $nUniq - $nNoise + ($nPerCount{1} - $nNoise)**2 / (2 * $nPerCount{2}) )/1000.0,
 				 ($nUniq-$nNoise)/1000.0, ($nPerCount{1} - $nNoise)/1000.0, $nPerCount{2}/1000.0);
 	}
+    }
+    if ($minQuality > 0 && $nOff{20} >= 1000 && $doOff1) {
+        my $nGoodCodes = 0;
+        my $nGoodReads = 0;
+        while (my ($code,$count) = each %codes) {
+            my $tot = sum(@$count);
+            if (!exists $offby1{$code} && $tot > 1) {
+                $nGoodCodes++;
+                $nGoodReads += $tot;
+            }
+        }
+        print STDERR sprintf("Aside from singletons and off-by-1s, see %.1f K barcodes (%.1f%% of reads)\n",
+                             $nGoodCodes/1000.0, $nGoodReads * 100.0 / $nOff{20} );
     }
     # and estimate bias
     if ($minQuality > 0 && $nUniq >= 5000) {
