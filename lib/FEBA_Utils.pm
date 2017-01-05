@@ -8,7 +8,7 @@ our (@ISA,@EXPORT);
 @EXPORT = qw( ReadTable ReadColumnNames ReadFasta NewerThan ReadFastaDesc reverseComplement );
 
 # filename and list of required fields => list of hashes, each with field->value
-# The list can be a single name or a refernce to a list
+# The list can be a single name or a reference to a list
 # (It used to be an actual list; not sure how that went wrong with perl prototypes?)
 sub ReadTable($*) {
     my ($filename,@required) = @_;
@@ -18,6 +18,10 @@ sub ReadTable($*) {
     open(IN, "<", $filename) || die "Cannot read $filename";
     my $headerLine = <IN>;
     $headerLine =~ s/[\r\n]+$//; # for DOS
+    # Check for Mac style files -- these are not supported, but give a useful error
+    die "Tab-delimited input file $filename is a Mac-style text file, which is not supported\n"
+        . "Use\ndos2unix -c mac $filename\nto convert it to a Unix text file.\n"
+        if $headerLine =~ m/\t/ && $headerLine =~ m/\r/;
     my @cols = split /\t/, $headerLine;
     my %cols = map { $cols[$_] => $_ } (0..(scalar(@cols)-1));
     foreach my $field (@required) {
