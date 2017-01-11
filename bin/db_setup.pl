@@ -17,7 +17,7 @@ Usage: db_setup.pl [ -db db_file_name ]
         -indir htmldir nickname1 ... nicknameN
 Other optional arguments:
     -reanno reannotation_file
-    -secrets secrets_file
+    -public public_file
     -outdir out_directory
     -metadir $metadir
     -gdir $gdir
@@ -47,12 +47,12 @@ Other optional arguments:
     directory that contains the database file or into outdir. And, a
     BLAST database of protein sequences is built in that directory.
 
-    secrets_file should contain lines of the form
-        orgId SetName
-        orgId Group=group
-        orgId Person=person
-    that indicate which experiments should be removed before making the database.
-    These lines can also contain comments (starting with "#") at the end.
+    public_file should contain lines of the form
+	orgId SetName key1=value1 ... keyN=valueN
+	where the key/value pairs are optional. There can also be
+	comment lines (starting with "#"),
+	comments at the end of rules (starting with "#"),
+	or empty lines.
 
     reannotation_file is tab-delimited -- see db_update_reanno.pl for details
 END
@@ -70,14 +70,17 @@ sub StartWork($$); # table, organism
 sub EndWork(); # 
 sub WorkPutRow(@); # list of fields to be written as a line
 sub WorkPutHash($@); # hash and list of fields to use
-sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs to exclude
+
+# Given a row from the experiment quality table, a row from the experiments table,
+# and a list of rules, and return 1 if it matches a rule or 0 otherwise
+sub FilterExpByRules($$$);
 
 {
-    my ($dbfile,$indir,$outdir,$orgfile,$orthfile,$secretsfile,$reannofile);
+    my ($dbfile,$indir,$outdir,$orgfile,$orthfile,$pubfile,$reannofile);
     (GetOptions('db=s' => \$dbfile,
                 'orginfo=s' => \$orgfile,
                 'orth=s' => \$orthfile,
-                'secrets=s' => \$secretsfile,
+                'public=s' => \$pubfile,
                 'indir=s' => \$indir,
                 'metadir=s' => \$metadir,
                 'gdir=s' => \$gdir,
@@ -92,7 +95,7 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
     die "No such directory: $gdir" unless -d $gdir;
     die "No such file: $orgfile" unless -e $orgfile;
     die "No such file: $orthfile" unless -e $orthfile;
-    die "No such file: $secretsfile" if defined $secretsfile && ! -e $secretsfile;
+    die "No such file: $pubfile" if defined $pubfile && ! -e $pubfile;
     die "No such file: $reannofile" if defined $reannofile && ! -e $reannofile;
     die "No organism nicknames specified\n" if scalar(@orgs) < 1;
     die "No such file: $xrefs" if $xrefs ne "" && ! -e $xrefs;
@@ -177,37 +180,37 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
             unless exists $orgSeen{$org};
     }
 
-    my %secrets = (); # orgId => list of rules of the form field => value
-    if (defined $secretsfile) {
-        open(SECRETS, "<", $secretsfile) || die "Cannot read $secretsfile";
+    my %pub = (); # orgId => list of rules, each is a hash to include SetName and optionally other fields as well
+    if (defined $pubfile) {
+        open(PUB, "<", $pubfile) || die "Cannot read $pubfile";
         my $nRules = 0;
-        while(my $line = <SECRETS>) {
+        while (my $line = <PUB>) {
             chomp $line;
             $line =~ s/#.*//; # remove comments
             $line =~ s/\s+$//; # remove trailing white space
             $line =~ s/^\s+//; # remove leading white space
             next if $line eq "";
-            # rule must have two parts separated by white space
-            die "Cannot parse rule:\n$line\n" unless $line =~ m/^(\S+)\s+(\S.*)$/;
-            my ($orgId,$rulespec) = ($1,$2);
+            # rule must have at least orgId and SetName
+            my @parts = split /\s+/, $line;
+            die "Not enough parts for public rule in\n$line\n" unless scalar(@parts) >= 2;
+            my $orgId = shift @parts;
+            my $set = shift @parts;
             if (!exists $orgUse{$orgId}) {
                 print STDERR "Ignoring rule for unknown org $orgId: $line\n";
-            } else {
-                my ($field,$value);
-                if ($rulespec =~ m/^(.*)=(.*)$/) {
-                    $field = $1;
-                    $value = $2;
-                } else {
-                    $field = "SetName";
-                    $value = $rulespec;
+            } else{
+                my $rule = { "SetName" => $set };
+                foreach my $part (@parts) {
+                    my ($key,$value) = split /=/, $part;
+                    die "Invalid public assignment $part in\n$line\n"
+                        unless defined $value && $value ne "SetName";
+                    $rule->{$key} = $value;
                 }
-                die "Unrecognized field $field" unless $field eq "SetName" || $field eq "Group" || $field eq "Person";
-                push @{ $secrets{$orgId} }, [ $field, $value ];
+                push @{ $pub{$orgId} }, $rule;
                 $nRules++;
             }
         }
-        close(SECRETS) || die "Error reading $secretsfile";
-        print STDERR "Read $nRules relevant rules from $secretsfile\n";
+        close(PUB);
+        print STDERR "Read $nRules relevant rules from $pubfile\n";
     }
 
     # Create db.Organism
@@ -267,7 +270,7 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
     EndWork();
 
     # Create db.Experiment.*
-    # Track which experiments are being kept (i.e., not filtered out by the secret rules)
+    # Track which experiments are being kept
     my %expKept = (); # orgId => name => 1
     foreach my $org (@orgs) {
         my @q = &ReadTable("$indir/$org/fit_quality.tab",
@@ -295,8 +298,9 @@ sub FilterExpByRules($$$); # q row, experiment row, and list of key=>value pairs
         # only successful experiments
         @q = grep { $_->{u} eq "TRUE" } @q;
         my $nExpsSucceeded = scalar(@q);
-        # filter out experiments by the rules
-        @q = grep FilterExpByRules($_, $exps{$_->{name}}, $secrets{$org}), @q;
+        # filter out experiments by the public file, if any
+        @q = grep &FilterExpByRules($_, $exps{$_->{name}}, $pub{$org}), @q
+            if defined $pubfile;
         my $nFiltered = scalar(@q);
         print STDERR "$org: read $nExpsRead experiments, $nExpsSucceeded successful";
         print STDERR ", filtered to $nFiltered" if $nFiltered < $nExpsSucceeded;
@@ -788,14 +792,19 @@ sub WorkPutHash($@) {
 sub FilterExpByRules($$$) {
     my ($q, $exp, $rules) = @_;
     foreach my $rule (@$rules) {
-        my ($key, $value) = @$rule;
-        if (exists $q->{$key}) {
-            return 0 if $q->{$key} eq $value;
-        } elsif (exists $exp->{$key}) {
-            return 0 if $exp->{$key} eq $value;
-        } else {
-            die "Cannot handle rule for $key=$value because $key does not exist for either q or experiment for $exp->{name}";
+        next unless $rule->{SetName} eq $exp->{SetName};
+        # See if all other fields match
+        my $match = 1;
+        while (my ($key,$value) = each %$rule) {
+            if (exists $q->{$key}) {
+                $match = 0 unless $q->{$key} eq $value;
+            } elsif (exists $exp->{$key}) {
+                $match = 0 unless $exp->{$key} eq $value;
+            } else {
+                die "Cannot handle rule for $key=$value because $key does not exist for either q or experiment for $exp->{name}";
+            }
         }
+        return 1 if $match;
     }
-    return 1;
+    return 0;
 }
