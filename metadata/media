@@ -370,7 +370,7 @@ Minimal	TRUE
 Controlled vocabulary	Concentration	Units
 3-(N-morpholino)propanesulfonic acid	40	mM
 Tricine	4	mM
-K2HPO4	1.32	mM
+Potassium phosphate dibasic	1.32	mM
 Iron (II) sulfate heptahydrate	0.01	mM
 Ammonium chloride	9.5	mM
 Aluminum potassium sulfate dodecahydrate	0.276	mM
@@ -616,3 +616,47 @@ Sodium D,L-Lactate	20	mM
 PIPES sesquisodium salt	30	mM
 Wolfe's mineral mix	1	X
 Wolfe's vitamin mix	1	X
+		
+Media	RCH2_defined_glucose_noVitamin	
+Description	Defined minimal media for soil and groundwater bacteria with glucose and no vitamins added	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+D-Glucose	20	mM
+PIPES sesquisodium salt	30	mM
+Wolfe's mineral mix	1	X
+		
+Media	DinoMM_L_lactateCarbon_HighNutrient	
+Description	Minimal media for marine bacteria with Sodium L-Lactate as the carbon source and more vitamins and minerals	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Sea salts	20	g/L
+Ammonium Sulfate	0.3	g/L
+Potassium phosphate monobasic	0.1	g/L
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+Sodium L-Lactate	20	mM
+		
+Media	DinoMM_L_lactateCarbon_HighNutrient_noVitamin	
+Description	Minimal media for marine bacteria with Sodium L-Lactate as the carbon source and no vitamins	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Sea salts	20	g/L
+Ammonium Sulfate	0.3	g/L
+Potassium phosphate monobasic	0.1	g/L
+Wolfe's mineral mix	1	X
+Sodium L-Lactate	20	mM
+		
+Media	LB_plus_SM_buffer	
+Description	Luria-Bertani broth with SM buffer (for phage work)	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Tryptone	10	g/L
+Yeast Extract	5	g/L
+Sodium Chloride	5	g/L
+Sodium Chloride	100	mM
+Magnesium sulfate	4	mM
+Gelatin	0.005	vol%
+Tris hydrochloride	25	mM
