@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #######################################################
-## geneSearch.cgi
+## blastSearch.cgi
 ##
 ## Copyright (c) 2015 University of California
 ##
