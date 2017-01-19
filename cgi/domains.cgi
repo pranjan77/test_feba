@@ -296,7 +296,7 @@ my $newline = "%0A";
 
 print
     h3("Sequence Analysis Tools"),
-    p(a({-href => "http://fit.genomics.lbl.gov/cgi-bin/papers/cgi/litSearch.cgi?query=>${sys}$newline$seq"},
+    p(a({-href => "http://papers.genomics.lbl.gov/cgi-bin/litSearch.cgi?query=>${sys}$newline$seq"},
         "PaperBLAST"),
       "(search for papers about homologs of this protein)"),
     p(a({-href => "http://www.ncbi.nlm.nih.gov/Structure/cdd/wrpsb.cgi?seqinput=>${sys}$newline$seq"},
