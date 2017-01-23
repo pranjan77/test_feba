@@ -26,7 +26,7 @@ END
 
     die "blat is not on the path!" if ($blat eq "blat" && !defined which("blat"));
 
-    die "No such file: g/$nickname" unless -d "g/$nickname";
+    die "No such directory: g/$nickname" unless -d "g/$nickname";
     my $modelfile = "$Bin/../primers/model_".$modelsuffix;
     die "No such file: $modelfile" unless -e $modelfile;
 
