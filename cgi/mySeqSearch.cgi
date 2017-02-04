@@ -56,11 +56,11 @@ my $locusShow;
 
 print $cgi->header; # must be printed before using fail()
 
+my $def = "";
 if ($query =~ m/[A-Za-z]/) {
     # parse and write the input sequence
     $seq = "";
     my @lines = split /[\r\n]+/, $query;
-    my $def = "";
     $def = shift @lines if @lines > 0 && $lines[0] =~ m/^>/;
     $def =~ s/^>//;
     $def = "query sequence" if $def eq "";
@@ -84,10 +84,12 @@ if ($query =~ m/[A-Za-z]/) {
 
     # extract sequence for the given gene
     my $gene = $dbh->selectrow_hashref("SELECT * from Gene where orgId=? AND locusId=?", {}, $orgId, $locusSpec);
+
     Utils::fail($cgi, "no such gene: $locusSpec in $orgId") unless defined $gene->{locusId};
     Utils::fail($cgi, "homology search is only available for protein-coding genes") unless $gene->{type} == 1;
     my $id = join(":",$orgId,$locusSpec);
     $locusShow = $gene->{gene} || $gene->{sysName} || $gene->{locusId};
+    $def = $locusShow;
     my $fastacmd = '../bin/blast/fastacmd';
     system($fastacmd,'-d',$myDB,'-s',$id,'-o',$seqFile)==0 || die "Error running $fastacmd -d $myDB -s $id -o $seqFile -- $!";
     my $in = Bio::SeqIO->new(-file => $seqFile,-format => 'fasta');
@@ -199,7 +201,13 @@ if ($cnt > 0) {
     print $cgi->p("No hits found!");
 }
 
-    print qq[<br><a href="http://www.microbesonline.org/cgi-bin/seqsearch.cgi?qtype=protein&query=$seq">Search for homologs in MicrobesOnline</a><BR><BR>] unless $qtype eq "nucleotide";
+    print qq[<br>Or search for homologs using
+	<A HREF="http://papers.genomics.lbl.gov/cgi-bin/litSearch.cgi?query=>$def%0A$seq"
+           TITLE="Find papers about this protein or its homologs">PaperBLAST</A>
+       or
+       <A HREF="http://www.microbesonline.org/cgi-bin/seqsearch.cgi?qtype=protein&query=$seq">MicrobesOnline</A>
+       <BR>
+       <BR>] unless $qtype eq "nucleotide";
 $dbh->disconnect();
 unlink($seqFile) || die "Error deleting $seqFile: $!";
 unlink($blastOut) || die "Error deleting $blastOut: $!";
