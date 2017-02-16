@@ -408,6 +408,12 @@ END
 	}
     }
     print STDERR "Wrote data for $nLine barcodes ($nInGene in genes) to $allfile\n";
+    die join("\n",
+             "No insertions in genes!",
+             "Please check that $genesfile contains genes,",
+             "$poolfile contains strains,",
+             "and that the scaffold identifiers match",
+             "") if $nInGene == 0;
 
     # write outdir/exps, with only the exps for these sets and with non-empty Description
     my @expCols = ReadColumnNames($expsfile); # write the columns in a reasonable order
