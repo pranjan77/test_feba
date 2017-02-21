@@ -41,25 +41,16 @@ my $showId = $sysName || $locusId;
 my $showName = $geneName || $showId;
 my $start = Utils::start_page("Cofitness for $showName ($genus $species $strain");
 my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusId,0,$type,"cofit");
+my $alt_desc = Utils::alt_descriptions($dbh,$orgId,$locusId);
 
 print
-	$start, $tabs,
-    h2("Top cofit genes for $showId from " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$genus $species $strain")),
-
-	# qq[<div style="position: relative;"><div class="floatbox">],
-	# start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
-	# "<BR>Compare selected genes to $showId $geneName: " . submit(-name=>"heatmap"),
-	# end_form,
-	# qq[</div>];
-
-    h3({class=>"short"},
-       "$showId $geneName :",
-       a({-title => Utils::alt_descriptions($dbh,$orgId,$locusId) || "no other information",
-                -href => "domains.cgi?orgId=$orgId&locusId=$locusId" },
-         $desc));
+  $start, $tabs,
+  h2("Top cofit genes for $showId from " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$genus $species $strain")),
+  h3("$showId $geneName : $desc"),
+  $alt_desc ? p($alt_desc) : "";
 
 if ($help == 1) {
-		print qq[<BR><BR><div class="helpbox">
+  print qq[<BR><BR><div class="helpbox">
 		<b><u>About this page:</u></b><BR><ul>
 		<li>Show the genes with the most similar fitness patterns as this gene. </li>
 		<li>To get to this page, search for any gene and click on the "Cofit" tab.</li> 
@@ -76,7 +67,7 @@ my $cofitResults = $dbh->selectall_arrayref(qq{
 		WHERE Cofit.orgId=? AND Cofit.locusId=?
 		ORDER BY rank LIMIT 20}, undef, $orgId, $locusId) || die;
 if (@$cofitResults == 0) {
-    print "<br>", $cgi->p(qq{Cofitness results are not available for this gene, sorry.});
+    print $cgi->p(qq{Cofitness results are not available for this gene, sorry.});
 } else {
     my @headRow = map { $cgi->th($cgi->b($_)) } qw{Rank Hit Name Description}, a({title => "Maximum cofitness of orthologs"}, "Conserved?"), qw{Cofitness &nbsp;} ;
 
@@ -100,32 +91,30 @@ if (@$cofitResults == 0) {
 	$url2 .= "&help=1" if $help == 1;
 	my $cofitUrl = "cofitCons.cgi?orgId=$orgId&locusId=$locusId&hitId=$hitId";
 	$cofitUrl .= "&help=1" if $help == 1;
-	push @trows, $cgi->Tr({bgcolor => $rowcolor, align => 'left', valign => 'top' },
-			      $cgi->td($rank),
-			      $cgi->td($cgi->a( {href => "myFitShow.cgi?orgId=$orgId&gene=$hitId" },
-						$showId )),
-			      $cgi->td($hitName),
-			      $cgi->td(a{ -title => Utils::alt_descriptions($dbh,$orgId,$hitId)
-                                              || "no other information",
-                                          -href => "domains.cgi?orgId=$orgId&locusId=$hitId" },
-                                       $hitDesc),
-                  $cgi->td( $cgi->a({href => $cofitUrl},
-						defined $cofitCons ? sprintf("%.2f", $cofitCons) : "no") ),
-                  $cgi->td($cgi->a({title=>"Compare genes via scatterplot", href => "$url2"}, $cofit)),
-                  $cgi->td(checkbox('locusId',0,$hitId,'')),
-	                      );
+        my $alt_desc_hit = Utils::alt_descriptions($dbh,$orgId,$hitId)
+          || "no other information";
+        $alt_desc_hit =~ s/&nbsp;/ /g;
+	push @trows,
+          $cgi->Tr( {bgcolor => $rowcolor, align => 'left', valign => 'top' },
+                    $cgi->td($rank),
+                    $cgi->td($cgi->a( {href => "myFitShow.cgi?orgId=$orgId&gene=$hitId" },
+                                      $showId )),
+                    $cgi->td($hitName),
+                    $cgi->td(a{ -title => $alt_desc_hit,
+                                  -href => "domains.cgi?orgId=$orgId&locusId=$hitId" },
+                             $hitDesc),
+                    $cgi->td( $cgi->a({href => $cofitUrl},
+                                      defined $cofitCons ? sprintf("%.2f", $cofitCons) : "no") ),
+                    $cgi->td($cgi->a({title=>"Compare genes via scatterplot", href => "$url2"}, $cofit)),
+                    $cgi->td(checkbox('locusId',0,$hitId,''))
+                  );
 
     }
     my $name = $geneName || $showId;
     print
 	start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
-	# p("Select other genes to include in heatmap"), # decided this was unnecessary and distracting
-        p("&nbsp;"), # need something or hidden makes the layout wierd
 	hidden('orgId', $orgId),
 	hidden('locusId', $locusId),
-	# qq[<br><div style="position: relative;"><div class="floatbox floatbox2">],
-	# submit(-class=>"heatmap", -name=>"heatmap with $name"),
-	# qq[</div></div>],
 	table( {cellpadding => 3, cellspacing => 0 }, @trows ),
 	p(submit(-class=>"heatmap", -name=>"Heatmap of $name with selected genes")),
 	end_form,

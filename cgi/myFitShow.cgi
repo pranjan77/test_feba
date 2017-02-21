@@ -81,26 +81,20 @@ if (scalar(@$hits) > 0) {
     push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
                           $cgi->th( [ 'Gene ID','Gene Name','Description','Genome','Fitness' ] ) );
 
-    
-
     foreach my $gene (@$hits) {
-    	if ($count < 100) {
-            $count++;
-            $used{$gene->{orgId}}{$gene->{locusId}} = 1;
-            my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
-			my @trow = map $cgi->td($_), (
-                            a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"},
-                               $gene->{sysName}||$gene->{locusId}), 
-                            $gene->{gene}, 
-                            a( { -title => Utils::alt_descriptions($dbh,$gene->{orgId},$gene->{locusId})
-                                     || "no other information",
-                                 -href => "domains.cgi?orgId=$gene->{orgId}&locusId=$gene->{locusId}" },
-                              $gene->{desc} ),
-                            $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
-                            a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
-                               $fitstring));
-            push @trows, $cgi->Tr(@trow);
-        }
+      if ($count < 100) {
+        $count++;
+        $used{$gene->{orgId}}{$gene->{locusId}} = 1;
+        my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
+        my @trow = map $cgi->td($_),
+          ( Utils::gene_link($dbh, $gene, "name", "geneOverview.cgi"),
+            $gene->{gene},
+            Utils::gene_link($dbh, $gene, "desc", "domains.cgi"),
+            $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
+            a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
+               $fitstring));
+        push @trows, $cgi->Tr(@trow);
+      }
     }
     print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
     print "\n"; # to allow flushing
@@ -261,14 +255,10 @@ if (@$descs >= 1) {
             $count++;
             $used{$gene->{orgId}}{$gene->{locusId}} = 1;
             my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
-            my @trow = map $cgi->td($_), (
-                a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"},
-                   $gene->{sysName}||$gene->{locusId} ), 
-                $gene->{gene}, 
-                a( { -title => Utils::alt_descriptions($dbh,$gene->{orgId},$gene->{locusId})
-                         || "no other information",
-                     -href => "domains.cgi?orgId=$gene->{orgId}&locusId=$gene->{locusId}" },
-                   $gene->{desc}),
+            my @trow = map $cgi->td($_),
+              ( Utils::gene_link($dbh, $gene, "name", "geneOverview.cgi"),
+                $gene->{gene},
+                Utils::gene_link($dbh, $gene, "desc", "domains.cgi"),
                 $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}},
                         "$orginfo->{$gene->{orgId}}->{genome}"),
                 a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
@@ -298,9 +288,8 @@ if (@$kegghits > 0) {
         $count++;
         $count++;
         my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
-        my @trow = map $cgi->td($_), (
-            a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}",
-                title => $gene->{desc}}, $gene->{sysName}||$gene->{locusId}), 
+        my @trow = map $cgi->td($_),
+          ( Utils::gene_link($dbh, $gene, "name", "geneOverview.cgi"),
             $gene->{gene},
             a( {href => "http://www.kegg.jp/dbget-bin/www_bget?ko:".$gene->{kgroup} },
                $gene->{kgroup}),
@@ -327,9 +316,8 @@ if (@$seedhits > 0) {
         next if $count >= 100;
         $count++;
         my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
-        my @trow = map td($_), (
-            a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}",
-                title => $gene->{desc}}, $gene->{sysName}||$gene->{locusId}),
+        my @trow = map td($_),
+          ( Utils::gene_link($dbh, $gene, "name", "geneOverview.cgi"),
             $gene->{gene},
             $gene->{seed_desc},
             $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
@@ -357,14 +345,10 @@ if (@$domains >= 1) {
             next if exists $used{ $gene->{orgId} }{ $gene->{locusId} };
             $count++;
             my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
-            my @trow = map $cgi->td($_), (
-                a( {href => "geneOverview.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"},
-                   $gene->{sysName}||$gene->{locusId}), 
-                $gene->{gene}, 
-                a( { -title => Utils::alt_descriptions($dbh,$gene->{orgId},$gene->{locusId})
-                         || "no other information",
-                     -href => "domains.cgi?orgId=$gene->{orgId}&locusId=$gene->{locusId}" },
-                   $gene->{desc}),
+            my @trow = map $cgi->td($_),
+              ( Utils::gene_link($dbh, $gene, "name", "geneOverview.cgi"),
+                $gene->{gene},
+                Utils::gene_link($dbh, $gene, "desc", "domains.cgi"),
                 $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
                 $gene->{domainId},
                 $gene->{domainName},

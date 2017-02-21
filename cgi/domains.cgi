@@ -11,7 +11,7 @@
 #
 # Required CGI parameters:
 # orgId -- which organism
-# locusId -- which locus
+# locusId (or gene) -- which locus
 
 use strict;
 use CGI qw(:standard Vars);
@@ -25,7 +25,7 @@ use Utils;
 my $cgi=CGI->new;
 
 my $orgId = $cgi->param('orgId') || die "No orgId parameter";
-my $locusId = $cgi->param('locusId') || die "No locusId parameter";
+my $locusId = $cgi->param('locusId') || $cgi->param('gene') || die "No locusId or gene parameter";
 
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);

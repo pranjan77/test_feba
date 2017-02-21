@@ -176,7 +176,6 @@ sub RowForGene($$$$$) {
    
     # my $firstForGene = 1;
     my $orgId = $gene->{orgId};
-    my $showId = $gene->{sysName} || $gene->{locusId};
     my $genome = $orginfo->{$orgId}{genome};
     my $genomeShort = $genome;
     $genomeShort =~ s/^(.)\S+/$1./;
@@ -192,31 +191,30 @@ sub RowForGene($$$$$) {
         . "&condition1=" . uri_escape($condition1);
     $orthFitURI .= "&help=1" if $help == 1;
 
-    return $cgi->Tr(
-        { -class=> $collapse, -valign => 'middle', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF" },
-        td($rowLabel),
-        td( a({href => "spec.cgi?orgId=$gene->{orgId}&expGroup=" . uri_escape($expGroup) . "#" . $condition1 },
-              $genomeShort)),
-        td( a({ -href => "myFitShow.cgi?orgId=$orgId&gene=$locusId" }, $showId)),
-        td( $gene->{gene}),
-        td( a({ -title => Utils::alt_descriptions($dbh,$orgId,$locusId) || "no other information",
-                -href => "domains.cgi?orgId=$orgId&locusId=$locusId" },
-              $gene->{desc}) ),
-        td( { -bgcolor => Utils::fitcolor($gene->{minFit}), -style=>'text-align: center;' },
-            a( { -title => sprintf("Click to compare (t = %.1f to %.1f)",$gene->{minT},$gene->{maxT}),
-                 -style => "color: rgb(0,0,0)",
-                 -onMouseOver=>"this.style.color='#CC0024'",
-                 -onMouseOut=>"this.style.color='#000000'",
-                 -href => $orthFitURI },
-               sprintf("%.1f",$gene->{minFit}) ) ),
-        td( { -bgcolor => Utils::fitcolor($gene->{maxFit}), -style=>'text-align: center;' },
-            a( { -title => sprintf("Click to compare (t = %.1f to %.1f)",$gene->{minT},$gene->{maxT}),
-                 -style => "color: rgb(0,0,0)",
-                 -onMouseOver=>"this.style.color='#CC0024'",
-                 -onMouseOut=>"this.style.color='#000000'",
-                 -href => $orthFitURI },
-               sprintf("%.1f",$gene->{maxFit}) ) )
-	    );
+    return $cgi->Tr( { -class=> $collapse, -valign => 'middle', -align => 'left',
+                       -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF" },
+                     td($rowLabel),
+                     td( a({href => "spec.cgi?orgId=$gene->{orgId}&expGroup="
+                            . uri_escape($expGroup) . "#" . $condition1 },
+                           $genomeShort) ),
+                     td( Utils::gene_link($dbh, $gene, "name", "myFitShow.cgi") ),
+                     td( $gene->{gene} ),
+                     td( Utils::gene_link($dbh, $gene, "desc", "domains.cgi") ),
+                     td( { -bgcolor => Utils::fitcolor($gene->{minFit}), -style=>'text-align: center;' },
+                         a( { -title => sprintf("Click to compare (t = %.1f to %.1f)",$gene->{minT},$gene->{maxT}),
+                              -style => "color: rgb(0,0,0)",
+                              -onMouseOver=>"this.style.color='#CC0024'",
+                              -onMouseOut=>"this.style.color='#000000'",
+                              -href => $orthFitURI },
+                            sprintf("%.1f",$gene->{minFit}) ) ),
+                     td( { -bgcolor => Utils::fitcolor($gene->{maxFit}), -style=>'text-align: center;' },
+                         a( { -title => sprintf("Click to compare (t = %.1f to %.1f)",$gene->{minT},$gene->{maxT}),
+                              -style => "color: rgb(0,0,0)",
+                              -onMouseOver=>"this.style.color='#CC0024'",
+                              -onMouseOut=>"this.style.color='#000000'",
+                              -href => $orthFitURI },
+                            sprintf("%.1f",$gene->{maxFit}) ) )
+                   );
 }
 
 # sort them so the ones with gene names come up first;

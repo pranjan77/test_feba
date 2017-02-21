@@ -242,12 +242,8 @@ my @trows = ();
 my @headings = qw{Group Condition};
 my @headings2 = ("", "");
 foreach my $gene (@genes) {
-    push @headings, $cgi->a({ href => "myFitShow.cgi?orgId=$orgId&gene=$gene->{locusId}",
-			      title => $gene->{desc} },
-			    $gene->{sysName} || $gene->{locusId});
-    my $desc = $gene->{desc};
-    $desc =~ s/"//g;
-    push @headings2, qq{<div title="$desc">$gene->{gene}</div>};
+    push @headings, Utils::gene_link($dbh, $gene, "name", "myFitShow.cgi");
+    push @headings2, $gene->{gene};
 }
 push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'}, $cgi->th(\@headings));
 
@@ -311,7 +307,7 @@ if (@genes > 0) {
     else {
         $compare = "";
     }
-    push @footer, $cgi->a( { href => $url, style => "", title => $gene->{desc} }, "remove")
+    push @footer, $cgi->a( { href => $url }, "remove")
 			       . "<BR>" . ($gene->{sysName} || $gene->{locusId}) . $compare ;
     }
     push @trows, $cgi->Tr( { -align=>'center', -valign=>'top' }, $cgi->td(\@footer));

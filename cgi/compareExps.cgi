@@ -249,14 +249,9 @@ if ($help == 1) {
             my $orthFitBase = "orthFit.cgi?orgId=$orgId&locusId=$gene->{locusId}";
 
 	    push @trows, $cgi->Tr({-align=>'left',-valign=>'top'},
-		                  $cgi->td($cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$gene->{locusId}",
-						    style => "color:rgb(0,0,0)"},
-						   $gene->{sysName} || $gene->{locusId})),
+		                  $cgi->td(Utils::gene_link($dbh, $gene, "name", "myFitShow.cgi")),
 				  $cgi->td($gene->{gene}),
-                                  td( a({ -title => Utils::alt_descriptions($dbh,$orgId,$gene->{locusId})
-                                              || "no other information",
-                                          -href => "domains.cgi?orgId=$orgId&locusId=$gene->{locusId}" },
-                                        $gene->{desc}) ),
+                                  $cgi->td(Utils::gene_link($dbh, $gene, "desc", "domains.cgi")),
 				  $cgi->td({ -bgcolor => Utils::fitcolor($gene->{x}) },
 					   $cgi->a({title => sprintf("t = %.1f. Click for conservation.", $gene->{tx}),
                                                     href => "$orthFitBase&$GroupCond1" },

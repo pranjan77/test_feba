@@ -189,48 +189,49 @@ if ($exp->{condition_1} ne "") {
 print $cgi->h3($header) if defined $header;
 
 if (@fit > 0) { # show the table
-    my @trows = ();
-    foreach my $row (@fit) {
-	my $geneId = $row->{sysName} || $row->{locusId};
+  my @trows = ();
+  foreach my $row (@fit) {
+    my $geneId = $row->{sysName} || $row->{locusId};
     my $strainUrl = "strainTable.cgi?orgId=$orgId&locusId=$row->{locusId}&expName=$expName";
     $strainUrl .= "&help=1" if $help == 1;
     my $orthUrl = "orthFit.cgi?orgId=$orgId&locusId=$row->{locusId}"
-                          . "&expGroup=" . uri_escape($exp->{expGroup})
-                                              . "&condition1=" . uri_escape($exp->{condition_1});
+      . "&expGroup=" . uri_escape($exp->{expGroup})
+        . "&condition1=" . uri_escape($exp->{condition_1});
     $orthUrl .= "&help=1" if $help == 1;
-	push @trows, $cgi->Tr({align => 'left', valign => 'top'},
-			      td(checkbox('locusId',0,$row->{locusId},'')),
-			      td(a({href => "myFitShow.cgi?orgId=$orgId&gene=$row->{locusId}",},
-					       # style => "color:rgb(0,0,0)"},
-						$geneId)),
-			      td($row->{gene}),
-			      td({ -bgcolor => Utils::fitcolor($row->{fit}) },
-                                 a({ -href => $strainUrl,
-                                     -title => "per-strain data",
-                                     -style => "color:rgb(0,0,0)" },
-                                     sprintf("%.1f", $row->{fit})) ),
-			      td( sprintf("%.1f", $row->{t}) ),
-                              td( a({ -title => Utils::alt_descriptions($dbh,$orgId,$row->{locusId})
-                                          || "no other information",
-                                          -href => "domains.cgi?orgId=$orgId&locusId=$row->{locusId}" },
-                                    $row->{desc}) ),
-			      td(a({ 
-				     title => "Compare to data from similar experiments or orthologs",
-				     href => $orthUrl},
-				 exists $cons{$row->{locusId}} && $cons{$row->{locusId}} > 1?
-                                   "<i>conserved</i>" : "compare")) );
-    }
-    print
-	start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
-	hidden('orgId', $orgId),
-	$cgi->table(
-	    { cellspacing => 0, cellpadding => 3},
-	    $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
-		     $cgi->th(['&nbsp;', 'gene','name','fitness','t score','description', '&nbsp;']),
-		     @trows) ),
-	"<BR><BR>",
-	submit(-name => 'Heatmap of selected genes'),
-	end_form;
+    my $alt_desc = Utils::alt_descriptions($dbh,$orgId,$row->{locusId});
+    $alt_desc =~ s/&nbsp;/ /g;
+    push @trows,
+      $cgi->Tr( {align => 'left', valign => 'top'},
+                td(checkbox('locusId',0,$row->{locusId},'')),
+                td(a({href => "myFitShow.cgi?orgId=$orgId&gene=$row->{locusId}",},
+                     # style => "color:rgb(0,0,0)"},
+                     $geneId)),
+                td($row->{gene}),
+                td({ -bgcolor => Utils::fitcolor($row->{fit}) },
+                   a({ -href => $strainUrl,
+                       -title => "per-strain data",
+                       -style => "color:rgb(0,0,0)" },
+                       sprintf("%.1f", $row->{fit})) ),
+                td( sprintf("%.1f", $row->{t}) ),
+                td( a({ -title => $alt_desc || "no other information",
+                        -href => "domains.cgi?orgId=$orgId&locusId=$row->{locusId}" },
+                      $row->{desc}) ),
+                td(a({ 
+                      title => "Compare to data from similar experiments or orthologs",
+                      href => $orthUrl},
+                     exists $cons{$row->{locusId}} && $cons{$row->{locusId}} > 1?
+                     "<i>conserved</i>" : "compare")) );
+  }
+  print
+    start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
+      hidden('orgId', $orgId),
+	$cgi->table( { cellspacing => 0, cellpadding => 3},
+                     $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
+                              $cgi->th(['&nbsp;', 'gene','name','fitness','t score','description', '&nbsp;']),
+                              @trows) ),
+                                "<BR><BR>",
+                                  submit(-name => 'Heatmap of selected genes'),
+                                    end_form;
 } elsif ($show eq "quality") {
     my @trows = ();
     push @trows, $cgi->Tr({align => 'left', valign => 'top' },

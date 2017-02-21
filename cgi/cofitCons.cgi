@@ -55,15 +55,19 @@ my @trows = ( Tr({-valign => 'top', -align => 'center'},
 		     a({title=>"score ratio for ortholog 2: blast_score_of_alignment / self_score"},'Ratio2'),
 		     "Gene2", "Name2", "Description2", "Cofit", "Rank" ])),
 	     Tr({-valign => 'top', -align => 'left'},
-		 td([ $cgi->a({href => "org.cgi?orgId=". $orginfo->{$orgId}{orgId}}, $orginfo->{$orgId}{genome}),
+		 td([ $cgi->a({ -href => "org.cgi?orgId=". $orginfo->{$orgId}{orgId},
+                                -title => $orginfo->{$orgId}{division} },
+                              $orginfo->{$orgId}{genome} ),
 		      "1.0",
-		      a({ href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, $show1),
+		      Utils::gene_link($dbh, $gene1, "name", "myFitShow.cgi"),
 		      $gene1->{gene},
-		      $gene1->{desc},
+		      Utils::gene_link($dbh, $gene1, "desc", "domains.cgi"),
+
 		      "1.0",
-		      a({ href => "myFitShow.cgi?orgId=$orgId&gene=$hitId"}, $show2),
+		      Utils::gene_link($dbh, $gene2, "name", "myFitShow.cgi"),
 		      $gene2->{gene},
-		      $gene2->{desc},
+		      Utils::gene_link($dbh, $gene2, "desc", "domains.cgi"),
+
 		      &cofitStrings($dbh,$orgId,$locusId,$hitId) ])) );
 
 my $nBoth = scalar(@orth1b);
@@ -73,17 +77,20 @@ my $n2only = scalar(keys %$orth2) - $nBoth;
 foreach my $o1 (@orth1b) {
     my $orthOrg = $o1->{orgId};
     my $o2 = $orth2->{$orthOrg};
-    push @trows, Tr({-valign => 'top', -align => 'left'},
-		    td([ $cgi->a({href => "org.cgi?orgId=". $orginfo->{$orthOrg}{orgId}}, $orginfo->{$orthOrg}{genome}),
-			 sprintf("%.2f", $o1->{ratio}),
-			 a({ href => "myFitShow.cgi?orgId=$orthOrg&gene=$o1->{locusId}"}, $o1->{sysName} || $o1->{locusId}),
-			 $o1->{gene},
-			 $o1->{desc},
-			 sprintf("%.2f", $o2->{ratio}),
-			 a({ href => "myFitShow.cgi?orgId=$orthOrg&gene=$o2->{locusId}"}, $o2->{sysName} || $o2->{locusId}),
-			 $o2->{gene},
-			 $o2->{desc},
-			 &cofitStrings($dbh, $orthOrg, $o1->{locusId}, $o2->{locusId}) ]));
+    push @trows,
+      Tr( {-valign => 'top', -align => 'left'},
+          td([ $cgi->a({ -href => "org.cgi?orgId=". $orginfo->{$orthOrg}{orgId},
+                         -title => $orginfo->{$orthOrg}{division} },
+                       $orginfo->{$orthOrg}{genome} ),
+               sprintf("%.2f", $o1->{ratio}),
+               Utils::gene_link($dbh, $o1, "name", "myFitShow.cgi"),
+               $o1->{gene},
+               Utils::gene_link($dbh, $o1, "desc", "domains.cgi"),
+               sprintf("%.2f", $o2->{ratio}),
+               Utils::gene_link($dbh, $o2, "name", "myFitShow.cgi"),
+               $o2->{gene},
+               Utils::gene_link($dbh, $o2, "desc", "domains.cgi"),
+               &cofitStrings($dbh, $orthOrg, $o1->{locusId}, $o2->{locusId}) ]));
 }
 
 my $title = "Conservation of cofitness between $show1 and $show2 in $orginfo->{$orgId}{genome}";

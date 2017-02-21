@@ -99,22 +99,22 @@ if (@$hits == 0) {
     my $typeName = "";
     $typeName = "Protein-coding gene" if $type == 1;
     $typeName = "23S (large subunit) ribosomal RNA" if $type == 2;
-	$typeName = "16S (small subunit) ribosomal RNA" if $type == 3;
-	$typeName = "5S ribosomal RNA" if $type == 4;
-	$typeName = "Transfer RNA" if $type == 5;
-	$typeName = "Other non-coding RNA" if $type == 6;
-	$typeName = "Pseudogene derived from a protein-coding gene" if $type == 7;
-	$typeName = "Pseudogene derived from an RNA gene" if $type == 8;
-	$typeName = "CRISPR" if $type == 9;
-	$typeName = "CRISPR spacer" if $type == 10;
-	$typeName = "Antisense RNA" if $type == 11;
-	$typeName = "Unclassified feature (possibly a pseudogene)" if $type == 99;
+    $typeName = "16S (small subunit) ribosomal RNA" if $type == 3;
+    $typeName = "5S ribosomal RNA" if $type == 4;
+    $typeName = "Transfer RNA" if $type == 5;
+    $typeName = "Other non-coding RNA" if $type == 6;
+    $typeName = "Pseudogene derived from a protein-coding gene" if $type == 7;
+    $typeName = "Pseudogene derived from an RNA gene" if $type == 8;
+    $typeName = "CRISPR" if $type == 9;
+    $typeName = "CRISPR spacer" if $type == 10;
+    $typeName = "Antisense RNA" if $type == 11;
+    $typeName = "Unclassified feature (possibly a pseudogene)" if $type == 99;
 
-	#nearby 5 genes
-	my @locusIds = $geneSpec;
-	my $idShow = $gene->{sysName} || $gene->{locusId};
-	my %spacingDesc = (); # locusId => spacing description
-	my $type;
+    #nearby  genes, 5 on each side
+    my @locusIds = $geneSpec;
+    my $idShow = $gene->{sysName} || $gene->{locusId};
+    my %spacingDesc = (); # locusId => spacing description
+    my $type;
     die "Cannot specify nearby with multiple locusIds or with addgene" unless @locusIds == 1;
     my $centralId = $locusIds[0];
     my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId = ? AND locusId = ?",
@@ -131,87 +131,35 @@ if (@$hits == 0) {
     $i2 = scalar(@$scgenes)-1 if $i2 > scalar(@$scgenes);
     @locusIds = map { $scgenes->[$_]{locusId} } ($i1..$i2);
 
- # 	my @genes = ();
-	# foreach my $locusId (@locusIds) {
- #    	my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId = ? AND locusId = ?",
-	# 				       {}, $orgSpec, $locusId);
- #    	# print $gene->{desc};
-	#     die "No such locus $locusId in org $orgId" if !defined $gene->{locusId};
-	# }
-
-
     my @genes = ();
-	foreach my $locusId (@locusIds) {
-	    my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId = ? AND locusId = ?",
-					       {}, $orgSpec, $locusId);
-	    die "No such locus $locusId in org $orgId" if !defined $gene->{locusId};
-	    # expName => "fit" => fitness value
-	    $gene->{fit} = $dbh->selectall_hashref(qq{SELECT expName,fit,t FROM GeneFitness
+    foreach my $locusId (@locusIds) {
+      my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId = ? AND locusId = ?",
+                                         {}, $orgSpec, $locusId);
+      die "No such locus $locusId in org $orgId" if !defined $gene->{locusId};
+      # expName => "fit" => fitness value
+      $gene->{fit} = $dbh->selectall_hashref(qq{SELECT expName,fit,t FROM GeneFitness
 	                                               WHERE orgId = ? AND locusId = ?},
-						   "expName", {}, $orgId, $locusId);
-	    foreach my $expName (keys %{ $gene->{fit} }) {
-		# die "No such experiment: $expName" unless exists $expinfo->{$expName};
-	    }
-	    $gene->{nExps} = scalar(keys %{ $gene->{fit} });
-	    push @genes, $gene;
-	}
+                                             "expName", {}, $orgId, $locusId);
+      $gene->{nExps} = scalar(keys %{ $gene->{fit} });
+      push @genes, $gene;
+    }
 
-
-
-    if ($hits->[0]{has_fitness} == 0) {
-		my $start = Utils::start_page("Fitness data for $idShow in $orginfo->{$orgId}{genome}");
-		my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusId,0,$gene->{type},"gene");
-		
-		print 
-			$start, $tabs, 
-			h2("Gene $idShow in " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
-			$cgi->h3("$idShow $gene->{gene}: $gene->{desc} in " . $orginfo->{$gene->{orgId}}{genome}),
-			# $cgi->p("Sorry, no fitness data for $idShow.");
-    } else {
-		# show fitness data for gene
-			my @fit = @{ $dbh->selectall_arrayref("SELECT expName,fit,t from GeneFitness where orgId=? AND locusId=?",
-						      { Slice => {} },
-						      $orgId, $locusId) };
-			my $nTotValues = scalar(@fit);
-			die "Unreachable" if $nTotValues == 0;
-			my $limitRows = $showAll ? $nTotValues : 20;
-			my $minAbsFit;
-		if ($nTotValues > $limitRows) {
-		    # subset the rows
-		    @fit = sort { abs($b->{fit}) <=> abs($a->{fit}) } @fit;
-		    @fit = @fit[0..($limitRows-1)];
-		    $minAbsFit = abs($fit[$#fit]{fit});
-		}
-
-		# and get metadata about experiments
-		my $expinfo = Utils::expinfo($dbh,$orgId);
-
-		if ($showAll) {
-		    @fit = sort { Utils::CompareExperiments($expinfo->{$a->{expName}}, $expinfo->{$b->{expName}}) } @fit;
-		} else {
-		    @fit = sort { $a->{fit} <=> $b->{fit} } @fit;
-		}
-
-		my $start = Utils::start_page("Overview for $idShow ($orginfo->{$orgId}{genome})");
-		my $title = "Gene Info for $idShow in $orginfo->{$orgId}{genome}";
-		my $tabs = Utils::tabsGene($dbh,$cgi,$orgSpec,$geneSpec,$showAll,$gene->{type},"gene");
-
-
-		print
-			$start, $tabs,
-		    h2("Gene info for $idShow in " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
-		    h3("$idShow $gene->{gene}:",
-                       a({ -title => Utils::alt_descriptions($dbh,$orgId,$locusId)
-                              || "no other information",
-                           -href => "domains.cgi?orgId=$orgId&locusId=$locusId" },
-                         $gene->{desc}));
-	}
-
+    my $start = Utils::start_page("Overview for $idShow ($orginfo->{$orgId}{genome})");
+    my $title = "Gene Info for $idShow in $orginfo->{$orgId}{genome}";
+    my $tabs = Utils::tabsGene($dbh,$cgi,$orgSpec,$geneSpec,$showAll,$gene->{type},"gene");
+    my $alt_desc = Utils::alt_descriptions($dbh,$orgId,$locusId);
     my $beginC = Utils::commify($begin);
     my $endC = Utils::commify($end);
-    print "Type $type: $typeName<BR>
-   	Located on scaffold $scaffold, $strand strand, nucleotides $beginC to $endC";
+    my @lines = ();
+    push @lines, $alt_desc if $alt_desc;
+    push @lines, "Type $type: $typeName";
+    push @lines, "Located on scaffold $scaffold, $strand strand, nucleotides $beginC to $endC";
 
+    print
+      $start, $tabs,
+        h2("Gene info for $idShow in " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
+          h3("$idShow $gene->{gene}: $gene->{desc}"),
+            p(join(br(), @lines));
 
     my @links = ();
     if ($gene->{locusId} =~ m/^\d+$/) {
@@ -249,55 +197,30 @@ if (@$hits == 0) {
     my $diff = "";
     my $prevrow;
     foreach my $row (@genes) {
-        $diff = $row->{begin} - $prevrow->{end} if defined $prevrow;		# $prevrow->{end} = 0 if !defined $prevrow;
-        my $label = $row->{gene} || $row->{sysName}; #|| $row->{locusId};
-        my $label2 =  $row->{gene} || $row->{sysName} || $row->{locusId};
-        my $label3 = $label2;
-        $label3 =~ s/^.*_/_/ if $row->{sysName} || $row->{locusId};
-        $label2 = $row->{sysName}. ": " . $label2 if $row->{sysName};
-        my $bgcolor = undef;
-        $bgcolor = "#FFFFFF" if $row->{locusId} eq $locusId;
-        my ($phen, $tip) = Utils::gene_fit_string($dbh,$orgSpec,$row->{locusId});
-        push @trows, Tr({ -valign => 'top', -align => 'left', -bgcolor=>$bgcolor},
-                        td([ a({href => "geneOverview.cgi?orgId=$orgId&gene=$row->{locusId}"},$row->{sysName}||$row->{locusId}), #locus
-                             a({href => "geneOverview.cgi?orgId=$orgId&gene=$row->{locusId}"},$row->{gene} || $row->{sysName}), 
-                             a({ -title => Utils::alt_descriptions($dbh,$orgId,$row->{locusId})
-                                     || "no other information",
-                                 -href => "domains.cgi?orgId=$orgId&locusId=$row->{locusId}" },
-                               $row->{desc}),
-                             $row->{strand},
-                             a({title=>"From $prevrow->{end} to $row->{begin}"},$diff), # $row->{begin},
-                             a({href => "myFitShow.cgi?orgId=$orgId&gene=$row->{locusId}", title=>$tip},$phen),
-                           ]));
-        $prevrow = $row;
+      $diff = $row->{begin} - $prevrow->{end} if defined $prevrow;
+      my $label = $row->{gene} || $row->{sysName}; #|| $row->{locusId};
+      my $label2 =  $row->{gene} || $row->{sysName} || $row->{locusId};
+      my $label3 = $label2;
+      $label3 =~ s/^.*_/_/ if $row->{sysName} || $row->{locusId};
+      $label2 = $row->{sysName}. ": " . $label2 if $row->{sysName};
+      my $bgcolor = undef;
+      $bgcolor = "#FFFFFF" if $row->{locusId} eq $locusId;
+      my ($phen, $tip) = Utils::gene_fit_string($dbh,$orgSpec,$row->{locusId});
+      push @trows, Tr({ -valign => 'top', -align => 'left', -bgcolor=>$bgcolor},
+                      td([ a({href => "geneOverview.cgi?orgId=$orgId&gene=$row->{locusId}"},$row->{sysName}||$row->{locusId}), #locus
+                           a({href => "geneOverview.cgi?orgId=$orgId&gene=$row->{locusId}"},$row->{gene} || $row->{sysName}), 
+                           a({ -title => Utils::alt_descriptions($dbh,$orgId,$row->{locusId})
+                               || "no other information",
+                               -href => "domains.cgi?orgId=$orgId&locusId=$row->{locusId}" },
+                             $row->{desc}),
+                           $row->{strand},
+                           a({title=>"From $prevrow->{end} to $row->{begin}"},$diff), # $row->{begin},
+                           a({href => "myFitShow.cgi?orgId=$orgId&gene=$row->{locusId}", title=>$tip},$phen),
+                         ]));
+      $prevrow = $row;
     }
     print table({cellspacing => 0, cellpadding => 3}, @trows);
-    
-# 	if ($showAll == 0) {
-# 	    my $showAllDest = qq(myFitShow.cgi?orgId=$orgId&gene=$locusId&showAll=1);
-# 	    print $cgi->p(qq(<a href=$showAllDest>All fitness data</a>));
-# 	} else {
-# 	    my $showFewDest = qq(myFitShow.cgi?orgId=$orgId&gene=$locusId&showAll=0);
-# 	    print $cgi->p(qq(<a href=$showFewDest>Strongest phenotypes</a>));
-# 	}
-# 	print $cgi->p($cgi->a( { href => "genesFit.cgi?orgId=$orgId&locusId=$locusId&around=2" }, "Fitness for nearby genes"));
-# 	my ($maxCofit) = $dbh->selectrow_array(qq{ SELECT cofit FROM Cofit WHERE orgId = ? AND locusId = ? AND rank = 1 LIMIT 1; },
-# 					       {}, $orgId, $locusId);
-# 	print $cgi->p($cgi->a({href => "cofit.cgi?orgId=$orgId&locusId=$locusId"}, "Top cofit genes"),
-# 		      sprintf("(max cofit %.2f)", $maxCofit)) if defined $maxCofit;
-#     } # end else unique hit has data
-
-#     if ($gene->{type} == 1) {
-#     	print
-# 			p(a({href => "getSeq.cgi?orgId=$orgId&locusId=$locusId"}, "Show sequence"),
-# 	  		"or",
-# 	  		a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Check homologs")
-# 	  	);
-# 		print p(a({href => "domains.cgi?orgId=$orgId&locusId=$locusId"}, "See Domains"));
-#     }
-    
-
-} #  end if just 1 hit
+}
 
 print "<br><br>";
 

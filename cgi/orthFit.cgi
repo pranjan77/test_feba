@@ -84,56 +84,50 @@ my $nSkipOrth = 0;
 
 my $shade = 0;
 foreach my $o (@genes) {
-    my $data = $dbh->selectall_arrayref(qq{SELECT * from Experiment JOIN GeneFitness USING  (orgId,expName)
+  my $data = $dbh->selectall_arrayref(qq{SELECT * from Experiment JOIN GeneFitness USING  (orgId,expName)
                                            WHERE orgId=? AND locusId=? AND expGroup=? AND condition_1=? ORDER BY fit},
-					{ Slice => {} }, $o->{orgId}, $o->{locusId}, $expGroup, $condition1);
-    if (@$data == 0 && $o->{orgId} ne $orgId) {
-        $nSkipOrth++;
-        next;
-    }
-    my $first = 1;
-    $shade++;
-    foreach my $row (@$data) {
-		my $ratio = $o->{orgId} eq $orgId ? "&mdash;" : sprintf("%.2f",$o->{ratio});
-		my $orgShort = "";
+                                      { Slice => {} }, $o->{orgId}, $o->{locusId}, $expGroup, $condition1);
+  if (@$data == 0 && $o->{orgId} ne $orgId) {
+    $nSkipOrth++;
+    next;
+  }
+  my $first = 1;
+  $shade++;
+  foreach my $row (@$data) {
+    my $ratio = $o->{orgId} eq $orgId ? "&mdash;" : sprintf("%.2f",$o->{ratio});
+    my $orgShort = "";
 
-		if ($first) {
-		    my $d = $orginfo->{$o->{orgId}};
-		    my $short = $d->{genome}; $short =~ s/^(.)[^ ]+/\1./;
-		    $orgShort = a({href => "org.cgi?orgId=$o->{orgId}", title => $d->{genome}}, $short);
-		}
-		my $strainUrl = "strainTable.cgi?orgId=$o->{orgId}&locusId=$o->{locusId}&expName=$row->{expName}";
-		$strainUrl .= "&help=1" if $help == 1;
-		push @trows, $cgi->Tr({ -valign => 'top', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF" },
-			      td($first ?  $ratio : ""),
-			      td($orgShort),
-			      td($first ? a({href => "myFitShow.cgi?orgId=$o->{orgId}&gene=$o->{locusId}"}, #style => "color: rgb(0,0,0)"},
-					    $o->{sysName} || $o->{locusId}) : ""),
-			      td($first ? a({href => "myFitShow.cgi?orgId=$o->{orgId}&gene=$o->{locusId}"}, $o->{gene}) : ""),
-			      td($first ?
-                                 a({ -title => Utils::alt_descriptions($dbh,$o->{orgId},$o->{locusId})
-                                         || "no other information",
-                                     -href => "domains.cgi?orgId=$o->{orgId}&locusId=$o->{locusId}" },
-                                   $o->{desc})
-                                 : ""),
-			      td(a({href => "exp.cgi?orgId=$o->{orgId}&expName=$row->{expName}"}, #style => "color: rgb(0,0,0)"},
-				   $row->{expDesc})),
-			      td({ -bgcolor => Utils::fitcolor($row->{fit}) },
-                                 a({ -href => $strainUrl,
-                                     -title => "per-strain data",
-                                     -style => "color:rgb(0,0,0)" },
-                                   sprintf("%.1f", $row->{fit}) ) ),
-			      td(sprintf("%.1f", $row->{t})) );
-	$first = 0;
+    if ($first) {
+      my $d = $orginfo->{$o->{orgId}};
+      my $short = $d->{genome}; $short =~ s/^(.)[^ ]+/\1./;
+      $orgShort = a({href => "org.cgi?orgId=$o->{orgId}", title => $d->{genome}}, $short);
     }
+    my $strainUrl = "strainTable.cgi?orgId=$o->{orgId}&locusId=$o->{locusId}&expName=$row->{expName}";
+    $strainUrl .= "&help=1" if $help == 1;
+    push @trows,
+      $cgi->Tr( { -valign => 'top', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF" },
+                td($first ?  $ratio : ""),
+                td($orgShort),
+                td($first ? Utils::gene_link($dbh, $o, "name", "myFitShow.cgi") : ""),
+                td($first ? $o->{gene} : ""),
+                td($first ? Utils::gene_link($dbh, $o, "desc", "domains.cgi") : ""),
+                td(a({href => "exp.cgi?orgId=$o->{orgId}&expName=$row->{expName}"},
+                     $row->{expDesc})),
+                td({ -bgcolor => Utils::fitcolor($row->{fit}) },
+                   a({ -href => $strainUrl,
+                       -title => "per-strain data",
+                       -style => "color:rgb(0,0,0)" },
+                     sprintf("%.1f", $row->{fit}) ) ),
+                td(sprintf("%.1f", $row->{t})) );
+    $first = 0;
+  }
 }
 print
-    table({ cellpadding => 3, cellspacing =>0}, @trows),
-    $nSkipOrth ? p("$nSkipOrth orthologs are not shown because they lack fitness data for this condition (or they lack data entirely)") : "",
-    p(a({href => "orthCond.cgi?expGroup=" . uri_escape($expGroup) . "&condition1=" . uri_escape($condition1) },
-        "Specific phenotypes for $expGroup $condition1 across organisms")),
-    p(a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Show all homologs"));
-
+  table({ cellpadding => 3, cellspacing =>0}, @trows),
+  $nSkipOrth ? p("$nSkipOrth orthologs are not shown because they lack fitness data for this condition (or they lack data entirely)") : "",
+  p(a({href => "orthCond.cgi?expGroup=" . uri_escape($expGroup) . "&condition1=" . uri_escape($condition1) },
+      "Specific phenotypes for $expGroup $condition1 across organisms")),
+  p(a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Show all homologs"));
 
 $dbh->disconnect();
 Utils::endHtml($cgi);

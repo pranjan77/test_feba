@@ -147,24 +147,24 @@ while(<RES>) {
     my $cov = sprintf("%.1f", 100*abs($queryEnd - $queryStart + 1)/length($seq));
     $percIdentity = sprintf("%.1f", $percIdentity);
 
-    my ($sys,$geneName,$desc) = $dbh->selectrow_array("SELECT sysName,gene,desc FROM Gene WHERE orgId = ? AND locusId = ?",
+    my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId = ? AND locusId = ?",
                                                       undef, $orgId, $locusId);
 
-    if (!defined $desc) {
+    if (!defined $gene) {
 	print "Warning! Unknown hit $orgId:$locusId<BR>";
 	next;
     }
     
 
+    my $orgId = $gene->{orgId};
+    my $locusId = $gene->{locusId};
     my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $orgId, $locusId);
-    my $showId = $sys || $locusId;
+    my $showId = $gene->{sysName} || $gene->{locusId};
     my $seqlen = length($seq);
     my @hit = ($cgi->a({href => "org.cgi?orgId=$orgId"},$orginfo->{$orgId}->{genome}),
-               $cgi->a({href => "geneOverview.cgi?orgId=$orgId&gene=$locusId"},$showId),
-               $cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId"}, $geneName),
-               $cgi->a({ -title => Utils::alt_descriptions($dbh,$orgId,$locusId) || "no other information",
-                         -href => "domains.cgi?orgId=$orgId&locusId=$locusId"},
-                       $desc),
+               Utils::gene_link($dbh, $gene, "name", "geneOverview.cgi"),
+               $gene->{gene},
+               Utils::gene_link($dbh, $gene, "desc", "domains.cgi"),
                $cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId", title => $fittitle }, $fitstring ),
                $cgi->a({title=>"evalue: $eVal ($bitScore bits)"},$percIdentity),
                $cgi->a({title=>"Query $queryStart..$queryEnd of $seqlen aligns to $showId $subjectStart..$subjectEnd"},$cov));
