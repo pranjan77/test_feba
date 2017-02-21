@@ -786,12 +786,38 @@ sub alt_descriptions($$$) {
                                               {}, $orgId, $locusId);
 
     my @altdesc = ();
-    push @altdesc, "$reannotation" if defined $reannotation;
+    push @altdesc, "Reannotation: $reannotation" if defined $reannotation;
     push @altdesc, "SEED: $seed_desc" if defined $seed_desc;
     push @altdesc, "KEGG: " . join("; ", @$kegg_descs)
             if scalar(@$kegg_descs) > 0;
-    $altdesccache{$orgId}{$locusId} = join(": ", @altdesc);
+    $altdesccache{$orgId}{$locusId} = join(";&nbsp; ", @altdesc);
     return $altdesccache{$orgId}{$locusId};
+}
+
+# a link to the gene by its description
+# The first argument is the dbh
+# The second argument is the gene row
+# The third argument is whether to show the name or the description ("name" or "desc")
+# The final optional argument is which cgi to use (default, singleFit.cgi)
+sub gene_link {
+  my ($dbh, $gene, $showParam, $cgiParam) = @_;
+  die "Unrecognized $showParam" unless $showParam eq "name" || $showParam eq "desc";
+  $cgiParam = "singleFit.cgi" unless $cgiParam;
+  my $desc = $gene->{desc};
+  $desc =~ s/"//g;
+  my $alt_desc = Utils::alt_descriptions($dbh,$gene->{orgId},$gene->{locusId});
+  my $desc_long;
+  if ($showParam eq "desc") {
+    $desc_long = $alt_desc || "No further information";
+  } else {
+    $desc_long = $desc;
+    $desc_long .= "; $alt_desc" if $alt_desc;
+  }
+  $desc_long =~ s/&nbsp;//g;
+  my $show = $showParam eq "name" ? $gene->{sysName} || $gene->{locusId} : $gene->{desc} || "no description";
+  return CGI::a({ -href => "$cgiParam?orgId=$gene->{orgId}&gene=$gene->{locusId}",
+                  -title => $desc_long },
+                $show);
 }
 
 # dbh, orgId, ref. to list of ec numbers => hashref of ecnum to locusId => 1
@@ -825,7 +851,6 @@ sub EcToGenes($$$) {
     }
     return \%ecGenes;
 }
-    
 
 #END 
 
