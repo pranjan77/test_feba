@@ -15,7 +15,8 @@ our (@ISA,@EXPORT);
              FindCompound GetCompoundCAS GetCompoundMW
              ListValidUnits
              LoadMedia
-             GetMedias GetMediaComponents GetUndefMedia GetUnknownComponents WarnReusedComponents);
+             GetMedias GetMediaComponents GetUndefMedia GetUnknownComponents WarnReusedComponents
+             SynToKey GetSynonymMap);
 
 sub LoadCompounds($); # metadata directory; no return value
 sub FindCompound($); # compound or synonym => compound or undef
@@ -40,7 +41,7 @@ sub SynToKey($);
 my %compounds = (); # compound to list of [ compound name, cas, MW ]; cas or MW are "" (not undef) if unknown
 my ($I_COMPOUND,$I_CAS,$I_MW) = 0..2;
 my %synonyms = (); # processed synonym (from SynToKey) => compound name
-
+sub GetSynonymMap() { return \%synonyms; }
 
 # Local variables for media information
 my %media = (); # media => list of [ compound_id, number, units ]
