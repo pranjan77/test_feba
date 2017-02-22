@@ -660,3 +660,66 @@ Sodium Chloride	100	mM
 Magnesium sulfate	4	mM
 Gelatin	0.005	vol%
 Tris hydrochloride	25	mM
+		
+Media	RCH2_defined_glucose_YE	
+Description	Defined minimal media for soil and groundwater bacteria with glucose	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+D-Glucose	20	mM
+PIPES sesquisodium salt	30	mM
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+Yeast Extract	0.1	g/L
+		
+Media	RCH2_defined_YE	
+Description	Defined minimal media for soil and groundwater bacteria with lactate	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+Sodium D,L-Lactate	20	mM
+PIPES sesquisodium salt	30	mM
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+Yeast Extract	0.1	g/L
+		
+Media	LB_10mMNitrate	
+Description	Luria-Bertani broth	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Tryptone	10	g/L
+Yeast Extract	5	g/L
+Sodium Chloride	5	g/L
+Sodium nitrate	10	mM
+		
+Media	RCH2_defined_glucose_YE_10mMNitrate	
+Description	Defined minimal media for soil and groundwater bacteria with glucose	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+D-Glucose	20	mM
+PIPES sesquisodium salt	30	mM
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+Yeast Extract	0.1	g/L
+Sodium nitrate	10	mM
+		
+Media	RCH2_defined_YE_10mM_Nitrate	
+Description	Defined minimal media for soil and groundwater bacteria with lactate	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+Sodium D,L-Lactate	20	mM
+PIPES sesquisodium salt	30	mM
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+Yeast Extract	0.1	g/L
+Sodium nitrate	10	mM
