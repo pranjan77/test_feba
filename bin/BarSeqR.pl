@@ -156,7 +156,20 @@ END
     my @noMedia = ();
     foreach my $exp (@exps) {
         # ignore lines not filled out or dropped
-        next if ($exp->{Index} eq "" && $exp->{SetName} eq "") || (defined $exp->{Drop} && $exp->{Drop} eq "TRUE");
+        next if ($exp->{Index} eq "" && $exp->{SetName} eq "");
+        if ($exp->{Drop}) {
+          my $drop = $exp->{Drop};
+          $drop =~ s/ //g;
+          if (uc($drop) eq "TRUE" || uc($drop) eq "DROP") {
+            print STDERR "Dropping $exp->{SetName} $exp->{Index} $exp->{Description}\n";
+            $exp->{Drop} = "TRUE";
+          } elsif (uc($drop) eq "NA") {
+            $exp->{Drop} = "";
+          } elsif (uc($drop) ne "FALSE") {
+            print STDERR "Unknown drop code $drop for $exp->{SetName} $exp->{Index}\n";
+            $exp->{Drop} = "";
+          }
+        }
 
         # Clean up media and warn if not a known media
         if (defined $exp->{Media} && $exp->{Media} ne "") {
