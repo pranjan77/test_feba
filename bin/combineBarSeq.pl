@@ -139,6 +139,7 @@ my $save_ignore = 0; # make a file of ignored lines (out.codes.ignored) ?
     my @lowcountI = (); # indexes with < 200,000 reads
     my @lowcounts = (); # those actual counts
     my @fractions = (); # fraction used for indexes with plenty of reads only
+    my @fractionsS = (); # fraction used for successful indexes (enough reads and f > 0.25)
     my @lowhitI = (); # indexes with fraction < 0.25
     my @okI = (); # indexes with enough reads and fraction above 0.25
     my $totalReads = 0;
@@ -154,13 +155,16 @@ my $save_ignore = 0; # make a file of ignored lines (out.codes.ignored) ?
 		push @lowhitI, $indexes[$i];
 	    } else {
 		push @okI, $indexes[$i];
+                push @fractionsS, $fraction;
 	    }
 	}
     }
     print STDERR sprintf("Indexes %d Success %d LowCount %d LowFraction %d Total Reads (millions): %.3f \n",
 			 scalar(@indexes), scalar(@okI), scalar(@lowcountI), scalar(@lowhitI), $totalReads/1e6);
-    print STDERR sprintf("Median Fraction (LowCount Excluded) %.3f\n",
-			 &median(@fractions)) if scalar(@fractions) > 0;
+    print STDERR sprintf("Median Fraction (LowCount Excluded) %.3f Median for Success %.3f\n",
+			 &median(@fractions),
+                         scalar(@fractionsS) > 0 ? &median(@fractionsS) : "")
+      if scalar(@fractions) > 0;
     print STDERR "Success " . &ShortList(@okI) . "\n" if @okI > 0;
     print STDERR sprintf("LowCount (median %d) %s\n",
 			 &median(@lowcounts), &ShortList(@lowcountI))
@@ -219,7 +223,7 @@ sub median {
 # assume indexes are of the form alphabetic_prefix followed by a number
 # shortens it by replacing prefix1 prefix2 prefix3 with prefix1:3
 # outputs a pretty string to print
-sub ShortList(@_) {
+sub ShortList {
     my @list = @_;
     @list = sort(@list);
     return join(" ", @list) unless $list[0] =~ m/^([a-zA-Z]+)\d+$/;
