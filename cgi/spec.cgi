@@ -118,7 +118,7 @@ foreach my $row (@$spec) {
                     td( a({ -title => Utils::alt_descriptions($dbh,$orgId,$row->{locusId})
                                 || "no other information",
                                 -href => "domains.cgi?orgId=$orgId&locusId=$row->{locusId}" },
-                          $row->{desc}) ),
+                          $row->{desc} || "No description") ),
                     td({ -bgcolor => Utils::fitcolor($showFit) },
                        a( $fitAttr, 
                           ( ($row->{minFit} < 0 && $row->{maxFit} < 0) || ($row->{minFit} > 0 && $row->{maxFit} > 0) ?
