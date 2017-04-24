@@ -49,7 +49,9 @@ Other optional arguments:
 
     public_file should contain lines of the form
 	orgId SetName key1=value1 ... keyN=valueN
-	where the key/value pairs are optional. There can also be
+	where the key/value pairs are optional.
+	Use "_" instead of " " to include a space in a value.
+	There can also be
 	comment lines (starting with "#"),
 	comments at the end of rules (starting with "#"),
 	or empty lines.
@@ -789,6 +791,13 @@ sub WorkPutHash($@) {
     WorkPutRow(map $row->{$_}, @fields);
 }
 
+# Convert white space to underscores
+sub wsu($) {
+  my ($value) = @_;
+  $value =~ s/ /_/g;
+  return $value;
+}
+
 sub FilterExpByRules($$$) {
     my ($q, $exp, $rules) = @_;
     foreach my $rule (@$rules) {
@@ -797,9 +806,9 @@ sub FilterExpByRules($$$) {
         my $match = 1;
         while (my ($key,$value) = each %$rule) {
             if (exists $q->{$key}) {
-                $match = 0 unless $q->{$key} eq $value;
+                $match = 0 unless &wsu($q->{$key}) eq &wsu($value);
             } elsif (exists $exp->{$key}) {
-                $match = 0 unless $exp->{$key} eq $value;
+                $match = 0 unless &wsu($exp->{$key}) eq &wsu($value);
             } else {
                 die "Cannot handle rule for $key=$value because $key does not exist for either q or experiment for $exp->{name}";
             }
