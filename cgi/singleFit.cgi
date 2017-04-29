@@ -14,7 +14,7 @@
 # 
 # Required CGI parameters:
 # orgId -- which organism to search in
-# locusId -- which locus to search on 
+# locusId -- which locus to search on
 #
 # Optional CGI parameters: 
 # showAll -- 1 if showing all fitness values instead of just the most extreme ones
