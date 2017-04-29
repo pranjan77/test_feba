@@ -7,7 +7,7 @@ use FindBin qw($Bin);
 
 {
     my $usage = qq{
-Usage: db_setup_SEED.pl [ -gdir g ] [ -out . ] org1 ... orgN
+Usage: db_setup_SEED.pl -subsys subsys.txt [ -gdir g ] [ -out . ] org1 ... orgN
 
 Relies on the gdir/organism/seedanno.tab files, which can be produced from
 the amino acid fasta file (aaseq) by using the SEED server, i.e.,
@@ -18,15 +18,21 @@ Writes to db.SEEDAnnotation and db.SEEDClass in the out directory
     ;
     my $gdir = "g";
     my $outdir = ".";
+    my $subsysfile;
     GetOptions('gdir=s' => \$gdir,
-               'outdir=s' => \$outdir)
+               'outdir=s' => \$outdir,
+               'subsys=s' => \$subsysfile)
         || die $usage;
     my @orgs = @ARGV;
     die "No organisms requested:\n$usage" unless scalar(@orgs) > 0;
     die "No such directory: $gdir" unless -d $gdir;
     die "No such directory: $outdir" unless -d $outdir;
+    die "Must specify -subsys" unless defined $subsysfile;
     foreach my $org (@orgs) {
         die "No such directory: $gdir/$org" unless -d "$gdir/$org";
+    }
+    if ($subsysfile ne "") {
+      die "No such file: $subsysfile\n" unless -e $subsysfile
     }
 
     my $anno_file = "$outdir/db.SEEDAnnotation";
@@ -79,4 +85,27 @@ Writes to db.SEEDAnnotation and db.SEEDClass in the out directory
         if scalar(keys(%badclass)) > 0;
     print STDERR "Wrote $anno_file\n";
     print STDERR "Wrote $class_file\n";
+
+    my $roles_file = "$outdir/db.SEEDRoles";
+    open(ROLES, ">", $roles_file) || die "Cannot write to $roles_file";
+    if ($subsysfile ne "") {
+      open(SUBSYS, "<", $subsysfile) || die "Error reading $subsysfile";
+      while(my $line = <SUBSYS>) {
+        chomp $line;
+        my ($toplevel, $category, $subsystem, $seedrole) = split /\t/, $line;
+        die "No role in $line" unless defined $seedrole;
+        # To handle quotes in sqlite3, double the quotes and put quotes around the whole thing
+        if ($seedrole =~ m/"/) {
+          $seedrole =~ s/"/""/g;
+          $seedrole = '"' . $seedrole . '"';
+        }
+        die "Quotes in toplevel field not allowed: $line" if $toplevel =~ m/"/;
+        die "Quotes in category field not allowed: $line" if $category =~ m/"/;
+        die "Quotes in subsystem field not allowed: $line" if $subsystem =~ m/"/;
+        print ROLES join("\t", $toplevel, $category, $subsystem, $seedrole)."\n";
+      }
+      close(SUBSYS) || die "Error reading $subsysfile";
+    }
+    close(ROLES) || die "Error writing to $roles_file";
+    print STDERR "Wrote $roles_file\n";
 }

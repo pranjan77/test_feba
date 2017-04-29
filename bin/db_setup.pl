@@ -10,6 +10,7 @@ use DBI;
 my $metadir = "$Bin/../metadata";
 my $gdir = "g";
 my $xrefs = "img.xrefs";
+my $subsysfile = "subsys.txt";
 
 my $usage = <<END
 Usage: db_setup.pl [ -db db_file_name ]
@@ -22,6 +23,10 @@ Other optional arguments:
     -metadir $metadir
     -gdir $gdir
     -xrefs $xrefs (from IMGXRefs.pl, or use an empty argument to skip it)
+    -subsys $subsysfile
+        (SEED subsystems table, or use an empty argument to skip it,
+	downloaded from ftp://ftp.theseed.org/subsystems/subsys.txt
+	with 4 columns)
 
     Sets up the cgi_data/ directory, especially the sqlite database, by reading from
     the html directories indir/nickname1 ... indir/nicknameN
@@ -88,7 +93,8 @@ sub FilterExpByRules($$$);
                 'gdir=s' => \$gdir,
                 'outdir=s' => \$outdir,
                 'xrefs=s' => \$xrefs,
-                'reanno=s' => \$reannofile )
+                'reanno=s' => \$reannofile,
+                'subsys=s' => \$subsysfile)
      && defined $indir && defined $orgfile && defined $orthfile)
         || die $usage;
     my @orgs = @ARGV;
@@ -101,6 +107,10 @@ sub FilterExpByRules($$$);
     die "No such file: $reannofile" if defined $reannofile && ! -e $reannofile;
     die "No organism nicknames specified\n" if scalar(@orgs) < 1;
     die "No such file: $xrefs" if $xrefs ne "" && ! -e $xrefs;
+    if ($subsysfile ne "") {
+      die "No such file: $subsysfile" unless -e $subsysfile;
+    }
+    
     if (!defined $outdir && defined $dbfile) {
         if ($dbfile =~ m|/|) {
             $outdir = $dbfile;
@@ -628,10 +638,11 @@ sub FilterExpByRules($$$);
     }
 
     # Build the SEED tables
-    system("$Bin/db_setup_SEED.pl","-gdir",$gdir,@orgs) == 0
+    system("$Bin/db_setup_SEED.pl","-gdir",$gdir,"-subsys",$subsysfile,@orgs) == 0
         || die "$Bin/db_setup_SEED.pl failed";
     push @workCommands, ".import db.SEEDAnnotation SEEDAnnotation";
     push @workCommands, ".import db.SEEDClass SEEDClass";
+    push @workCommands, ".import db.SEEDRoles SEEDRoles";
 
     # load the other data into sqlite3
     if (defined $dbfile) {

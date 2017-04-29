@@ -798,10 +798,11 @@ sub alt_descriptions($$$) {
 # The first argument is the dbh
 # The second argument is the gene row
 # The third argument is whether to show the name or the description ("name" or "desc")
-# The final optional argument is which cgi to use (default, singleFit.cgi)
+# The final argument is which cgi to use (usually myFitShow.cgi)
 sub gene_link {
   my ($dbh, $gene, $showParam, $cgiParam) = @_;
   die "Unrecognized $showParam" unless $showParam eq "name" || $showParam eq "desc";
+  die "Must specify cgi" unless defined $cgiParam;
   $cgiParam = "singleFit.cgi" unless $cgiParam;
   my $desc = $gene->{desc};
   $desc =~ s/"//g;

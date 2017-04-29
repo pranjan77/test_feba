@@ -55,7 +55,7 @@ cofit.cgi -- top cofit hits for a gene
 	fitness data (for query gene) => myFitShow.cgi
 	homologs => mySeqSearch.cgi
 domains.cgi -- the proteins page
-	includes domains (PFam/TIGRFam), SwissProt & KEGG best hits, SEED annotations,
+	includes domains (PFam/TIGRFam), SwissProt & KEGG best hits, SEED annotations (=> seedsubsystem.cgi),
         metabolic maps (=> keggmap.cgi) if it has EC numbers,
         and the protein sequence
         [or redirects to geneOverview.cgi if not a protein-coding gene]
@@ -108,6 +108,9 @@ keggmap.cgi -- show a kegg map and optionally color code by gene presence and fi
 	links to organism page (if specified), list of metabolic maps (keggmaplist.cgi),
         and per-EC links: to singleFit.cgi or genesFit.cgi (if orgId)
         or else ec number search (myFitShow.cgi)
+seedsubsystem.pl -- show all the genes in a subsystem
+	links to organism page, to gene fitness page (myFitShow.cgi), and to
+        heatmap (genesFit.cgi)
 
 Dead pages:
 getSeq.cgi -- sequence of gene (if it is a protein)

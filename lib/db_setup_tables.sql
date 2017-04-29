@@ -323,6 +323,14 @@ CREATE TABLE SEEDClass (
 CREATE INDEX 'SEEDClassByNum' on SEEDClass ('num');
 CREATE INDEX 'SEEDClassByOrgNum' on SEEDClass ('orgId','num');
 
+CREATE TABLE SEEDRoles (
+	toplevel TEXT NOT NULL,
+        category TEXT NOT NULL,
+        subsystem TEXT NOT NULL,
+        seedrole TEXT NOT NULL);
+CREATE INDEX 'SEEDRoleBySubsystem' ON SEEDRoles ('subsystem', 'seedrole');
+CREATE INDEX 'SEEDRoleByRole' ON SEEDRoles ('seedrole', 'subsystem');
+
 /* KEGG Maps */
 CREATE TABLE ECInfo (
 	ecnum TEXT NOT NULL,

@@ -235,10 +235,22 @@ foreach my $row (@$seed_classes) {
                          : a({-href => $url_pre . $num}, $text));
     $ecall{$num} = 1 if $type == 1;
 }
+my $subsysShow = "";
+if ($seed_desc) {
+  my $subsysList = $dbh->selectcol_arrayref("SELECT subsystem FROM SEEDRoles WHERE seedrole = ?",
+                                        {}, $seed_desc);
+  my @subsysShow = ();
+  foreach my $subsys (@$subsysList) {
+    my $nice = $subsys; $nice =~ s/_/ /g;
+    push @subsysShow, a({ -href => "seedsubsystem.cgi?orgId=$orgId&subsystem=$subsys" },
+                        $nice);
+  }
+  $subsysShow = " in subsystem " . join(" or ", @subsysShow) if @subsysShow > 0;
+}
 
 print
     h3("The SEED"),
-    p(defined $seed_desc ?  "Annotated as: " . $seed_desc : "No annotation"),
+    p(defined $seed_desc ?  "Annotated as " . '"' . $seed_desc . '"' . $subsysShow : "No annotation"),
     @show_classes > 0 ? p(join(", ", @show_classes)) : "",
     p("or check the current SEED with",
       # %0A encodes "\n" so that it looks like fasta input.
