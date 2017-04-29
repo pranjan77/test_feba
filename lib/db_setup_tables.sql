@@ -308,6 +308,7 @@ CREATE TABLE SEEDAnnotation (
         seed_desc TEXT NOT NULL,
         PRIMARY KEY (orgId,locusId)
 );
+CREATE INDEX 'SEEDAnnotationByDesc' on SEEDAnnotation ('seed_desc', 'orgId', 'locusId');
 
 /* Enzyme Commission or Transporter Classification numbers.
    The Transporter Classification is described at
