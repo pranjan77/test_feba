@@ -32,8 +32,8 @@ die "Unknown organism" unless $orgId eq "" || exists $orginfo->{$orgId};
 my $nice = $subsystem; $nice =~ s/_/ /g;
 print
   header,
-  Utils::start_page("Subsystem $nice in $orginfo->{$orgId}{genome}"),
-  h2("Subsystem $nice in",
+  Utils::start_page("SEED Subsystem: $nice in $orginfo->{$orgId}{genome}"),
+  h2("SEED Subsystem: $nice in",
      a({ -href => "org.cgi?orgId=$orgId"}, $orginfo->{$orgId}{genome}));
 
 my $roles = $dbh->selectcol_arrayref("SELECT seedrole FROM SEEDRoles WHERE subsystem = ?",
@@ -72,7 +72,7 @@ if (@$roles == 0) {
 
 print
   p(a( { -href => "http://www.nmpdr.org/FIG/subsys.cgi?request=show_ssa&ssa_name=$subsystem" },
-       "Or view this subsystem at nmpdr" ));
+       "Or view this subsystem at NMPDR" ));
 
 Utils::endHtml($cgi);
 exit(0);

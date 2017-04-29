@@ -96,7 +96,9 @@ orthCond.cgi -- specific sick genes for a condition across all organisms
 # per-organism pages
 org.cgi -- links to experiments (exps.cgi), specific phenotypes (spec.cgi),
         reannotations (orgReanno.cgi),
-	metabolic maps (keggmap.cgi and keggmaplist.cgi), and downloads
+	metabolic maps (keggmap.cgi and keggmaplist.cgi),
+        SEED subsystems (seedsubsystemsOrg.cgi),
+        and downloads
         (createFitData.cgi, createCofitData.cgi, spec.cgi, createExpData.cgi, orgSeqs.cgi)
 spec.cgi -- specific phenotypes of a certain type for an organism
 	links to condition overview comparison (orthCond.cgi), per-gene pages (singleFit.cgi, domains.cgi),
@@ -111,6 +113,8 @@ keggmap.cgi -- show a kegg map and optionally color code by gene presence and fi
 seedsubsystem.pl -- show all the genes in a subsystem
 	links to organism page, to gene fitness page (myFitShow.cgi), and to
         heatmap (genesFit.cgi)
+seedsubsystemsOrg.cgi -- links to organism page and to
+	seedsubsystem.pl
 
 Dead pages:
 getSeq.cgi -- sequence of gene (if it is a protein)

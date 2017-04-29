@@ -129,12 +129,14 @@ if (scalar(@$reanno) > 0) {
 }
 
 print
-    h3("Metabolic Maps from KEGG"),
-    p("See",
-      a( {href => "keggmap.cgi?mapId=01100&orgId=$orgId"}, "overview map"),
-      "or",
-      a( {href => "keggmaplist.cgi?orgId=$orgId"}, "list of maps")."."),
-    "\n";
+  h3("Metabolic Maps from KEGG"),
+  p("See",
+    a( {href => "keggmap.cgi?mapId=01100&orgId=$orgId"}, "overview map"),
+    "or",
+    a( {href => "keggmaplist.cgi?orgId=$orgId"}, "list of maps")."."),
+  h3("SEED Subsystems"),
+  p(a({href => "seedsubsystemsOrg.cgi?orgId=$orgId"}, "See list")),
+  "\n";
       
 # No COUNT DISTINCT in sqlite3 so use GROUP BY as workaround
 my $loci = $dbh->selectcol_arrayref("SELECT locusId FROM ConservedCofit WHERE orgId = ? GROUP BY locusId",
