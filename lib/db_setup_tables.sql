@@ -332,6 +332,18 @@ CREATE TABLE SEEDRoles (
 CREATE INDEX 'SEEDRoleBySubsystem' ON SEEDRoles ('subsystem', 'seedrole');
 CREATE INDEX 'SEEDRoleByRole' ON SEEDRoles ('seedrole', 'subsystem');
 
+/* This table is necessary because the SEED annotations may be either a role,
+   or more than one role joined by " / ". Only values of seed_desc that
+   actually occur, and only roles that are described in SEEDRoles, are
+   in this table.
+*/
+CREATE TABLE SEEDAnnotationToRoles (
+       seed_desc TEXT NOT NULL,
+       seedrole TEXT NOT NULL,
+       PRIMARY KEY (seed_desc, seedrole)
+);
+CREATE INDEX 'SEEDAnnotationByRole' ON SEEDAnnotationToRoles ('seedrole', 'seed_desc');
+
 /* KEGG Maps */
 CREATE TABLE ECInfo (
 	ecnum TEXT NOT NULL,

@@ -640,9 +640,9 @@ sub FilterExpByRules($$$);
     # Build the SEED tables
     system("$Bin/db_setup_SEED.pl","-gdir",$gdir,"-subsys",$subsysfile,@orgs) == 0
         || die "$Bin/db_setup_SEED.pl failed";
-    push @workCommands, ".import db.SEEDAnnotation SEEDAnnotation";
-    push @workCommands, ".import db.SEEDClass SEEDClass";
-    push @workCommands, ".import db.SEEDRoles SEEDRoles";
+    foreach my $table (qw{SEEDAnnotation SEEDClass SEEDRoles SEEDAnnotationToRoles}) {
+      push @workCommands, ".import db.$table $table";
+    }
 
     # load the other data into sqlite3
     if (defined $dbfile) {

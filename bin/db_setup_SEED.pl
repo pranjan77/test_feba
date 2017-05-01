@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Given a list of organisms, build files for loading the SEEDAnnotation and SEEDClass tables
+# Given a list of organisms, build files for loading the SEED related tables
 
 use strict;
 use Getopt::Long;
@@ -13,7 +13,8 @@ Relies on the gdir/organism/seedanno.tab files, which can be produced from
 the amino acid fasta file (aaseq) by using the SEED server, i.e.,
 http://servers.nmpdr.org/sapling/server.cgi?code=server_paper_example6.pl
 
-Writes to db.SEEDAnnotation and db.SEEDClass in the out directory
+Writes to db.SEEDAnnotation, db.SEEDClass, db.SEEDRoles, and db.SEEDAnnotationToRoles
+in the out directory
 }
     ;
     my $gdir = "g";
@@ -35,6 +36,7 @@ Writes to db.SEEDAnnotation and db.SEEDClass in the out directory
       die "No such file: $subsysfile\n" unless -e $subsysfile
     }
 
+    my %desc = (); # track values of seed_desc for later
     my $anno_file = "$outdir/db.SEEDAnnotation";
     my $class_file = "$outdir/db.SEEDClass";
     open(ANNO, ">", $anno_file) || die "Cannot write to $anno_file";
@@ -55,6 +57,7 @@ Writes to db.SEEDAnnotation and db.SEEDClass in the out directory
             die "Invalid input line\n$_\nfrom $in_file"
                 unless defined $locusId && defined $seed_desc;
             next if $seed_desc eq ""; # allow missing annotations
+            $desc{$seed_desc} = 1;
             print ANNO join("\t", $org, $locusId, $seed_desc)."\n";
 
             # and parse out EC and TC number(s)
@@ -86,6 +89,10 @@ Writes to db.SEEDAnnotation and db.SEEDClass in the out directory
     print STDERR "Wrote $anno_file\n";
     print STDERR "Wrote $class_file\n";
 
+    # only roles that are described in the subsystem table will be included in SEEDAnnotationToRoles
+    # (these may not actually have a subsystem assigned)
+    my %roles = ();
+
     my $roles_file = "$outdir/db.SEEDRoles";
     open(ROLES, ">", $roles_file) || die "Cannot write to $roles_file";
     if ($subsysfile ne "") {
@@ -94,6 +101,7 @@ Writes to db.SEEDAnnotation and db.SEEDClass in the out directory
         chomp $line;
         my ($toplevel, $category, $subsystem, $seedrole) = split /\t/, $line;
         die "No role in $line" unless defined $seedrole;
+        $roles{$seedrole} = 1;
         # To handle quotes in sqlite3, double the quotes and put quotes around the whole thing
         if ($seedrole =~ m/"/) {
           $seedrole =~ s/"/""/g;
@@ -108,4 +116,19 @@ Writes to db.SEEDAnnotation and db.SEEDClass in the out directory
     }
     close(ROLES) || die "Error writing to $roles_file";
     print STDERR "Wrote $roles_file\n";
+
+    my $annoroles_file = "$outdir/db.SEEDAnnotationToRoles";
+    open(ANNOROLES, ">", $annoroles_file) || die "Cannot write to $annoroles_file";
+    foreach my $desc (sort keys %desc) {
+      my @roles = ($desc);
+      if (!exists $roles{$desc}) {
+        @roles = split " / ", $desc;
+      }
+      foreach my $role (@roles) {
+        print ANNOROLES join("\t", $desc, $role) . "\n"
+          if exists $roles{$role};
+      }
+    }
+    close(ANNOROLES) || die "Error writing to $annoroles_file";
+    print STDERR "Wrote $annoroles_file\n";
 }
