@@ -47,13 +47,16 @@ if (@$roles == 0) {
     my $genes = $dbh->selectall_arrayref(qq{ SELECT * from SEEDAnnotation JOIN Gene USING (orgId, locusId)
                                              WHERE orgId = ? AND seed_desc = ? },
                                          { Slice => {} }, $orgId, $role);
+    my $showRole = $role;
+    # Link to EC number hits from other sources
+    $showRole =~ s!EC (\d+[.]\d+[.]\d+[.]\d+)!<A HREF="myFitShow.cgi?orgId=$orgId&gene=ec:$1">EC $1</A>!g;
     if (@$genes == 0) {
-      my @trow = map td($_), ( $role, "No genes", "&nbsp;" );
+      my @trow = map td($_), ( $showRole, "No genes", "&nbsp;" );
       push @trows, \@trow;
     } else {
       my $first = 1;
       foreach my $gene (@$genes) {
-        my @trow = map td($_), ( $first ? $role : "-",
+        my @trow = map td($_), ( $first ? $showRole : "&nbsp;",
                                  Utils::gene_link($dbh, $gene, "name", "myFitShow.cgi"),
                                  checkbox('locusId', 1, $gene->{locusId}, '')
                                );

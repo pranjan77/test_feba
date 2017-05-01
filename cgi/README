@@ -113,6 +113,8 @@ keggmap.cgi -- show a kegg map and optionally color code by gene presence and fi
 seedsubsystem.pl -- show all the genes in a subsystem
 	links to organism page, to gene fitness page (myFitShow.cgi), and to
         heatmap (genesFit.cgi)
+	Also links to EC # search (myFitShow.cgi) if the role contains an EC #,
+        to help find alternate genes for these steps.
 seedsubsystemsOrg.cgi -- links to organism page and to
 	seedsubsystem.pl
 
