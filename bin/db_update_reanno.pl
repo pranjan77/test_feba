@@ -28,8 +28,14 @@ END
     my $clear_statement = $dbh->prepare(qq{ DELETE FROM Reannotation; });
     $clear_statement->execute() || die "Cannot clear the Reannotation table in $db";
     my $insert_statement = $dbh->prepare(qq{ INSERT INTO Reannotation VALUES (?,?,?,?); });
+    my $orgs = $dbh->selectcol_arrayref("SELECT orgId FROM Organism");
+    my %orgs = map { $_ => 1 } @$orgs;
     my $nAdd = 0;
+    my %skipOrgs = ();
     foreach my $row (@annos) {
+      if (! exists $orgs{ $row->{orgId} }) {
+        $skipOrgs{ $row->{orgId} } = 1;
+      } else {
         my ($n) = $dbh->selectrow_array("SELECT COUNT(*) FROM Gene WHERE orgId = ? AND locusId = ?",
                                         {}, $row->{orgId}, $row->{locusId});
         if ($n == 0) {
@@ -39,7 +45,10 @@ END
                 || die "Failed to insert into Reannotation";
             $nAdd++;
         }
+      }
     }
     $dbh->disconnect();
     print STDERR "Cleared Reannotation table and added $nAdd rows\n";
+    print STDERR "Ignored reannotations for unknown organisms: " . join(" ", sort keys %skipOrgs) . "\n"
+      if keys(%skipOrgs) > 0;
 }
