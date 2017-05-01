@@ -74,6 +74,12 @@ if (@$roles == 0) {
 }
 
 print
+  p( start_form(-name => 'orgselect', -method => 'GET', -action => 'seedsubsystem.cgi'),
+     hidden( -name => 'subsystem', -value => $subsystem, -override => 1),
+     "Or select organism:",
+     Utils::OrgSelector($orgId, $orginfo),
+     "<button type='submit'>Go</button>",
+     end_form ),
   p(a( { -href => "http://www.nmpdr.org/FIG/subsys.cgi?request=show_ssa&ssa_name=$subsystem" },
        "Or view this subsystem at NMPDR" ));
 
