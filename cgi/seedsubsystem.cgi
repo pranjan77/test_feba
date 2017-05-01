@@ -44,8 +44,10 @@ if (@$roles == 0) {
   my @th = map th($_), qw{Role Gene &nbsp;};
   my @trows = ( \@th );
   foreach my $role (@$roles) {
-    my $genes = $dbh->selectall_arrayref(qq{ SELECT * from SEEDAnnotation JOIN Gene USING (orgId, locusId)
-                                             WHERE orgId = ? AND seed_desc = ? },
+    my $genes = $dbh->selectall_arrayref(qq{ SELECT * FROM SEEDAnnotationToRoles
+                                             JOIN SEEDAnnotation USING (seed_desc)
+                                             JOIN Gene USING (orgId, locusId)
+                                             WHERE orgId = ? AND seedrole = ? },
                                          { Slice => {} }, $orgId, $role);
     my $showRole = $role;
     # Link to EC number hits from other sources

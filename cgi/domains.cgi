@@ -237,8 +237,10 @@ foreach my $row (@$seed_classes) {
 }
 my $subsysShow = "";
 if ($seed_desc) {
-  my $subsysList = $dbh->selectcol_arrayref("SELECT subsystem FROM SEEDRoles WHERE seedrole = ?",
-                                        {}, $seed_desc);
+  my $subsysList = $dbh->selectcol_arrayref(qq{ SELECT DISTINCT subsystem FROM SeedAnnotationToRoles
+                                                JOIN SEEDRoles USING (seedrole)
+                                                WHERE seed_desc = ? },
+                                            {}, $seed_desc);
   my @subsysShow = ();
   foreach my $subsys (@$subsysList) {
     my $nice = $subsys; $nice =~ s/_/ /g;

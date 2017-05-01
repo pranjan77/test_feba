@@ -34,23 +34,25 @@ print
      a({ -href => "org.cgi?orgId=$orgId"}, $orginfo->{$orgId}{genome})),
   p("Subsystems are shown if they have at least one gene assigned to them. Because many roles are assigned to more than one subsystem, the subsystem may not be present even if the gene annotation(s) are correct.");
 
-my $subsys = $dbh->selectall_arrayref(qq{ SELECT toplevel, category, subsystem, COUNT(*) AS nGenes
-                                          FROM SeedRoles JOIN SeedAnnotation
-                                          ON SeedRoles.seedrole = SeedAnnotation.seed_desc
+my $subsys = $dbh->selectall_arrayref(qq{ SELECT toplevel, category, subsystem, COUNT(DISTINCT locusId) AS nGenes
+                                          FROM SEEDRoles JOIN SEEDAnnotationToRoles USING (seedrole)
+                                          JOIN SeedAnnotation USING (seed_desc)
                                           WHERE orgId = ?
                                           GROUP BY subsystem
                                           ORDER BY toplevel, category, subsystem },
                                       { Slice => {} }, $orgId);
 
-my @th = map th($_), ( "Top level", "Category", "Subsystem", "#Genes" );
+my @th = map th($_), ( "Category", "Subsystem", "#Genes" );
 my @trows = ( \@th );
+my $lastCat = undef;
 foreach my $row (@$subsys) {
   my $subsys = $row->{subsystem};
   my $nice = $subsys; $nice =~ s/_/ /g;
-  my @trow = ( td( $row->{toplevel} ),
-              td( $row->{category} ),
-              td( a( { -href => "seedsubsystem.cgi?orgId=$orgId&subsystem=$subsys" }, $nice) ),
-              td( { -style => "text-align: right;"}, $row->{nGenes} ) );
+  my $catShow = $row->{category} eq "" ? $row->{toplevel} : "$row->{toplevel} : $row->{category}";
+  my @trow = ( td( $catShow eq $lastCat ? "&nbsp;" : $catShow ),
+               td( a( { -href => "seedsubsystem.cgi?orgId=$orgId&subsystem=$subsys" }, $nice) ),
+               td( { -style => "text-align: right;"}, $row->{nGenes} ) );
+  $lastCat = $catShow;
   push @trows, \@trow;
 }
   @trows = map Tr( { -valign => "top"}, @$_ ), @trows;
