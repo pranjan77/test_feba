@@ -384,3 +384,11 @@ CREATE TABLE Reannotation (
         comment TEXT NOT NULL,
         PRIMARY KEY (orgId,locusId)
 );
+
+CREATE TABLE ReannotationEC (
+	orgId TEXT NOT NULL,
+        locusId TEXT NOT NULL,
+	ecnum TEXT NOT NULL,
+	PRIMARY KEY (orgId,locusId,ecnum)
+);
+CREATE INDEX 'ReannotationByEC' ON ReannotationEC ('ecnum', 'orgId', 'locusId');

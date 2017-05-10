@@ -27,11 +27,17 @@ END
     my $dbh = DBI->connect("dbi:SQLite:dbname=$db", "", "", { RaiseError => 1 }) || die $DBI::errstr;
     my $clear_statement = $dbh->prepare(qq{ DELETE FROM Reannotation; });
     $clear_statement->execute() || die "Cannot clear the Reannotation table in $db";
+    my $clear_statement2 = $dbh->prepare(qq{ DELETE FROM ReannotationEC; });
+    $clear_statement2->execute() || die "Cannot clear the ReannotationEC table in $db";
+
     my $insert_statement = $dbh->prepare(qq{ INSERT INTO Reannotation VALUES (?,?,?,?); });
+    my $insert_statement2 = $dbh->prepare(qq{ INSERT INTO ReannotationEC VALUES (?,?,?); });
+
     my $orgs = $dbh->selectcol_arrayref("SELECT orgId FROM Organism");
     my %orgs = map { $_ => 1 } @$orgs;
     my $nAdd = 0;
     my %skipOrgs = ();
+    my @ecrows = (); # orgId, locusId, ec
     foreach my $row (@annos) {
       if (! exists $orgs{ $row->{orgId} }) {
         $skipOrgs{ $row->{orgId} } = 1;
@@ -39,11 +45,37 @@ END
         my ($n) = $dbh->selectrow_array("SELECT COUNT(*) FROM Gene WHERE orgId = ? AND locusId = ?",
                                         {}, $row->{orgId}, $row->{locusId});
         if ($n == 0) {
-            print STDERR "Warning: reannotation of non-existent gene $row->{locusId} in $row->{orgId}\n";
+          print STDERR "Warning: reannotation of non-existent gene $row->{locusId} in $row->{orgId}\n";
         } else {
-            $insert_statement->execute($row->{orgId}, $row->{locusId}, $row->{new_annotation}, $row->{comment})
-                || die "Failed to insert into Reannotation";
-            $nAdd++;
+          $insert_statement->execute($row->{orgId}, $row->{locusId}, $row->{new_annotation}, $row->{comment})
+            || die "Failed to insert into Reannotation";
+          $nAdd++;
+          # And try to parse EC number(s) from the annotation
+          # This can be [EC 1.1.1.1] or [EC 1.1.1.1 1.1.1.2] or [EC 1.1.1.1; 1.1.1.1.2]
+          # or similarly with commas or parens, or it can be
+          # (EC 1.1.1.1; EC 1.1.1.1)
+          my @words = split / /, $row->{new_annotation};
+          my %ecSeen = ();
+          foreach my $word (@words) {
+            # Removing leading paren or bracket
+            $word =~ s/^[(\[]//;
+            # Remove leading EC: (the space case does not arise)
+            $word =~ s/^EC://i;
+            $word =~ s/[,;)\]]$//;
+            # allow EC numbers like 3.2.1.B4, sucrose-6-phosphate hydrolase
+            if ($word =~ m/^\d+[.]\d+[.]\d+[.][A-Z]?[0-9-]+$/) {
+              my $ec = $word;
+              if (exists $ecSeen{$ec}) {
+                print STDERR "Warning: duplicate ec assignment in $row->{orgId} $row->{locusId} $row->{new_annotation}\n";
+              } else {
+                $insert_statement2->execute($row->{orgId}, $row->{locusId}, $ec)
+                  || die "Failed to insert into ReannotationEC";
+                $ecSeen{$ec} = 1;
+              }
+            } elsif ($word =~ m/\d+[.]\d+[.]\d+/) {
+              print STDERR "Warning: unparseable ec number in $row->{orgId} $row->{locusId} $row->{new_annotation}\n";
+            }
+          }
         }
       }
     }
