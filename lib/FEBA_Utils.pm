@@ -1,4 +1,8 @@
 
+# FEBA_Utils.pm -- Utilities for the command-line scripts.
+# Copyright (c) 2017 All Rights Reserved by UC Berkeley
+# Authors: Morgan Price at LBL
+
 package FEBA_Utils;
 require Exporter;
 use strict;
