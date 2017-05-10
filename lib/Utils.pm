@@ -1,6 +1,6 @@
 #
 #######################################################
-## Utils.pm -- for cgi code
+## Utils.pm -- helper functions for the FEBA cgi code
 ##
 ## Copyright (c) 2015 All Right Reserved by UC Berkeley
 ##
@@ -318,6 +318,45 @@ sub matching_exact($$$) {
     return $dbh->selectall_arrayref($sql, { Slice => {} });
 }
 
+# Matching against words in the reannotation or the description was originally
+# implemented with a series of LIKE statements:
+# new_annotation = "$geneSpec"
+# OR new_annotation LIKE "% $geneSpec" OR new_annotation LIKE "$geneSpec %" OR new_annotation LIKE "% $geneSpec %"
+# OR new_annotation LIKE "$geneSpec-%" OR new_annotation LIKE "$geneSpec-"
+# OR new_annotation LIKE "% $geneSpec-%" OR new_annotation LIKE "%-$geneSpec %"
+# OR new_annotation LIKE "$geneSpec/%" OR new_annotation LIKE "%/$geneSpec"
+# OR new_annotation LIKE "% $geneSpec/%" OR new_annotation LIKE "%/$geneSpec %"
+# OR new_annotation LIKE "$geneSpec,%" OR new_annotation LIKE "% $geneSpec,%"
+# OR new_annotation LIKE "%-$geneSpec,%"
+# but this can be stated more succinctly with sqlite3's GLOB operator.
+# Because GLOB is case specific, need to lowercase both the query and the description.
+
+sub matching_reanno($$$) {
+    my ($dbh,$orgId,$geneSpec) = @_;
+    die if !defined $dbh || !defined $orgId || !defined $geneSpec;
+    # make the query safe to include in SQL
+    $geneSpec =~ s/^ +//;
+    $geneSpec =~ s/ +$//;
+    $geneSpec =~ s/[\"\n\r]//g;
+    $geneSpec = lc($geneSpec);
+    my $exact = $geneSpec;
+    # replace GLOB special characters with ?, which matches any one character
+    $geneSpec =~ s/[*\[\]]/?/g;
+
+    my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
+    my $wordend = "[ /,;()-]";
+    my $sql = qq{SELECT * from Organism JOIN Gene USING (orgId) JOIN Reannotation USING (orgId,locusId)
+                 WHERE
+                 ( lower(new_annotation) = "$exact"
+                   OR lower(new_annotation) GLOB "$geneSpec$wordend*"
+                   OR lower(new_annotation) GLOB "*$wordend$geneSpec$wordend*"
+                   OR lower(new_annotation) GLOB "*$wordend$geneSpec" )
+                 $orgClause
+                 ORDER BY genus, species, strain, locusId, sysName, gene, begin, end, new_annotation
+                 LIMIT 100;};
+    return $dbh->selectall_arrayref($sql, { Slice => {} });
+}
+
 sub matching_descs($$$) {
     my ($dbh,$orgId,$geneSpec) = @_;
     die if !defined $dbh || !defined $orgId || !defined $geneSpec;
@@ -325,21 +364,22 @@ sub matching_descs($$$) {
     $geneSpec =~ s/^ +//;
     $geneSpec =~ s/ +$//;
     $geneSpec =~ s/[\"\n\r]//g;
+    $geneSpec = lc($geneSpec);
+    my $exact = $geneSpec;
+    # replace GLOB special characters with ?, which matches any one character
+    $geneSpec =~ s/[*\[\]]/?/g;
 
     my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
+    my $wordend = "[ /,;()-]";
     my $sql = qq{SELECT * from Organism JOIN Gene USING (orgId)
-             WHERE (
-                desc = "$geneSpec"
-                OR desc LIKE "% $geneSpec" OR desc LIKE "$geneSpec %" OR desc LIKE "% $geneSpec %"
-                OR desc LIKE "$geneSpec-%" OR desc LIKE "$geneSpec-"
-                OR desc LIKE "% $geneSpec-%" OR desc LIKE "%-$geneSpec %"
-                OR desc LIKE "$geneSpec/%" OR desc LIKE "%/$geneSpec"
-                OR desc LIKE "% $geneSpec/%" OR desc LIKE "%/$geneSpec %"
-                OR desc LIKE "$geneSpec,%" OR desc LIKE "% $geneSpec,%"
-                )
-         $orgClause
-         ORDER BY genus, species, strain, locusId, sysName, gene, begin, end, desc 
-         LIMIT 100;};
+                 WHERE
+                 ( lower(desc) = "$exact"
+                   OR lower(desc) GLOB "$geneSpec$wordend*"
+                   OR lower(desc) GLOB "*$wordend$geneSpec$wordend*"
+                   OR lower(desc) GLOB "*$wordend$geneSpec" )
+                 $orgClause
+                 ORDER BY genus, species, strain, locusId, sysName, gene, begin, end, desc
+                 LIMIT 100;};
     return $dbh->selectall_arrayref($sql, { Slice => {} });
 }
 
@@ -822,6 +862,7 @@ sub gene_link {
 }
 
 # dbh, orgId, ref. to list of ec numbers => hashref of ecnum to locusId => 1
+# Note that EC number searches (in myFitShow.cgi) do NOT use this function
 sub EcToGenes($$$) {
     my ($dbh,$orgId,$ecnums) = @_;
     return {} if @$ecnums == 0;
