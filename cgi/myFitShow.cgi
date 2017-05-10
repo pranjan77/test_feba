@@ -234,6 +234,36 @@ if ($geneSpec =~ m/^ec:([0-9A-Za-z.-]+)$/i) {
     &end();
 }
 
+# match by reannotation
+
+my $reannos = Utils::matching_reanno($dbh, $orgSpec, $geneSpec) if $count < 100;
+@$reannos = grep { !exists $used{ $_->{orgId} }{ $_->{locusId} } } @$reannos;
+if (@$reannos >= 1) {
+  print h3(b("Match by reannotation for $geneSpec:"));
+  my @trows = ();
+  push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
+                        $cgi->th( [ 'Gene ID','Gene Name','Reannotation','Genome','Fitness' ] ) );
+  foreach my $gene (@$reannos) {
+    if ($count < 100) {
+            $count++;
+            $used{$gene->{orgId}}{$gene->{locusId}} = 1;
+            my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
+            my @trow = map $cgi->td($_),
+              ( Utils::gene_link($dbh, $gene, "name", "geneOverview.cgi"),
+                $gene->{gene},
+                $cgi->a( { href => "domains.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}" },
+                         $gene->{new_annotation} ),
+                $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}},
+                        "$orginfo->{$gene->{orgId}}->{genome}"),
+                a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
+                   $fitstring));
+            push @trows, $cgi->Tr(@trow);
+        }
+    }
+    print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
+    print "\n"; # to allow flush
+}
+
 
 # match by description
 my $descs;
