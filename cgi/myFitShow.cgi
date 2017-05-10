@@ -141,7 +141,37 @@ if ($geneSpec =~ m/^ec:([0-9A-Za-z.-]+)$/i) {
     my $ecnum = $1;
     my ($ecdesc) = $dbh->selectrow_array("SELECT ecdesc FROM ECInfo WHERE ecnum = ? ;", {}, $ecnum);
     $ecdesc = "unknown" if !defined $ecdesc;
-    print p("Searching for Enyzme Commission number $ecnum ($ecdesc) by TIGRFam, by KEGG ortholog group, and then by SEED annotation");
+    print p("Searching for Enyzme Commission number $ecnum ($ecdesc) by Reannotation, by TIGRFam, by KEGG ortholog group, and then by SEED annotation");
+    my $reannoquery = qq{SELECT orgId, locusId, new_annotation, sysName, gene
+                         FROM Gene JOIN Reannotation USING (orgId,locusId) JOIN ReannotationEC USING (orgId,locusId)
+                         WHERE ecnum = ? };
+    $reannoquery .= qq{ AND orgId = "$orgSpec" } if $orgSpec ne "";
+    my $hits0 = $dbh->selectall_arrayref($reannoquery, { Slice => {} }, $ecnum);
+    @$hits0 = grep { !exists $used{ $_->{orgId} }{ $_->{locusId} } } @$hits0;
+    if (@$hits0 > 0) {
+      print h3(b("Match by reannotation for $ecnum"));
+      my @trows = ();
+      push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
+                            $cgi->th( [ 'Gene ID','Gene Name', 'Reannotation', 'Genome','Fitness' ] ) );
+      foreach my $gene (@$hits0) {
+        $used{ $gene->{orgId} }{ $gene->{locusId} } = 1;
+        next if $count >= 100;
+        $count++;
+        my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
+        my @trow = map td($_),
+          ( Utils::gene_link($dbh, $gene, "name", "geneOverview.cgi"),
+            $gene->{gene},
+            a( {href => "domains.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"},
+               $gene->{new_annotation} ),
+            a( {href => "org.cgi?orgId=$gene->{orgId}"}, $orginfo->{$gene->{orgId}}{genome}),
+            a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle},
+               $fitstring));
+        push @trows, Tr(@trow);
+      }
+      print $cgi->table({ cellspacing=>0, cellpadding=>3 }, @trows);
+      print "\n";
+    }
+
     my $hits1 = Utils::matching_domain_ec($dbh, $orgSpec, $ecnum);
     @$hits1 = grep { !exists $used{ $_->{orgId} }{ $_->{locusId} } } @$hits1;
     if (@$hits1 > 0) {
@@ -221,7 +251,8 @@ if ($geneSpec =~ m/^ec:([0-9A-Za-z.-]+)$/i) {
             my @trow = map td($_),
               ( Utils::gene_link($dbh, $gene, "name", "geneOverview.cgi"),
                 $gene->{gene},
-                $gene->{seed_desc},
+                a( {href => "domains.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"},
+                   $gene->{seed_desc} ),
                 a( {href => "org.cgi?orgId=$gene->{orgId}"}, $orginfo->{$gene->{orgId}}{genome}),
                 a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle},
                    $fitstring));

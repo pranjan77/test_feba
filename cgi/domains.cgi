@@ -259,6 +259,15 @@ print
       a({-href => "http://core.theseed.org/FIG/seedviewer.cgi?page=FigFamViewer&fasta_seq=>${sys}%0A$seq"},
         "FIGfam search"));
 
+# And add reannotated EC numbers to %ecall
+# (Above we already did TIGRFam, KEGG, SEED)
+my $reannoEc = $dbh->selectcol_arrayref(qq{ SELECT ecnum FROM ReannotationEC
+                                            WHERE orgId = ? AND locusId = ? },
+                                        {}, $orgId, $locusId);
+foreach my $ec (@$reannoEc) {
+  $ecall{$ec} = 1;
+}
+
 if (keys(%ecall) > 0) {
     my @ec = sort keys %ecall;
 
