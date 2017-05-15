@@ -556,6 +556,16 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	writeDelim(d, nameToPath("fit_logratios.tab"));
 	wroteName("fit_logratios.tab");
 
+	d = merge(genes[,c("locusId","sysName","desc")], cbind(locusId=fit$g,fit$lrn1));
+	names(d)[-(1:3)] = paste(fit$q$name,fit$q$short);
+	writeDelim(d, nameToPath("fit_logratios_half1.tab"));
+	wroteName("fit_logratios_half1.tab");
+
+	d = merge(genes[,c("locusId","sysName","desc")], cbind(locusId=fit$g,fit$lrn2));
+	names(d)[-(1:3)] = paste(fit$q$name,fit$q$short);
+	writeDelim(d, nameToPath("fit_logratios_half2.tab"));
+	wroteName("fit_logratios_half2.tab");
+
 	d = genes[genes$locusId %in% fit$g, c("locusId","sysName","desc")];
 	d$comb = paste(d$sysName, d$desc); # for MeV
 	if (sum(fit$q$u) == 0) {
