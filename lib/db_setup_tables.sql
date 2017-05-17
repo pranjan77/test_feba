@@ -84,6 +84,7 @@ CREATE TABLE Experiment(
    concentration_2 TEXT     NOT NULL,
    growthPlate TEXT NOT NULL,
    growthWells TEXT NOT NULL,
+   pubId TEXT NOT NULL,
    PRIMARY KEY (orgId, expName)
 );
 
@@ -392,3 +393,10 @@ CREATE TABLE ReannotationEC (
 	PRIMARY KEY (orgId,locusId,ecnum)
 );
 CREATE INDEX 'ReannotationByEC' ON ReannotationEC ('ecnum', 'orgId', 'locusId');
+
+CREATE TABLE Publication (
+	pubId TEXT NOT NULL, /* i.e., Price15 */
+	title TEXT NOT NULL,
+	URL TEXT NOT NULL, /* usually of the form https://doi.org/DOI */
+        PRIMARY KEY (pubId)
+);

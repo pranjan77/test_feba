@@ -11,6 +11,7 @@ my $metadir = "$Bin/../metadata";
 my $gdir = "g";
 my $xrefs = "img.xrefs";
 my $subsysfile = "subsys.txt";
+my $publicationsFile = 'Publications.tab';
 
 my $usage = <<END
 Usage: db_setup.pl [ -db db_file_name ]
@@ -27,6 +28,8 @@ Other optional arguments:
         (SEED subsystems table, or use an empty argument to skip it,
 	downloaded from ftp://ftp.theseed.org/subsystems/subsys.txt
 	with 4 columns)
+    -publications $publicationsFile
+    -test -- skip cofitness and strain fitness
 
     Sets up the cgi_data/ directory, especially the sqlite database, by reading from
     the html directories indir/nickname1 ... indir/nicknameN
@@ -52,9 +55,10 @@ Other optional arguments:
     directory that contains the database file or into outdir. And, a
     BLAST database of protein sequences is built in that directory.
 
-    public_file should contain lines of the form
-	orgId SetName key1=value1 ... keyN=valueN
+    public_file (which is optional) should contain lines of the form
+	orgId SetName pubId key1=value1 ... keyN=valueN
 	where the key/value pairs are optional.
+	Use a pubId of "-" for unpublished
 	Use "_" instead of " " to include a space in a value.
 	There can also be
 	comment lines (starting with "#"),
@@ -62,6 +66,8 @@ Other optional arguments:
 	or empty lines.
 
     reannotation_file is tab-delimited -- see db_update_reanno.pl for details
+
+    The publications file should be tab-delimited with the fields pubId, title, and URL.
 END
 ;
 
@@ -79,11 +85,11 @@ sub WorkPutRow(@); # list of fields to be written as a line
 sub WorkPutHash($@); # hash and list of fields to use
 
 # Given a row from the experiment quality table, a row from the experiments table,
-# and a list of rules, and return 1 if it matches a rule or 0 otherwise
-sub FilterExpByRules($$$);
+# and a list of rules, return the pubId if it matches or undef otherwise
+sub ExpToPubId($$$);
 
 {
-    my ($dbfile,$indir,$outdir,$orgfile,$orthfile,$pubfile,$reannofile);
+    my ($dbfile,$indir,$outdir,$orgfile,$orthfile,$pubfile,$reannofile,$test);
     (GetOptions('db=s' => \$dbfile,
                 'orginfo=s' => \$orgfile,
                 'orth=s' => \$orthfile,
@@ -94,7 +100,9 @@ sub FilterExpByRules($$$);
                 'outdir=s' => \$outdir,
                 'xrefs=s' => \$xrefs,
                 'reanno=s' => \$reannofile,
-                'subsys=s' => \$subsysfile)
+                'subsys=s' => \$subsysfile,
+                'publications=s' => \$publicationsFile,
+               'test' => \$test)
      && defined $indir && defined $orgfile && defined $orthfile)
         || die $usage;
     my @orgs = @ARGV;
@@ -110,6 +118,7 @@ sub FilterExpByRules($$$);
     if ($subsysfile ne "") {
       die "No such file: $subsysfile" unless -e $subsysfile;
     }
+    die "No such file: $publicationsFile" unless -e $publicationsFile;
     
     if (!defined $outdir && defined $dbfile) {
         if ($dbfile =~ m|/|) {
@@ -192,7 +201,13 @@ sub FilterExpByRules($$$);
             unless exists $orgSeen{$org};
     }
 
-    my %pub = (); # orgId => list of rules, each is a hash to include SetName and optionally other fields as well
+    my @publications_fields = qw{pubId title URL};
+    my @publications = &ReadTable($publicationsFile, \@publications_fields);
+    my %pubId = map { $_->{pubId} => 1 } @publications;
+
+    my %pubrules = (); # orgId => list of [ rule, pubId ]
+    my %ignorePubOrgs = ();
+    # each rule is a hash that includes SetName and optionally other fields as well
     if (defined $pubfile) {
         open(PUB, "<", $pubfile) || die "Cannot read $pubfile";
         my $nRules = 0;
@@ -204,12 +219,15 @@ sub FilterExpByRules($$$);
             next if $line eq "";
             # rule must have at least orgId and SetName
             my @parts = split /\s+/, $line;
-            die "Not enough parts for public rule in\n$line\n" unless scalar(@parts) >= 2;
+            die "Not enough parts for public rule in\n$line\n" unless scalar(@parts) >= 3;
             my $orgId = shift @parts;
             my $set = shift @parts;
+            my $pubId = shift @parts;
+            $pubId = "" if $pubId eq "-";
+            die "Unknown publication id $pubId" if $pubId ne "" && !exists $pubId{$pubId};
             if (!exists $orgUse{$orgId}) {
-                print STDERR "Ignoring rule for unknown org $orgId: $line\n";
-            } else{
+              $ignorePubOrgs{$orgId} = 1;
+            } else {
                 my $rule = { "SetName" => $set };
                 foreach my $part (@parts) {
                     my ($key,$value) = split /=/, $part;
@@ -217,12 +235,14 @@ sub FilterExpByRules($$$);
                         unless defined $value && $value ne "SetName";
                     $rule->{$key} = $value;
                 }
-                push @{ $pub{$orgId} }, $rule;
+                push @{ $pubrules{$orgId} }, [ $rule, $pubId ];
                 $nRules++;
             }
         }
         close(PUB);
         print STDERR "Read $nRules relevant rules from $pubfile\n";
+        print STDERR "Ignored rules for unknown organisms: " . join(" ", sort keys %ignorePubOrgs)."\n"
+          if scalar(keys %ignorePubOrgs) > 0;
     }
 
     # Create db.Organism
@@ -310,9 +330,12 @@ sub FilterExpByRules($$$);
         # only successful experiments
         @q = grep { $_->{u} eq "TRUE" } @q;
         my $nExpsSucceeded = scalar(@q);
-        # filter out experiments by the public file, if any
-        @q = grep &FilterExpByRules($_, $exps{$_->{name}}, $pub{$org}), @q
-            if defined $pubfile;
+        if (defined $pubfile) {
+          foreach my $q (@q) {
+            $q->{pubId} = &ExpToPubId($q, $exps{$q->{name}}, $pubrules{$org});
+          }
+          @q = grep { defined $_->{pubId} } @q;
+        }
         my $nFiltered = scalar(@q);
         print STDERR "$org: read $nExpsRead experiments, $nExpsSucceeded successful";
         print STDERR ", filtered to $nFiltered" if $nFiltered < $nExpsSucceeded;
@@ -360,6 +383,7 @@ sub FilterExpByRules($$$);
             $row->{expGroup} = lc($row->{expGroup}) unless $row->{expGroup} eq "pH";
             $row->{condition_1} = "" if $row->{condition_1} eq "None";
 
+            $row->{pubId} = "" if !defined $row->{pubId};
             WorkPutHash($row, qw{orgId expName expDesc timeZeroSet num nMapped nPastEnd nGenic
                                  nUsed gMed gMedt0 gMean cor12 mad12 mad12c mad12c_t0
                                  opcor adjcor gccor maxFit
@@ -367,10 +391,17 @@ sub FilterExpByRules($$$);
                                  temperature pH vessel aerobic liquid shaking
                                  condition_1 units_1 concentration_1
                                  condition_2 units_2 concentration_2
-                                 growthPlate growthWells});
+                                 growthPlate growthWells pubId});
         }
         EndWork();
     }
+
+    # Create db.Publications
+    StartWorkFile("Publication", "db.Publication");
+    foreach my $pub (@publications) {
+      WorkPutHash($pub, qw{pubId title URL});
+    }
+    EndWork();
 
     # Create db.GeneFitness.* and, if enough experiments, db.Cofit.*
     my %orgCofit = (); # org => 1 if organism has cofitness
@@ -411,7 +442,9 @@ sub FilterExpByRules($$$);
         my @tophits = (); # a list of rows
         my @colsKept = grep exists $expKept->{$_}, @colNames;
         my $nExpKept = scalar(@colsKept);
-        if ($nExpKept < 15) {
+        if (defined $test) {
+          print STDERR "Skipping cofitness -- testing\n";
+        } elsif ($nExpKept < 15) {
             print STDERR "Not computing cofitness for $org -- just $nExpKept experiments\n";
         } else {
             print STDERR "Computing top hits for $org\n";
@@ -520,68 +553,72 @@ sub FilterExpByRules($$$);
     # Strains with scaffold="pastEnd" or enoughT0 != "TRUE" are ignored.
     # Strain fitness values are rounded to just 1 decimal point.
     # Strain fitness tables are indexed by seek positions to the kb, which is in StrainDataSeek table.
-    foreach my $org (@orgs) {
+    if (defined $test) {
+      print STDERR "Skipping strain fitness, testing\n";
+    } else {
+      foreach my $org (@orgs) {
         open(OUT, ">", "db.StrainFitness.$org") || die "Cannot write to db.StrainFitness.$org";
         my $infile = "$indir/$org/strain_fit.tab";
         if (!open(IN, "<", $infile)) {
-            print STDERR "Cannot read $infile -- skipping strain fitness for $org\n";
+          print STDERR "Cannot read $infile -- skipping strain fitness for $org\n";
         } else {
-            StartWork("StrainDataSeek", $org);
-            my $headerLine = <IN>;
-            chomp $headerLine;
-            my @colNames = split /\t/, $headerLine;
-            # column name => index
-            my %colNames = map {$colNames[$_] => $_} (0..(scalar(@colNames)-1));
-            my @metaShow = qw{barcode scaffold strand pos locusId used};
-            foreach my $col (@metaShow) {
-                die "No column for $col in $infile" unless exists $colNames{$col};
+          StartWork("StrainDataSeek", $org);
+          my $headerLine = <IN>;
+          chomp $headerLine;
+          my @colNames = split /\t/, $headerLine;
+          # column name => index
+          my %colNames = map {$colNames[$_] => $_} (0..(scalar(@colNames)-1));
+          my @metaShow = qw{barcode scaffold strand pos locusId used};
+          foreach my $col (@metaShow) {
+            die "No column for $col in $infile" unless exists $colNames{$col};
+          }
+          foreach my $col (qw{enoughT0}) {
+            die "No column for $col in $infile" unless exists $colNames{$col};
+          }
+          my $expKept = $expKept{$org};
+          foreach my $expName (keys %$expKept) {
+            die "No column for $expName in $infile" unless exists $colNames{$expName};
+          }
+          my @exps = grep { exists $expKept->{$_} } @colNames;
+          my @expI = map { $colNames{$_} } @exps;
+          
+          print OUT join("\t", @metaShow, @exps)."\n";
+          my @metaShowI = map { $colNames{$_} } @metaShow;
+          my $iColEnoughT0 = $colNames{enoughT0};
+          my $iColScaffold = $colNames{scaffold};
+          my $iColLocus = $colNames{locusId};
+          my $iColPos = $colNames{pos};
+          
+          my $lastScaffold = "";
+          my $lastKb = -1;
+          
+          # No hash look ups in inner loop make this ~2x faster.
+          while (<IN>) {
+            chomp;
+            my @F = split /\t/, $_, -1;
+            die "Wrong number of rows in\n$_\nfrom $infile" unless scalar(@F) == scalar(@colNames);
+            my $scaffold = $F[$iColScaffold];
+            next unless $F[$iColEnoughT0] eq "TRUE" && $scaffold ne "pastEnd";
+            $F[$iColLocus] = "" if $F[$iColLocus] eq "NA";
+            my @out = @F[ @metaShowI ];
+            push @out, map { sprintf("%.1f",$_) } @F[@expI];
+            
+            my $kb = int($F[$iColPos] / 1000.0);
+            if ($scaffold ne $lastScaffold || $kb != $lastKb) {
+              WorkPutRow($org, $scaffold, $kb, tell(OUT));
             }
-            foreach my $col (qw{enoughT0}) {
-                die "No column for $col in $infile" unless exists $colNames{$col};
-            }
-            my $expKept = $expKept{$org};
-            foreach my $expName (keys %$expKept) {
-                die "No column for $expName in $infile" unless exists $colNames{$expName};
-            }
-            my @exps = grep { exists $expKept->{$_} } @colNames;
-            my @expI = map { $colNames{$_} } @exps;
-
-            print OUT join("\t", @metaShow, @exps)."\n";
-            my @metaShowI = map { $colNames{$_} } @metaShow;
-            my $iColEnoughT0 = $colNames{enoughT0};
-            my $iColScaffold = $colNames{scaffold};
-            my $iColLocus = $colNames{locusId};
-            my $iColPos = $colNames{pos};
-
-            my $lastScaffold = "";
-            my $lastKb = -1;
-
-            # No hash look ups in inner loop make this ~2x faster.
-            while (<IN>) {
-                chomp;
-                my @F = split /\t/, $_, -1;
-                die "Wrong number of rows in\n$_\nfrom $infile" unless scalar(@F) == scalar(@colNames);
-                my $scaffold = $F[$iColScaffold];
-                next unless $F[$iColEnoughT0] eq "TRUE" && $scaffold ne "pastEnd";
-                $F[$iColLocus] = "" if $F[$iColLocus] eq "NA";
-                my @out = @F[ @metaShowI ];
-                push @out, map { sprintf("%.1f",$_) } @F[@expI];
-
-                my $kb = int($F[$iColPos] / 1000.0);
-                if ($scaffold ne $lastScaffold || $kb != $lastKb) {
-                    WorkPutRow($org, $scaffold, $kb, tell(OUT));
-                }
-                print OUT join("\t", @out)."\n";
-
-                $lastScaffold = $scaffold;
-                $lastKb = $kb;
-            }
-            EndWork();
-            close(IN) || die "Error reading $infile";
+            print OUT join("\t", @out)."\n";
+            
+            $lastScaffold = $scaffold;
+            $lastKb = $kb;
+          }
+          EndWork();
+          close(IN) || die "Error reading $infile";
         } # end if have strain data for org
         close(OUT) || die "Error writing to db.StrainFitness.$org";
         print STDERR "Wrote db.StrainFitness.$org\n";
-    } # end loop over orgs
+      } # end loop over orgs
+    } # end else (not test mode)
 
     # Load SwissProt hits, or just use the existing files
     if (defined $outdir) {
@@ -610,7 +647,7 @@ sub FilterExpByRules($$$);
     }
 
     # rename the strain fitness files
-    if (defined $outdir && $outdir ne ".") {
+    if (defined $outdir && $outdir ne "." && !defined $test) {
         foreach my $org (@orgs) {
             system("mv", "db.StrainFitness.$org", $outdir) == 0 || die "mv db.StrainFitness.$org $outdir failed: $!";
             die "No such file: $outdir/db.StrainFitness.$org" unless -e "$outdir/db.StrainFitness.$org";
@@ -809,22 +846,23 @@ sub wsu($) {
   return $value;
 }
 
-sub FilterExpByRules($$$) {
+sub ExpToPubId($$$) {
     my ($q, $exp, $rules) = @_;
-    foreach my $rule (@$rules) {
-        next unless $rule->{SetName} eq $exp->{SetName};
-        # See if all other fields match
-        my $match = 1;
-        while (my ($key,$value) = each %$rule) {
-            if (exists $q->{$key}) {
-                $match = 0 unless &wsu($q->{$key}) eq &wsu($value);
-            } elsif (exists $exp->{$key}) {
-                $match = 0 unless &wsu($exp->{$key}) eq &wsu($value);
-            } else {
-                die "Cannot handle rule for $key=$value because $key does not exist for either q or experiment for $exp->{name}";
-            }
+    foreach my $row (@$rules) {
+      my ($rule, $pubId) = @$row;
+      next unless $rule->{SetName} eq $exp->{SetName};
+      # See if all other fields match
+      my $match = 1;
+      while (my ($key,$value) = each %$rule) {
+        if (exists $q->{$key}) {
+          $match = 0 unless &wsu($q->{$key}) eq &wsu($value);
+        } elsif (exists $exp->{$key}) {
+          $match = 0 unless &wsu($exp->{$key}) eq &wsu($value);
+        } else {
+          die "Cannot handle rule for $key=$value because $key does not exist for either q or experiment for $exp->{name}";
         }
-        return 1 if $match;
+      }
+      return $pubId if $match;
     }
-    return 0;
+    return undef;
 }
