@@ -125,6 +125,14 @@ if ($show eq "") {
     push @culture, "($exp->{liquid})" if $exp->{liquid} ne "" && lc($exp->{liquid}) ne "liquid";
     
     my @pieces = ("Media: $media", join(", ",@culture), "By: $exp->{person} on $exp->{dateStarted}");
+    if ($exp->{pubId}) {
+      my $pub = $dbh->selectrow_hashref("SELECT * from Publication WHERE pubId = ?",
+                                        {}, $exp->{pubId});
+      if (defined $pub) { # should always exist
+        push @pieces, "Reference: " . a({ -href => $pub->{URL}, -title => $pub->{title} },
+                                     $pub->{pubId});
+      }
+    }
     
     my $mediaComponents = $dbh->selectall_arrayref(qq{SELECT * from MediaComponents LEFT JOIN Compounds USING (compound)
                                                           WHERE media = ? },
@@ -146,7 +154,7 @@ if ($show eq "") {
             $comp .= ", $mix " . small("(" . join(", ", @{ $compStrings{$mix} }) . ")");
         }
         push @pieces, $comp;
-    }
+      }
     if ($exp->{growthPlate} ne "" && $exp->{growthWells} ne "") {
         push @pieces, "Growth plate: $exp->{growthPlate} $exp->{growthWells}";
     }
