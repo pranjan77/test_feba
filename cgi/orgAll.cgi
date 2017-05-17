@@ -79,25 +79,45 @@ print
 #exit if no results
 # Utils::fail($cgi, "No experiments for this organism.") if @$cond == 0;
 
+sub small($) {
+  my ($content) = @_;
+  return qq{<small>$content</small>};
+}
+
+my $nreannos = $dbh->selectall_arrayref("SELECT orgId, COUNT(*) FROM Reannotation GROUP BY orgId");
+my %nreanno = map { $_->[0] => $_->[1] } @$nreannos;
+
 #create table
-# my @headings = qw{Organism Experiments Carbon Nitrogen Stresses Other};
-my @trows = ( Tr({-valign => "top", -align => 'center'}, th([ 'Organism', 'Division', 'Experiments', 'Carbon Sources', 'Nitrogen Sources', 'Stress Compounds', 'Other Conditions'])));
-#Tr({ -valign => 'top', -align => 'center' }, map { th($_) } \@headings) );
+my @trows = Tr({-valign => "bottom", -align => 'center'},
+               th([ 'Organism', 'Division', 'Experiments']),
+               th({-style => "background-color: white;"},
+                  [ &small('# Carbon Sources'),
+                    &small('# Nitrogen Sources'),
+                    &small('# Stress Compounds'),
+                    &small('# Other Conditions') ]),
+               th('Updated Annotations') );
 foreach my $row (@$all) {
-	my $orgId = $row->{orgId};
-	# my $other = $row->{nCond} - $nCarbon->{$row->{orgId}}->{nCon} - $nNitrogen->{$row->{orgId}}->{nCon} - $nStress->{$row->{orgId}}->{nCon};
-    push @trows, Tr({ -valign => 'top', -align => 'right' },
-    	# display result row by row
-	     td ({-align=>'left'}, [a({href=>"org.cgi?orgId=$row->{orgId}"},$orginfo-> {$row->{orgId}}{genome}), $row->{division}]), #organism
-		 	# $row->{expGroup} || "unrecorded", #group
-		 td([#$row->{nCond}, #conditions
-		 	a( { href => "org.cgi?orgId=$row->{orgId}"},
-		    $total->{$row->{orgId}}->{nExp}),#$row->{nExp} ), #experiments
-		 	a({href=>"exps.cgi?orgId=$orgId&expGroup=carbon%20source"}, $nCarbon->{$row->{orgId}}->{nCon}),
-		 	a({href=>"exps.cgi?orgId=$orgId&expGroup=nitrogen%20source"}, $nNitrogen->{$row->{orgId}}->{nCon}), 
-		 	a({href=>"exps.cgi?orgId=$orgId&expGroup=stress"}, $nStress->{$row->{orgId}}->{nCon}),
-		 	$count->{$row->{orgId}}->{nCond},
-		 ]));
+  my $orgId = $row->{orgId};
+  my $nreannoString = "&nbsp;";
+  $nreannoString = a( { -href => "orgReanno.cgi?orgId=$orgId" }, $nreanno{$orgId} )
+    if $nreanno{$orgId};
+  push @trows, Tr({ -valign => 'top', -align => 'right' },
+                  td({-align => 'left'},
+                      [ a({href=>"org.cgi?orgId=$row->{orgId}"},$orginfo-> {$row->{orgId}}{genome}),
+                        &small($row->{division}) ]),
+                  td({-align => 'right'},
+                     a( { href => "org.cgi?orgId=$row->{orgId}"},
+                          $total->{$row->{orgId}}->{nExp}) ),
+                  td({-align => 'right', -style => 'background-color: white;'},
+                     [ a({href=>"exps.cgi?orgId=$orgId&expGroup=carbon%20source"},
+                         $nCarbon->{$row->{orgId}}->{nCon}),
+                       a({href=>"exps.cgi?orgId=$orgId&expGroup=nitrogen%20source"},
+                         $nNitrogen->{$row->{orgId}}->{nCon}), 
+                       a({href=>"exps.cgi?orgId=$orgId&expGroup=stress"},
+                         $nStress->{$row->{orgId}}->{nCon}),
+                       $count->{$row->{orgId}}->{nCond} ]),
+                  td({-align => 'right'}, $nreannoString)
+		 );
 }
 
 print table({cellspacing => 0, cellpadding => 3}, @trows);
@@ -105,7 +125,7 @@ my $nTotExps = 0;
 foreach my $row (@$all) {
     $nTotExps += $total->{$row->{orgId}}->{nExp};
 }
-print p("Total experiments: ", Utils::commify($nTotExps));
+print p("Total number of genome-wide fitness experiments: ", Utils::commify($nTotExps));
 
 # display number of genes that have data out of total genes
 # gather number of genes and data

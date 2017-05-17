@@ -104,7 +104,7 @@ spec.cgi -- specific phenotypes of a certain type for an organism
 	links to condition overview comparison (orthCond.cgi), per-gene pages (singleFit.cgi, domains.cgi),
 	and comparative analysis of gene fitness in a condition (orthFit.cgi)
         [and to org.cgi]
-orgAll.cgi -- links to org.cgi and exps.cgi
+orgAll.cgi -- links to org.cgi, exps.cgi, orgReanno.cgi
 # metabolic maps
 keggmap.cgi -- show a kegg map and optionally color code by gene presence and fitness
 	links to organism page (if specified), list of metabolic maps (keggmaplist.cgi),
