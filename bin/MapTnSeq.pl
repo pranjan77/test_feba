@@ -2,6 +2,8 @@
 # Given TnSeq data from a library of transposon insertions with random barcodes, for each usable read,
 # identify the barcode and the location in the genome.
 #
+# -- Morgan Price, Arkin group, Lawrence Berkeley National Lab
+
 use strict;
 use Getopt::Long;
 use FindBin qw($Bin);
@@ -13,6 +15,9 @@ my $tmpdir = defined $ENV{TMPDIR} ? $ENV{TMPDIR} : "/tmp";
 my $minIdentity = 90; # minimum %identity for mapping to genome or past-end
 my $minScore = 15; # minimum score for mapping to genome or past-end
 my $debug = undef;
+# Parameters for BLAT. Thanks to Judy Savitskaya for these additions
+my $tileSize = 11; # size of an alignment tile
+my $stepSize = 11; # distance between the starting bases of alignment tiles (will overlap if stepSize<tileSize)
 
 # Given BLAT rows (as list of lists) and hitsPastEnd hash (as reference),
 # output the mapping for the read, or not (if "trumped" by hit-past-end).
@@ -29,8 +34,10 @@ my %nameToBarcode = ();
 # Note -- should also add an option for tweaking tileSize and stepSize? 12/4 seems better than the default 11/11?
 
 my $usage = <<END
-Usage: MapTnSeq.pl [ -debug ] [ -limit maxReads ] [ -minQuality $minQuality ] [-flanking $flanking]
-            [ -minIdentity $minIdentity ] [ -minScore $minScore ] [ -wobble $wobbleAllowed ]
+Usage: MapTnSeq.pl [ -debug ] [ -limit maxReads ] [ -minQuality $minQuality ]
+            [-flanking $flanking]  [ -wobble $wobbleAllowed ]
+            [ -minIdentity $minIdentity ] [ -minScore $minScore ]
+            [ -tileSize $tileSize ] [ -stepSize $stepSize ]
             [-tmpdir $tmpdir ] [ -unmapped saveTo ]
             -genome fasta_file -model model_file -first fastq_file > output_file
 
@@ -64,13 +71,17 @@ Usage: MapTnSeq.pl [ -debug ] [ -limit maxReads ] [ -minQuality $minQuality ] [-
     minQuality specifies the minimum quality score for each character
     in the barcode.  flanking specifies the minimum number of
     nucleotides on each side that must match exactly.
+
+    tileSize and stepSize are parameters for BLAT.  If the portion of
+    the read after the junction is short, try a lower stepSize.  Also
+    see BLAT's documentation.
 END
     ;
 
 sub FindBarcode($$$$$);
 sub FindModelEnd($$$);
 sub FindSubstr($$$$);
-sub BLAT8($$$$$$); # BLAT to a blast8 format file
+sub BLAT8($$$$$$$$); # BLAT to a blast8 format file
 
 {
     my $limit = undef;
@@ -85,6 +96,7 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
     (GetOptions('debug' => \$debug, 'limit=i' => \$limit, 'minQuality=i' => \$minQuality,
 		'unmapped=s' => \$unmappedFile,
                 'flanking=i' => \$flanking, 'minIdentity=i' => \$minIdentity, 'minScore=i' => \$minScore,
+                'tileSize=i' => \$tileSize,'stepSize=i' => \$stepSize,
                 'tmpdir=s' => \$tmpdir,
                 'blat=s' => \$blatcmd,
                 'wobble=s' => \$wobbleAllowed,
@@ -96,6 +108,8 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
     die "Cannot read $fastqFile" unless -r $fastqFile;
     die "Not a directory: $tmpdir" unless -d $tmpdir;
     die "minScore must be at least 10" if $minScore < 10;
+    die "tileSize must be at least 7" if $tileSize < 7;
+    die "stepSize must be at least 1" if $stepSize < 1;
     die "Invalid minimum identity" if $minIdentity < 50 || $minIdentity > 100;
 
     open(MODEL, "<", $modelFile) || die "Cannot read $modelFile";
@@ -147,7 +161,7 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
         (last, next) unless $name;
         chomp $name;
         die "Sequence name line does not start with @" unless $name =~ m/^@/;
-        
+
         my $seq = <FASTQ>;
         chomp $seq;
         die "Sequence line is empty"
@@ -199,7 +213,7 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
 	open(END, ">", $endFna) || die "Cannot write to $endFna";
 	print END ">pastend\n$pastEnd\n";
 	close(END) || die "Error writing to $endFna";
-	my $blat8 = BLAT8($tmpFna, $endFna, $tmpdir, $blatcmd, $minScore, $minIdentity);
+	my $blat8 = BLAT8($tmpFna, $endFna, $tmpdir, $blatcmd, $minScore, $minIdentity,$tileSize,$stepSize);
 	print STDERR "Parsing past-end hits to $blat8\n" if defined $debug;
 	open(BLAT, "<", $blat8) || die "Cannot read $blat8";
 	while(<BLAT>) {
@@ -214,7 +228,7 @@ sub BLAT8($$$$$$); # BLAT to a blast8 format file
     }
 
     # Map to the genome
-    my $blat8 = BLAT8($tmpFna, $genomeFile, $tmpdir, $blatcmd, $minScore, $minIdentity);
+    my $blat8 = BLAT8($tmpFna, $genomeFile, $tmpdir, $blatcmd, $minScore, $minIdentity, $tileSize, $stepSize);
     print STDERR "Parsing $blat8\n" if defined $debug;
     open(BLAT, "<", $blat8) || die "Cannot read $blat8";
     my @lines = ();
@@ -333,15 +347,15 @@ sub FindModelEnd($$$) {
 }
 
 # returns the name of the file
-sub BLAT8($$$$$$) {
-    my ($queriesFile,$dbFile,$tmpdir,$blatcmd,$minScore,$minIdentity) = @_;
+sub BLAT8($$$$$$$$) {
+    my ($queriesFile,$dbFile,$tmpdir,$blatcmd,$minScore,$minIdentity,$tileSize,$stepSize) = @_;
 
     my $blat8File = "$tmpdir/MapTnSeq.$$.".rand() . ".psl";
     # prevent writing to stdout by BLAT
     open(OLD_STDOUT, ">&STDOUT");
     print OLD_STDOUT ""; # prevent warning
     open(STDOUT, ">", "/dev/null");
-    my @cmd = ($blatcmd, "-out=blast8", "-t=dna", "-q=dna", "-minScore=$minScore", "-minIdentity=$minIdentity", "-maxIntron=0", "-noTrimA", $dbFile, $queriesFile, $blat8File);
+    my @cmd = ($blatcmd, "-out=blast8", "-t=dna", "-q=dna", "-minScore=$minScore", "-minIdentity=$minIdentity", "-maxIntron=0", "-noTrimA", "-tileSize=$tileSize", "-stepSize=$stepSize", $dbFile, $queriesFile, $blat8File);
     print STDERR join(" ", "Running:", @cmd)."\n" if $debug;
     system(@cmd) == 0 || die "Cannot run $blatcmd: $!";
     close(STDOUT);
