@@ -205,6 +205,12 @@ sub BLAT8($$$$$$$$); # BLAT to a blast8 format file
     close(TMPFNA) || die "Error writing to $tmpFna";
     print STDERR "Read $nReads reads\n";
 
+    if ($nTryToMap == 0) {
+      print STDERR "None of the reads are candidates for mapping (none match the model and are long enough)\n";
+      unlink($tmpFna);
+      exit(0);
+    }
+
     my %hitsPastEnd = (); # read to score of match to past-end sequence
 
     if (defined $pastEnd) {
