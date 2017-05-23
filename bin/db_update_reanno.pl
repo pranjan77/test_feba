@@ -61,7 +61,7 @@ END
             $word =~ s/^[(\[]//;
             # Remove leading EC: (the space case does not arise)
             $word =~ s/^EC://i;
-            $word =~ s/[,;)\]]$//;
+            $word =~ s/[,;)\]]+$//;
             # allow EC numbers like 3.2.1.B4, sucrose-6-phosphate hydrolase
             if ($word =~ m/^\d+[.]\d+[.]\d+[.][A-Z]?[0-9-]+$/) {
               my $ec = $word;
