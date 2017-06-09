@@ -244,7 +244,7 @@ L-Asparagine	70-47-3	Sigma	A4159	132.12				yes	yes
 L-Aspartic Acid	56-84-8	Sigma	A8949	133.1				yes	yes		
 L-Aspartic acid potassium salt	1115-63-5			171.19							
 L-Citrulline	372-75-8	Sigma	C7629	175.19				yes	yes		
-L-Cysteine hydrochloride monohydrate	7048-04-6	Sigma	C7880	175.63	L-Cysteine HCl, L-Cysteine			yes	yes		
+L-Cysteine hydrochloride monohydrate	7048-04-6	Sigma	C7880	175.63	L-Cysteine HCl			yes	yes		
 L-Fucose	2438-80-4	Sigma	F2252	164.16				yes			
 L-Glutamic acid monopotassium salt monohydrate	6382-01-0	fluka	49601	203.24	L-Glutamic acid potassium salt monohydrate, L-Glutamic acid potassium salt			yes	yes		
 L-Glutamine	56-85-9	Sigma	G3126	146.14				yes	yes		
@@ -519,3 +519,5 @@ Cholinium aspartate
 Cholinium alpha ketoglutarate											
 Geraniol	106-24-1			154.25							
 Formaldehyde	50-00-0			30.03							
+L-Cysteine	52-90-4	sigmaaldrich	W326305-100G	121.16	 (R)-2-Amino-3-mercaptopropionic acid						
+Hemin	16009-13-5	sigmaaldrich	H9039-10G	651.94	Chloro(protoporphyrinato)iron(III), Chlorohemin, Chloroprotoporphyrin IX iron(III), Ferriprotoporphyrin IX chloride, Hemin(chloride)						
