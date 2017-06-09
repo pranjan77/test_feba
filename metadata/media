@@ -723,3 +723,75 @@ Wolfe's mineral mix	1	X
 Wolfe's vitamin mix	1	X
 Yeast Extract	0.1	g/L
 Sodium nitrate	10	mM
+		
+#Media	Chakraborty_Basal	
+		
+		
+		
+		
+		
+Media	M2_noCarbon	
+Description	Defined minimal media for Caulobacter with no carbon	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Disodium phosphate	1.74	g/L
+Potassium phosphate monobasic	1.06	g/L
+Ammonium chloride	0.5	g/L
+Magnesium sulfate	0.5	mM
+Calcium chloride	0.5	mM
+Iron (II) sulfate heptahydrate	0.01	mM
+EDTA	0.008	mM
+		
+Media	M2_noNitrogen	
+Description	Defined minimal media for Caulobacter with no carbon	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Disodium phosphate	1.74	g/L
+Potassium phosphate monobasic	1.06	g/L
+D-Glucose	20	mM
+Magnesium sulfate	0.5	mM
+Calcium chloride	0.5	mM
+Iron (II) sulfate heptahydrate	0.01	mM
+EDTA	0.008	mM
+		
+Media	PYE	
+Description	Rich media for Caulobacter	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Peptone	2	g/L
+Yeast Extract	1	g/L
+Magnesium sulfate	0.8	mM
+Calcium chloride	0.5	mM
+		
+Media	Varel_Bryant_medium	
+Description	Defined medium for B.theta without Carbon	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Mineral 3B solution	1	X
+Hemin	15	uM
+L-methionine	134	uM
+Iron (II) sulfate heptahydrate	15	uM
+L-Cysteine	8.25	mM
+Sodium bicarbonate	23.8	mM
+		
+Media	DinoMM_noNitrogen_HighNutrient_GlucoseC	
+Description	Minimal media for marine bacteria with no nitrogen source, sucrose as a carbon source, and more vitamins and minerals	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Sea salts	20	g/L
+Potassium phosphate monobasic	0.1	g/L
+D-Glucose	20	mM
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+		
+Media	RCH2_defined_glucose_0.25xMineral	
+Description	Defined minimal media for soil and groundwater bacteria with glucose	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+D-Glucose	20	mM
+PIPES sesquisodium salt	30	mM
+Wolfe's mineral mix	0.25	X
+Wolfe's vitamin mix	1	X

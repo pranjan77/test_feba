@@ -78,3 +78,43 @@ biotin	2	mg/L
 Folic Acid	2	mg/L
 Cyanocobalamin	0.1	mg/L
 Choline chloride	200	mg/L
+		
+		
+Media	20AA_mix	
+Description	AA solution for cultivation of auxotrophs	
+X	1	
+Controlled vocabulary	Concentration	Units
+L-Arginine	0.5	mM
+L-Histidine	0.5	mM
+L-Lysine	0.5	mM
+L-Aspartic Acid	0.5	mM
+L-Glutamic acid monopotassium salt monohydrate	0.5	mM
+L-Serine	0.5	mM
+L-Threonine	0.5	mM
+L-Asparagine	0.5	mM
+L-Glutamine	0.5	mM
+L-Cysteine hydrochloride monohydrate	0.5	mM
+Glycine	0.5	mM
+L-Proline	0.5	mM
+L-Alanine	0.5	mM
+L-Valine	0.5	mM
+L-Isoleucine	0.5	mM
+L-Leucine	0.5	mM
+L-Methionine	0.5	mM
+L-Phenylalanine	0.5	mM
+L-tyrosine disodium salt	0.5	mM
+L-Tryptophan	0.5	mM
+		
+# Hualan Liu, 05/23/17		
+Media	Mineral 3B solution	
+Description	mineral mix for B. theta defined medium	
+X	1	
+Controlled vocabulary	Concentration	Units
+Potassium phosphate monobasic	6.6	mM
+Sodium Chloride	15.4	mM
+Magnesium chloride hexahydrate	98	uM
+Calcium chloride dihydrate	176.5	uM
+Cobalt chloride hexahydrate	4.2	uM
+Manganese (II) chloride tetrahydrate	50.5	uM
+Ammonium chloride	9.3	mM
+Sodium sulfate	1.75	mM
