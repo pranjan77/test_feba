@@ -34,7 +34,9 @@ my $cgi=CGI->new;
 
 my $orgId = $cgi->param('orgId') || die "no orgId parameter";
 my $locusId = $cgi->param('locusId') || die "no locusId parameter";
-my $expGroup = $cgi->param('expGroup') || die "no expGroup parameter";
+# Allow expGroup missing because occasionally an experiment does not have an expGroup
+# (Should that be an error during loading?)
+my $expGroup = $cgi->param('expGroup') || "";
 my $condition1 = $cgi->param('condition1');
 die "no condition1 parameter" unless defined $condition1;
 my $help = $cgi->param('help') || "";
