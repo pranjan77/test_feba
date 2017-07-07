@@ -153,7 +153,6 @@ enzyme commision (EC) numbers and hence to metabolic maps (from the last public 
 
 <P>Fitness Browser includes links to other analysis tools (see the protein page) as well as a homologs page (computed using BLAST).
 
-
 <H3><A name="links" style="color: black;">Linking to the Fitness Browser</A></H3>
 
 Most of the genomes in this web site were taken
@@ -174,6 +173,14 @@ For example, to link to the fitness data for <i>endA</i> from
 <P>(Both Fitness BLAST and Fitness BLAST for genomes are powered by
 <A HREF="http://www.drive5.com/usearch/">usearch</A>,
 not BLAST. However, <A HREF="blastSearch.cgi">single sequence search</A> and the homologs page rely on BLAST.)
+
+<H3><A name="downloads" style="color: black;">Data Downloads</A></H3>
+
+<ul>
+<li>You can download various tables for each organism from the links at the bottom of each organism's page.
+<li>The June 2017 release of the Fitness Browser is available in its entirety <A HREF="https://doi.org/10.6084/m9.figshare.5134840">here</A>.
+<li>For this current version of the Fitness Browser, you can download <A HREF="../cgi_data/aaseqs">all protein sequences</A> or the main <A HREF="../cgi_data/feba.db">sqlite3 database</A> (large! ~5 GB as of July 2017).
+</ul>
 
 <H3><A name="code" style="color: black;">About the code</A></H3>
 
