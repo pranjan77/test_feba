@@ -173,7 +173,8 @@ if (@$hits == 0) {
     # Linking to NCBI is tricky -- for example, Cupriavidus basilensis 4G11 is in NCBI but the locus tags are not indexed yet.
     # Similarly PS417_05815 from P. fluorescens WCS417 -- hits P. simaie recA instead if search Protein, wierd.
     # So assume that it will work if the genome has an NCBI taxonomyId. This is a hack.
-    push @links, $cgi->a({href => "http://www.ncbi.nlm.nih.gov/gene/?term=$gene->{sysName}#see-all"}, "NCBI")
+
+    push @links, $cgi->a({href => "http://www.ncbi.nlm.nih.gov/protein/?term=$gene->{sysName}#see-all"}, "NCBI")
         if $gene->{type} == 1 && $gene->{sysName} ne "" && $orginfo->{$orgId}{taxonomyId} ne "";
 
     # Use LocusXRef to try to link to IMG

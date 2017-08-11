@@ -207,7 +207,6 @@ if (@fit > 0) { # show the table
         . "&condition1=" . uri_escape($exp->{condition_1});
     $orthUrl .= "&help=1" if $help == 1;
     my $alt_desc = Utils::alt_descriptions($dbh,$orgId,$row->{locusId});
-    $alt_desc =~ s/&nbsp;/ /g;
     push @trows,
       $cgi->Tr( {align => 'left', valign => 'top'},
                 td(checkbox('locusId',0,$row->{locusId},'')),

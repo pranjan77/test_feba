@@ -93,7 +93,6 @@ if (@$cofitResults == 0) {
 	$cofitUrl .= "&help=1" if $help == 1;
         my $alt_desc_hit = Utils::alt_descriptions($dbh,$orgId,$hitId)
           || "no other information";
-        $alt_desc_hit =~ s/&nbsp;/ /g;
 	push @trows,
           $cgi->Tr( {bgcolor => $rowcolor, align => 'left', valign => 'top' },
                     $cgi->td($rank),

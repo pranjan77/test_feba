@@ -830,7 +830,7 @@ sub alt_descriptions($$$) {
     push @altdesc, "SEED: $seed_desc" if defined $seed_desc;
     push @altdesc, "KEGG: " . join("; ", @$kegg_descs)
             if scalar(@$kegg_descs) > 0;
-    $altdesccache{$orgId}{$locusId} = join(";&nbsp; ", @altdesc);
+    $altdesccache{$orgId}{$locusId} = join("; ", @altdesc);
     return $altdesccache{$orgId}{$locusId};
 }
 
