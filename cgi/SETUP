@@ -16,7 +16,7 @@ by using bin/db_setup.pl. This also requires
    the kegg tables, see ../kegg/
    (And kegg/maps/ will be needed for the maps to actually work, see kegg/README)
 
-BLAST executables (blastall, fastacmd, formatdb), which should be in
+BLAST executables (blastall, fastacmd, formatdb, bl2seq), which should be in
 	bin/blast/
 (or this can be a symlink to a location where they are available)
 

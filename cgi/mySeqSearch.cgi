@@ -29,6 +29,7 @@ use Bio::SeqIO;
 use lib "../lib";
 use Utils;
 use IO::Handle;
+use URI::Escape;
 
 my $cgi=CGI->new;
 my $style = Utils::get_style();
@@ -63,8 +64,6 @@ if ($query =~ m/[A-Za-z]/) {
     my @lines = split /[\r\n]+/, $query;
     $def = shift @lines if @lines > 0 && $lines[0] =~ m/^>/;
     $def =~ s/^>//;
-    $def = "query sequence" if $def eq "";
-
     foreach (@lines) {
         s/[ \t]//g;
         s/^[0-9]+//; # leading digit/whitespace occurs in UniProt format
@@ -74,6 +73,7 @@ if ($query =~ m/[A-Za-z]/) {
         s/[*]/X/g;
         $seq .= uc($_);
     }
+    $def = substr($seq,0,20) . "..." if $def eq "";
 
     my $id = "query";
     open(FAA,">",$seqFile) || die "Cannot write fasta file";
@@ -137,6 +137,10 @@ system('sort','-k1,1','-k12,12gr','-k11,11g','-k3,3gr',$blastOut,'-o',$blastSort
 
 # output blast result
 
+my $defencoded = uri_escape($def); # the defline may have wierd characters
+my $aln_preURL = $query ? "showAlign.cgi?query=$defencoded&querySequence=$seq"
+  : "showAlign.cgi?query=$orgId:$locusSpec";
+
 open(RES,$blastSort) || die "Error reading $blastSort";
 my $cnt = 0;
 my @hits = ();
@@ -155,7 +159,6 @@ while(<RES>) {
 	next;
     }
     
-
     my $orgId = $gene->{orgId};
     my $locusId = $gene->{locusId};
     my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $orgId, $locusId);
@@ -167,7 +170,9 @@ while(<RES>) {
                Utils::gene_link($dbh, $gene, "desc", "domains.cgi"),
                $cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId", title => $fittitle }, $fitstring ),
                $cgi->a({title=>"evalue: $eVal ($bitScore bits)"},$percIdentity),
-               $cgi->a({title=>"Query $queryStart..$queryEnd of $seqlen aligns to $showId $subjectStart..$subjectEnd"},$cov));
+               $cgi->a({ title=>"Query $queryStart..$queryEnd of $seqlen aligns to $showId $subjectStart..$subjectEnd",
+                         href => "$aln_preURL&subject=$subjectId" },
+                       $cov));
     
     if (defined $orgId and $locusSpec) {
         # add ortholog indicator
