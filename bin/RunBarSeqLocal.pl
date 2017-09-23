@@ -10,7 +10,7 @@ use lib "$Bin/../lib";
 my $usage = <<END
 Usage: RunBarSeqLocal.pl  [-minQuality 0 ] [ -pieceLines 20000000 ]
 	  [-nosplit] [-debug] [ -limit 1000 ]
-          [ -indexes BarSeqPrimersH48 | -n25 ]
+          [ -indexes BarSeqPrimersH48 | -n25 | -bs3 ]
           organism_directory setname fastq.gz_file_or_directory_with_fastq.gz_files
    e.g.:
    feba/bin/RunBarSeqLocal.pl g/Keio Keio_ML9_set1 fastq/Keio_ML9_set1
@@ -60,10 +60,11 @@ my $debug = undef;
     my $minQuality = 0;
     my $limitReads = undef;
     my $barcodes = undef;
-    my $n25;
+    my ($n25, $bs3);
 
     die $usage unless GetOptions('debug' => \$debug,
                                  'n25' => \$n25,
+                                 'bs3' => \$bs3,
                                  'nosplit' => \$nosplit,
                                  'minQuality=i' => \$minQuality,
                                  'pieceLines=i' => \$linesPerPiece,
@@ -140,6 +141,7 @@ my $debug = undef;
 
         my $corecmd = "$Bin/MultiCodes.pl -minQuality $minQuality";
         $corecmd .= " -n25" if defined $n25;
+        $corecmd .= " -bs3" if defined $bs3;
 	$corecmd .= " -limit $limitReads" if defined $limitReads;
 	if (defined $barcodes) {
 	    $corecmd .= " -primers $barcodes";

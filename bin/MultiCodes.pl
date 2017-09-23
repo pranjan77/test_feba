@@ -1,6 +1,9 @@
 #!/usr/bin/perl -w
 use strict;
 use Getopt::Long;
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+use FEBA_Utils; # for ReadTable()
 
 my $minQuality = 10;
 
@@ -10,11 +13,15 @@ Or, if not yet multiplexed,
        MultiCodes.pl -out out_prefix -primers PrimerIndexTable < fastq
 Optional arguments:
     [ -debug ] [ -dntag ] [ -limit maxReads ] [ -minQuality $minQuality ]
-    [ -n25 ]
+    [ -n25 | -bs3 ]
     [ -preseq CAGCGTACG -postseq AGAGACCTC -nPreExpected 9 ]
 
-    -n25 indicates 11:14 nt before the pre-sequence, corresponding to 2:5 N at start of primer,
-    as used on the HiSeq 4000.
+    -n25 or -bs3 indicate newer multiplexing designs:
+    -n25 means 11:14 nt before the pre-sequence, corresponding to a read with
+	2:5 Ns, GTCGACCTGCAGCGTACG, N20, AGAGACC
+    -bs3 means 1:4 + 6 + 11 = 18:21 nt before the pre-sequence, corresponding to
+	1:4 Ns, index2, GTCGACCTGCAGCGTACG, N20, AGAGACC
+	where nN and index2 is specified in ../primers/bs2.index2
 
     nPreExpected can also be a range, i.e. 11:14
 
@@ -63,19 +70,20 @@ my $iname = undef;
 my $doOff1 = undef;
 
 {
-    my ($indexfile,$out,$nLimit);
-    my $n25;
+    my ($indexfile,$out,$nLimit,$n25,$bs3);
+    my ($index2,$index2At); # for bs3 mode -- check that sequence has $index2 starting at (1-based) $index2At
     (GetOptions('primers=s' => \$indexfile,
 		'out=s' => \$out,
 		'index=s' => \$iname,
                 'minQuality=i' => \$minQuality,
                 'limit=i' => \$nLimit,
-                'nPreExpected=i' => \$nPreExpected,
+                'nPreExpected=s' => \$nPreExpected,
 		'preseq=s' => \$preseq,
 		'postseq=s' => \$postseq,
                 'dntag' => \$dntag,
                 'debug' => \$debug,
                 'n25' => \$n25,
+                'bs3' => \$bs3,
                 'off1=i' => \$doOff1)
      && defined $out)
         || die $usage;
@@ -89,18 +97,41 @@ my $doOff1 = undef;
 	if ($dntag) {
 	    die "-index with -dntag not supported" if defined $iname;
 	    $preseq = "GTCTCGTAG";
-	    $nPreExpected = 8;
+	    $nPreExpected = 8 unless defined $nPreExpected;
 	    $postseq = "CGATGAATT";
 	} else {
 	    $preseq = "CAGCGTACG";
-	    $nPreExpected = defined $iname ? 14 : 9;
+	    $nPreExpected = defined $iname ? 14 : 9
+              unless defined $nPreExpected;
 	    $postseq = "AGAGACCTC";
 	}
     }
+
+    die "Cannot specify multiple protocols\n"
+      if (defined $n25) + (defined $bs3) > 1;
     if (defined $n25) {
-        die "Cannot specify -n25 unless -index is set\n" unless defined $iname;
-        $nPreExpected = '11:14';
+      die "Cannot specify -n25 unless -index is set\n" unless defined $iname;
+      $nPreExpected = '11:14';
     }
+
+    if (defined $bs3) {
+      die "Cannot specify -bs3 unless -index is set\n" unless defined $iname;
+      my $ifile = "$Bin/../primers/barseq3.index2";
+      die "No such file: $ifile\n" unless -e $ifile;
+      my @tab = FEBA_Utils::ReadTable($ifile, ["index_name","index2","nN"]);
+      my @tabMatch = grep { $_->{index_name} eq $iname } @tab;
+      if (@tabMatch == 0) {
+        print STDERR "Warning! Ignoring the second index -- index_name $iname does not appear in $ifile\n";
+        $nPreExpected = '16:19';
+      } else {
+        die "Multiple matches for index $iname in $ifile" if @tabMatch > 1;
+        my $row = $tabMatch[0];
+        $index2 = $row->{index2};
+        $index2At = $row->{nN}+1;
+        $nPreExpected = $index2At + 6 + 9;
+      }
+    }
+
     if ($nPreExpected =~ m/^(\d+):(\d+)$/) {
         $nPreExpectedMin = $1;
         $nPreExpectedMax = $2;
@@ -108,6 +139,14 @@ my $doOff1 = undef;
         die $usage unless $nPreExpected =~ m/^\d+$/;
         $nPreExpectedMin = $nPreExpected - 2;
         $nPreExpectedMax = $nPreExpected + 2;
+    }
+
+    my $index2len;
+    if (defined $index2) {
+      die "Invalid index2 sequence $index2" unless $index2 =~ m/^[ACGT]+$/;
+      die "Invalid $index2At" unless $index2At =~ m/^\d+$/ && $index2At >= 1;
+      $index2len = length($index2);
+      print STDERR "Checking for index2 $index2 at position $index2At\n";
     }
 
     my $nReads = 0;
@@ -146,6 +185,7 @@ my $doOff1 = undef;
     }
 
     my $nWrongPrePos = 0;
+    my $nWrongIndex2 = 0;
     while(my $header = <STDIN>) {
         chomp $header;
         my $seq = <STDIN>;
@@ -156,6 +196,14 @@ my $doOff1 = undef;
 
         last if defined $nLimit && $nReads >= $nLimit;
 
+        if (defined $index2) {
+          my $part = substr($seq, $index2At-1, $index2len);
+          if ($part ne $index2) {
+            $nWrongIndex2++;
+            next;
+          }
+        }
+
         my $iPrefix = defined $iname ? 0 : FindPrefix($seq, \@prefix);
         next if $iPrefix < 0;
         $nMulti++;
@@ -163,8 +211,8 @@ my $doOff1 = undef;
         my ($barcode,$off) = FindBarcode($seq, $quality, $nLeading+length($indexseq));
         if (!defined $barcode && defined $off && $off >= 0) {
             $nWrongPrePos++;
-            die "Over 10% of reads have the wrong spacing to the pre-sequence ($nWrongPrePos of $nReads so far).\n".
-                "Perhaps you forget to specify -n25?\n"
+            die "Over 10% of reads have the wrong spacing (not $nPreExpectedMin:$nPreExpectedMax) to the pre-sequence ($nWrongPrePos of $nReads so far).\n".
+                "Perhaps you forget to specify the protocol (i.e., -n25 or -bs3)?\n"
                 if $nWrongPrePos >= 200 && $nWrongPrePos >= 0.1 * $nReads;
         }
         next unless defined $barcode;
@@ -179,8 +227,10 @@ my $doOff1 = undef;
     my $nOffTot = sum(values %nOff);
     my $nUniq = scalar(keys %codes);
     print STDERR "Reads $nReads Multiplexed $nMulti Usable(20) $nOff{20} fraction " . ($nOff{20}/$nReads) . " unique codes $nUniq \n" if $nReads > 0;
-    print STDERR sprintf("Wrong presequence position: %d reads (%.3f%%)\n", $nWrongPrePos, 100*$nWrongPrePos/$nReads)
-        if $nReads > 0;
+    print STDERR sprintf("Failed to match index2: %d reads (%.3f%%)\n", $nWrongIndex2, 100*$nWrongIndex2/$nReads)
+      if $nReads > 0 && defined $index2;
+    print STDERR sprintf("Wrong presequence position: %d reads (%.3f%%)\n", $nWrongPrePos, 100*$nWrongPrePos/($nReads-$nWrongIndex2))
+      if $nReads > $nWrongIndex2;
     foreach my $off (18..22) {
         print STDERR sprintf("Off\t%d\t%d\t%.3f\n", $off, $nOff{$off}, $nOff{$off}/$nOffTot) if $nOffTot > 0;
     }
