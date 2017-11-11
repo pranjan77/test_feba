@@ -648,11 +648,13 @@ sub ExpToPubId($$$);
 
     # rename the strain fitness files
     if (defined $outdir && $outdir ne "." && !defined $test) {
-        foreach my $org (@orgs) {
-            system("mv", "db.StrainFitness.$org", $outdir) == 0 || die "mv db.StrainFitness.$org $outdir failed: $!";
-            die "No such file: $outdir/db.StrainFitness.$org" unless -e "$outdir/db.StrainFitness.$org";
-        }
-        print STDERR "Moved db.StrainFitness.* into $outdir\n";
+      print STDERR "Removing any preexisting db.StrainFitness.* files from $outdir\n";
+      system("rm -f $outdir/db.StrainFitness.* >& /dev/null");
+      foreach my $org (@orgs) {
+        system("mv", "db.StrainFitness.$org", $outdir) == 0 || die "mv db.StrainFitness.$org $outdir failed: $!";
+        die "No such file: $outdir/db.StrainFitness.$org" unless -e "$outdir/db.StrainFitness.$org";
+      }
+      print STDERR "Moved db.StrainFitness.* into $outdir\n";
     }
 
     push @workCommands, ".import $xrefs LocusXref" if $xrefs ne "";
