@@ -707,6 +707,14 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	writeDelim(d, nameToPath("specific_phenotypes"));
 	wroteName("specific_phenotypes");
 
+        d = which(abs(fit$lrn) > 2 & abs(fit$t) > 5, arr.ind=T);
+        if (nrow(d) >= 1) {
+	  out = data.frame(locusId=fit$g[d[,1]], name=names(fit$lrn)[d[,2]], lrn=fit$lrn[d], t=fit$t[d]);
+	  out = merge(genes[,words("locusId sysName desc")], merge(expsU[,c("name","short")], out));
+	  writeDelim(out, nameToPath("strong.tab"));
+	  wroteName("strong.tab");
+	}
+
 	if(writeImage) {
 	    img = format(Sys.time(),"fit%Y%b%d.image"); # e.g., fit2013Oct24.image
 	    expsUsed = expsU;
