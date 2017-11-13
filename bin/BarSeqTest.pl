@@ -6,7 +6,7 @@ use Getopt::Long;
 use FindBin qw($Bin);
 
 my $usage =<<END
-Usage: BarSeqTest.pl -org organism [ -n25 ] -index S1:S2:S3 -desc Time0:Lactate:Glucose
+Usage: BarSeqTest.pl -org organism [ -n25 | -bs3 ] -index S1:S2:S3 -desc Time0:Lactate:Glucose
 	    -fastqdir directory
            [ -pool g/organism/pool.n10 ]
 	   [ -outdir g/organism/barseqtest ]
@@ -26,7 +26,7 @@ my $test = undef; # check for files, but do no work
 
 {
     my ($org, $indexSpec, $descSpec, $fastqdir, $pool, $outdir);
-    my $n25;
+    my ($n25, $bs3);
 
     GetOptions('org=s' => \$org,
 	       'index=s' => \$indexSpec,
@@ -35,11 +35,13 @@ my $test = undef; # check for files, but do no work
 	       'pool=s' => \$pool,
 	       'test' => \$test,
                'n25' => \$n25,
+               'bs3' => \$bs3,
 	       'outdir=s' => \$outdir) || die $usage;
     @ARGV == 0 || die $usage;
     die $usage unless defined $org && defined $indexSpec && defined $descSpec && defined $fastqdir;
     die "No such directory: g/$org" unless -d "g/$org";
     die "No such directory: $fastqdir" unless -d $fastqdir;
+    die "Cannot specify both -n25 and -bs3" if defined $n25 && defined $bs3;
     
     if (!defined $pool) {
 	$pool = "g/$org/pool.n10";
@@ -82,8 +84,10 @@ my $test = undef; # check for files, but do no work
 	my @filenames = @{ $fastqFiles{$index} };
 	my $pathSpec = join(" ", @filenames);
 	push @codesFiles, "$outdir/$index.codes";
-        my $n25opt = defined $n25 ? "-n25" : "";
-	&maybeRun("zcat $pathSpec | $Bin/MultiCodes.pl $n25opt -minQuality 0 -index $index -out $outdir/$index");
+        my $extraopt = "";
+        $extraopt = "-n25" if defined $n25;
+        $extraopt = "-bs3" if defined $bs3;
+	&maybeRun("zcat $pathSpec | $Bin/MultiCodes.pl $extraopt -minQuality 0 -index $index -out $outdir/$index");
     }
     &maybeRun("$Bin/combineBarSeq.pl $outdir/test $pool " . join(" ", @codesFiles));
     unless (defined $test) {
