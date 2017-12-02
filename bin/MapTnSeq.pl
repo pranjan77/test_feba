@@ -135,11 +135,14 @@ sub BLAT8($$$$$$$$); # BLAT to a blast8 format file
     if ($fastqFile =~ m/[.]gz$/) {
         $pipe = 1;
         open(FASTQ, '-|', 'zcat', $fastqFile) || die "Cannot run zcat on $fastqFile";
+        print STDERR "Reads (gzipped) from $fastqFile\n";
     } elsif ($fastqFile =~ m/[.zip]$/) {
         $pipe = 1;
         open(FASTQ, "7za -so e $fastqFile | zcat |") || die "Cannot run 7za and zcat on $fastqFile";
+        print STDERR "Reads (zipped) from $fastqFile\n";
     } else {
         open(FASTQ, "<", $fastqFile) || die "Cannot read $fastqFile";
+        print STDERR "Reads (raw) from $fastqFile\n";
     }
 
     my %nameToHits = (); # list of scaffold, position, strand, match score

@@ -70,6 +70,9 @@ END
     my %pastEnd = (); # number of reads for that barcode mapped past the end
     # (pastEnd reads are not included in barPosCount)
 
+    print STDERR join("\n", "Reading mapping files:", @ARGV)."\n"
+      if @ARGV > 0;
+
     while(<>) {
         chomp;
         my ($read,$barcode,$scaffold,$pos,$strand,$uniq,$qBeg,$qEnd,$score,$identity) = split /\t/, $_;
