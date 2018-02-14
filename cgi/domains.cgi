@@ -256,7 +256,7 @@ print
     @show_classes > 0 ? p(join(", ", @show_classes)) : "",
     p("or check the current SEED with",
       # %0A encodes "\n" so that it looks like fasta input.
-      a({-href => "http://core.theseed.org/FIG/seedviewer.cgi?page=FigFamViewer&fasta_seq=>${sys}%0A$seq"},
+      a({-href => "http://pubseed.theseed.org/FIG/seedviewer.cgi?page=FigFamViewer&fasta_seq=>${sys}%0A$seq"},
         "FIGfam search"));
 
 # And add reannotated EC numbers to %ecall

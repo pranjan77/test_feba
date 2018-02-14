@@ -82,8 +82,9 @@ print
      Utils::OrgSelector($orgId, $orginfo),
      "<button type='submit'>Go</button>",
      end_form ),
-  p(a( { -href => "http://www.nmpdr.org/FIG/subsys.cgi?request=show_ssa&ssa_name=$subsystem" },
-       "Or view this subsystem at NMPDR" ));
+  p(a( { -href => "http://pubseed.theseed.org/FIG/seedviewer.cgi?page=Subsystems&subsystem=$subsystem" },
+       "Or view this subsystem at the SEED" ),
+   "(slow)");
 
 Utils::endHtml($cgi);
 exit(0);
