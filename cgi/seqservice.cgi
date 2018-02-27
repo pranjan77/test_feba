@@ -152,6 +152,7 @@ foreach my $row (@rows) {
     if (defined $minFit) {
 	$maxCofit = $dbh->selectrow_array(qq{ SELECT cofit FROM Cofit WHERE orgId = ? AND locusId = ? AND rank = 1 LIMIT 1; },
 					  {}, $orgId, $locusId);
+        $maxCofit = "" if !defined $maxCofit; # possible if there is no cofitness for this bug
     }
     my $coverage = $alnlen/length($seq);
     if ($html) {
