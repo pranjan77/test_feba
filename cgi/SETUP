@@ -8,13 +8,18 @@ Its schema is described in lib/db_setup_tables.sql
 It can built from the HTML directories that are created by BarSeqR.pl
 by using bin/db_setup.pl. This also requires
    all-vs-all best hits, see MakeBBH.pl
-   KEGG best hits, see KeggBestHit.pl
-   SwissProt best hits, see SprotBestHit.pl
+   KEGG best hits from rapsearch2, see KeggBestHit.pl
+   SwissProt best hits from rapsearch2, see SprotBestHit.pl
    SEED annotations (g/*/seedanno.tab, see db_setup_SEED.pl)
 	 As well as SEED subsystems from ftp://ftp.theseed.org/subsystems/subsys.txt
    img.xrefs, see bin/IMGXRefs.pl
    the kegg tables, see ../kegg/
    (And kegg/maps/ will be needed for the maps to actually work, see kegg/README)
+   Hits to TIGRFam and PFam in a tab-delimited format, in g/*/{pfam,tigrfam}.tab
+   MetaCyc information, see see db_setup_metacyc.pl, including:
+     Tab-delimited representations of pathways in MetaCyc, as parsed by bin/ParseMetaCycPathways.pl
+     MetaCyc proteins, from feba/bin/ParseMetaCycSeq.pl and feba/bin/ParseMetaCycSeqDat.pl
+     Hits to MetaCyc proteins from rapsearch2 (g/blast_results/metacyc_*.m8; see db_setup_metacyc.pl)
 
 BLAST executables (blastall, fastacmd, formatdb, bl2seq), which should be in
 	bin/blast/

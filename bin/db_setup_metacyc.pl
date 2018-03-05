@@ -15,12 +15,15 @@ my $minIdentity = 30;
 my $minCoverage = 0.80;
 my $maxLog10E = -2;
 my $metaseqfile = "metacyc.faa";
+my $ind = ".";
 
 my $usage = <<END
 Usage: db_setup_metacyc.pl [ -db db_file_name ] [ -dir $dir ] org1 ... orgN
 
 Given the output files from rap search (in
-g/blast_results/metacyc_*.m8) and the metacyc ids and reactions files,
+g/blast_results/metacyc_*.m8), the metacyc ids (in the -ids file)
+
+ and he metacyc ids and various metacyc files (in the -in directory),
 populates the MetaCyc-related tables. Will delete any existing data in
 those tables, but the tables must already exist.
 
@@ -29,9 +32,8 @@ those tables, but the tables must already exist.
 
 Other optional arguments, with defaults:
    -gdir $gdir -- the base directory
-   -faa $metaseqfile -- the metacyc fasta file from ParseMetacycSeq.pl
-   -ids $metaidsfile -- the metacyc fasta file from ParseMetacycSeqDat.pl
-   -reactions $reactionsfile -- the output of ParseMetaCycReactions.pl
+   -ids $metaidsfile -- the tab-delimited from ParseMetacycSeqDat.pl
+   -in $ind  -- the directory with the output of ParseMetaCycPathways.pl
    -minIdentity $minIdentity -- minimum %identity
    -minCoverage $minCoverage -- minimum coverage both ways
 END
@@ -39,7 +41,7 @@ END
 
 die $usage unless GetOptions('db=s' => \$db,
                              'dir=s' => \$dir,
-                             'reactions=s' => \$reactionsfile,
+                             'in=s' => \$ind,
                              'gdir=s' => \$gdir,
                              'faa=s' => \$metaseqfile,
                              'minIdentity=f' => \$minIdentity,
@@ -49,10 +51,18 @@ die $usage unless scalar(@orgs) > 0;
 die "No such directory: $dir" unless -d $dir;
 die "No such directory: $gdir" unless -d $gdir;
 die "No such directory: $gdir/blast_results" unless -d "$gdir/blast_results";
-die "No such file: $reactionsfile" unless -e $reactionsfile;
+die "No such directory: $ind" unless -d $ind;
 die "No such file: $db" if defined $db && ! -e $db;
 die "No such file: $metaseqfile" unless -e $metaseqfile;
 die "No such file: $metaidsfile" unless -e $metaidsfile;
+my @metacyc_tables = qw/MetacycPathway MetacycPathwayReaction MetacycPathwayReactionPredecessor
+                       MetacycPathwayPrimaryCompound
+                       MetacycReaction MetacycReactionCompound MetacycReactionEC
+                       MetacycCompound/;
+foreach my $table (@metacyc_tables) {
+  die "No such file (should have been built by ParseMetaCycPathways.pl): $ind/$table.tab"
+    unless -e "$ind/$table.tab";
+}
 
 my $metaseqs = FEBA_Utils::ReadFasta($metaseqfile);
 
@@ -117,8 +127,13 @@ if (defined $db) {
     foreach my $table (qw{BestHitMetacyc MetacycReaction}) {
         print SQLITE "DELETE from $table;\n";
     }
+    foreach my $table (@metacyc_tables) {
+        print SQLITE "DELETE from $table;\n";
+    }
     print SQLITE ".import $dir/db.BestHitMetacyc BestHitMetacyc\n";
-    print SQLITE ".import $reactionsfile MetacycReaction\n";
+    foreach my $table (@metacyc_tables) {
+      print SQLITE ".import $ind/$table.tab $table\n";
+    }
     close(SQLITE) || die "Error running sqlite3 on $db";
     print "Successfully loaded into $db -- deleting the db.* files\n";
     unlink("$dir/db.BestHitMetacyc");

@@ -246,14 +246,76 @@ CREATE TABLE 'BestHitMetacyc' (
        ecnum TEXT, /* MetaCyc documentation says it may be null; not sure it happens; not handled by loading code */
        PRIMARY KEY(orgId,locusId,rxnId)
 );
-CREATE INDEX 'BestHitMetacycByLocus' on BestHitMetacyc ('ecnum','orgId');
+CREATE INDEX 'BestHitMetacycByLocus' ON BestHitMetacyc ('ecnum','orgId');
 
-/* Not all valid reactions have a useful description, so not all of them appear in this table */
+/* No superpathways, at least for now */
+CREATE TABLE 'MetacycPathway' (
+       pathwayId TEXT NOT NULL,
+       pathwayName TEXT NOT NULL,
+       PRIMARY KEY (pathwayId)
+);
+
+CREATE TABLE 'MetacycPathwayReaction' (
+       pathwayId TEXT NOT NULL,
+       rxnId TEXT NOT NULL,
+       direction INT NOT NULL, /* -1 for left, +1 for right */
+       isHypothetical INT NOT NULL,
+       PRIMARY KEY (pathwayId, rxnId)
+);
+CREATE INDEX 'MetacycPathwayReactionByReaction' ON MetacycPathwayReaction('rxnId','pathwayId');
+
+CREATE TABLE 'MetacycPathwayReactionPredecessor' (
+       pathwayId TEXT NOT NULL,
+       rxnId TEXT NOT NULL,
+       predecessorId TEXT NOT NULL, /* another reaction in this pathway */
+       PRIMARY KEY (pathwayId, rxnId, predecessorId)
+);
+
+/* This table indicates which reactants are the primary compounds,
+   from the perspective of this pathway */
+CREATE TABLE 'MetacycPathwayPrimaryCompound' (
+       pathwayId TEXT NOT NULL,
+       rxnId TEXT NOT NULL,
+       side INT NOT NULL, /* relative to the reaction, not the pathway; -1 for left or +1 for right */
+       compoundId INT NOT NULL,
+       PRIMARY KEY (pathwayId, rxnId, compoundId, side)
+);
+
+/* All valid reactions should appear in this table */
 CREATE TABLE 'MetacycReaction' (
        rxnId TEXT NOT NULL,
        rxnName TEXT NOT NULL, /* may contain HTML tags or entities; may be a comment not a name */
+       isSpontaneous INT NOT NULL,
        PRIMARY KEY(rxnId)
 );
+
+CREATE TABLE 'MetacycReactionCompound' (
+       rxnId TEXT NOT NULL,
+       compoundId TEXT NOT NULL,
+       side INT NOT NULL, /* -1 for left, +1 for right */
+       coefficient TEXT NOT NULL, /* occasionally is 0.5 or something like n or n-1 */
+       compartment TEXT NOT NULL, /* usually empty, otherwise is CYTOSOL, IN, OUT, or OTHER */
+       PRIMARY KEY (rxnId, compoundId, side, compartment)
+);
+CREATE INDEX 'MetacycReactionCompoundByCompound' ON MetacycReactionCompound('compoundId','rxnId','side');
+
+CREATE TABLE 'MetacycReactionEC' (
+       rxnId TEXT NOT NULL,
+       ecnum TEXT NOT NULL, /* may include - (not fully specified) */
+       PRIMARY KEY(rxnId,ecnum)
+);
+CREATE INDEX 'MetacycReactionECByEcnum' ON MetacycReactionEC('ecnum','rxnId');
+
+CREATE TABLE 'MetacycCompound' (
+       compoundId TEXT NOT NULL,
+       compoundName TEXT NOT NULL,
+       keggLigand TEXT NOT NULL, /* may be empty */
+       formula TEXT NOT NULL, /* may be empty */
+       PRIMARY KEY (compoundId)
+);
+CREATE INDEX 'MetacycCompoundByKEGGLigand' ON MetacycCompound('keggLigand','compoundId');
+
+
 
 /* Ortholog groups of all genes that have conserved specific phenotypes.
 	(If not conserved, is in there with nInOG=1)
