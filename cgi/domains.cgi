@@ -199,28 +199,46 @@ my $bhMetacyc = $dbh->selectall_arrayref(qq{ SELECT * FROM BestHitMetacyc
                                              ORDER BY rxnName DESC },
                                          { Slice => {} }, $orgId, $locusId);
 if (scalar(@$bhMetacyc) > 0) {
-    my @showrxns = ();
-    my %ecSeen = ();
-    foreach my $row (@$bhMetacyc) {
-        next if exists $ecSeen{$row->{ecnum}};
-        $ecSeen{$row->{ecnum}} = 1;
-        push @showrxns,
-        a({ href => "http://metacyc.org/META/NEW-IMAGE?type=REACTION&object=" . $row->{rxnId} },
-          $row->{rxnName} || $row->{rxnId})
-            . " [EC: "
-            . a({ href => "http://metacyc.org/META/NEW-IMAGE?type=EC-NUMBER&object=EC-" . $row->{ecnum} },
-                $row->{ecnum})
-            ."]";
+  my @showrxns = ();
+  my @showecs = ();
+  my %ecSeen = ();
+  # Multiple hits if gene is linked to >1 reaction
+  foreach my $row (@$bhMetacyc) {
+    my $ecnums = $dbh->selectcol_arrayref("SELECT ecnum from MetacycReactionEC WHERE rxnId = ?",
+                                          {}, $row->{rxnId});
+    my $rxnName = $row->{rxnName} || "";
+    foreach my $ec (@$ecnums) {
+      next if exists $ecSeen{$ec};
+      $ecSeen{$ec} = 1;
+      push @showecs, $ec;
+      # and maybe update the name
+
+      # If no reaction name, or it is just some EC number(s) --
+      # replace with KEGG description of first ec
+      if ($rxnName eq "" || $rxnName =~ m/^[0-9][.][0-9.,]+$/) {
+        ($rxnName) = $dbh->selectrow_array("SELECT ecdesc FROM ECInfo WHERE ecnum = ?",
+                                           {}, $ec);
+      }
     }
-    my $row = $bhMetacyc->[0];
-    my $acc = $row->{sprotAccession};
-    print
-        h3("MetaCyc"),
-        p(
-            sprintf("%.0f%% similar to", $row->{identity}),
-            a({ href => "http://www.uniprot.org/uniprot/$acc" }, $acc) . ":<BR>",
-            join(";<BR>", @showrxns)
-        );
+    $rxnName = $row->{rxnId} if $rxnName eq "";
+    my $showrxn = a({ -href => "http://metacyc.org/META/NEW-IMAGE?type=REACTION&object=" . $row->{rxnId},
+                      -title => "see reaction in MetaCyc" },
+                 $rxnName);
+    if (@showecs > 0) {
+      @showecs = map a({ -href => "https://metacyc.org/META/NEW-IMAGE?type=EC-NUMBER&object=EC-$_" }, $_), @showecs;
+      $showrxn .= " [EC: " . join(", ", @showecs) . "]";
+    }
+    push @showrxns, $showrxn;
+  }
+  my $row = $bhMetacyc->[0];
+  my $acc = $row->{sprotAccession};
+  print
+    h3("MetaCyc"),
+      p(
+        sprintf("%.0f%% similar to", $row->{identity}),
+        a({ href => "http://www.uniprot.org/uniprot/$acc" }, $acc) . ": " .
+        join("; ", @showrxns)
+       );
 }
 
 # SEED information, if any
