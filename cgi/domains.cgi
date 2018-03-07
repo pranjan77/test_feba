@@ -362,7 +362,7 @@ if (@ec > 0 || keys(%metacycrxn) > 0) {
   my @pathList = ();
   foreach my $pathId (@path) {
     my ($n,$nFound) = @{ $pathCount{$pathId} };
-    push @pathList, li(a( {-href => "https://metacyc.org/META/NEW-IMAGE?type=PATHWAY&object=" . $pathId},
+    push @pathList, li(a( {-href => "pathway.cgi?orgId=$orgId&pathwayId=$pathId"},
                           $pathways{$pathId} ),
                        "($nFound/$n steps found)");
   }

@@ -57,6 +57,7 @@ cofit.cgi -- top cofit hits for a gene
 domains.cgi -- the proteins page
 	includes domains (PFam/TIGRFam), SwissProt & KEGG best hits, SEED annotations (=> seedsubsystem.cgi),
         metabolic maps (=> keggmap.cgi) if it has EC numbers,
+        metacyc pathways (=> pathway.cgi) if its MetaCyc best hit links to a pathway reaction or it has a suitable EC number,
         and the protein sequence
         [or redirects to geneOverview.cgi if not a protein-coding gene]
 geneOverview.cgi -- the gene overview page
@@ -117,6 +118,7 @@ seedsubsystem.pl -- show all the genes in a subsystem
         to help find alternate genes for these steps.
 seedsubsystemsOrg.cgi -- links to organism page and to
 	seedsubsystem.pl
-
+pathway.cgi -- show a metacyc pathway and candidate genes
+	links to organism page and to gene fitness page (myFitShow.cgi)
 Dead pages:
 getSeq.cgi -- sequence of gene (if it is a protein)
