@@ -122,6 +122,7 @@ foreach my $rxnId (@rxnIds) {
     my $side = $rxn->{direction} * $row->{"side"};
     my $list = $side == -1 ? \@left : \@right;
     $name = $row->{coefficient} . " " . $name unless $row->{coefficient} eq "" || $row->{coefficient} eq "1";
+    $name = $name . Sub("[" . lc($row->{compartment}) . "]") if $row->{compartment} ne "";
     push @$list, $name;
   }
   my $spontaneous = $rxn->{isSpontaneous} ? " (spontaneous)" : "";
