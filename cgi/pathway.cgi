@@ -94,6 +94,7 @@ foreach my $row (@$primary) {
   $primary{ $row->{rxnId} }{ $row->{compoundId} }{ $row->{side} } = 1;
 }
 
+my %primaryShown = (); # compoundId => 1 if shown as primary already
 foreach my $rxnId (@rxnIds) {
   my $rxn = $rxns{$rxnId};
   my $ecs = $dbh->selectcol_arrayref("SELECT ecnum FROM MetacycReactionEC WHERE rxnId = ?",
@@ -114,11 +115,22 @@ foreach my $rxnId (@rxnIds) {
                                          LEFT JOIN MetacycCompound USING (compoundId)
                                          WHERE rxnId = ? },
                                      { Slice => {} }, $rxnId);
-  foreach my $row (@$cmps) {
+  foreach my $i (0..(scalar(@$cmps)-1)) {
+    $cmps->[$i]{row} = $i;
+  }
+  my @sortedcmps = sort { (exists $primary{$rxnId}{$b->{compoundId}}) - (exists $primary{$rxnId}{$a->{compoundId}})
+                            || (exists $primaryShown{$b->{compoundId}}) - (exists $primaryShown{$a->{compoundId}})
+                              || $a->{row} - $b->{row} } @$cmps;
+  foreach my $row (@sortedcmps) {
     my $compoundId = $row->{"compoundId"};
     # Some reactants are actually compound classes -- for those, just use the name.
     my $name = $row->{compoundName} || $compoundId;
-    $name = i($name) if exists $primary{$rxnId}{$compoundId};
+    my $color = "DarkGrey";
+    if (exists $primary{$rxnId}{$compoundId}) {
+      $color = "Brown";
+      $primaryShown{$compoundId} = 1;
+    }
+    $name = span({ style => "color: $color" }, $name);
     my $side = $rxn->{direction} * $row->{"side"};
     my $list = $side == -1 ? \@left : \@right;
     $name = $row->{coefficient} . " " . $name unless $row->{coefficient} eq "" || $row->{coefficient} eq "1";
