@@ -14,7 +14,7 @@
 # locusId (or gene) -- which locus
 
 use strict;
-use CGI qw(:standard Vars);
+use CGI qw(:standard Vars start_ul);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
 use Bio::SeqIO;
@@ -85,9 +85,10 @@ print
     header, $start, $tabs, '<div id="tabcontent">',
     h2("Protein Info for $sys in " . $cgi->a({href => "org.cgi?orgId=$orgId"},$orginfo->{$orgId}{genome})),
     p(join("<BR>", @toplines)),
-    h3("Domains");
+    h3("Domains and Families");
 
-my %ecall = (); # ec number => 1, across all assignment methods
+my %ecall = (); # ec number => source => 1
+# (source is one of TIGRFam, KEGG, SEED, reanno, MetaCyc)
 
 if (@$cond == 0) {
     print "No PFam or TIGRFam domains were found in this protein."
@@ -129,11 +130,13 @@ if (@$cond == 0) {
                                  # $row->{begin}, #begin
                                  # $row->{end}, #end
                                ]));
-            $ecall{ $row->{ec} } = 1 if $row->{ec} ne "";
+            $ecall{ $row->{ec} }{"TIGRFam"} = 1 if $row->{ec} ne "";
         }
     }
     print table({cellspacing => 0, cellpadding => 3}, @trows);
 }
+
+print h3("Best Hits");
 
 # UniProt information, if any
 my $bhSprot = $dbh->selectrow_hashref("SELECT * from BestHitSwissProt
@@ -143,15 +146,13 @@ my $bhSprot = $dbh->selectrow_hashref("SELECT * from BestHitSwissProt
 if (defined $bhSprot->{sprotAccession}) {
     my $acc = $bhSprot->{sprotAccession};
     print
-        h3("SwissProt"),
-        p(
-            sprintf("%.0f%% similar to", $bhSprot->{identity}),
+        p("Swiss-Prot:",
+            sprintf("%.0f%% identical to", $bhSprot->{identity}),
             a({ href => "http://www.uniprot.org/uniprot/$acc",
                 title => $bhSprot->{sprotAccession} },
               $bhSprot->{sprotId} ) . ":",
             $bhSprot->{desc},
             $bhSprot->{geneName} ? "($bhSprot->{geneName})" : "",
-            br(),
             "from",
             $bhSprot->{organism} );
 }
@@ -160,8 +161,8 @@ print "\n";
 # KEGG information, if any
 my $kegg = Utils::kegg_info($dbh, $orgId, $locusId);
 if (defined $kegg) {
-    print h3("KEGG");
     my $ko = $kegg->{ko};
+    my @kopieces = ();
     if (scalar(@{ $kegg->{ko} }) > 0) {
         foreach my $row (@$ko) {
             my $ecs = $row->{ec};
@@ -172,25 +173,30 @@ if (defined $kegg) {
                 } else {
                     push @ecdesc, a({-href => "http://www.kegg.jp/dbget-bin/www_bget?ec:$ec"}, $ec);
                 }
-                $ecall{$ec} = 1;
+                $ecall{$ec}{"KEGG"} = 1;
             }
             my $ecdesc = join(" ", @ecdesc);
-            $ecdesc = "[EC: $ecdesc]" if $ecdesc ne "";
+            $ecdesc = " [EC: $ecdesc]" if $ecdesc ne "";
 
-            print p(a({-href => "http://www.kegg.jp/dbget-bin/www_bget?ko:" . $row->{kgroup}},
-                      $row->{kgroup}), " :",
-                    $row->{desc} || "(no description)",
-                    $ecdesc );
+            push @kopieces,
+              join("",
+                   a({-href => "http://www.kegg.jp/dbget-bin/www_bget?ko:" . $row->{kgroup}},
+                     $row->{kgroup}),
+                   ", ",
+                   $row->{desc} || "(no description)",
+                   $ecdesc);
         }
     } else {
-        print p("No KEGG ortholog group");
+      push @kopieces, "None";
     }
     my $keggOrg = $kegg->{keggOrg};
     my $keggId = $kegg->{keggId};
-    print p(sprintf("(inferred from %.0f%% similarity to ", $kegg->{identity}),
-            a({-href => "http://www.kegg.jp/dbget-bin/www_bget?$keggOrg:$keggId"},
-              "$keggOrg:$keggId").")");
+    print join(" ", "KEGG orthology group:", @kopieces,
+               sprintf("(inferred from %.0f%% identity to ", $kegg->{identity}),
+               a({-href => "http://www.kegg.jp/dbget-bin/www_bget?$keggOrg:$keggId"},
+                 "$keggOrg:$keggId").")");
 }
+print "\n";
 
 # MetaCyc information, if any
 my $bhMetacyc = $dbh->selectall_arrayref(qq{ SELECT * FROM BestHitMetacyc
@@ -198,6 +204,7 @@ my $bhMetacyc = $dbh->selectall_arrayref(qq{ SELECT * FROM BestHitMetacyc
                                              WHERE orgId = ? AND locusId = ?
                                              ORDER BY rxnName DESC },
                                          { Slice => {} }, $orgId, $locusId);
+my %metacycrxn = (); # which reactions are linked to
 if (scalar(@$bhMetacyc) > 0) {
   my @showrxns = ();
   my @showecs = ();
@@ -207,9 +214,11 @@ if (scalar(@$bhMetacyc) > 0) {
     my $ecnums = $dbh->selectcol_arrayref("SELECT ecnum from MetacycReactionEC WHERE rxnId = ?",
                                           {}, $row->{rxnId});
     my $rxnName = $row->{rxnName} || "";
+    $metacycrxn{ $row->{rxnId} } = 1;
     foreach my $ec (@$ecnums) {
       next if exists $ecSeen{$ec};
       $ecSeen{$ec} = 1;
+      $ecall{$ec}{"MetaCyc"} = 1;
       push @showecs, $ec;
       # and maybe update the name
 
@@ -222,7 +231,7 @@ if (scalar(@$bhMetacyc) > 0) {
     }
     $rxnName = $row->{rxnId} if $rxnName eq "";
     my $showrxn = a({ -href => "http://metacyc.org/META/NEW-IMAGE?type=REACTION&object=" . $row->{rxnId},
-                      -title => "see reaction in MetaCyc" },
+                      -title => "see $row->{rxnId} in MetaCyc" },
                  $rxnName);
     if (@showecs > 0) {
       @showecs = map a({ -href => "https://metacyc.org/META/NEW-IMAGE?type=EC-NUMBER&object=EC-$_" }, $_), @showecs;
@@ -233,13 +242,13 @@ if (scalar(@$bhMetacyc) > 0) {
   my $row = $bhMetacyc->[0];
   my $acc = $row->{sprotAccession};
   print
-    h3("MetaCyc"),
-      p(
-        sprintf("%.0f%% similar to", $row->{identity}),
+      p("MetaCyc:",
+        sprintf("%.0f%% identical to", $row->{identity}),
         a({ href => "http://www.uniprot.org/uniprot/$acc" }, $acc) . ": " .
         join("; ", @showrxns)
        );
 }
+print "\n";
 
 # SEED information, if any
 my @show_classes = ();
@@ -251,7 +260,7 @@ foreach my $row (@$seed_classes) {
     my $text = ($type == 1 ? "EC " : "TC ").$num;
     push @show_classes, ($num =~ m/-/ ? $text
                          : a({-href => $url_pre . $num}, $text));
-    $ecall{$num} = 1 if $type == 1;
+    $ecall{$num}{"SEED"} = 1 if $type == 1;
 }
 my $subsysShow = "";
 if ($seed_desc) {
@@ -269,13 +278,10 @@ if ($seed_desc) {
 }
 
 print
-    h3("The SEED"),
-    p(defined $seed_desc ?  "Annotated as " . '"' . $seed_desc . '"' . $subsysShow : "No annotation"),
-    @show_classes > 0 ? p(join(", ", @show_classes)) : "",
-    p("or check the current SEED with",
-      # %0A encodes "\n" so that it looks like fasta input.
-      a({-href => "http://pubseed.theseed.org/FIG/seedviewer.cgi?page=FigFamViewer&fasta_seq=>${sys}%0A$seq"},
-        "FIGfam search"));
+    h3("Predicted SEED Role"),
+    p(defined $seed_desc ?  '"' . $seed_desc . '"' . $subsysShow : "No annotation",
+      @show_classes > 0 ? "(" . join(", ", @show_classes) . ")" : "");
+print "\n";
 
 # And add reannotated EC numbers to %ecall
 # (Above we already did TIGRFam, KEGG, SEED)
@@ -283,9 +289,88 @@ my $reannoEc = $dbh->selectcol_arrayref(qq{ SELECT ecnum FROM ReannotationEC
                                             WHERE orgId = ? AND locusId = ? },
                                         {}, $orgId, $locusId);
 foreach my $ec (@$reannoEc) {
-  $ecall{$ec} = 1;
+  $ecall{$ec}{"reanno"} = 1;
 }
 
+# Ok, now we have all the EC numbers, link to MetaCyc pathways and to KEGG maps
+# MetaCyc pathways
+my @ec = sort keys %ecall;
+# ecGenes will store the mapping of ec => hash of potential locusIds in this genome
+# This is both for isozymes and for other reactions in relevant pathways.
+my $ecGenes;
+
+if (@ec > 0 || keys(%metacycrxn) > 0) {
+  # Expand the list of potential MetaCyc reactions by using EC numbers
+  foreach my $ec (@ec) {
+    my $ecrxns = $dbh->selectcol_arrayref("SELECT rxnId FROM MetacycReactionEC WHERE ecnum = ?",
+                                          {}, $ec);
+    foreach my $rxnId (@$ecrxns) {
+      $metacycrxn{$rxnId} = 1;
+    }
+  }
+
+  # Find all relevant MetaCyc pathways, using MetacycPathwayReaction
+  my %pathways = (); # pathwayId => pathName
+  foreach my $rxnId (keys %metacycrxn) {
+    my $paths = $dbh->selectall_arrayref(qq{ SELECT pathwayId, pathwayName
+                                             FROM MetacycPathwayReaction JOIN MetacycPathway USING (pathwayId)
+                                             WHERE rxnId = ? },
+                                         {}, $rxnId);
+    foreach my $paths (@$paths) {
+      my ($pathId, $pathName) = @$paths;
+      $pathways{$pathId} = $pathName;
+    }
+  }
+
+  # List the EC numbers in those pathways
+  my %pathwayEC = (); # pathway => EC => 1 if present in genome, 0 otherwise
+  my %ec2 = %ecall;
+  foreach my $pathId (keys %pathways) {
+    my $ecs = $dbh->selectcol_arrayref(qq{ SELECT ecnum FROM MetacycPathwayReaction
+                                           JOIN MetacycReactionEC USING (rxnId)
+                                           WHERE pathwayId = ? },
+                                       {}, $pathId);
+    $pathwayEC{$pathId} = $ecs;
+    foreach my $ec (@$ecs) {
+      $ec2{$ec} = 1;
+    }
+  }
+
+  # Find all genes that may be mapped to those EC
+  my @ec2 = keys %ec2;
+  $ecGenes = Utils::EcToGenes($dbh, $orgId, \@ec2);
+
+  # Relevance of each pathway
+  my %pathCount = (); # pathId => [#reactions, #found, score ]
+  foreach my $pathId (keys %pathways) {
+      my $ecs = $pathwayEC{$pathId};
+      my $n = scalar(@$ecs);
+      my $nFound = 0;
+      foreach my $ec (@$ecs) {
+        $nFound++ if exists $ecGenes->{$ec} && scalar(keys %{ $ecGenes->{$ec} }) > 0;
+      }
+      # score is nFound - nMissing (higher is better)
+      $pathCount{$pathId} = [ $n, $nFound, $nFound - ($n-$nFound) ];
+  }
+  # sort by higher score, or by fewer missing, or by name (alphabetically)
+  my @path = sort { $pathCount{$b}[2] - $pathCount{$a}[2]
+                      || $pathCount{$a}[1] - $pathCount{$b}[1]
+                        || $pathways{$a} cmp $pathways{$b}
+                      }  keys %pathways;
+
+  # Show a list of links to pathways
+  my @pathList = ();
+  foreach my $pathId (@path) {
+    my ($n,$nFound) = @{ $pathCount{$pathId} };
+    push @pathList, li(a( {-href => "https://metacyc.org/META/NEW-IMAGE?type=PATHWAY&object=" . $pathId},
+                          $pathways{$pathId} ),
+                       "($nFound/$n steps found)");
+  }
+  print h3("MetaCyc Pathways"), start_ul(), join("\n", @pathList), end_ul(), "\n"
+    if @pathList > 0;
+}
+
+# KEGG maps
 if (keys(%ecall) > 0) {
     my @ec = sort keys %ecall;
 
@@ -304,13 +389,12 @@ if (keys(%ecall) > 0) {
                                  $mapdesc));
         }
         print
-            h3("Metabolic Maps"),
+            h3("KEGG Metabolic Maps"),
             "<ul>",
             join("", @rendered),
             "</ul>";
     }
 
-    my $ecGenes = Utils::EcToGenes($dbh, $orgId, \@ec);
     my @links = ();
     foreach my $ec (@ec) {
         my @iso = keys %{ $ecGenes->{$ec} };
@@ -367,6 +451,12 @@ print
                     "outform=-noshort",
                     "SEQ=>${sys}$newline$seq")},
         "TMHMM")),
+
+    p("Check the current SEED with",
+      # %0A encodes "\n" so that it looks like fasta input.
+      a({-href => "http://pubseed.theseed.org/FIG/seedviewer.cgi?page=FigFamViewer&fasta_seq=>${sys}%0A$seq"},
+        "FIGfam search")),
+
 
     h3("Protein Sequence ($seqLen amino acids)"),
     pre(">$sys $gene->{desc} ($orginfo->{$orgId}{genome})\n$seq"),
