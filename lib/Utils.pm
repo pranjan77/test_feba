@@ -842,8 +842,7 @@ sub alt_descriptions($$$) {
 sub gene_link {
   my ($dbh, $gene, $showParam, $cgiParam) = @_;
   die "Unrecognized $showParam" unless $showParam eq "name" || $showParam eq "desc";
-  die "Must specify cgi" unless defined $cgiParam;
-  $cgiParam = "singleFit.cgi" unless $cgiParam;
+  die "Must specify cgi" unless $cgiParam;
   my $desc = $gene->{desc};
   $desc =~ s/"//g;
   my $alt_desc = Utils::alt_descriptions($dbh,$gene->{orgId},$gene->{locusId});
@@ -855,7 +854,7 @@ sub gene_link {
     $desc_long .= "; $alt_desc" if $alt_desc;
   }
   $desc_long =~ s/&nbsp;//g;
-  my $show = $showParam eq "name" ? $gene->{sysName} || $gene->{locusId} : $gene->{desc} || "no description";
+  my $show = $showParam eq "name" ? $gene->{gene} || $gene->{sysName} || $gene->{locusId} : $gene->{desc} || "no description";
   return CGI::a({ -href => "$cgiParam?orgId=$gene->{orgId}&gene=$gene->{locusId}",
                   -title => $desc_long },
                 $show);
