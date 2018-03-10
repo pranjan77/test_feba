@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 #######################################################
-## pathway.cgi -- view MetaCyc pathway for an organism
+## pathway.cgi -- view MetaCyc pathway with candidate
+##	genes in that organism and fitness data
 ##
 ## Copyright (c) 2018 University of California
 ##

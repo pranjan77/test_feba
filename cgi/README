@@ -99,6 +99,7 @@ org.cgi -- links to experiments (exps.cgi), specific phenotypes (spec.cgi),
         reannotations (orgReanno.cgi),
 	metabolic maps (keggmap.cgi and keggmaplist.cgi),
         SEED subsystems (seedsubsystemsOrg.cgi),
+        MetaCyc pathways (pathwaysOrg.cgi)
         and downloads
         (createFitData.cgi, createCofitData.cgi, spec.cgi, createExpData.cgi, orgSeqs.cgi)
 spec.cgi -- specific phenotypes of a certain type for an organism
@@ -119,6 +120,7 @@ seedsubsystem.pl -- show all the genes in a subsystem
 seedsubsystemsOrg.cgi -- links to organism page and to
 	seedsubsystem.pl
 pathway.cgi -- show a metacyc pathway and candidate genes
-	links to organism page and to gene fitness page (myFitShow.cgi)
+	links to organism page, to gene fitness page (myFitShow.cgi),
+	and to strain data (strainTable.cgi)
 Dead pages:
 getSeq.cgi -- sequence of gene (if it is a protein)
