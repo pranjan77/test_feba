@@ -247,7 +247,7 @@ CREATE TABLE 'BestHitMetacyc' (
        PRIMARY KEY(orgId,locusId,rxnId)
 );
 CREATE INDEX 'BestHitMetacycByEC' ON BestHitMetacyc ('ecnum','orgId');
-CREATE INDEX 'BestHitMetacycByRxn' ON BestHitMetacyc ('rxnId','orgId');
+CREATE INDEX 'BestHitMetacycByRxn' ON BestHitMetacyc ('rxnId','orgId','locusId');
 
 /* No superpathways, at least for now */
 CREATE TABLE 'MetacycPathway' (
