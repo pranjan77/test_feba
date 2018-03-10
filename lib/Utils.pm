@@ -896,6 +896,38 @@ sub EcToGenes($$$) {
     return \%ecGenes;
 }
 
+# All EC assignments for an organism
+# Returns hashref of ecnum to locusId => 1
+sub EcToGenesAll($$) {
+    my ($dbh,$orgId) = @_;
+    my %ecGenes = (); # ecnum => locusId => 1
+    # match ECs by Reannotation, by TIGRFam, by KEGG ortholog group, and by SEED annotation
+    my $hits0 = $dbh->selectall_arrayref(
+        qq{ SELECT ecnum, locusId FROM ReannotationEC WHERE orgId = ? },
+        {}, $orgId);
+    my $hits1 = $dbh->selectall_arrayref(
+	qq{ SELECT ec, locusId FROM GeneDomain JOIN Gene USING (orgId,locusId)
+            WHERE orgId = ? AND ec <> "" },
+        {}, $orgId);
+    my $hits2 = $dbh->selectall_arrayref(
+        qq{ SELECT ecnum, locusId FROM KgroupEC JOIN KEGGMember USING (kgroup)
+            JOIN BestHitKEGG USING (keggOrg,keggId)
+            WHERE orgId = ? },
+        {}, $orgId);
+    my $hits3 = $dbh->selectall_arrayref(
+        qq{ SELECT num,locusId
+		FROM SEEDClass JOIN SEEDAnnotation USING (orgId,locusId)
+                WHERE orgId = ? AND type = 1 }, # type 1 means EC
+        {}, $orgId);
+    foreach my $hits ($hits0,$hits1,$hits2,$hits3) {
+        foreach my $row (@$hits) {
+            my ($ec,$locusId) = @$row;
+            $ecGenes{$ec}{$locusId} = 1;
+        }
+    }
+    return \%ecGenes;
+}
+
 #END 
 
 return 1;
