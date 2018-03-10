@@ -13,7 +13,8 @@
 # pathwayId -- which MetaCyc pathway
 #
 # Optional CGI parameters:
-# expName -- which experiment(s) to show fitness data from TODO
+# expName -- which experiment(s) to show fitness data from
+# addexp -- add experiment(s) which match this query
 
 use strict;
 use CGI qw(:standard Vars);
@@ -27,6 +28,8 @@ my $cgi=CGI->new;
 
 my $orgId = $cgi->param('orgId') || die "No orgId parameter";
 my $pathId = $cgi->param('pathwayId') || die "No pathwayId parameter";
+my @expNames = $cgi->param('expName');
+my $addexp = $cgi->param('addexp');
 
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
@@ -36,13 +39,45 @@ my ($pathwayName) = $dbh->selectrow_array("SELECT pathwayName FROM MetacycPathwa
                                           {}, $pathId);
 die "Unknown pathway: $pathId" unless defined $pathwayName;
 
+# Fetch metadata on experiments
+my %exps = map { $_->{expName} => $_ } @{ $dbh->selectall_arrayref("SELECT * FROM Experiment WHERE orgId = ?",
+                                                                   { Slice => {} }, $orgId) };
+
+if ($addexp) {
+  my %expSeen = map { $_ => 1 } @expNames;
+  my $addexps = Utils::matching_exps($dbh, $orgId, $addexp);
+  foreach my $exp (@$addexps) {
+    my $expName = $exp->{expName};
+    next if exists $expSeen{$expName};
+    $expSeen{$expName} = 1;
+    push @expNames, $expName;
+  }
+}
+
+my @exps = ();
+foreach my $expName (@expNames) {
+  die "Invalid expName $expName" unless $expName =~ m/^[a-zA-Z][a-zA-Z0-9_-]+$/;
+  die "Invalid expName $expName for org $orgId" unless exists $exps{$expName};
+  push @exps, $exps{$expName};
+}
+
 print
   header,
   Utils::start_page("MetaCyc Pathway: $pathwayName in $orginfo->{$orgId}{genome}"),
   h2("MetaCyc Pathway: ",
      a({ -href => "https://metacyc.org/META/NEW-IMAGE?type=PATHWAY&object=$pathId" }, $pathwayName),
      "in",
-     a({ -href => "org.cgi?orgId=$orgId" }, $orginfo->{$orgId}{genome}));
+     a({ -href => "org.cgi?orgId=$orgId" }, $orginfo->{$orgId}{genome})),
+  # the experiment selector
+  start_form(-name => 'input', -method => 'GET', -action => 'pathway.cgi'),
+  hidden( -name => 'orgId', -value => $orgId, -override => 1),
+  hidden( -name => 'pathwayId', -value => $pathId, -override => 1),
+  join("\n", map { hidden( -name => 'expName', -value => $_, -override => 1) } @expNames),
+  p({-class => "buttons", style=>"align:left; white-space:nowrap; line-height:40px;"}, "Add experiment(s): ",
+    textfield(-name => 'addexp', -default => "", -override => 1, -size => 20, -maxLength => 100),
+    submit('Add','Add') ),
+  end_form,
+  br();
 
 my $rxns = $dbh->selectall_arrayref(qq{ SELECT * FROM MetacycPathwayReaction
                                         JOIN MetacycReaction USING (rxnId)
@@ -94,7 +129,31 @@ foreach my $row (@$primary) {
   $primary{ $row->{rxnId} }{ $row->{compoundId} }{ $row->{side} } = 1;
 }
 
+my @trows = ();
+if (@exps > 0) {
+  # make a header row
+  my @hrow = ( th("Reactions and Genes") );
+  foreach my $exp (@exps) {
+    push @hrow, th(a( { -href => "exp.cgi?orgId=$orgId&expName=$exp->{expName}",
+                       -title => $exp->{expName} },
+                     $exp->{expDesc} ));
+  }
+  push @trows, Tr(@hrow)."\n";
+  # make a removal row
+  my @rmrow = ( td("") );
+  my $base = "pathway.cgi?orgId=$orgId&pathwayId=$pathId";
+  foreach my $expId (@expNames) {
+    my @expNames2 = grep { $_ ne $expId } @expNames;
+    my $URL = join("&", $base, map { "expName=$_" } @expNames2);
+    push @rmrow, td(a( { -href => $URL}, "remove"));
+  }
+  push @trows, Tr(@rmrow)."\n";
+}
+
+my $genestyle = "padding-left: 3em;"; # inset gene descriptions
+
 my %primaryShown = (); # compoundId => 1 if shown as primary already
+my $ncol = 1 + scalar(@expNames);
 foreach my $rxnId (@rxnIds) {
   my $rxn = $rxns{$rxnId};
   my $ecs = $dbh->selectcol_arrayref("SELECT ecnum FROM MetacycReactionEC WHERE rxnId = ?",
@@ -156,19 +215,43 @@ foreach my $rxnId (@rxnIds) {
   push @loci, sort @loci2;
 
   my %lociShown = (); # to ignore duplicates
-  my @showloci = ();
+  my @locirows = ();
   # show list of genes
   foreach my $locusId (@loci) {
     next if exists $lociShown{$locusId};
     $lociShown{$locusId} = 1;
     my $gene = $dbh->selectrow_hashref("SELECT * from Gene WHERE orgId = ? AND locusId = ?",
                                        {}, $orgId, $locusId);
-    push @showloci, Utils::gene_link($dbh, $gene, "name", "myFitShow.cgi");
+    my @generow = ();
+    push @generow, td({ -style => $genestyle }, Utils::gene_link($dbh, $gene, "name", "myFitShow.cgi"));
+    my $fitrows = $dbh->selectall_arrayref("SELECT expName,fit,t FROM GeneFitness WHERE orgId=? AND locusId=?",
+                                       {}, $orgId, $locusId);
+    my %fit = map { $_->[0] => $_ } @$fitrows;
+    foreach my $expName (@expNames) {
+      my $fitrow = $fit{$expName};
+      my ($fit,$t);
+      (undef,$fit,$t) = @$fitrow if defined $fitrow;
+      push @generow, td({ -bgcolor => Utils::fitcolor($fit) },
+                        a({ -href => "strainTable.cgi?orgId=$orgId&locusId=$locusId&expName=$expName",
+                            -title => defined $fitrow ? sprintf("t = %.1f", $t) : "No data",
+                            -style => "color:rgb(0,0,0)" },
+                          defined $fitrow ? sprintf("%.1f", $fit) : "&endash;"));
+    }
+    push @locirows, Tr(@generow);
   }
-
-  print p(b(a({ -href => "https://metacyc.org/META/NEW-IMAGE?type=REACTION&object=$rxnId"}, $rxnName)) . $reverse,
-          br(),
-          join(" + ", @left), "&rarr;", join(" + ", @right) . $spontaneous,
-          br(),
-         "Candidate genes: " . (@showloci > 0 ? join(", ", @showloci) : "none"));
+  push @trows, Tr(td({ -colspan => $ncol},
+                     a({ -href => "https://metacyc.org/META/NEW-IMAGE?type=REACTION&object=$rxnId"}, $rxnName)
+                     . $reverse . ":"
+                     . br()
+                     . join(" + ", @left) . "&rarr;" . join(" + ", @right)
+                     . $spontaneous));
+  if (@locirows > 0) {
+    push @trows, @locirows;
+  } else {
+    push @trows, Tr(td({ -style => $genestyle, -colspan => $ncol }, "No genes"));
+  }
 }
+print "\n", table( { cellspacing => 0, cellpadding => 3 }, @trows);
+$dbh->disconnect();
+Utils::endHtml($cgi);
+
