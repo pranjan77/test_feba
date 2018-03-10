@@ -136,6 +136,8 @@ print
     a( {href => "keggmaplist.cgi?orgId=$orgId"}, "list of maps")."."),
   h3("SEED Subsystems"),
   p(a({href => "seedsubsystemsOrg.cgi?orgId=$orgId"}, "See list")),
+  h3("MetaCyc Pathways"),
+  p(a{href => "pathwaysOrg.cgi?orgId=$orgId"}, "See list"),
   "\n";
       
 # No COUNT DISTINCT in sqlite3 so use GROUP BY as workaround
