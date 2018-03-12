@@ -312,6 +312,7 @@ CREATE TABLE 'MetacycCompound' (
        compoundName TEXT NOT NULL,
        keggLigand TEXT NOT NULL, /* may be empty */
        formula TEXT NOT NULL, /* may be empty */
+       isClass INT NOT NULL,
        PRIMARY KEY (compoundId)
 );
 CREATE INDEX 'MetacycCompoundByKEGGLigand' ON MetacycCompound('keggLigand','compoundId');

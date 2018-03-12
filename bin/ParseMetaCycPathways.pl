@@ -68,6 +68,27 @@ while (my $cmp = ParsePTools($fhc)) {
 close($fhc) || die "Error reading $indir/compounds.dat";
 print STDERR "Read " . scalar(keys %compounds) . " compounds\n";
 
+# Classes are hierarchical, so a compound class is not directly labelled as such --
+# one needs to infer that it is a compound by going up the hierarchy
+# (i.e. All-Carbohydrates has TYPES = Compounds and Glycans has TYPES = Carbohydrates.)
+# Instead, will just assume that it is a compound if a pathway or reaction refers to it
+my %classes = (); # id => hash that includes id, name and types (also a hash)
+open(my $fhcc, "<", "$indir/classes.dat")
+  || die "Cannot open $indir/classes.dat";
+while(my $cc = ParsePTools($fhcc)) {
+  my $id = $cc->{"UNIQUE-ID"}[0]{"value"};
+  die unless $id;
+  die "Duplicate class $id" if exists $classes{$id};
+  my %obj = ( "id" => $id, "types" => {}, "name" => "" );
+  foreach my $l (@{ $cc->{"TYPES"} }) {
+    $obj{"types"}{ $l->{"value"} } = 1;
+  }
+  $obj{"name"} = $cc->{"COMMON-NAME"}[0]{"value"}
+    if exists $cc->{"COMMON-NAME"};
+  $classes{$id} = \%obj;
+}
+close($fhcc) || die "Error reading $indir/classes.dat";
+
 my %path = (); # pathwayId => hash of pathwayName, reactions. Each reaction has
 #	fields rxnId, direction, isHypothetical, predecessor (a list of rxnIds), and primary (a list of [compoundId,side])
 my %dirToVal = ("NIL" => "", ":L2R" => 1, ":R2L" => -1);
@@ -97,8 +118,7 @@ while (my $path = ParsePTools($fhpath)) {
       unless defined $dir;
     my @lefts = split / +/, $lefts;
     my @rights = split / +/, $rights;
-    # Ideally these are present in the compounds table, but they could be compound classes, which
-    # are described in classes.dat and do not really have useful information.
+    # These should be present in the compounds table or the classes table
     my @both = @lefts;
     push @both, @rights;
     foreach my $id (@both) {
@@ -141,7 +161,11 @@ while (my $path = ParsePTools($fhpath)) {
 }
 close($fhpath) || die "Error reading $indir/pathways.dat";
 print STDERR "Read " . scalar(keys %path) . " base-level pathways with "
-  . scalar(keys %otherCompounds) . " unknown compounds (probably compound classes) and $nIgnoredPredecessor ignored predecessors\n";
+  . scalar(keys %otherCompounds) . " unknown compounds (classes?) and $nIgnoredPredecessor ignored predecessors\n";
+foreach my $id (keys %otherCompounds) { # this is rare
+  print STDERR "Warning: unknown compound $id is not a class\n"
+    unless exists $classes{$id};
+}
 
 # rxnId => hash of rxnId, rxnName, ecnum (a list), isSpontaneous, and compounds, which is a list of hashes of
 #	compoundId, side, coefficient, compartment
@@ -301,9 +325,11 @@ foreach my $rxnId (sort keys %rxn) {
   foreach my $cmp (@{ $rxn->{compounds} }) {
     print OUT join("\t", $rxnId,
                    $cmp->{"compoundId"}, $cmp->{"side"},
-                   $cmp->{"coefficient"}, $cmp->{"compartment"})."\n";
+                   $cmp->{"coefficient"}, $cmp->{"compartment"}
+                  )."\n";
   }
 }
+
 close(OUT) || die "Error writing to $out/MetacycReactionCompound.tab";
 
 open(OUT, ">", "$out/MetacycReactionEC.tab")
@@ -320,6 +346,13 @@ open(OUT, ">", "$out/MetacycCompound.tab")
   || die "Cannot write to $out/MetacycCompound.tab";
 foreach my $compoundId (sort keys %compounds) {
   my $cmp = $compounds{$compoundId};
-  print OUT join("\t", $compoundId, $cmp->{"compoundName"}, $cmp->{"keggLigand"}, $cmp->{"formula"})."\n";
+  print OUT join("\t", $compoundId,
+                 $cmp->{"compoundName"}, $cmp->{"keggLigand"}, $cmp->{"formula"},
+                0 # not a class
+                )."\n";
+}
+foreach my $id (sort keys %otherCompounds) {
+  print OUT join("\t", $id, $classes{$id}{"name"}, "", "", 1) . "\n"
+    if exists $classes{$id};
 }
 close(OUT) || die "Error writing to $out/MetacycCompound.tab";
