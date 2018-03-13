@@ -215,6 +215,18 @@ foreach my $rxnId (@rxnIds) {
   }
   push @loci, sort @loci2;
 
+  # And add SEED assignments via KEGG reaction ids
+  my $keggrxnId = $rxn->{keggrxnId};
+  if ($keggrxnId) {
+    my $loci3 = $dbh->selectcol_arrayref(qq{ SELECT DISTINCT locusId FROM SEEDReaction
+                                             JOIN SEEDRoleReaction USING (seedrxnId)
+                                             JOIN SeedAnnotationToRoles USING (seedrole)
+                                             JOIN SEEDAnnotation USING (seed_desc)
+                                             WHERE orgId = ? AND keggrxnId = ? },
+                                         {}, $orgId, $keggrxnId);
+    push @loci, sort @$loci3;
+  }
+
   my %lociShown = (); # to ignore duplicates
   my @locirows = ();
   # show list of genes
@@ -236,7 +248,7 @@ foreach my $rxnId (@rxnIds) {
                         a({ -href => "strainTable.cgi?orgId=$orgId&locusId=$locusId&expName=$expName",
                             -title => defined $fitrow ? sprintf("t = %.1f", $t) : "No data",
                             -style => "color:rgb(0,0,0)" },
-                          defined $fitrow ? sprintf("%.1f", $fit) : "&endash;"));
+                          defined $fitrow ? sprintf("%.1f", $fit) : ""));
     }
     push @locirows, Tr(@generow);
   }

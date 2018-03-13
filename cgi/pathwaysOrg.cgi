@@ -35,15 +35,21 @@ print
 
 
 # For each reaction that is in a pathway, find potential genes
-# by using EC numbers or BestHitMetacyc
+# by BestHitMetacyc, EC numbers, or SEED annotations (via links to KEGG reactions)
 
 my $rxn2path = $dbh->selectall_arrayref("SELECT rxnId, pathwayId FROM MetacycPathwayReaction");
 my %rxnInPath = map { $_->[0] => 1 } @$rxn2path;
-my $rxn2ec = $dbh->selectall_arrayref("SELECT rxnId, ecnum FROM MetacycReactionEC");
 my $rxn2locus = $dbh->selectall_arrayref("SELECT rxnId, locusId FROM BestHitMetacyc WHERE orgId = ?",
                                   {}, $orgId);
 
-# Fetch EC mappings
+my %rxnFound = (); # rxnId => 1 if found
+foreach my $row (@$rxn2locus) {
+  my ($rxnId,$locusId) = @$row;
+  $rxnFound{$rxnId} = 1;
+}
+
+# EC mappings
+my $rxn2ec = $dbh->selectall_arrayref("SELECT rxnId, ecnum FROM MetacycReactionEC");
 my %ec = ();
 foreach my $row (@$rxn2ec) {
   my ($rxnId,$ecnum) = @$row;
@@ -52,15 +58,22 @@ foreach my $row (@$rxn2ec) {
 my @ecs = keys %ec;
 my $ecGenes = Utils::EcToGenesAll($dbh, $orgId); # ec => locusId => 1
 
-my %rxnFound = (); # rxnId => 1 if found
-foreach my $row (@$rxn2locus) {
-  my ($rxnId,$locusId) = @$row;
-  $rxnFound{$rxnId} = 1;
-}
 foreach my $row (@$rxn2ec) {
   my ($rxnId,$ec) = @$row;
   $rxnFound{$rxnId} = 1 if exists $ecGenes->{$ec};
 }
+
+# SEED mappings
+my $rxnFoundSEED = $dbh->selectcol_arrayref(qq{ SELECT DISTINCT rxnId FROM SEEDAnnotation
+                                                 JOIN SEEDAnnotationToRoles USING (seed_desc)
+                                                 JOIN SEEDRoleReaction USING (seedrole)
+                                                 JOIN SEEDReaction USING (seedrxnId)
+                                                 JOIN MetacycReaction USING (keggrxnId)
+                                                 WHERE orgId = ? AND keggrxnId <> "" }, {}, $orgId);
+foreach my $rxnId (@$rxnFoundSEED) {
+  $rxnFound{$rxnId} = 1;
+}
+
 print p("Found candidate genes for ", scalar(keys %rxnFound), "reactions");
 
 my %pathRxns = ();
