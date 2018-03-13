@@ -2,11 +2,12 @@
 # A helper script for db_setup.pl -- populates KEGG related tables from besthit.kegg
 use strict;
 use Getopt::Long;
+use FindBin qw($Bin);
 
 my $db;
 my $dir = ".";
 my $usage = <<END
-Usage: db_setup.pl -db feba.db [ -dir $dir ] kegg_input_files
+Usage: db_setup_kegg.pl -db feba.db [ -dir $dir ] kegg_input_files
 	(or use standard input instead of a list of input files)
 
 Given output file(s) from KeggBestHit.pl and a sqlite3 database, populates
@@ -79,6 +80,16 @@ foreach my $table (qw{BestHitKEGG KEGGMember KgroupDesc KgroupEC}) {
     print SQLITE "DELETE from $table;\n";
     print SQLITE ".import $dir/db.$table $table\n";
 }
+
+# Also load the SEEDRoleReaction and SEEDReaction tables, which link
+# SEED roles to KEGG reaction ids
+print SQLITE <<END
+DELETE FROM SEEDRoleReaction;
+.import $Bin/../kegg/modelseed_role_reactions.tab SEEDRoleReaction
+DELETE FROM SEEDReaction;
+.import $Bin/../kegg/modelseed_reactions.tab SEEDReaction
+END
+;
 close(SQLITE) || die "Error running sqlite3 on $db";
 
 print STDERR "Done, removing temporary files\n";

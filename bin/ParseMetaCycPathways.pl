@@ -167,7 +167,7 @@ foreach my $id (keys %otherCompounds) { # this is rare
     unless exists $classes{$id};
 }
 
-# rxnId => hash of rxnId, rxnName, ecnum (a list), isSpontaneous, and compounds, which is a list of hashes of
+# rxnId => hash of rxnId, rxnName, ecnum (a list), isSpontaneous, keggrxnId, and compounds, which is a list of hashes of
 #	compoundId, side, coefficient, compartment
 my %rxn = ();
 open (my $fhr, "<", "$indir/reactions.dat")
@@ -177,7 +177,8 @@ while (my $rxn = ParsePTools($fhr)) {
   die "Missing UNIQUE-ID" unless $rxnId;
   die "Duplicate reaction id $rxnId" if exists $rxn{$rxnId};
 
-  my $obj = { "rxnId" => $rxnId, "ecnum" => [], "isSpontaneous" => 0, "compounds" => [] };
+  my $obj = { "rxnId" => $rxnId, "ecnum" => [], "isSpontaneous" => 0, "compounds" => [],
+              "keggrxnId" => "" };
 
   foreach my $l (@{ $rxn->{"EC-NUMBER"} }) {
     my $ec = $l->{"value"};
@@ -249,6 +250,15 @@ while (my $rxn = ParsePTools($fhr)) {
     push @{ $obj->{"compounds"} }, $l;
   }
 
+  # and identify a link to a KEGG reaction, if any
+  foreach my $l (@{ $rxn->{"DBLINKS"} }) {
+    my $link = $l->{"value"};
+    if ($link =~ m/^[(]LIGAND-RXN "([A-Z0-9]+)"/) {
+      $obj->{keggrxnId} = $1;
+      last;
+    }
+  }
+
   $rxn{$rxnId} = $obj;
 }
 close($fhr) || die "Error reading $indir/reactions.dat";
@@ -314,7 +324,7 @@ foreach my $rxnId (sort keys %rxn) {
   my $rxn = $rxn{$rxnId};
   my $name = $rxn->{"rxnName"}
     || join(",", @{ $rxn->{"ecnum"} });
-  print OUT join("\t", $rxnId, $name, $rxn->{"isSpontaneous"})."\n";
+  print OUT join("\t", $rxnId, $name, $rxn->{isSpontaneous}, $rxn->{keggrxnId})."\n";
 }
 close(OUT) || die "Error writing to $out/MetacycReaction.tab";
 
@@ -337,7 +347,7 @@ open(OUT, ">", "$out/MetacycReactionEC.tab")
 foreach my $rxnId (sort keys %rxn) {
   my $rxn = $rxn{$rxnId};
   foreach my $ecnum (@{ $rxn->{"ecnum"} }) {
-    print OUT join("\t", $rxnId, $ecnum)."\n";
+    print OUT join("\t", $rxnId, $ecnum)."\n" unless $ecnum =~ m/-/; # fully specified only
   }
 }
 close(OUT) || die "Error writing to $out/MetacycReactionEC.tab";

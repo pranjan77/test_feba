@@ -287,8 +287,10 @@ CREATE TABLE 'MetacycReaction' (
        rxnId TEXT NOT NULL,
        rxnName TEXT NOT NULL, /* may contain HTML tags or entities; may be a comment not a name */
        isSpontaneous INT NOT NULL,
+       keggrxnId TEXT NOT NULL, /* may be empty */
        PRIMARY KEY(rxnId)
 );
+CREATE INDEX 'MetacycReactionByKEGG' ON MetacycReaction('keggrxnId','rxnId');
 
 CREATE TABLE 'MetacycReactionCompound' (
        rxnId TEXT NOT NULL,
@@ -302,7 +304,7 @@ CREATE INDEX 'MetacycReactionCompoundByCompound' ON MetacycReactionCompound('com
 
 CREATE TABLE 'MetacycReactionEC' (
        rxnId TEXT NOT NULL,
-       ecnum TEXT NOT NULL, /* may include - (not fully specified) */
+       ecnum TEXT NOT NULL, /* fully specified only */
        PRIMARY KEY(rxnId,ecnum)
 );
 CREATE INDEX 'MetacycReactionECByEcnum' ON MetacycReactionEC('ecnum','rxnId');
@@ -408,6 +410,21 @@ CREATE TABLE SEEDAnnotationToRoles (
        PRIMARY KEY (seed_desc, seedrole)
 );
 CREATE INDEX 'SEEDAnnotationByRole' ON SEEDAnnotationToRoles ('seedrole', 'seed_desc');
+
+CREATE TABLE SEEDRoleReaction (
+	seedrole TEXT NOT NULL,
+        seedrxnId TEXT NOT NULL, /* from ModelSEED */
+        PRIMARY KEY (seedrole, seedrxnId)
+);
+CREATE INDEX 'SEEDRoleByReaction' ON SEEDRoleReaction('seedrxnId', 'seedrole');
+
+CREATE TABLE SEEDReaction (
+	seedrxnId TEXT NOT NULL,    /* from ModelSEED */
+        reactionname TEXT NOT NULL, /* often the same as the seedrxnId */
+        keggrxnId TEXT NOT NULL,    /* may be empty */
+        PRIMARY KEY (seedrxnId)
+);
+CREATE INDEX 'SEEDReactionByKEGG' ON SEEDReaction('keggrxnId','seedrxnId');
 
 /* KEGG Maps */
 CREATE TABLE ECInfo (
