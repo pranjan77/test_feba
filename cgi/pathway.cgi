@@ -271,6 +271,16 @@ foreach my $rxnId (@rxnIds) {
   }
 }
 print "\n", table( { cellspacing => 0, cellpadding => 3 }, @trows);
+
+print
+  p( start_form(-name => 'orgselect', -method => 'GET', -action => 'pathway.cgi'),
+     hidden( -name => 'pathwayId', -value => $pathId, -override => 1),
+     "Or select organism:",
+     Utils::OrgSelector($orgId, $orginfo),
+     "<button type='submit'>Go</button>",
+     end_form );
+
+
 $dbh->disconnect();
 Utils::endHtml($cgi);
 
