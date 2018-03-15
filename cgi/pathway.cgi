@@ -44,6 +44,7 @@ die "Unknown pathway: $pathId" unless defined $pathwayName;
 my %exps = map { $_->{expName} => $_ } @{ $dbh->selectall_arrayref("SELECT * FROM Experiment WHERE orgId = ?",
                                                                    { Slice => {} }, $orgId) };
 
+my @warnings = ();
 if ($addexp) {
   my %expSeen = map { $_ => 1 } @expNames;
   my $addexps = Utils::matching_exps($dbh, $orgId, $addexp);
@@ -53,6 +54,7 @@ if ($addexp) {
     $expSeen{$expName} = 1;
     push @expNames, $expName;
   }
+  push @warnings, qq{No experiments matching "$addexp"} if @$addexps == 0;
 }
 
 my @exps = ();
@@ -69,6 +71,7 @@ print
      a({ -href => "https://metacyc.org/META/NEW-IMAGE?type=PATHWAY&object=$pathId" }, $pathwayName),
      "in",
      a({ -href => "org.cgi?orgId=$orgId" }, $orginfo->{$orgId}{genome})),
+  p(join(br(), @warnings)),
   # the experiment selector
   start_form(-name => 'input', -method => 'GET', -action => 'pathway.cgi'),
   hidden( -name => 'orgId', -value => $orgId, -override => 1),
@@ -164,9 +167,11 @@ foreach my $rxnId (@rxnIds) {
                                      {}, $ecs->[0])
     if @$ecs > 0;
   my $rxnName = $rxn->{rxnName};
-  $rxnName = $ecdesc || $rxnId if $rxnName eq "" || $rxnName =~ m/^[0-9][.][0-9.,]+$/;
+  # Ignore reaction names that are just EC numbers
+  $rxnName = "" if $rxnName =~ m/^[0-9][.][0-9.,-]+$/;
+  $rxnName = $ecdesc if $rxnName eq "";
   $rxnName =~ s/[.]$//;
-  my $reverse = $rxn->{direction} == -1 ? " (in reverse)" : "";
+  $rxnName .= " (in reverse)" if $rxnName && $rxn->{direction} == -1;
 
   my @left = ();
   my @right = ();
@@ -185,12 +190,13 @@ foreach my $rxnId (@rxnIds) {
     my $compoundId = $row->{"compoundId"};
     # Some reactants are actually compound classes -- for those, just use the name.
     my $name = $row->{compoundName} || $compoundId;
-    my $color = "DarkGrey";
+    my $color = undef;
     if (exists $primary{$rxnId}{$compoundId}) {
-      $color = "Brown";
       $primaryShown{$compoundId} = 1;
+    } else {
+      $color = "DimGrey";
     }
-    $name = span({ style => "color: $color" }, $name);
+    $name = span({ style => "color: $color" }, $name) if defined $color;
     my $side = $rxn->{direction} * $row->{"side"};
     my $list = $side == -1 ? \@left : \@right;
     $name = $row->{coefficient} . " " . $name unless $row->{coefficient} eq "" || $row->{coefficient} eq "1";
@@ -253,10 +259,9 @@ foreach my $rxnId (@rxnIds) {
     push @locirows, Tr(@generow);
   }
   push @trows, Tr(td({ -colspan => $ncol},
-                     a({ -href => "https://metacyc.org/META/NEW-IMAGE?type=REACTION&object=$rxnId"}, $rxnName)
-                     . $reverse . ":"
-                     . br()
-                     . join(" + ", @left) . "&rarr;" . join(" + ", @right)
+                     a({ -href => "https://metacyc.org/META/NEW-IMAGE?type=REACTION&object=$rxnId"},
+                       ($rxnName ? $rxnName . ":" . br() : "")
+                       . join(" + ", @left) . "&rarr;" . join(" + ", @right))
                      . $spontaneous));
   if (@locirows > 0) {
     push @trows, @locirows;
