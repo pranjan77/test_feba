@@ -203,7 +203,7 @@ foreach my $rxnId (@rxnIds) {
     $name = $name . Sub("[" . lc($row->{compartment}) . "]") if $row->{compartment} ne "";
     push @$list, $name;
   }
-  my $spontaneous = $rxn->{isSpontaneous} ? " (spontaneous)" : "";
+  my $spontaneous = $rxn->{isSpontaneous} ? "(spontaneous)" : "";
 
   # And the gene(s) for this reaction
   # First, from BestHitMetacyc
@@ -261,8 +261,9 @@ foreach my $rxnId (@rxnIds) {
   push @trows, Tr(td({ -colspan => $ncol},
                      a({ -href => "https://metacyc.org/META/NEW-IMAGE?type=REACTION&object=$rxnId"},
                        ($rxnName ? $rxnName . ":" . br() : "")
-                       . join(" + ", @left) . "&rarr;" . join(" + ", @right))
-                     . $spontaneous));
+                       . join(" + ", @left) . "&rarr;" . join(" + ", @right)),
+                     $spontaneous,
+                     @$ecs > 0 ? "(EC " . join("; ", @$ecs) . ")" : ""));
   if (@locirows > 0) {
     push @trows, @locirows;
   } else {
