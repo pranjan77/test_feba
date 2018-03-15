@@ -89,22 +89,25 @@ while(my $cc = ParsePTools($fhcc)) {
 }
 close($fhcc) || die "Error reading $indir/classes.dat";
 
-my %path = (); # pathwayId => hash of pathwayName, reactions. Each reaction has
-#	fields rxnId, direction, isHypothetical, predecessor (a list of rxnIds), and primary (a list of [compoundId,side])
+my %path = (); # pathwayId => hash of pathwayName, subpathways, reactions, hypo_reactions, and predecessor
+# subpathways is a list of pathway ids
+# reactions is a hash of rxnId => hash with fields rxnId, direction, primary,
+#	where primary is a list of [compoundId,side]
+#	subpathways may also end up in the reaction list but these will be ignored later on.
+# hypo_reactions maps rxnId => 1
+# predecessor is a hash of rxnId to list of predecessor rxnIds
 my %dirToVal = ("NIL" => "", ":L2R" => 1, ":R2L" => -1);
 my %otherCompounds = ();
-my $nIgnoredPredecessor = 0;
 open (my $fhpath, "<", "$indir/pathways.dat")
   || die "Cannot open $indir/pathways.dat";
 while (my $path = ParsePTools($fhpath)) {
   my $pathwayId = $path->{"UNIQUE-ID"}[0]{"value"};
   die unless $pathwayId;
   die "Duplicate pathway $pathwayId" if exists $path{$pathwayId};
-
-  my %types = map { $_->{"value"} => 1 } @{ $path->{"TYPES"} };
-  next if exists $types{"Super-Pathways"}; # no superpathways
-
   my $pathwayName = $path->{"COMMON-NAME"}[0]{"value"} || "";
+  #my %types = map { $_->{"value"} => 1 } @{ $path->{"TYPES"} };
+  my %subpathways = ();
+  my %pred = ();
 
   # Parse REACTION-LAYOUT to get the reactions, then set up isHypothetical and predecessor(s)
   my %reactions = ();
@@ -128,43 +131,84 @@ while (my $path = ParsePTools($fhpath)) {
     push @primary, map [$_, +1], @rights;
     $reactions{$rxnId} = { "rxnId" => $rxnId,
                            "direction" => $dir,
-                           "isHypothetical" => 0,
-                           "predecessor" => [],
                            "primary" => \@primary };
   }
 
   foreach my $l (@{ $path->{"PREDECESSORS"} }) {
     my $string = $l->{"value"};
-    # sometimes a pathway is listed as a predecessor, isntead of relating a reaction to its predecessor
-    next unless $string =~ m/^[(]/;
-    $string =~ m/^[(]([^()]+)[)]$/ || die "Cannot parse PREDECESSORS for pathway $pathwayId: $string";
-    my @pre = split / +/, $1;
-    my $rxnId = shift @pre;
-    if (!exists $reactions{$rxnId}) {
-      $nIgnoredPredecessor++;
+    # a pathway can be listed as a predecessor; this means incorporate all predecessors from that pathway
+    if ($string =~ m/^[A-Z0-9+-]+$/) {
+      $subpathways{$string} = 1;
     } else {
-      foreach my $pre (@pre) {
-        # sometimes reactions outside of the pathway are listed as predecessors
-        push @{ $reactions{$rxnId}{"predecessor"} }, $pre;
-      }
+      $string =~ m/^[(]([^()]+)[)]$/ || die "Cannot parse PREDECESSORS for pathway $pathwayId: $string";
+      my @pre = split / +/, $1;
+      my $rxnId = shift @pre;
+      push @{ $pred{$rxnId} }, @pre;
     }
   }
 
+  my %hypo_reactions = ();
   foreach my $l (@{ $path->{"HYPOTHETICAL-REACTIONS"} }) {
     my $rxnId = $l->{"value"};
-    die "Hypothetical reaction $rxnId not in layout" unless exists $reactions{$rxnId};
-    $reactions{$rxnId}{"isHypothetical"} = 1;
+    $hypo_reactions{$rxnId} = 1;
   }
 
+  foreach my $l (@{ $path->{"SUB-PATHWAYS"} }) {
+    $subpathways{ $l->{value} } = 1;
+  }
+  my @subpathways = sort keys %subpathways;
+
   my @reactions = sort { $a->{"rxnId"} cmp $b->{"rxnId"} } values(%reactions);
-  $path{$pathwayId} = { "pathwayName" => $pathwayName, "reactions" => \@reactions };
+  $path{$pathwayId} = { "pathwayName" => $pathwayName,
+                        "reactions" => \@reactions,
+                        "subpathways" => \@subpathways,
+                        "hypo_reactions" => \%hypo_reactions,
+                        "predecessor" => \%pred };
 }
 close($fhpath) || die "Error reading $indir/pathways.dat";
 print STDERR "Read " . scalar(keys %path) . " base-level pathways with "
-  . scalar(keys %otherCompounds) . " unknown compounds (classes?) and $nIgnoredPredecessor ignored predecessors\n";
+  . scalar(keys %otherCompounds) . " unknown compounds (classes?)\n";
 foreach my $id (keys %otherCompounds) { # this is rare
   print STDERR "Warning: unknown compound $id is not a class\n"
     unless exists $classes{$id};
+}
+
+# Recursively expand subpathways
+my %path_expanded = (); # pathway => subpathway => 1 if already incorporated
+for(;;) {
+  my $nChange = 0;
+  while (my ($pathId, $path) = each %path) {
+    foreach my $subId (@{ $path->{subpathways} }) {
+      next if exists $path_expanded{$pathId}{$subId};
+      # In principle, only actual pathways should end up in this list,
+      # but this is not always followed;
+      next unless exists $path{$subId};
+      my $sub = $path{$subId};
+      my $grandIds = $sub->{subpathways};
+      # only expand sub into path if sub is fully expanded already
+      my $fully = 1;
+      foreach my $grandId (@$grandIds) {
+        $fully = 0 if exists $path{$grandId} && !exists $path_expanded{$subId}{$grandId};
+      }
+      if ($fully) {
+        # expand sub into path:
+        $path_expanded{$pathId}{$subId} = 1;
+        $nChange++;
+        # Add all the reactions
+        push @{ $path->{reactions} }, @{ $sub->{reactions} };
+        # Add all the predecessor relationships
+        while (my ($rxnId, $pre) = each %{ $sub->{predecessor} }) {
+          push @{ $path->{predecessor}{$rxnId} }, @$pre;
+        }
+        # Add isHypothetical (not sure if this is necessary, it may be represented in the parent already)
+        foreach my $rxnId (keys %{ $sub->{hypo_reactions} }) {
+          $path->{hypo_reactions}{$rxnId} = 1;
+        }
+      }
+    }
+  }
+  print STDERR "Expanded $nChange subpathways\n" if $nChange > 0;
+  last if $nChange == 0;
 }
 
 # rxnId => hash of rxnId, rxnName, ecnum (a list), isSpontaneous, keggrxnId, and compounds, which is a list of hashes of
@@ -276,8 +320,17 @@ open(OUT, ">", "$out/MetacycPathwayReaction.tab")
   || die "Cannot write to $out/MetacycPathwayReaction.tab";
 foreach my $pathwayId (sort keys %path) {
   my $path = $path{$pathwayId};
+  # A super-pathway can include a reaction multiple times -- just ignore repeats
+  my %seen = (); # rxnId => 1
   foreach my $rxn (@{ $path->{"reactions"} }) {
-    print OUT join("\t", $pathwayId, $rxn->{"rxnId"}, $rxn->{"direction"}, $rxn->{"isHypothetical"})."\n";
+    my $rxnId = $rxn->{rxnId};
+    next if exists $path{$rxnId};
+    next if exists $seen{$rxnId};
+    $seen{$rxnId} = 1;
+    die "Pathway $pathwayId includes non-reaction non-pathway $rxnId"
+      unless exists $rxn{$rxnId};
+    print OUT join("\t", $pathwayId, $rxn->{"rxnId"}, $rxn->{"direction"},
+                   exists $path->{hypo_reactions}{ $rxn->{rxnId} } ? 1 : 0)."\n";
   }
 }
 close(OUT) || die "Error writing to $out/MetacycPathwayReaction.tab";
@@ -286,15 +339,17 @@ open(OUT, ">", "$out/MetacycPathwayReactionPredecessor.tab")
   || die "Cannot write to $out/MetacycPathwayReactionPredecessor.tab";
 foreach my $pathwayId (sort keys %path) {
   my $path = $path{$pathwayId};
-  foreach my $rxn (@{ $path->{"reactions"} }) {
-    my $rxnId = $rxn->{"rxnId"};
-    # ensure that duplicate predecessors are not written
-    # (do not think they are meaningful)
+  my $pred = $path->{predecessor};
+  foreach my $rxnId (sort keys %{ $path->{predecessor} }) {
+    next if exists $path{$rxnId};
+    die "Pathway $pathwayId has predecessors for non-reaction non-pathway $rxnId"
+      unless exists $rxn{$rxnId};
+    # ensure that duplicate predecessors are not written (they are not meaningful)
     my %seen = (); # pre => 1
-    foreach my $pre (@{ $rxn->{"predecessor"} }) {
-      next if exists $seen{$pre};
-      print OUT join("\t", $pathwayId, $rxnId, $pre)."\n";
-      $seen{$pre} = 1;
+    foreach my $predId (sort @{ $path->{predecessor}{$rxnId} }) {
+      next if exists $seen{$predId};
+      $seen{$predId} = 1;
+      print OUT join("\t", $pathwayId, $rxnId, $predId)."\n";
     }
   }
 }
@@ -304,7 +359,14 @@ open(OUT, ">", "$out/MetacycPathwayPrimaryCompound.tab")
   || die "Cannot write to $out/MetacycPathwayPrimaryCompound.tab";
 foreach my $pathwayId (sort keys %path) {
   my $path = $path{$pathwayId};
+  my %seenRxn = (); # rxnId => 1 # ignore duplicates of reactions
   foreach my $rxn (@{ $path->{"reactions"} }) {
+    my $rxnId = $rxn->{rxnId};
+    next if exists $path{$rxnId};
+    die "Pathway $pathwayId has non-reaction non-pathway component $rxnId"
+      unless exists $rxn{$rxnId};
+    next if exists $seenRxn{$rxnId};
+    $seenRxn{$rxnId} = 1;
     # prevent duplicates, even though they may be deliberate in some biosynthetic pathways as a
     # hacked way to show the requirement for >1 molecule
     my %seen = (); # compound => side => 1
