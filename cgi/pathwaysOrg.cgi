@@ -48,6 +48,10 @@ foreach my $row (@$rxn2locus) {
   $rxnFound{$rxnId} = 1;
 }
 
+my $rxnSponteaneous = $dbh->selectcol_arrayref("SELECT rxnId FROM MetacycReaction WHERE isSpontaneous = 1");
+# rxnId => 1 if spontaenous
+my %rxnSponteaneous = map { $_ => 1 } @$rxnSponteaneous;
+
 # EC mappings
 my $rxn2ec = $dbh->selectall_arrayref("SELECT rxnId, ecnum FROM MetacycReactionEC");
 my %ec = ();
@@ -90,7 +94,7 @@ foreach my $pathId (keys %pathRxns) {
   $pathSize{$pathId} = scalar(@$rxns);
   my $nFound = 0;
   foreach my $rxnId (@$rxns) {
-    $nFound++ if exists $rxnFound{$rxnId};
+    $nFound++ if exists $rxnFound{$rxnId} || exists $rxnSponteaneous{$rxnId};
   }
   $pathFound{$pathId} = $nFound;
   $pathScore{$pathId} = Utils::MetacycPathwayScore($pathSize{$pathId}, $nFound);
