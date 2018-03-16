@@ -770,12 +770,16 @@ sub ExpToPubId($$$);
     # Load the reannotation information
     if (defined $reannofile) {
         if (defined $dbfile) {
-            my @reannocmd = ("$Bin/db_update_reanno.pl", "-reanno", $reannofile, "-db", $dbfile);
+            my @reannocmd = ("$Bin/db_update_reanno.pl", "-nometacyc", "-reanno", $reannofile, "-db", $dbfile);
             system(@reannocmd) == 0 || die "Error running\n" . join(" ", @reannocmd) . "\n: $!";
         } else {
             print STDERR "Ignoring -reanno $reannofile because no database specified.\n";
         }
     }
+
+    # Compute MetaCyc pathway coverage
+    my @covercmd = ("$Bin/db_update_metacyc_coverage.pl", "-db", $dbfile);
+    system(@covercmd) == 0 || die "Error running " . join(" ", @covercmd) . "\n: $!";
 
     if (defined $outdir) {
         # Make the BLAST database
@@ -799,7 +803,7 @@ sub ExpToPubId($$$);
     }
 
     print STDERR "Success\n";
-}        
+}
 
 sub StartWorkFile($$) {
     my ($table,$file) = @_;
