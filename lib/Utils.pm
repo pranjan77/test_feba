@@ -928,6 +928,62 @@ sub EcToGenesAll($$) {
     return \%ecGenes;
 }
 
+# the two arguments are the #steps in the pathway
+# and the #steps with candidates
+sub MetacycPathwayScore($$) {
+  my ($nSteps, $nFound) = @_;
+  return $nFound - ($nSteps - $nFound) * 2.5;
+}
+
+# Given an organism and a metacyc pathway, find candidate genes
+# via BestHitMetacyc, SEED roles to reactions, or EC number.
+# Returns a hash of
+# rxnId => {isSpontaneous => 0 or 1, loci => list of locusIds }
+# Every reaction in the pathway is included, and for any given reaction,
+# each element of loci is unique
+sub MetacycPathwayCandidates($$$) {
+  my ($dbh, $orgId, $pathId) = @_;
+  my $rxns = $dbh->selectall_arrayref(qq{ SELECT rxnId, keggrxnId, isSpontaneous FROM MetacycPathwayReaction
+                                          JOIN MetacycReaction USING (rxnId)
+                                          WHERE pathwayId = ? },
+                                      {}, $pathId);
+  my %out = ();
+  foreach my $row (@$rxns) {
+    my ($rxnId, $keggrxnId, $isSpontaneous) = @$row;
+    my $bh = $dbh->selectall_arrayref("SELECT * from BestHitMetacyc WHERE rxnId = ? AND orgId = ?",
+                                      { Slice => {} }, $rxnId, $orgId);
+    my @loci = map { $_->{locusId} } @$bh;
+
+    if ($keggrxnId) {
+      my $loci = $dbh->selectcol_arrayref(qq{ SELECT DISTINCT locusId FROM SEEDReaction
+                                               JOIN SEEDRoleReaction USING (seedrxnId)
+                                               JOIN SeedAnnotationToRoles USING (seedrole)
+                                               JOIN SEEDAnnotation USING (seed_desc)
+                                               WHERE orgId = ? AND keggrxnId = ? },
+                                           {}, $orgId, $keggrxnId);
+      push @loci, sort @$loci;
+    }
+
+    my @lociEc = ();
+    my $ecs = $dbh->selectcol_arrayref("SELECT ecnum FROM MetacycReactionEC WHERE rxnId = ?",
+                                       {}, $rxnId);
+    my $ecGenes = Utils::EcToGenes($dbh, $orgId, $ecs); # ec => locusId => 1
+    while (my ($ec, $hash) = each %$ecGenes) {
+      push @lociEc, keys %$hash;
+    }
+    push @loci, sort @lociEc;
+
+    my @uniq = ();
+    my %seen = ();
+    foreach my $locusId (@loci) {
+      push @uniq, $locusId unless exists $seen{$locusId};
+      $seen{$locusId} = 1;
+    }
+    $out{$rxnId} = { "isSpontaneous" => $isSpontaneous, "loci" => \@uniq };
+  }
+  return \%out;
+}
+
 #END 
 
 return 1;

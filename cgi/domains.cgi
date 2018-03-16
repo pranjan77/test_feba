@@ -17,6 +17,7 @@ use strict;
 use CGI qw(:standard Vars start_ul);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
+use IO::Handle; # for autoflush
 use Bio::SeqIO;
 
 use lib "../lib";
@@ -135,6 +136,8 @@ if (@$cond == 0) {
     }
     print table({cellspacing => 0, cellpadding => 3}, @trows);
 }
+autoflush STDOUT 1; # so preliminary results appear
+print "\n";
 
 print h3("Best Hits");
 
@@ -292,23 +295,31 @@ foreach my $ec (@$reannoEc) {
   $ecall{$ec}{"reanno"} = 1;
 }
 
-# Ok, now we have all the EC numbers, link to MetaCyc pathways and to KEGG maps
-# MetaCyc pathways
-my @ec = sort keys %ecall;
-# ecGenes will store the mapping of ec => hash of potential locusIds in this genome
-# This is both for isozymes and for other reactions in relevant pathways.
-my $ecGenes;
+# Also link to metacyc reactions via SEED roles
+my $rxnsFromSEED = $dbh->selectcol_arrayref(qq{ SELECT rxnId FROM SEEDAnnotation
+                                           JOIN SEEDAnnotationToRoles USING (seed_desc)
+                                           JOIN SeedRoleReaction USING (seedrole)
+                                           JOIN SEEDReaction USING (seedrxnId)
+                                           JOIN MetacycReaction USING (keggrxnId)
+                                           WHERE orgId = ? AND locusId = ? },
+                                            {}, $orgId, $locusId);
+foreach my $rxnId (@$rxnsFromSEED) {
+  $metacycrxn{$rxnId} = 1;
+}
 
-if (@ec > 0 || keys(%metacycrxn) > 0) {
-  # Expand the list of potential MetaCyc reactions by using EC numbers
-  foreach my $ec (@ec) {
-    my $ecrxns = $dbh->selectcol_arrayref("SELECT rxnId FROM MetacycReactionEC WHERE ecnum = ?",
-                                          {}, $ec);
-    foreach my $rxnId (@$ecrxns) {
-      $metacycrxn{$rxnId} = 1;
-    }
+# And expand the list of potential MetaCyc reactions by using EC numbers
+foreach my $ec (keys %ecall) {
+  my $ecrxns = $dbh->selectcol_arrayref("SELECT rxnId FROM MetacycReactionEC WHERE ecnum = ?",
+                                        {}, $ec);
+  foreach my $rxnId (@$ecrxns) {
+    $metacycrxn{$rxnId} = 1;
   }
+}
 
+# Now that we have all the EC numbers and the potential MetaCyc reactions --
+# link to MetaCyc pathways and to KEGG maps
+
+if (keys(%metacycrxn) > 0) {
   # Find all relevant MetaCyc pathways, using MetacycPathwayReaction
   my %pathways = (); # pathwayId => pathName
   foreach my $rxnId (keys %metacycrxn) {
@@ -322,35 +333,16 @@ if (@ec > 0 || keys(%metacycrxn) > 0) {
     }
   }
 
-  # List the EC numbers in those pathways
-  my %pathwayEC = (); # pathway => EC => 1 if present in genome, 0 otherwise
-  my %ec2 = %ecall;
-  foreach my $pathId (keys %pathways) {
-    my $ecs = $dbh->selectcol_arrayref(qq{ SELECT ecnum FROM MetacycPathwayReaction
-                                           JOIN MetacycReactionEC USING (rxnId)
-                                           WHERE pathwayId = ? },
-                                       {}, $pathId);
-    $pathwayEC{$pathId} = $ecs;
-    foreach my $ec (@$ecs) {
-      $ec2{$ec} = 1;
-    }
-  }
-
-  # Find all genes that may be mapped to those EC
-  my @ec2 = keys %ec2;
-  $ecGenes = Utils::EcToGenes($dbh, $orgId, \@ec2);
-
   # Relevance of each pathway
   my %pathCount = (); # pathId => [#reactions, #found, score ]
   foreach my $pathId (keys %pathways) {
-      my $ecs = $pathwayEC{$pathId};
-      my $n = scalar(@$ecs);
-      my $nFound = 0;
-      foreach my $ec (@$ecs) {
-        $nFound++ if exists $ecGenes->{$ec} && scalar(keys %{ $ecGenes->{$ec} }) > 0;
-      }
-      # score is nFound - nMissing (higher is better)
-      $pathCount{$pathId} = [ $n, $nFound, $nFound - ($n-$nFound) ];
+    my $cands = Utils::MetacycPathwayCandidates($dbh, $orgId, $pathId);
+    my $nSteps = scalar(keys %$cands);
+    my $nFound = 0;
+    while (my ($rxnId, $hash) = each %$cands) {
+      $nFound++ if $hash->{isSpontaneous} || @{ $hash->{loci} } > 0;
+    }
+    $pathCount{$pathId} = [ $nSteps, $nFound, Utils::MetacycPathwayScore($nSteps,$nFound) ];
   }
   # sort by higher score, or by fewer missing, or by name (alphabetically)
   my @path = sort { $pathCount{$b}[2] - $pathCount{$a}[2]
@@ -369,8 +361,9 @@ if (@ec > 0 || keys(%metacycrxn) > 0) {
   print h3("MetaCyc Pathways"), start_ul(), join("\n", @pathList), end_ul(), "\n"
     if @pathList > 0;
 }
+print "\n";
 
-# KEGG maps
+# KEGG maps and isozymes
 if (keys(%ecall) > 0) {
     my @ec = sort keys %ecall;
 
@@ -396,6 +389,8 @@ if (keys(%ecall) > 0) {
     }
 
     my @links = ();
+    my $ecGenes = Utils::EcToGenes($dbh, $orgId, \@ec);
+
     foreach my $ec (@ec) {
         my @iso = keys %{ $ecGenes->{$ec} };
         my @iso2 = grep { $_ ne $locusId } @iso;
@@ -410,6 +405,7 @@ if (keys(%ecall) > 0) {
         scalar(@links) > 0 ? p("Compare fitness of isozymes for:", join(", ", @links))
         : "No predicted isozymes";
 }
+print "\n";
 
 # print sequence
 $seq =~ s/(.{60})/$1\n/gs;

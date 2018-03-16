@@ -84,7 +84,7 @@ foreach my $row (@$rxn2path) {
 
 my %pathFound = ();
 my %pathSize = ();
-my %pathScore = (); # nFound - nMissing = 2 * nFound - size
+my %pathScore = ();
 foreach my $pathId (keys %pathRxns) {
   my $rxns = $pathRxns{$pathId};
   $pathSize{$pathId} = scalar(@$rxns);
@@ -93,7 +93,7 @@ foreach my $pathId (keys %pathRxns) {
     $nFound++ if exists $rxnFound{$rxnId};
   }
   $pathFound{$pathId} = $nFound;
-  $pathScore{$pathId} = $nFound * 2 - $pathSize{$pathId};
+  $pathScore{$pathId} = Utils::MetacycPathwayScore($pathSize{$pathId}, $nFound);
 }
 
 my $rxnname = $dbh->selectall_arrayref("SELECT pathwayId, pathwayName FROM MetacycPathway");

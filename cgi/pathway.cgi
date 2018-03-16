@@ -158,8 +158,11 @@ my $genestyle = "padding-left: 3em;"; # inset gene descriptions
 
 my %primaryShown = (); # compoundId => 1 if shown as primary already
 my $ncol = 1 + scalar(@expNames);
+# rxnId => {isSpontaneous => 0 or 1, loci => list of locusIds }
+my $cands = Utils::MetacycPathwayCandidates($dbh, $orgId, $pathId);
 foreach my $rxnId (@rxnIds) {
   my $rxn = $rxns{$rxnId};
+  my $loci = $cands->{$rxnId}{loci};
   my $ecs = $dbh->selectcol_arrayref("SELECT ecnum FROM MetacycReactionEC WHERE rxnId = ?",
                                     {}, $rxnId);
   my $ecdesc = "";
@@ -205,40 +208,9 @@ foreach my $rxnId (@rxnIds) {
   }
   my $spontaneous = $rxn->{isSpontaneous} ? "(spontaneous)" : "";
 
-  # And the gene(s) for this reaction
-  # First, from BestHitMetacyc
-  my $bh = $dbh->selectall_arrayref("SELECT * from BestHitMetacyc WHERE rxnId = ? AND orgId = ?",
-                                    { Slice => {} }, $rxnId, $orgId);
-  my @loci = map { $_->{locusId} } @$bh;
-
-  # And add EC assignments
-  my $ecGenes = Utils::EcToGenes($dbh, $orgId, $ecs); # ec => locusId => 1
-  my @loci2 = ();
-  while (my ($ec, $hash) = each %$ecGenes) {
-    foreach my $locusId (keys %$hash) {
-      push @loci2, $locusId;
-    }
-  }
-  push @loci, sort @loci2;
-
-  # And add SEED assignments via KEGG reaction ids
-  my $keggrxnId = $rxn->{keggrxnId};
-  if ($keggrxnId) {
-    my $loci3 = $dbh->selectcol_arrayref(qq{ SELECT DISTINCT locusId FROM SEEDReaction
-                                             JOIN SEEDRoleReaction USING (seedrxnId)
-                                             JOIN SeedAnnotationToRoles USING (seedrole)
-                                             JOIN SEEDAnnotation USING (seed_desc)
-                                             WHERE orgId = ? AND keggrxnId = ? },
-                                         {}, $orgId, $keggrxnId);
-    push @loci, sort @$loci3;
-  }
-
-  my %lociShown = (); # to ignore duplicates
   my @locirows = ();
   # show list of genes
-  foreach my $locusId (@loci) {
-    next if exists $lociShown{$locusId};
-    $lociShown{$locusId} = 1;
+  foreach my $locusId (@$loci) {
     my $gene = $dbh->selectrow_hashref("SELECT * from Gene WHERE orgId = ? AND locusId = ?",
                                        {}, $orgId, $locusId);
     my @generow = ();
