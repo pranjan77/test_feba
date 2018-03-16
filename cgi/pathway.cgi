@@ -182,7 +182,7 @@ foreach my $rxnId (@rxnIds) {
     if @$ecs > 0;
   my $rxnName = $rxn->{rxnName};
   # Ignore reaction names that are just EC numbers
-  $rxnName = "" if $rxnName =~ m/^[0-9][.][0-9.,-]+$/;
+  $rxnName = "" if $rxnName =~ m/^[0-9][.][0-9]+[.]/;
   $rxnName = $ecdesc if $rxnName eq "";
   $rxnName =~ s/[.]$//;
   $rxnName .= " (in reverse)" if $rxnName && $rxn->{direction} == -1;
