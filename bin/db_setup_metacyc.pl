@@ -23,7 +23,7 @@ Usage: db_setup_metacyc.pl [ -db db_file_name ] [ -dir $dir ] org1 ... orgN
 Given the output files from rap search (in
 g/blast_results/metacyc_*.m8), the metacyc ids (in the -ids file)
 
- and he metacyc ids and various metacyc files (in the -in directory),
+and the metacyc ids and various metacyc files (in the -in directory),
 populates the MetaCyc-related tables. Will delete any existing data in
 those tables, but the tables must already exist.
 
@@ -135,6 +135,10 @@ if (defined $db) {
       print SQLITE ".import $ind/$table.tab $table\n";
     }
     close(SQLITE) || die "Error running sqlite3 on $db";
+
+    # This table is filled by db_update_metacyc_coverage.pl
+    print SQLITE "DELETE FROM MetacycPathwayCoverage;";
+
     print "Successfully loaded into $db -- deleting the db.* files\n";
     unlink("$dir/db.BestHitMetacyc");
 }

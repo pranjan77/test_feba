@@ -282,6 +282,15 @@ CREATE TABLE 'MetacycPathwayPrimaryCompound' (
        PRIMARY KEY (pathwayId, rxnId, compoundId, side)
 );
 
+CREATE TABLE 'MetacycPathwayCoverage' (
+       /* only org / pathway combinations with at least 1 candidate gene are included */
+       orgId TEXT NOT NULL,
+       pathwayId TEXT NOT NULL,
+       nSteps INT NOT NULL,
+       nFound INT NOT NULL, /* either with candidate gene(s) or spontaenous */
+       PRIMARY KEY (orgId, pathwayId)
+);
+
 /* All valid reactions should appear in this table */
 CREATE TABLE 'MetacycReaction' (
        rxnId TEXT NOT NULL,

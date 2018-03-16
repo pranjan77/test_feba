@@ -321,42 +321,33 @@ foreach my $ec (keys %ecall) {
 
 if (keys(%metacycrxn) > 0) {
   # Find all relevant MetaCyc pathways, using MetacycPathwayReaction
-  my %pathways = (); # pathwayId => pathName
+  my %pathways = (); # pathwayId => pathway object
   foreach my $rxnId (keys %metacycrxn) {
-    my $paths = $dbh->selectall_arrayref(qq{ SELECT pathwayId, pathwayName
-                                             FROM MetacycPathwayReaction JOIN MetacycPathway USING (pathwayId)
-                                             WHERE rxnId = ? },
-                                         {}, $rxnId);
-    foreach my $paths (@$paths) {
-      my ($pathId, $pathName) = @$paths;
-      $pathways{$pathId} = $pathName;
+    my $paths = $dbh->selectall_arrayref(qq{ SELECT pathwayId, pathwayName, nFound, nSteps
+                                             FROM MetacycPathwayReaction
+                                             JOIN MetacycPathway USING (pathwayId)
+                                             JOIN MetacycPathwayCoverage USING (pathwayId)
+                                             WHERE rxnId = ? AND orgId = ? },
+                                         { Slice => {} }, $rxnId, $orgId);
+    foreach my $path (@$paths) {
+      $pathways{ $path->{pathwayId} } = $path;
     }
   }
-
-  # Relevance of each pathway
-  my %pathCount = (); # pathId => [#reactions, #found, score ]
-  foreach my $pathId (keys %pathways) {
-    my $cands = Utils::MetacycPathwayCandidates($dbh, $orgId, $pathId);
-    my $nSteps = scalar(keys %$cands);
-    my $nFound = 0;
-    while (my ($rxnId, $hash) = each %$cands) {
-      $nFound++ if $hash->{isSpontaneous} || @{ $hash->{loci} } > 0;
-    }
-    $pathCount{$pathId} = [ $nSteps, $nFound, Utils::MetacycPathwayScore($nSteps,$nFound) ];
+  foreach my $path (values %pathways) {
+    $path->{score} = Utils::MetacycPathwayScore($path->{nSteps}, $path->{nFound});
   }
-  # sort by higher score, or by fewer missing, or by name (alphabetically)
-  my @path = sort { $pathCount{$b}[2] - $pathCount{$a}[2]
-                      || $pathCount{$a}[1] - $pathCount{$b}[1]
-                        || $pathways{$a} cmp $pathways{$b}
-                      }  keys %pathways;
+  my @path = sort { $b->{score} <=> $a->{score}
+                      || $a->{nSteps} <=> $b->{nSteps}
+                        || $a->{pathwayName} cmp $b->{pathwayName} } values %pathways;
 
-  # Show a list of links to pathways
   my @pathList = ();
-  foreach my $pathId (@path) {
-    my ($n,$nFound) = @{ $pathCount{$pathId} };
+  foreach my $path (@path) {
+    my $pathId = $path->{pathwayId};
+    my $nFound = $path->{nFound};
+    my $nSteps = $path->{nSteps};
     push @pathList, li(a( {-href => "pathway.cgi?orgId=$orgId&pathwayId=$pathId"},
-                          $pathways{$pathId} ),
-                       "($nFound/$n steps found)");
+                          $path->{pathwayName} ),
+                       "($nFound/$nSteps steps found)");
   }
   print h3("MetaCyc Pathways"), start_ul(), join("\n", @pathList), end_ul(), "\n"
     if @pathList > 0;

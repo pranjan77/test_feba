@@ -12,13 +12,17 @@ Usage: db_setup.pl -reanno reannotation_file -db db_file_name
 
     reannotation_file should be tab-delimited and should include the
     fields orgId, locusId, new_annotation, and comment.
+
+Optional arguments:
+  -nometacyc -- skip recomputing metacyc pathway coverage
 END
     ;
 
 {
-    my ($reannofile,$db);
+    my ($reannofile,$db, $nometacyc);
     die $usage unless GetOptions('reanno=s' => \$reannofile,
-                                 'db=s' => \$db)
+                                 'db=s' => \$db,
+                                'nometacyc' => \$nometacyc)
         && @ARGV == 0
         && defined $reannofile
         && defined $db;
@@ -83,4 +87,8 @@ END
     print STDERR "Cleared Reannotation table and added $nAdd rows\n";
     print STDERR "Ignored reannotations for unknown organisms: " . join(" ", sort keys %skipOrgs) . "\n"
       if keys(%skipOrgs) > 0;
+    unless (defined $nometacyc) {
+      my @covercmd = ("$Bin/db_update_metacyc_coverage.pl", "-db", $db);
+      system(@covercmd) == 0 || die "Error running " . join(" ", @covercmd) . "\n: $!";
+    }
 }
