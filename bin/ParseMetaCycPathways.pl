@@ -212,10 +212,13 @@ for(;;) {
   last if $nChange == 0;
 }
 
-# rxnId => hash of rxnId, rxnName, ecnum (a list), isSpontaneous, keggrxnId, and compounds, which is a list of hashes of
-#	compoundId, side, coefficient, compartment
+# rxnId => hash of rxnId, rxnName, ecnum (a list), isSpontaneous, keggrxnId, compounds, subreactions (a list of ids)
+#     compounds is a list of hashes of compoundId, side, coefficient, compartment
+# Note that a few reactions are compound reactions, as indicated using REACTION-LIST and stored in subreactions
 my %rxn = ();
-open (my $fhr, "<", "$indir/reactions.dat")
+
+open (my $fhr
+, "<", "$indir/reactions.dat")
   || die "Cannot open $indir/reactions.dat";
 while (my $rxn = ParsePTools($fhr)) {
   my $rxnId = $rxn->{"UNIQUE-ID"}[0]{"value"};
@@ -223,7 +226,7 @@ while (my $rxn = ParsePTools($fhr)) {
   die "Duplicate reaction id $rxnId" if exists $rxn{$rxnId};
 
   my $obj = { "rxnId" => $rxnId, "ecnum" => [], "isSpontaneous" => 0, "compounds" => [],
-              "keggrxnId" => "" };
+              "keggrxnId" => "", "subreactions" => [] };
 
   foreach my $l (@{ $rxn->{"EC-NUMBER"} }) {
     my $ec = $l->{"value"};
@@ -240,6 +243,10 @@ while (my $rxn = ParsePTools($fhr)) {
 
   if (exists $rxn->{"SPONTANEOUS?"} && $rxn->{"SPONTANEOUS?"}[0]{"value"} eq "T") {
     $obj->{"isSpontaneous"} = 1;
+  }
+
+  foreach my $l (@{ $rxn->{"REACTION-LIST"} }) {
+    push @{ $obj->{subreactions} }, $l->{value};
   }
 
   my @cmp = ();
@@ -308,6 +315,21 @@ while (my $rxn = ParsePTools($fhr)) {
 }
 close($fhr) || die "Error reading $indir/reactions.dat";
 print STDERR "Read " . scalar(keys %rxn) . " reactions\n";
+
+# EC numbers may be associated with the top-level reaction but not the subreactions.
+# So, record this assocation so that later on the EC number can be "pushed down" to the subreactions.
+my $nECDown = 0;
+while (my ($rxnId, $rxn) = each %rxn) {
+  foreach my $subId (@{ $rxn->{subreactions} }) {
+    die "Invalid sub-reaction id $subId" unless exists $rxn{$subId};
+    my $sub = $rxn{$subId};
+    if (@{ $rxn->{ecnum} } > 0) {
+      push @{ $sub->{ecnum} }, @{ $rxn->{ecnum} };
+      $nECDown++;
+    }
+  }
+}
+print STDERR "Pushed $nECDown EC numbers from top-level reactions to sub-reactions\n";
 
 open(OUT, ">", "$out/MetacycPathway.tab")
   || die "Cannot write to $out/MetacycPathway.tab";
@@ -409,7 +431,10 @@ open(OUT, ">", "$out/MetacycReactionEC.tab")
   || die "Cannot write to $out/MetacycReactionEC.tab";
 foreach my $rxnId (sort keys %rxn) {
   my $rxn = $rxn{$rxnId};
+  my %seen = ();
   foreach my $ecnum (@{ $rxn->{"ecnum"} }) {
+    next if exists $seen{$ecnum};
+    $seen{$ecnum} = 1;
     print OUT join("\t", $rxnId, $ecnum)."\n" unless $ecnum =~ m/-/; # fully specified only
   }
 }
