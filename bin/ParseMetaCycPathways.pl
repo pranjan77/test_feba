@@ -106,7 +106,6 @@ while (my $path = ParsePTools($fhpath)) {
   die "Duplicate pathway $pathwayId" if exists $path{$pathwayId};
   my $pathwayName = $path->{"COMMON-NAME"}[0]{"value"} || "";
   #my %types = map { $_->{"value"} => 1 } @{ $path->{"TYPES"} };
-  my %subpathways = ();
   my %pred = ();
 
   # Parse REACTION-LAYOUT to get the reactions, then set up isHypothetical and predecessor(s)
@@ -136,9 +135,10 @@ while (my $path = ParsePTools($fhpath)) {
 
   foreach my $l (@{ $path->{"PREDECESSORS"} }) {
     my $string = $l->{"value"};
-    # a pathway can be listed as a predecessor; this means incorporate all predecessors from that pathway
+    # a pathway can be listed as a predecessor; this means incorporate all predecessors from that pathway,
+    # but will rely on SUB-PATHWAYS to explicitly incorporate subpathways
     if ($string =~ m/^[A-Z0-9+-]+$/) {
-      $subpathways{$string} = 1;
+      # igore;
     } else {
       $string =~ m/^[(]([^()]+)[)]$/ || die "Cannot parse PREDECESSORS for pathway $pathwayId: $string";
       my @pre = split / +/, $1;
@@ -153,6 +153,7 @@ while (my $path = ParsePTools($fhpath)) {
     $hypo_reactions{$rxnId} = 1;
   }
 
+  my %subpathways = ();
   foreach my $l (@{ $path->{"SUB-PATHWAYS"} }) {
     $subpathways{ $l->{value} } = 1;
   }
