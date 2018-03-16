@@ -55,7 +55,9 @@ if ($addexp) {
     $expSeen{$expName} = 1;
     push @expNames, $expName;
   }
-  push @warnings, qq{No experiments matching "$addexp"} if @$addexps == 0;
+  push @warnings, span({ -style => "color: red;" },
+                       qq{No experiments matching "$addexp"})
+    if @$addexps == 0;
 }
 
 my @exps = ();
@@ -100,38 +102,61 @@ foreach my $row (@$preds) {
     if exists $rxns{ $row->{predecessorId} } && exists $rxns{ $row->{rxnId} };
 }
 
-# Order the reactions by precedence
+# Order the reactions by precedence. (hack-ish)
+
 # First, every node with no precedors gets 0
 my %score = ();
-my $nNoScore = scalar(keys %score);
 while (my ($rxnId, $predlist) = each %pred) {
   if (scalar(@$predlist) == 0) {
     $score{$rxnId} = 0;
   }
 }
 
-# Then, every successor of a node with a score gets score+1
-# until we make no more assignments
-# For a node with multiple precedence, we want to make sure to use the maximum score of the precedors
-for(;;) {
+# For strictly circular pathways such as GLYOXYLATE-BYPASS, this will fail to choose a starting point, so, give some node a score
+if (scalar(keys %score) == 0) {
+  my $first = (sort keys %pred)[0];
+  $score{$first} = 0;
+}
+
+# Then, for every node with all precedors having a score, set to max(preceding score) + 1
+# If this fails to make any assignments, and not all scores are set, then relax this to allow just 1 score to be set
+#	(This is a way to get around cycles)
+my $nRound = 0;
+my $maxRounds = 100;
+my $strict = 1;
+for($nRound = 0; $nRound < $maxRounds; $nRound++) {
   my $nSet = 0;
-  while (my ($succ, $predlist) = each %pred) {
+  while (my ($succId, $predlist) = each %pred) {
+    next if exists $score{$succId}; # never reassign a score
+    my $nPredSet = 0;
+    my $maxPred = 0;
     foreach my $rxnId (@$predlist) {
       if (exists $score{$rxnId}) {
-        unless(exists $score{$succ} && $score{$succ} >= $score{$rxnId} + 1) {
-          $score{$succ} = $score{$rxnId} + 1;
-          $nSet++;
-        }
+        $nPredSet++;
+        $maxPred = $score{$rxnId} if $maxPred < $score{$rxnId};
       }
     }
+    if ($nPredSet == scalar(@$predlist) || ($nPredSet > 0 && ! $strict)) {
+      $score{$succId} = $maxPred + 1;
+      $nSet++;
+    }
   }
-  last if $nSet == 0;
+  if ($nSet == 0) {
+    last unless $strict;
+    $strict = 0;
+    print p("Strict off") if $debug;
+  } else {
+    $strict = 1;
+    print p("Strict on after setting $nSet") if $debug;
+  }
 }
+print p("Sorting the pathway failed to terminate") if $nRound == $maxRounds;
+
 
 my @rxnIds = sort { $score{$a} <=> $score{$b} } keys %rxns;
 
 if ($debug) {
-  print p("Reaction ordering and scores:");
+  print p("Reaction ordering and scores after $nRound rounds:");
   foreach my $rxnId (@rxnIds) {
     print p($rxnId, "score", $score{$rxnId}, "predecessors", @{ $pred{$rxnId} });
   }
@@ -256,6 +281,7 @@ foreach my $rxnId (@rxnIds) {
 print "\n", table( { cellspacing => 0, cellpadding => 3 }, @trows);
 
 print
+  p( a({ -href => "pathwaysOrg.cgi?orgId=$orgId" }, "Or see all pathways in $orginfo->{$orgId}{genome}") ),
   p( start_form(-name => 'orgselect', -method => 'GET', -action => 'pathway.cgi'),
      hidden( -name => 'pathwayId', -value => $pathId, -override => 1),
      "Or select organism:",
