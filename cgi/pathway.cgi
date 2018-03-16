@@ -31,6 +31,7 @@ my $orgId = $cgi->param('orgId') || die "No orgId parameter";
 my $pathId = $cgi->param('pathwayId') || die "No pathwayId parameter";
 my @expNames = $cgi->param('expName');
 my $addexp = $cgi->param('addexp');
+my $debug = $cgi->param('debug') || 0;
 
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
@@ -111,13 +112,16 @@ while (my ($rxnId, $predlist) = each %pred) {
 
 # Then, every successor of a node with a score gets score+1
 # until we make no more assignments
+# For a node with multiple precedence, we want to make sure to use the maximum score of the precedors
 for(;;) {
   my $nSet = 0;
   while (my ($succ, $predlist) = each %pred) {
     foreach my $rxnId (@$predlist) {
-      if (exists $score{$rxnId} && !exists $score{$succ}) {
-        $score{$succ} = $score{$rxnId} + 1;
-        $nSet++;
+      if (exists $score{$rxnId}) {
+        unless(exists $score{$succ} && $score{$succ} >= $score{$rxnId} + 1) {
+          $score{$succ} = $score{$rxnId} + 1;
+          $nSet++;
+        }
       }
     }
   }
@@ -125,6 +129,13 @@ for(;;) {
 }
 
 my @rxnIds = sort { $score{$a} <=> $score{$b} } keys %rxns;
+
+if ($debug) {
+  print p("Reaction ordering and scores:");
+  foreach my $rxnId (@rxnIds) {
+    print p($rxnId, "score", $score{$rxnId}, "predecessors", @{ $pred{$rxnId} });
+  }
+}
 
 my $primary = $dbh->selectall_arrayref("SELECT * FROM MetacycPathwayPrimaryCompound WHERE pathwayId = ?",
                                        { Slice => {} }, $pathId);
