@@ -59,9 +59,9 @@ END
 
   print STDERR "Found at least one candidate gene for " . scalar(keys %rxnFound) . " reactions\n";
 
-  my $rxnSponteaneous = $dbh->selectcol_arrayref("SELECT rxnId FROM MetacycReaction WHERE isSpontaneous = 1");
+  my $rxnSpont = $dbh->selectcol_arrayref("SELECT rxnId FROM MetacycReaction WHERE isSpontaneous = 1");
   # rxnId => 1 if spontaenous
-  my %rxnSponteaneous = map { $_ => 1 } @$rxnSponteaneous;
+  my %rxnSpont = map { $_ => 1 } @$rxnSpont;
 
   my $pathrxn = $dbh->selectall_arrayref("SELECT pathwayId, rxnId FROM MetacycPathwayReaction");
   my %pathRxns = ();
@@ -83,7 +83,7 @@ END
       my $nFound = 0;
       foreach my $rxnId (@rxns) {
         $nWithGene++ if $rxnFound{$rxnId}{$orgId};
-        $nFound++ if $rxnFound{$rxnId}{$orgId} || exists $rxnSponteaneous{$rxnId};
+        $nFound++ if $rxnFound{$rxnId}{$orgId} || exists $rxnSpont{$rxnId};
       }
       if ($nWithGene > 0) {
         print OUT join("\t", $orgId, $pathId, $nSteps, $nFound)."\n";
