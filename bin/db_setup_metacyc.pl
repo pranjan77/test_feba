@@ -134,10 +134,10 @@ if (defined $db) {
     foreach my $table (@metacyc_tables) {
       print SQLITE ".import $ind/$table.tab $table\n";
     }
-    close(SQLITE) || die "Error running sqlite3 on $db";
-
     # This table is filled by db_update_metacyc_coverage.pl
     print SQLITE "DELETE FROM MetacycPathwayCoverage;";
+
+    close(SQLITE) || die "Error running sqlite3 on $db";
 
     print "Successfully loaded into $db -- deleting the db.* files\n";
     unlink("$dir/db.BestHitMetacyc");
