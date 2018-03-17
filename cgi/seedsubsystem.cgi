@@ -41,7 +41,7 @@ my $roles = $dbh->selectcol_arrayref("SELECT seedrole FROM SEEDRoles WHERE subsy
 if (@$roles == 0) {
   print p("No roles -- is this a valid subsystem?");
 } else {
-  my @th = map th($_), qw{Role Gene &nbsp;};
+  my @th = map th($_), qw{Role Gene Name &nbsp;};
   my @trows = ( \@th );
   foreach my $role (@$roles) {
     my $genes = $dbh->selectall_arrayref(qq{ SELECT * FROM SEEDAnnotationToRoles
@@ -53,13 +53,14 @@ if (@$roles == 0) {
     # Link to EC number hits from other sources
     $showRole =~ s!EC (\d+[.]\d+[.]\d+[.]\d+)!<A HREF="myFitShow.cgi?orgId=$orgId&gene=ec:$1">EC $1</A>!g;
     if (@$genes == 0) {
-      my @trow = map td($_), ( $showRole, "No genes", "&nbsp;" );
+      my @trow = map td($_), ( $showRole, "No genes", "", "", "" );
       push @trows, \@trow;
     } else {
       my $first = 1;
       foreach my $gene (@$genes) {
         my @trow = map td($_), ( $first ? $showRole : "&nbsp;",
                                  Utils::gene_link($dbh, $gene, "name", "myFitShow.cgi"),
+                                 $gene->{gene} || "",
                                  checkbox('locusId', 1, $gene->{locusId}, '')
                                );
         push @trows, \@trow;
