@@ -250,7 +250,9 @@ foreach my $rxnId (@rxnIds) {
     my $gene = $dbh->selectrow_hashref("SELECT * from Gene WHERE orgId = ? AND locusId = ?",
                                        {}, $orgId, $locusId);
     my @generow = ();
-    push @generow, td({ -style => $genestyle }, Utils::gene_link($dbh, $gene, "name", "myFitShow.cgi"));
+    push @generow, td({ -style => $genestyle },
+                      Utils::gene_link($dbh, $gene, "name", "myFitShow.cgi")
+                     . ($gene->{gene} ? " (" . $gene->{gene} . ")" : ""));
     my $fitrows = $dbh->selectall_arrayref("SELECT expName,fit,t FROM GeneFitness WHERE orgId=? AND locusId=?",
                                        {}, $orgId, $locusId);
     my %fit = map { $_->[0] => $_ } @$fitrows;
