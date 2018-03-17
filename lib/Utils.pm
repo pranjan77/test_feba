@@ -837,7 +837,8 @@ sub alt_descriptions($$$) {
 # a link to the gene by its description
 # The first argument is the dbh
 # The second argument is the gene row
-# The third argument is whether to show the name or the description ("name" or "desc")
+# The third argument is whether to show the systematic name or the description ("name" or "desc")
+#	(if there is a gene name it should be shown separately)
 # The final argument is which cgi to use (usually myFitShow.cgi)
 sub gene_link {
   my ($dbh, $gene, $showParam, $cgiParam) = @_;
@@ -854,7 +855,7 @@ sub gene_link {
     $desc_long .= "; $alt_desc" if $alt_desc;
   }
   $desc_long =~ s/&nbsp;//g;
-  my $show = $showParam eq "name" ? $gene->{gene} || $gene->{sysName} || $gene->{locusId} : $gene->{desc} || "no description";
+  my $show = $showParam eq "name" ? $gene->{sysName} || $gene->{locusId} : $gene->{desc} || "no description";
   return CGI::a({ -href => "$cgiParam?orgId=$gene->{orgId}&gene=$gene->{locusId}",
                   -title => $desc_long },
                 $show);
