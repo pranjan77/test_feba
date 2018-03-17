@@ -271,6 +271,7 @@ while (my $rxn = ParsePTools($fhr)) {
                   "side" => $l->{"side"},
                   "coefficient" => $coefficient,
                   "compartment" => $compartment };
+    $otherCompounds{$cmpId} = 1 unless exists $compounds{$cmpId};
   }
 
   # then identify duplicate compounds
