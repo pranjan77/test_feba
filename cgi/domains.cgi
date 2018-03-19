@@ -301,7 +301,7 @@ my $rxnsFromSEED = $dbh->selectcol_arrayref(qq{ SELECT rxnId FROM SEEDAnnotation
                                            JOIN SeedRoleReaction USING (seedrole)
                                            JOIN SEEDReaction USING (seedrxnId)
                                            JOIN MetacycReaction USING (keggrxnId)
-                                           WHERE orgId = ? AND locusId = ? },
+                                           WHERE orgId = ? AND locusId = ? AND keggrxnId <> "" },
                                             {}, $orgId, $locusId);
 foreach my $rxnId (@$rxnsFromSEED) {
   $metacycrxn{$rxnId} = 1;
