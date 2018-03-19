@@ -196,6 +196,7 @@ my %primaryShown = (); # compoundId => 1 if shown as primary already
 my $ncol = 1 + scalar(@expNames);
 # rxnId => {isSpontaneous => 0 or 1, loci => list of locusIds }
 my $cands = Utils::MetacycPathwayCandidates($dbh, $orgId, $pathId);
+my @loci = (); # list of loci shown
 foreach my $rxnId (@rxnIds) {
   my $rxn = $rxns{$rxnId};
   my $loci = $cands->{$rxnId}{loci};
@@ -253,6 +254,7 @@ foreach my $rxnId (@rxnIds) {
     push @generow, td({ -style => $genestyle },
                       Utils::gene_link($dbh, $gene, "name", "myFitShow.cgi")
                      . ($gene->{gene} ? " (" . $gene->{gene} . ")" : ""));
+    push @loci, $gene->{locusId};
     my $fitrows = $dbh->selectall_arrayref("SELECT expName,fit,t FROM GeneFitness WHERE orgId=? AND locusId=?",
                                        {}, $orgId, $locusId);
     my %fit = map { $_->[0] => $_ } @$fitrows;
@@ -281,6 +283,20 @@ foreach my $rxnId (@rxnIds) {
   }
 }
 print "\n", table( { cellspacing => 0, cellpadding => 3 }, @trows);
+
+my @lociUniq = ();
+my %lociSeen = ();
+foreach my $locusId (@loci) {
+  push @lociUniq, $locusId unless exists $lociSeen{$locusId};
+  $lociSeen{$locusId} = 1;
+}
+# When written, this should always be the case because pathways with no candidate
+# genes should not be linked to, but just in case
+if (@lociUniq > 0) {
+  my $URL = "genesFit.cgi?orgId=MR1&showAll=0&" . join("&", map { "locusId=$_" } @lociUniq);
+  my $nLoci = scalar(@lociUniq);
+  print p( a({ -href => $URL }, "Or see all fitness data for $nLoci genes") );
+}
 
 print
   p( a({ -href => "pathwaysOrg.cgi?orgId=$orgId" }, "Or see all pathways in $orginfo->{$orgId}{genome}") ),
