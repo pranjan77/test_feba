@@ -121,6 +121,10 @@ seedsubsystemsOrg.cgi -- links to organism page and to
 	seedsubsystem.pl
 pathway.cgi -- show a metacyc pathway and candidate genes
 	links to organism page, to gene fitness page (myFitShow.cgi),
-	and to strain data (strainTable.cgi)
+	and to strain data (strainTable.cgi).
+	Also links to genesFit.cgi for all data for those genes
+	And to pathway.cgi for another organism
+pathwaysOrg.cgi -- list of metacyc pathways
+	links to organism page and to pathway.cgi
 Dead pages:
 getSeq.cgi -- sequence of gene (if it is a protein)
