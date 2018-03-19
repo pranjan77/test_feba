@@ -271,7 +271,8 @@ foreach my $rxnId (@rxnIds) {
     push @locirows, Tr(@generow);
   }
   push @trows, Tr(td({ -colspan => $ncol},
-                     a({ -href => "https://metacyc.org/META/NEW-IMAGE?type=REACTION&object=$rxnId"},
+                     a({ -href => "https://metacyc.org/META/NEW-IMAGE?type=REACTION&object=$rxnId",
+                         -title => "MetaCyc Reaction" },
                        ($rxnName ? $rxnName . ":" . br() : "")
                        . join(" + ", @left) . "&rarr;" . join(" + ", @right)),
                      $spontaneous,
