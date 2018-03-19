@@ -18,7 +18,7 @@
 # addexp -- add experiment(s) which match this query
 
 use strict;
-use CGI qw(:standard Vars);
+use CGI qw(:standard Vars start_ul);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
 
@@ -284,6 +284,10 @@ foreach my $rxnId (@rxnIds) {
 }
 print "\n", table( { cellspacing => 0, cellpadding => 3 }, @trows);
 
+print p("Links:"),
+  start_ul(),
+  li( a({ -href => "https://metacyc.org/META/NEW-IMAGE?type=PATHWAY&object=$pathId&detail-level=3" }, "Pathway details at MetaCyc"), );
+
 my @lociUniq = ();
 my %lociSeen = ();
 foreach my $locusId (@loci) {
@@ -295,17 +299,18 @@ foreach my $locusId (@loci) {
 if (@lociUniq > 0) {
   my $URL = "genesFit.cgi?orgId=MR1&showAll=0&" . join("&", map { "locusId=$_" } @lociUniq);
   my $nLoci = scalar(@lociUniq);
-  print p( a({ -href => $URL }, "Or see all fitness data for $nLoci genes") );
+  print li( a({ -href => $URL }, "Fitness data for $nLoci genes") );
 }
 
 print
-  p( a({ -href => "pathwaysOrg.cgi?orgId=$orgId" }, "Or see all pathways in $orginfo->{$orgId}{genome}") ),
-  p( start_form(-name => 'orgselect', -method => 'GET', -action => 'pathway.cgi'),
+  li( start_form(-name => 'orgselect', -method => 'GET', -action => 'pathway.cgi'),
      hidden( -name => 'pathwayId', -value => $pathId, -override => 1),
-     "Or select organism:",
+     "Select organism:",
      Utils::OrgSelector($orgId, $orginfo),
      "<button type='submit'>Go</button>",
-     end_form );
+     end_form ),
+  li( a({ -href => "pathwaysOrg.cgi?orgId=$orgId" }, "All MetaCyc pathways for $orginfo->{$orgId}{genome}") ),
+  end_ul();
 
 
 $dbh->disconnect();
