@@ -311,7 +311,8 @@ print
      "<button type='submit'>Go</button>",
      end_form ),
   li( a({ -href => "pathwaysOrg.cgi?orgId=$orgId" }, "All MetaCyc pathways for $orginfo->{$orgId}{genome}") ),
-  end_ul();
+  end_ul(),
+  p(small(qq{Candidate genes for each reaction are identified from best hits to MetaCyc; by matching EC numbers (which are assigned by TIGRFam, SEED, or best hits to KEGG); or by matching SEED roles to KEGG reactions to MetaCyc reactions. See the "Protein" tab of each gene for more information}));
 
 
 $dbh->disconnect();

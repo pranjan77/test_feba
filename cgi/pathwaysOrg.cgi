@@ -53,7 +53,9 @@ foreach my $path (@sorted) {
                           $path->{pathwayName } ) ),
                    td( $path->{nFound}, "/", $path->{nSteps} ) );
 }
-print table( { cellspacing => 0, cellpadding => 3 }, @trows);
+print
+  table( { cellspacing => 0, cellpadding => 3 }, @trows),
+  p(small("Only pathways with at least one candidate gene are shown"));
 
 $dbh->disconnect();
 Utils::endHtml($cgi);
