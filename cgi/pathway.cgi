@@ -206,10 +206,10 @@ foreach my $rxnId (@rxnIds) {
   ($ecdesc) = $dbh->selectrow_array("SELECT ecdesc FROM ECInfo WHERE ecnum = ? LIMIT 1",
                                      {}, $ecs->[0])
     if @$ecs > 0;
-  my $rxnName = $rxn->{rxnName};
   # Ignore reaction names that are just EC numbers
+  my $rxnName = $rxn->{rxnName};
   $rxnName = "" if $rxnName =~ m/^[0-9][.][0-9]+[.]/;
-  $rxnName = $ecdesc if $rxnName eq "";
+  $rxnName = $ecdesc if $rxnName eq "" && defined $ecdesc;
   $rxnName =~ s/[.]$//;
   $rxnName .= " (in reverse)" if $rxnName && $rxn->{direction} == -1;
 

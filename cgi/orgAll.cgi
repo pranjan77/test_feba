@@ -79,11 +79,6 @@ print
 #exit if no results
 # Utils::fail($cgi, "No experiments for this organism.") if @$cond == 0;
 
-sub small($) {
-  my ($content) = @_;
-  return qq{<small>$content</small>};
-}
-
 my $nreannos = $dbh->selectall_arrayref("SELECT orgId, COUNT(*) FROM Reannotation GROUP BY orgId");
 my %nreanno = map { $_->[0] => $_->[1] } @$nreannos;
 
@@ -91,10 +86,10 @@ my %nreanno = map { $_->[0] => $_->[1] } @$nreannos;
 my @trows = Tr({-valign => "bottom", -align => 'center'},
                th([ 'Organism', 'Division', 'Experiments']),
                th({-style => "background-color: white;"},
-                  [ &small('# Carbon Sources'),
-                    &small('# Nitrogen Sources'),
-                    &small('# Stress Compounds'),
-                    &small('# Other Conditions') ]),
+                  [ small('# Carbon Sources'),
+                    small('# Nitrogen Sources'),
+                    small('# Stress Compounds'),
+                    small('# Other Conditions') ]),
                th('Updated Annotations') );
 foreach my $row (@$all) {
   my $orgId = $row->{orgId};
@@ -103,19 +98,19 @@ foreach my $row (@$all) {
     if $nreanno{$orgId};
   push @trows, Tr({ -valign => 'top', -align => 'right' },
                   td({-align => 'left'},
-                      [ a({href=>"org.cgi?orgId=$row->{orgId}"},$orginfo-> {$row->{orgId}}{genome}),
-                        &small($row->{division}) ]),
+                      [ a({-href=>"org.cgi?orgId=$orgId"}, $orginfo-> {$orgId}{genome}),
+                        small($row->{division}) ]),
                   td({-align => 'right'},
-                     a( { href => "org.cgi?orgId=$row->{orgId}"},
-                          $total->{$row->{orgId}}->{nExp}) ),
+                     a( { href => "org.cgi?orgId=$orgId"},
+                          $total->{$orgId}{nExp} )),
                   td({-align => 'right', -style => 'background-color: white;'},
-                     [ a({href=>"exps.cgi?orgId=$orgId&expGroup=carbon%20source"},
-                         $nCarbon->{$row->{orgId}}->{nCon}),
+                     [ a({-href=>"exps.cgi?orgId=$orgId&expGroup=carbon%20source"},
+                         $nCarbon->{$orgId}{nCon} || ""),
                        a({href=>"exps.cgi?orgId=$orgId&expGroup=nitrogen%20source"},
-                         $nNitrogen->{$row->{orgId}}->{nCon}), 
+                         $nNitrogen->{$orgId}{nCon} || ""),
                        a({href=>"exps.cgi?orgId=$orgId&expGroup=stress"},
-                         $nStress->{$row->{orgId}}->{nCon}),
-                       $count->{$row->{orgId}}->{nCond} ]),
+                         $nStress->{$orgId}{nCon} || ""),
+                       $count->{$orgId}{nCond} || "" ]),
                   td({-align => 'right'}, $nreannoString)
 		 );
 }
@@ -143,7 +138,6 @@ print p("Total number of genome-wide fitness experiments: ", Utils::commify($nTo
 # my $data = `./createExpData.cgi orgId=$orgId`;
 # print $cgi->p($cgi->a({href => "download.cgi?orgId=$orgId"}, "Download experimental data"), " - Note: May take a minute or so to load once clicked.");
 # print $cgi->p($cgi->a({href => "createExpData.cgi?orgId=$orgId"}, "Download experimental data"), " - Note: May take a few seconds to load once clicked.");
-
 
 $dbh->disconnect();
 Utils::endHtml($cgi);

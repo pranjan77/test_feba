@@ -63,7 +63,7 @@ if (defined $locusSpec && $locusSpec ne "") {
     die "Invalid begin parameter" unless $begin =~ m/^-?\d+$/;
     die "Invalid end parameter" unless $end =~ m/^\d+$/;
 }
-my $zoom = $cgi->param('zoom');
+my $zoom = $cgi->param('zoom') || "";
 my $initwidth = $end - $begin + 1;
 if ($zoom eq "in") {
     $begin += 0.2 * $initwidth;
@@ -72,7 +72,7 @@ if ($zoom eq "in") {
     $begin -= 0.4 * $initwidth;
     $end += 0.4 * $initwidth;
 }
-my $pan = $cgi->param('pan');
+my $pan = $cgi->param('pan') || "";
 if ($pan eq "left") {
     
     $begin -= 0.4 * $initwidth;
@@ -139,7 +139,7 @@ if ($tsv != 1) {
         p("Experiments: ",
           scalar(@expShow) > 0 ? join(", ", @expShow) : "none selected");
 
-if ($help == 1) {
+if ($help) {
         print qq[<div class="helpbox">
         <b><u>About this page:</u></b><BR><ul>
         <li>View the fitness of genes in various strains under a condition.</li>
@@ -173,7 +173,7 @@ if ($help == 1) {
       print "No genes in range.";
   } else {
       # sort @$genes;
-      if ($debug == 1) {
+      if ($debug) {
           foreach my $genea(@$genes) {
               print $genea->{begin} . "\t" . $genea->{end} . "\t | ";
           }

@@ -59,7 +59,7 @@ if (scalar(@$hits) == 1) {
     my $orgId = $gene->{orgId};
     my $locusId = $gene->{locusId};
     my $url = "singleFit.cgi?orgId=$orgId&locusId=$locusId&showAll=0";
-    $url = "singleFit.cgi?orgId=$orgId&locusId=$locusId&showAll=0&help=1" if $help == 1;
+    $url = "singleFit.cgi?orgId=$orgId&locusId=$locusId&showAll=0&help=1" if $help;
 
     print redirect(-url=>"$url");
     exit(0);

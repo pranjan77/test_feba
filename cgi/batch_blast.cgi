@@ -119,8 +119,8 @@ if (defined $jobId && !defined $confirm) {
     if (-d $dir) {
         print p("This file has been processed by Fitness BLAST already!");
         if (! -e "$dir/job.db") {
-            print ("But the results are not ready yet. This may be a duplicate submission.",
-                   "If the link below fails, try it again in 30 seconds or so");
+          print "But the results are not ready yet. This may be a duplicate submission.",
+            " If the link below fails, try it again in 30 seconds or so.";
         }
         print p(a({-href => "batch_overview.cgi?jobId=$jobId"}, "Job results"));
     } else {

@@ -158,9 +158,7 @@ while(<RES>) {
 	print "Warning! Unknown hit $orgId:$locusId<BR>";
 	next;
     }
-    
-    my $orgId = $gene->{orgId};
-    my $locusId = $gene->{locusId};
+
     my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $orgId, $locusId);
     my $showId = $gene->{sysName} || $gene->{locusId};
     my $seqlen = length($seq);

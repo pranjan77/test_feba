@@ -128,7 +128,7 @@ if (@$hits == 0) {
                               qq[</P></div></div>],
                                 h3("$idShow $gene->{gene}: $gene->{desc}"),
                                   $alt_desc ? p($alt_desc) : "";
-      if ($help == 1) {
+      if ($help) {
           print qq[<div class="helpbox">
 		<b><u>About this page:</u></b><BR><ul>
 		<li>View the experiments that have the strongest phenotypes for this gene. (Or choose to view all phenotypes with the link below.)</li>
@@ -166,7 +166,7 @@ if (@$hits == 0) {
         my $exp = $expinfo->{$expName};
         my $group = $exp->{expGroup};
         my $strainUrl = "strainTable.cgi?orgId=$orgId&locusId=$locusId&expName=$expName";
-        $strainUrl .= "&help=1" if $help == 1;
+        $strainUrl .= "&help=1" if $help;
         push @out, join(" ",
                         td($group eq $lastGroup ? "" : $group),
                         td(a({ 
