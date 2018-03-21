@@ -65,7 +65,7 @@ print header,
 	$start, '<div id="ntcontent">',
     h2($title);
 
-if ($help == 1) {
+if ($help) {
         print qq[<div class="helpbox">
         <b><u>About this page:</u></b><BR><ul>
         <li>View all of the fitness data for a gene and its orthologs in a given condition. </li>
@@ -101,11 +101,11 @@ foreach my $o (@genes) {
 
     if ($first) {
       my $d = $orginfo->{$o->{orgId}};
-      my $short = $d->{genome}; $short =~ s/^(.)[^ ]+/\1./;
+      my $short = $d->{genome}; $short =~ s/^(.)[^ ]+/$1./;
       $orgShort = a({href => "org.cgi?orgId=$o->{orgId}", title => $d->{genome}}, $short);
     }
     my $strainUrl = "strainTable.cgi?orgId=$o->{orgId}&locusId=$o->{locusId}&expName=$row->{expName}";
-    $strainUrl .= "&help=1" if $help == 1;
+    $strainUrl .= "&help=1" if $help;
     push @trows,
       $cgi->Tr( { -valign => 'top', -align => 'left', -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF" },
                 td($first ?  $ratio : ""),

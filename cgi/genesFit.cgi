@@ -273,7 +273,7 @@ foreach my $exp (@exps) {
 	my $fit = $gene->{fit}{$expName}{fit};
 	my $t = $gene->{fit}{$expName}{t};
     my $strainUrl = "strainTable.cgi?orgId=$orgId&locusId=$gene->{locusId}&expName=$expName";
-        $strainUrl .= "&help=1" if $help == 1;
+        $strainUrl .= "&help=1" if $help;
 	if (defined $fit) {
 	    my $fitShow = sprintf("%.1f",$fit);
 	    $t = sprintf("%.1f", $t);

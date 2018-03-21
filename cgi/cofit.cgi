@@ -88,9 +88,9 @@ if (@$cofitResults == 0) {
                                          AND o2.locusId2 = c.hitId; },
 				    {}, $orgId, $locusId, $hitId);
 	my $url2 = "compareGenes.cgi?orgId=$orgId&locus1=$locusId&locus2=$hitId";
-	$url2 .= "&help=1" if $help == 1;
+	$url2 .= "&help=1" if $help;
 	my $cofitUrl = "cofitCons.cgi?orgId=$orgId&locusId=$locusId&hitId=$hitId";
-	$cofitUrl .= "&help=1" if $help == 1;
+	$cofitUrl .= "&help=1" if $help;
         my $alt_desc_hit = Utils::alt_descriptions($dbh,$orgId,$hitId)
           || "no other information";
 	push @trows,
