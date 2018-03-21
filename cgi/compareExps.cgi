@@ -28,16 +28,16 @@ my $cgi=CGI->new;
 print $cgi->header;
 
 my $orgId = $cgi->param('orgId');
-my $expName1 = $cgi->param('expName1');
+my $expName1 = $cgi->param('expName1') || "";
 $expName1 =~ s/^[ \t]+//;
 $expName1 =~ s/[ \t\r\n]+$//;
-my $expName2 = $cgi->param('expName2');
+my $expName2 = $cgi->param('expName2') || "";
 $expName2 =~ s/^[ \t]+//;
 $expName2 =~ s/[ \t\r\n]+$//;
-my $query1 = $cgi->param('query1');
+my $query1 = $cgi->param('query1') || "";
 $query1 =~ s/^[ \t]+//;
 $query1 =~ s/[ \t\r\n]+$//;
-my $query2 = $cgi->param('query2');
+my $query2 = $cgi->param('query2') || "";
 $query2 =~ s/^[ \t]+//;
 $query2 =~ s/[ \t\r\n]+$//;
 my $tsv = $cgi->param('tsv') ? 1 : 0;
@@ -45,12 +45,10 @@ my $help = $cgi->param('help') || "";
 my $outlier = $cgi->param('outlier');
 die "Must specify orgId" unless defined $orgId && $orgId ne "";
 die "Must specify expName1 or query1"
-    unless (defined $expName1 || defined $query1)
-    && !($expName1 eq "" && $query1 eq "");
+    if $expName1 eq "" && $query1 eq "";
 die "Must specify expName2 or query2"
-    unless (defined $expName2 || defined $query2)
-    && !($expName2 eq "" && $query2 eq "");
-die "Cannot query both 1 and 2" if defined $query1 && defined $query2 && $query1 ne "" && $query2 ne "";
+    if $expName2 eq "" && $query2 eq "";
+die "Cannot query both 1 and 2" if $query1 ne "" && $query2 ne "";
 
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
