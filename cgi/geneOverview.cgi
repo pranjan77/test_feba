@@ -30,7 +30,7 @@ print $cgi->header;
 my $style = Utils::get_style();
 
 my $orgSpec = $cgi->param('orgId') || "";
-my $geneSpec = $cgi->param('gene');
+my $geneSpec = $cgi->param('gene') || "";
 my $showAll = $cgi->param('showAll') ? 1 : 0;
 my $start = Utils::start_page("Overview for $geneSpec ($orgSpec)");
 
@@ -114,12 +114,8 @@ if (@$hits == 0) {
     my @locusIds = $geneSpec;
     my $idShow = $gene->{sysName} || $gene->{locusId};
     my %spacingDesc = (); # locusId => spacing description
-    my $type;
     die "Cannot specify nearby with multiple locusIds or with addgene" unless @locusIds == 1;
     my $centralId = $locusIds[0];
-    my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId = ? AND locusId = ?",
-				       {}, $orgId, $centralId);
-    $type = $gene->{type};
     my $scgenes = $dbh->selectall_arrayref("SELECT * from Gene where orgId = ? AND scaffoldId = ? ORDER BY begin",
 					   { Slice => {} }, $orgId, $gene->{scaffoldId});
     die "Cannot find genes for $gene->{scaffoldId}" unless scalar(@$scgenes) > 0;
@@ -195,11 +191,15 @@ if (@$hits == 0) {
                           a({title=>'Distance between the end of previous gene and beginning of current gene', color=>"#011B47"},'Distance (nt)'),
                           'Phenotype', ])));
 
-    my $diff = "";
     my $prevrow;
     foreach my $row (@genes) {
-      $diff = $row->{begin} - $prevrow->{end} if defined $prevrow;
-      my $label = $row->{gene} || $row->{sysName}; #|| $row->{locusId};
+      my $diff = "";
+      my $difftitle = "";
+      if (defined $prevrow) {
+        $diff = $row->{begin} - $prevrow->{end};
+        $difftitle = "From $prevrow->{end} to $row->{begin}";
+      }
+      my $label = $row->{gene} || $row->{sysName} || ""; #|| $row->{locusId};
       my $label2 =  $row->{gene} || $row->{sysName} || $row->{locusId};
       my $label3 = $label2;
       $label3 =~ s/^.*_/_/ if $row->{sysName} || $row->{locusId};
@@ -207,7 +207,7 @@ if (@$hits == 0) {
       my $bgcolor = undef;
       $bgcolor = "#FFFFFF" if $row->{locusId} eq $locusId;
       my ($phen, $tip) = Utils::gene_fit_string($dbh,$orgSpec,$row->{locusId});
-      push @trows, Tr({ -valign => 'top', -align => 'left', -bgcolor=>$bgcolor},
+      push @trows, Tr({ -valign => 'top', -align => 'left', -bgcolor => $bgcolor},
                       td([ a({href => "geneOverview.cgi?orgId=$orgId&gene=$row->{locusId}"},$row->{sysName}||$row->{locusId}), #locus
                            a({href => "geneOverview.cgi?orgId=$orgId&gene=$row->{locusId}"},$row->{gene} || $row->{sysName}), 
                            a({ -title => Utils::alt_descriptions($dbh,$orgId,$row->{locusId})
@@ -215,7 +215,7 @@ if (@$hits == 0) {
                                -href => "domains.cgi?orgId=$orgId&locusId=$row->{locusId}" },
                              $row->{desc}),
                            $row->{strand},
-                           a({title=>"From $prevrow->{end} to $row->{begin}"},$diff), # $row->{begin},
+                           a({title=>$difftitle},$diff), # $row->{begin},
                            a({href => "myFitShow.cgi?orgId=$orgId&gene=$row->{locusId}", title=>$tip},$phen),
                          ]));
       $prevrow = $row;

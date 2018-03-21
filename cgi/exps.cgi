@@ -30,27 +30,26 @@ $orgId = "" if !defined $orgId;
 
 my $expSpec = $cgi->param('query');
 $expSpec = "" if !defined $expSpec;
+$expSpec =~ s/ +$//;
+$expSpec =~ s/^ +$//;
+$expSpec =~s/[\'\"\n\r\;\\]//g;
+
 my $expGroup = $cgi->param('expGroup');
 my $condition1 = $cgi->param('condition1');
 
 my $dbh = Utils::get_dbh();
 
-# Sanitize all input
-$orgId, $expSpec, $expGroup, $condition1 =~ s/ +$//;
-$orgId, $expSpec, $expGroup, $condition1 =~ s/^ +$//;
-$orgId, $expSpec, $expGroup, $condition1 =~ s/[\'\"\n\r\;\\]//g; #'
-
-# Redirect to orgGroup.cgi if displaying all exp from one organism
+# Redirect to org.cgi if displaying all experiments from one organism,
+# or to orgAll.cgi if displaying all experiments
 if ($orgId ne "" && !defined $expGroup && ($cgi->param("All experiments") || $expSpec eq "")) {
     print redirect(-url=>"org.cgi?orgId=$orgId");
 } elsif ($orgId eq "" && $expSpec eq "" && $expGroup eq "" && $condition1 eq "") {
   print redirect(-url=>"orgAll.cgi");
 } 
 
-# my $style = Utils::get_style();
 my $specShow = $expSpec;
 if ($specShow eq "") {
-    $specShow = join(" ", $expGroup, $condition1);
+    $specShow = defined $condition1 ? join(" ", $expGroup, $condition1) : $expGroup;
 }
 my $start = Utils::start_page("Experiments for $specShow");
 $expSpec = "" if $cgi->param("All experiments");

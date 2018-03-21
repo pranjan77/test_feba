@@ -49,7 +49,7 @@ print
   h3("$showId $geneName : $desc"),
   $alt_desc ? p($alt_desc) : "";
 
-if ($help == 1) {
+if ($help) {
   print qq[<BR><BR><div class="helpbox">
 		<b><u>About this page:</u></b><BR><ul>
 		<li>Show the genes with the most similar fitness patterns as this gene. </li>

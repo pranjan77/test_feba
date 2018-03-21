@@ -206,7 +206,7 @@ print p,
 print "</P></div></div>";
 
 
-if ($help == 1) {
+if ($help) {
         print qq[<div class="helpbox">
         <b><u>About this page:</u></b><BR><ul>
         <li>Show the experiments with the strongest phenotypes for the specified genes. (You can also choose to view all phenotypes with the link below.)</li>

@@ -189,7 +189,7 @@ sub RowForGene($$$$$) {
     my $orthFitURI = "orthFit.cgi?orgId=$orgId&locusId=$locusId"
         . "&expGroup=" . uri_escape($expGroup)
         . "&condition1=" . uri_escape($condition1);
-    $orthFitURI .= "&help=1" if $help == 1;
+    $orthFitURI .= "&help=1" if $help;
 
     return $cgi->Tr( { -class=> $collapse, -valign => 'middle', -align => 'left',
                        -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF" },
