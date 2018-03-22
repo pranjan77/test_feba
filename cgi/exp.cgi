@@ -88,7 +88,7 @@ print $start, $tabs,
 #     end_form,
 #     qq[</P></div></div>],
 
-if ($help == 1) {
+if ($help) {
         print qq[<div class="helpbox">
         <b><u>About this page:</u></b><BR><ul>
         <li>View the genes that had strong and specific phenotypes in this experiment. </li>
@@ -201,11 +201,11 @@ if (@fit > 0) { # show the table
   foreach my $row (@fit) {
     my $geneId = $row->{sysName} || $row->{locusId};
     my $strainUrl = "strainTable.cgi?orgId=$orgId&locusId=$row->{locusId}&expName=$expName";
-    $strainUrl .= "&help=1" if $help == 1;
+    $strainUrl .= "&help=1" if $help;
     my $orthUrl = "orthFit.cgi?orgId=$orgId&locusId=$row->{locusId}"
       . "&expGroup=" . uri_escape($exp->{expGroup})
         . "&condition1=" . uri_escape($exp->{condition_1});
-    $orthUrl .= "&help=1" if $help == 1;
+    $orthUrl .= "&help=1" if $help;
     my $alt_desc = Utils::alt_descriptions($dbh,$orgId,$row->{locusId});
     push @trows,
       $cgi->Tr( {align => 'left', valign => 'top'},
