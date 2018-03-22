@@ -219,7 +219,7 @@ if ($error ne "") {
 }
 
 
-if ($help == 1) {
+if ($help) {
     print qq[<div class="helpbox">
     <b><u>About this page:</u></b><BR><ul>
     <li>View the fitness values between two genes in this organism. </li>

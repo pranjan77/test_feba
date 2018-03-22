@@ -113,7 +113,7 @@ foreach my $ogId (@ogInOrder) {
     $group++;
 }
 
-if ($help == 1) {
+if ($help) {
         print qq[<BR><BR><div class="helpbox">
         <b><u>About this page:</u></b><BR><ul>
         <li>View genes with <A HREF="help.cgi#specific">specific and strong phenotypes</A> in $condition1 $expGroup, across all organisms.</li>

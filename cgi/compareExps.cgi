@@ -215,7 +215,7 @@ my $start = Utils::start_page("Outlier genes from $orginfo->{$orgId}{genome}");
     print $start, '<div id="ntcontent">',
 	h2("Outlier genes from $orginfo->{$orgId}{genome}");
 
-if ($help == 1) {
+if ($help) {
     print qq[<div class="helpbox">
     <b><u>About this page:</u></b><BR><ul>
     <li>View genes that have different fitness in the two experiments: they are important for fitness in $exp2->{expDesc} but not in $exp1->{expDesc}.</li>
@@ -282,7 +282,7 @@ $dbh->disconnect();
 my $title = "Compare Experiments for $orginfo->{$orgId}{genome}";
 my $start = Utils::start_page("$title");
 my $helptext = "";
-if ($help == 1) {
+if ($help) {
     $helptext = qq[<div class="helpbox">
     <b><u>About this page:</u></b><BR><ul>
     <li>Each point shows the fitness of a gene in the two experiments</A>

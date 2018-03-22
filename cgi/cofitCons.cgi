@@ -99,7 +99,7 @@ print
 	$start, '<div id="ntcontent">',
     h2($title);
 
-if ($help == 1) {
+if ($help) {
         print qq[<div class="helpbox">
         <b><u>About this page:</u></b><BR><ul>
         <li>See if two genes have similar fitness patterns (high <A HREF="help.cgi#cofitness">cofitness</A>) across organisms. </li>
