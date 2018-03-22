@@ -106,7 +106,7 @@ foreach my $row (@$spec) {
         . "&condition1=" . uri_escape($cond);
     my $fitAttr = { -href => $cmpURL,
                     -style => "color:rgb(0,0,0)",
-                    -title => $row->{n} > 1 ? sprintf("%.1f to %.1f", $row->{minFit}, $row->{maxFit}) : "" };
+                    -title => $row->{minFit} != $row->{maxFit} ? sprintf("%.1f to %.1f", $row->{minFit}, $row->{maxFit}) : "no replicates" };
     my $allURL = "orthCond.cgi?expGroup=".uri_escape($expGroup)."&condition1=".uri_escape($cond);
     my $condParams = {href => $allURL, title=>"Compare specific phenotypes across organisms"};
     $condParams->{name} = $cond if $first;
