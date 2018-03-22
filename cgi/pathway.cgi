@@ -298,7 +298,7 @@ foreach my $locusId (@loci) {
 # When written, this should always be the case because pathways with no candidate
 # genes should not be linked to, but just in case
 if (@lociUniq > 0) {
-  my $URL = "genesFit.cgi?orgId=MR1&showAll=0&" . join("&", map { "locusId=$_" } @lociUniq);
+  my $URL = "genesFit.cgi?orgId=$orgId&showAll=0&" . join("&", map { "locusId=$_" } @lociUniq);
   my $nLoci = scalar(@lociUniq);
   print li( a({ -href => $URL }, "Fitness data for $nLoci genes") );
 }
