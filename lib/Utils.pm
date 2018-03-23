@@ -939,7 +939,7 @@ sub MetacycPathwayScore($$) {
 
 # Given an organism and a metacyc pathway, find candidate genes
 # via BestHitMetacyc, SEED roles to reactions, or EC number.
-# Returns a hash of
+# Returns a reference to a hash of
 # rxnId => {isSpontaneous => 0 or 1, loci => list of locusIds }
 # Every reaction in the pathway is included, and for any given reaction,
 # each element of loci is unique
