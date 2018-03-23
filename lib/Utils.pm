@@ -547,7 +547,8 @@ sub tabsGene($$$$$$$) {
     my ($maxCofit) = $dbh->selectrow_array(qq{ SELECT cofit FROM Cofit WHERE orgId = ? AND locusId = ? AND rank = 1 LIMIT 1; },
                            {}, $orgId, $locusId);
 
-    my $max = sprintf("(max cofit %.2f)", $maxCofit) if defined $maxCofit;
+    my $max = "";
+    $max = sprintf("(max cofit %.2f)", $maxCofit) if defined $maxCofit;
     my $cClass = "gene";
     $cClass = "selected" if $curr eq "cofit";
     $cClass = "disable" if $hasCofit == 0;
