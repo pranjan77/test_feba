@@ -272,7 +272,7 @@ if ($tsv == 1) { # tab delimited values, not a page
     my $ind = 0;
     foreach my $row (@$rows) {
         # next unless exists $gene->{x} && exists $gene->{y};
-        my $displayName = $genesh{$row->{locusId}}{gene} || $genesh{$row->{locusId}}{sysName};
+        my $displayName = $genesh{$row->{locusId}}{gene} || $genesh{$row->{locusId}}{sysName} || "";
         print join("\t", $row->{pos}, $row->{strand}, $displayName, $row->{locusId}, $avgFits[$ind])."\n";
         $ind += 1;
     }

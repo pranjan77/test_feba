@@ -300,7 +300,7 @@ if (@genes > 0) {
     if ($around and ($centralId ne $gene->{locusId})) {
         $compare = "compareGenes.cgi?orgId=$orgId&locus1=$centralId&locus2=" . $gene->{locusId};
         $compare = "<BR>" . $cgi->a({href=>$compare}, "plot");
-    } elsif (!$around and ($firstGene != $gene->{locusId}) or ($firstGene ne $gene->{locusId})) {
+    } elsif (!$around and ($firstGene ne $gene->{locusId}) or ($firstGene ne $gene->{locusId})) {
         $compare = "compareGenes.cgi?orgId=$orgId&locus1=$firstGene&locus2=" . $gene->{locusId};
         $compare = "<BR>" . $cgi->a({href=>$compare}, "plot");
     }

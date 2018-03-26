@@ -230,6 +230,7 @@ if (scalar(@$bhMetacyc) > 0) {
       if ($rxnName eq "" || $rxnName =~ m/^[0-9][.][0-9.,]+$/) {
         ($rxnName) = $dbh->selectrow_array("SELECT ecdesc FROM ECInfo WHERE ecnum = ?",
                                            {}, $ec);
+        $rxnName = "" if !defined $rxnName;
       }
     }
     $rxnName = $row->{rxnId} if $rxnName eq "";
