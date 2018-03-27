@@ -233,6 +233,10 @@ if ($showAll) {
     print $cgi->a( { href => "genesFit.cgi?orgId=$orgId&$locusSpec&showAll=1&around=$around" },
                    "all $nTotValues experiments" );
 }
+print " or ",
+  a({ -href => "heatmap.cgi?orgId=$orgId&" . join("&", map {"r=$_"} @locusIds) },
+    "choose conditions");
+
 print "<br><br>";
 
 

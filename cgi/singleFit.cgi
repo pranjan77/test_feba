@@ -158,7 +158,8 @@ if (@$hits == 0) {
         my $showFewDest = qq(singleFit.cgi?orgId=$orgId&locusId=$locusId&showAll=0);
         $option .= qq[<a href="$showFewDest">strongest phenotypes</a>];
       }
-      print $option;
+      print p($option, " or ",
+              a({ -href => "heatmap.cgi?orgId=$orgId&r=$locusId" }, "choose conditions"));
       my @out = (); # specifiers for HTML rows for each fitness value
       my $lastGroup = ""; # only enter the first time
       foreach my $fitrow (@fit) {
