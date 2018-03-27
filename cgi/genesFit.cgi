@@ -11,7 +11,7 @@
 #
 # Required CGI parameters:
 # orgId -- which organism
-# genes -- 1 or more locusIds
+# locusId -- 1 or more locusIds
 # Optional CGI parameters:
 # addgene -- a gene to add (locusId, name, sysName)
 # showAll -- 1 if showing all fitness values instead of just the most extreme ones
