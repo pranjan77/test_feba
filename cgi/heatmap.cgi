@@ -291,31 +291,43 @@ my $selectColAt = qq{
 
 my $go = "<BUTTON type='submit'>Go</BUTTON>";
 
+my $page_URL = "http://" . $ENV{SERVER_NAME} . $ENV{REQUEST_URI};
+
+my $tinyform = join("",
+                    start_form(-style => "display: inline;",
+                               -name => 'tiny', -method => 'POST', target => "blank",
+                               -action => 'https://tinyurl.com/create.php'),
+                    hidden(-name => 'url', -default => $page_URL, -override => 1),
+                    " <BUTTON type='submit'>TinyURL</BUTTON> ",
+                    end_form);
+
 if ($view) {
   # this form need not set view back to 0 as that is the default
   print
-    start_form(-name => 'input', -method => 'GET', -action => 'heatmap.cgi'),
-      p(join("",@hidden),
-        "<BUTTON type='submit'>Edit</BUTTON>"),
-          end_form;
+    p($tinyform,
+      start_form(-style => "display: inline;",
+                 -name => 'input', -method => 'GET', -action => 'heatmap.cgi'),
+      join("",@hidden),
+      " <BUTTON type='submit'>Edit</BUTTON> ",
+      end_form);
 } else {
     # I should really use div and text-style: width=12em or whatever to make the text have a consistent width...
   print
-    start_form(-name => 'input', -method => 'GET', -action => 'heatmap.cgi'),
-      p("Add gene(s):",
-        join("", @hidden),
-        textfield( -name => 'addrow', -default => "", -override => 1, -size => 10, -maxLength => 1000 ),
-        " at $selectRowAt $go"),
-          end_form;
-
-  print
-    start_form(-name => 'input', -method => 'GET', -action => 'heatmap.cgi'),
-      p("Add comment:",
-        join("", @hidden),
-        hidden(-name => 'addrow', -default => "_l$nlabel", -override => 1),
-        textfield( -name => "rt._l$nlabel", -default => "", -override => 1, -size => 10, -maxLength => 100 ),
-        " at $selectRowAt $go"),
-          end_form;
+    p(start_form(-style => "display: inline;",
+                 -name => 'input', -method => 'GET', -action => 'heatmap.cgi'),
+      "Add gene(s):",
+      join("", @hidden),
+      textfield( -name => 'addrow', -default => "", -override => 1, -size => 10, -maxLength => 1000 ),
+      " at $selectRowAt $go",
+      end_form,
+      start_form(-style => "display: inline;",
+                 -name => 'input', -method => 'GET', -action => 'heatmap.cgi'),
+      " or comment:",
+      join("", @hidden),
+      hidden(-name => 'addrow', -default => "_l$nlabel", -override => 1),
+      textfield( -name => "rt._l$nlabel", -default => "", -override => 1, -size => 10, -maxLength => 100 ),
+      " at $selectRowAt $go",
+        end_form);
 
   print
     start_form(-name => 'input', -method => 'GET', -action => 'heatmap.cgi'),
@@ -326,11 +338,12 @@ if ($view) {
           end_form;
 
   print
-    start_form(-name => 'input', -method => 'GET', -action => 'heatmap.cgi'),
-      p(join("", @hidden),
-        hidden(-name => 'view', -default => 1, -override => 1),
-        "<BUTTON type='submit'>Hide controls</BUTTON>"),
-          end_form;
+    p(start_form(-style => "display: inline;", -name => 'input', -method => 'GET', -action => 'heatmap.cgi'),
+      join("", @hidden),
+      hidden(-name => 'view', -default => 1, -override => 1),
+      "<BUTTON type='submit'>Hide controls</BUTTON>",
+      end_form,
+      $tinyform);
 
   my $nloci = scalar(@locusIds);
   print p("Or see",
