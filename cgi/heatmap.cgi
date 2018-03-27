@@ -12,8 +12,8 @@
 #
 # Common CGI parameters:
 # r -- 1 or more row specifiers, in order from top to bottom. Each is either a locusId
-#	or a label specifier like _l1 or similar label.
-# rt.X for various row specifiers (i.e., rtext,_l1) -- text to show instead of
+#	or a comment/label specifier like _l1 but varying the number
+# rt.X for various row specifiers (i.e., rt._l1) -- text to show instead of
 #	the usual gene annotation. (The original annotation will be in the popup text.)
 # c -- 1 or more column specifiers (experiments), from left to right
 # view -- set to 1 if in view-only mode # not implemented
@@ -132,8 +132,18 @@ my $title1 = @locusIds > 0 ? "Fitness Heatmap for " . scalar(@locusIds) . " gene
 
 print $cgi->header,
   Utils::start_page($title1 . " " . $genome),
-  h2($title1, a({-href => "org.cgi?orgId=$orgId"}, $genome)),
-  qq[<div id="ntcontent">];
+  h2($title1, a({-href => "org.cgi?orgId=$orgId"}, $genome));
+
+my $maxC = 50;
+my $maxR = 200;
+if (@c > $maxC) {
+  $#c = $maxC-1;
+  push @errors, "This page limits the number of columns to $maxC";
+}
+if (@r > $maxR) {
+  $#r = $maxR-1;
+  push @errors, "This page limits the number of rows to $maxR";
+}
 
 foreach my $error (@errors) {
   print $cgi->h3($error);
@@ -233,7 +243,16 @@ foreach my $iRow (0..$maxRow) {
     push @trows, Tr(@out);
   }
 }
-print table( { cellspacing => 0, cellpadding => 3 }, @trows) if @r > 0;
+
+
+# End the divs early so that any horizontal scroll-bar is visible at the bottom of the table instead of hidden farther down
+# Also note that most pages have div #page, div #main, and div #ntcontent,
+# but this page does not have the ntcontent div
+print "</div></div>"; # end page, end main
+
+print table( { cellspacing => 0, cellpadding => 3,
+               -style => "table-layout: auto; overflow-x: scroll" },
+             @trows) if @r > 0;
 
 my @hidden = (); # all of the common (static) arguments as hidden fields
 # Do not save view as it never needs to be set by a hidden field (a form can only turn it off)
@@ -291,7 +310,7 @@ if ($view) {
 
   print
     start_form(-name => 'input', -method => 'GET', -action => 'heatmap.cgi'),
-      p("Add label:",
+      p("Add comment:",
         join("", @hidden),
         hidden(-name => 'addrow', -default => "_l$nlabel", -override => 1),
         textfield( -name => "rt._l$nlabel", -default => "", -override => 1, -size => 10, -maxLength => 100 ),
