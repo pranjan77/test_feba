@@ -17,7 +17,7 @@
 # orgId -- which organism
 
 use strict;
-use CGI qw(:standard Vars);
+use CGI qw(:standard Vars start_ul);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
 use IO::Handle; # for autoflush
@@ -42,11 +42,6 @@ Utils::fail($cgi, "Unknown organism: $orgId") unless $orgId eq "" || exists $org
 my $cond = $dbh->selectall_arrayref(qq{SELECT orgId, expGroup, COUNT(DISTINCT condition_1) AS nCond, COUNT(*) as nExp FROM Experiment WHERE orgId=? GROUP BY expGroup ORDER BY expGroup; },
     { Slice => {} },
     $orgId);
-
-
-# gather number of genes and data
-my $numGenes = $dbh->selectrow_array(qq{SELECT COUNT (DISTINCT locusId) FROM Gene WHERE orgId = ?;}, undef, $orgId);
-my $numData = $dbh->selectrow_array(qq{SELECT COUNT (DISTINCT locusId) FROM GeneFitness WHERE orgId = ?;}, undef, $orgId);
 
 
 # write the title
@@ -79,14 +74,20 @@ if ((defined $orginfo->{$orgId}{taxonomyId}) && ($orginfo->{$orgId}{taxonomyId} 
 	print $cgi->p("NCBI taxonomy id:", $cgi->a({href => "http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=$orginfo->{$orgId}{taxonomyId}"}, $orginfo->{$orgId}{taxonomyId}));
 }
 
-# not sure this plus use of newlines below is actually working to make top of page load faster
-autoflush STDOUT 1; # show preliminary results
-
 print
-    p("Fitness data for $numData genes of $numGenes genes."),
-    h3("Fitness Experiments"),
-    table({cellspacing => 0, style => "margin-left: 50px;", cellpadding => 3}, @trows),
-    "\n";
+  h3("Fitness Experiments"),
+  table({cellspacing => 0, style => "margin-left: 50px;", cellpadding => 3}, @trows),
+  h3("Tools"),
+  start_ul(),
+  li(a( {href => "keggmaplist.cgi?orgId=$orgId"}, "KEGG maps")),
+  li(a( {href => "keggmap.cgi?mapId=01100&orgId=$orgId"}, "KEGG overview map")),
+  li(a( {href => "seedsubsystemsOrg.cgi?orgId=$orgId"}, "SEED subsystems")),
+  li(a( {href => "pathwaysOrg.cgi?orgId=$orgId"}, "MetaCyc pathways")),
+  li(a( {href => "heatmap.cgi?orgId=$orgId"}, "Build heatmap")),
+  end_ul();
+
+autoflush STDOUT 1; # show preliminary results
+print "\n";
 
 # Overview of specific phenotypes
 my $specN = $dbh->selectall_hashref(
@@ -128,18 +129,6 @@ if (scalar(@$reanno) > 0) {
           "Updated annotations for " . scalar(@$reanno) . " genes");
 }
 
-print
-  h3("Metabolic Maps from KEGG"),
-  p("See",
-    a( {href => "keggmap.cgi?mapId=01100&orgId=$orgId"}, "overview map"),
-    "or",
-    a( {href => "keggmaplist.cgi?orgId=$orgId"}, "list of maps")."."),
-  h3("SEED Subsystems"),
-  p(a({href => "seedsubsystemsOrg.cgi?orgId=$orgId"}, "See list")),
-  h3("MetaCyc Pathways"),
-  p(a{href => "pathwaysOrg.cgi?orgId=$orgId"}, "See list"),
-  "\n";
-      
 # No COUNT DISTINCT in sqlite3 so use GROUP BY as workaround
 my $loci = $dbh->selectcol_arrayref("SELECT locusId FROM ConservedCofit WHERE orgId = ? GROUP BY locusId",
                                           {}, $orgId);
@@ -156,6 +145,12 @@ print h3("Downloads"),
         li(a({href => "orgSeqs.cgi?orgId=$orgId"}, "Protein sequences"), "(fasta)"),
         li(a({href => "orgGenes.cgi?orgId=$orgId"}, "List of genes"), "(tab-delimited)")
     );
+print "\n";
+
+my $numGenes = $dbh->selectrow_array(qq{SELECT COUNT (DISTINCT locusId) FROM Gene WHERE orgId = ?;}, undef, $orgId);
+my $numData = $dbh->selectrow_array(qq{SELECT COUNT (DISTINCT locusId) FROM GeneFitness WHERE orgId = ?;}, undef, $orgId);
+
+print p("Fitness data for $numData of $numGenes genes.");
 
 $dbh->disconnect();
 Utils::endHtml($cgi);
