@@ -140,7 +140,9 @@ foreach my $error (@errors) {
 }
 
 my @trows = ();
-my @headings = qw{Gene Description};
+my @headings = ();
+push @headings, "&nbsp;"; # either gene controls or empty
+push @headings, qw{Gene Description};
 foreach my $expName (@c) {
   die "Invalid column: $expName" unless exists $expinfo->{$expName};
   my $exp = $expinfo->{$expName};
@@ -151,25 +153,30 @@ foreach my $expName (@c) {
 my $ncol = scalar(@headings);
 push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'}, $cgi->th(\@headings));
 
+my @rtargs = ();
+foreach my $r (@r) {
+  my $rt = $cgi->param("rt.$r");
+  push @rtargs, "rt.$r=$rt" if defined $rt;
+}
+
 # remove-column row
 if (@c > 0 && ! $view) {
   my @row = ();
-  push @row, td(""), td("");
+  push @row, td(""), td(""), td("");
   foreach my $expName (@c) {
     my @args = ("orgId=$orgId", "view=$view");
     push @args, map "r=$_", @r;
+    push @args, @rtargs;
     push @args, map "c=$_", grep $_ ne $expName, @c;
-    foreach my $r (@r) {
-      my $rt = $cgi->param("rt.$r");
-      push @args, "rt.$r=$rt" if defined $rt;
-    }
     my $URL = "heatmap.cgi?" . join("&", @args);
     push @row, td(a({ -href => $URL, title => "remove $expName" }, "remove"));
   }
   push @trows, $cgi->Tr({-align=>'CENTER', -valign=>'TOP'}, @row);
 }
 
-foreach my $rowspec (@r) {
+my $maxRow = scalar(@r)-1;
+foreach my $iRow (0..$maxRow) {
+  my $rowspec = $r[$iRow];
   if ($rowspec =~ m/^_l\d+$/) {
     my $text = $cgi->param("rt.$rowspec");
     $text = " " if !defined $text;
@@ -179,6 +186,32 @@ foreach my $rowspec (@r) {
     die "Invalid row $rowspec" unless exists $genes{$locusId};
     my $gene = $genes{$locusId};
     my @out = (); # fields for each column
+    my $controls = "&nbsp;";
+    unless ($view) {
+      my $baseURL = "heatmap.cgi?" . join("&", "orgId=$orgId", @rtargs, map { "c=$_" } @c);
+      my @pieces = ();
+      my $rmURL = join("&", $baseURL, map { "r=$_" } grep { $_ ne $rowspec } @r);
+      push @pieces, a({-href => $rmURL, -title => "remove"}, "-");
+      if ($iRow > 0) {
+        my @newr = ();
+        push @newr, @r[0..($iRow-2)] if $iRow >= 2;
+        push @newr, $r[$iRow], $r[$iRow-1];
+        push @newr, @r[($iRow+1)..$maxRow] if $iRow < $maxRow;
+        my $URL = join("&", $baseURL, map { "r=$_" } @newr);
+        push @pieces, a({-href => $URL, -title => "move up"}, "&uarr;");
+      }
+      if ($iRow < $maxRow) {
+        my @newr = ();
+        push @newr, @r[0..($iRow-1)] if $iRow > 0;
+        push @newr, $r[$iRow+1], $r[$iRow];
+        push @newr, @r[($iRow+2)..$maxRow] if $iRow+2 <= $maxRow;
+        my $URL = join("&", $baseURL, map {"r=$_" } @newr);
+        push @pieces, a({-href => $URL, -title => "move down"}, "&darr;");
+      }
+      $controls = span({ -style => "color: darkblue; font-weight: bold;" },
+                       @pieces);
+    }
+    push @out, td($controls);
     my $name =  Utils::gene_link($dbh, $gene, "name", "myFitShow.cgi");
     $name .= " " . "(" . $gene->{gene} . ")" if $gene->{gene};
     push @out, td($name);
