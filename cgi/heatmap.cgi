@@ -315,7 +315,7 @@ if ($view) {
   print
     p(start_form(-style => "display: inline;",
                  -name => 'input', -method => 'GET', -action => 'heatmap.cgi'),
-      "Add gene(s):",
+      "Add genes:",
       join("", @hidden),
       textfield( -name => 'addrow', -default => "", -override => 1, -size => 10, -maxLength => 1000 ),
       " at $selectRowAt $go",
@@ -331,7 +331,7 @@ if ($view) {
 
   print
     start_form(-name => 'input', -method => 'GET', -action => 'heatmap.cgi'),
-      p("Add experiment:",
+      p("Add experiments:",
         join("", @hidden),
         textfield( -name => 'addcol', -default => "", -override => 1, -size => 15, -maxLength => 100 ),
         " at $selectColAt $go"),
