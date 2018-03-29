@@ -29,11 +29,13 @@
 
 use strict;
 
-use CGI qw(-nosticky :standard Vars);
+# use oldstyle urls to ignore ; as a potential separator of queries.
+use CGI qw(-nosticky -oldstyle_urls :standard Vars);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
 use List::Util 'sum';
 use HTML::Entities;
+use URI::Escape;
 
 use lib "../lib";
 use Utils;
@@ -177,7 +179,7 @@ foreach my $c (@c) {
 my @rtargs = ();
 foreach my $r (@r) {
   my $rt = $cgi->param("rt.$r");
-  push @rtargs, "rt.$r=$rt" if defined $rt && $rt ne "";
+  push @rtargs, "rt.$r=" . uri_escape($rt) if defined $rt && $rt ne "";
 }
 
 my $rmmark = "&#10799;"; # Unicode Character 'VECTOR OR CROSS PRODUCT' (U+2A2F)
@@ -216,8 +218,7 @@ if (defined $edit && $edit ne "") {
 
 my @trows = ();
 my @headings = ();
-push @headings, "&nbsp;" unless $view; # delete/edit controls
-push @headings, "&nbsp;"; # either up/down controls or empty
+push @headings, "&nbsp;" unless $view; # delete/edit/up/down controls
 push @headings, qw{Gene Description};
 foreach my $expName (@c) {
   die "Invalid column: $expName" unless exists $expinfo->{$expName};
@@ -250,8 +251,26 @@ foreach my $iRow (0..$maxRow) {
 
   my @td = ();
   unless ($view) {
-    push @td, td( a({ -href => $rmURL, -title => "remove", -style => $actionStyle}, $rmmark),
-                  a({ -href => $editURL, -title => "edit text" , -style => $actionStyle}, $editmark) );
+    my @controls = ();
+    push @controls, a({ -href => $rmURL, -title => "remove", -style => $actionStyle}, $rmmark);
+    push @controls, a({ -href => $editURL, -title => "edit text" , -style => $actionStyle}, $editmark);
+    if ($iRow > 0) {
+      my @newr = ();
+      push @newr, @r[0..($iRow-2)] if $iRow >= 2;
+      push @newr, $r[$iRow], $r[$iRow-1];
+      push @newr, @r[($iRow+1)..$maxRow] if $iRow < $maxRow;
+      my $URL = join("&", $baseURL, map { "r=$_" } @newr);
+      push @controls, a({-href => $URL, -title => "move up", -style => $actionStyle}, "&uarr;");
+    }
+    if ($iRow < $maxRow) {
+      my @newr = ();
+      push @newr, @r[0..($iRow-1)] if $iRow > 0;
+      push @newr, $r[$iRow+1], $r[$iRow];
+      push @newr, @r[($iRow+2)..$maxRow] if $iRow+2 <= $maxRow;
+      my $URL = join("&", $baseURL, map {"r=$_" } @newr);
+      push @controls, a({-href => $URL, -title => "move down", -style => $actionStyle}, "&darr;");
+    }
+    push @td, td(@controls);
   }
 
   if ($rowspec =~ m/^_l\d+$/) {
@@ -261,28 +280,7 @@ foreach my $iRow (0..$maxRow) {
     die "Invalid row $rowspec" unless exists $genes{$locusId};
     my $gene = $genes{$locusId};
     my @out = (); # fields for each column
-    my $controls = "&nbsp;";
-    unless ($view) {
-      my @pieces = ();
-      if ($iRow > 0) {
-        my @newr = ();
-        push @newr, @r[0..($iRow-2)] if $iRow >= 2;
-        push @newr, $r[$iRow], $r[$iRow-1];
-        push @newr, @r[($iRow+1)..$maxRow] if $iRow < $maxRow;
-        my $URL = join("&", $baseURL, map { "r=$_" } @newr);
-        push @pieces, a({-href => $URL, -title => "move up", -style => $actionStyle}, "&uarr;");
-      }
-      if ($iRow < $maxRow) {
-        my @newr = ();
-        push @newr, @r[0..($iRow-1)] if $iRow > 0;
-        push @newr, $r[$iRow+1], $r[$iRow];
-        push @newr, @r[($iRow+2)..$maxRow] if $iRow+2 <= $maxRow;
-        my $URL = join("&", $baseURL, map {"r=$_" } @newr);
-        push @pieces, a({-href => $URL, -title => "move down", -style => $actionStyle}, "&darr;");
-      }
-      $controls = join(" ", @pieces);
-    }
-    push @td, td($controls);
+
     my $name =  Utils::gene_link($dbh, $gene, "name", "myFitShow.cgi");
     $name .= " " . "(" . $gene->{gene} . ")" if $gene->{gene};
     push @td, td($name);
