@@ -11,18 +11,21 @@
 # orgId -- which organism
 #
 # Common CGI parameters:
-# r -- 1 or more row specifiers, in order from top to bottom. Each is either a locusId
+# r -- list of more row specifiers, in order from top to bottom. Each is either a locusId
 #	or a comment/label specifier like _l1 but varying the number
 # rt.X for various row specifiers (i.e., rt._l1) -- text to show instead of
 #	the usual gene annotation. (The original annotation will be in the popup text.)
-# c -- 1 or more column specifiers (experiments), from left to right
+#	This is also how the text for labels is set.
+# c -- list of column specifiers (experiments), from left to right
 # view -- set to 1 if in view-only mode # not implemented
-# 
+# edit -- set to a row (0-indexed) if editing the text for this row
+#
 # CGI parameters used to update the view:
 # addrow -- search for matching gene(s) in this organism [multiple space-delimited terms]
 # addrowAt -- -1 or 1 for top or bottom
 # addcol -- ditto but may add multiple experiments
 # addcolAt -- -1 or 1 for left or right
+#
 
 use strict;
 
@@ -50,9 +53,9 @@ my $view = $cgi->param('view') || 0;
 my @errors = ();
 
 my $addrow = $cgi->param('addrow') || "";
-$addrow =~ s/[ \t]+$//;
-$addrow =~ s/^[ \t]+//;
-my @addrow = split /[ \t]+/, $addrow;
+$addrow =~ s/[ ,\t\r\n]+$//;
+$addrow =~ s/^[ ,\t\r\n]+//;
+my @addrow = split /[ ,\t\r\n]+/, $addrow;
 my $addrowAt = $cgi->param('addrowAt') || 0;
 
 foreach my $add (@addrow) {
@@ -149,48 +152,110 @@ foreach my $error (@errors) {
   print $cgi->h3($error);
 }
 
-my @trows = ();
-my @headings = ();
-push @headings, "&nbsp;"; # either gene controls or empty
-push @headings, qw{Gene Description};
-foreach my $expName (@c) {
-  die "Invalid column: $expName" unless exists $expinfo->{$expName};
-  my $exp = $expinfo->{$expName};
-  push @headings, a( {-href => "exp.cgi?orgId=$orgId&expName=$expName", -title => $expName},
-                     $expinfo->{$expName}{expDesc});
+my @hidden = (); # all of the common (static) arguments as hidden fields
+my %hiddenrt = (); # row specifier => the hidden field for its text (if any)
+
+# Do not save view as it never needs to be set by a hidden field (a form can only turn it off)
+push @hidden, hidden('orgId', $orgId );
+foreach my $r (@r) {
+  push @hidden, hidden(-name => 'r', -default => $r, -override => 1);
+}
+foreach my $r (@r) {
+  my $arg = "rt.$r";
+  my $value = $cgi->param($arg);
+  if (defined $value) {
+    my $h = hidden($arg, $value);
+    push @hidden, $h;
+    $hiddenrt{$r} = $h;
+  }
+}
+foreach my $c (@c) {
+  push @hidden, hidden(-name => 'c', -default => $c, -override => 1);
 }
 
-my $ncol = scalar(@headings);
-push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'}, $cgi->th(\@headings));
 
 my @rtargs = ();
 foreach my $r (@r) {
   my $rt = $cgi->param("rt.$r");
-  push @rtargs, "rt.$r=$rt" if defined $rt;
+  push @rtargs, "rt.$r=$rt" if defined $rt && $rt ne "";
 }
 
-# remove-column row
-if (@c > 0 && ! $view) {
-  my @row = ();
-  push @row, td(""), td(""), td("");
-  foreach my $expName (@c) {
+my $rmmark = "&#10799;"; # Unicode Character 'VECTOR OR CROSS PRODUCT' (U+2A2F)
+my $editmark = span({ -style => "display: inline-block; transform: rotateZ(90deg);" }, "&#9998;");
+
+my $edit = $cgi->param("edit");
+if (defined $edit && $edit ne "") {
+  # If in edit mode, just show a box to edit this text
+  die "Invalid edit argument" unless $edit =~ m/^\d+$/ && $edit >= 0 && $edit < scalar(@r);
+  my $r = $r[$edit];
+  my $orig = $cgi->param("rt.$r");
+  my $label;
+  my $isGene = $r !~ m/^_l/;
+  if ($isGene) {
+    my $gene = $genes{$r};
+    die unless defined $gene;
+    $orig = $gene->{desc} unless defined $orig && $orig ne "";
+    $label = "Revise description for " . Utils::gene_link($dbh, $gene, "name", "myFitShow.cgi");
+    $label .= " " . "(" . $gene->{gene} . ")" if $gene->{gene};
+    $label .= " to ";
+  } else {
+    $label = "Revise comment: ";
+  }
+
+  print
+    p(start_form(-name => 'edit', -method => 'GET', -action => 'heatmap.cgi'),
+      join("", grep { $_ ne $hiddenrt{$r} } @hidden),
+      $label,
+      br(),
+      textfield( -name => "rt.$r", -default => $orig, -override => 1, -size => 50, -maxLength => 500 ),
+      " <BUTTON type='submit'>Go</BUTTON> ",
+      end_form);
+  $dbh->disconnect();
+  Utils::endHtml($cgi); # exits
+}
+
+my @trows = ();
+my @headings = ();
+push @headings, "&nbsp;" unless $view; # delete/edit controls
+push @headings, "&nbsp;"; # either up/down controls or empty
+push @headings, qw{Gene Description};
+foreach my $expName (@c) {
+  die "Invalid column: $expName" unless exists $expinfo->{$expName};
+  my $exp = $expinfo->{$expName};
+  my $show = a( {-href => "exp.cgi?orgId=$orgId&expName=$expName", -title => $expName},
+                     $expinfo->{$expName}{expDesc});
+  unless ($view) {
     my @args = ("orgId=$orgId", "view=$view");
     push @args, map "r=$_", @r;
     push @args, @rtargs;
     push @args, map "c=$_", grep $_ ne $expName, @c;
-    my $URL = "heatmap.cgi?" . join("&", @args);
-    push @row, td(a({ -href => $URL, title => "remove $expName" }, "remove"));
+    my $rmURL = "heatmap.cgi?" . join("&", @args);
+    $show .= br() . a({ -href => $rmURL, title => "remove $expName" }, $rmmark);
   }
-  push @trows, $cgi->Tr({-align=>'CENTER', -valign=>'TOP'}, @row);
+  push @headings, $show;
 }
+push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'}, $cgi->th(\@headings));
+my $ncol = scalar(@headings);
+my $ncolLabel = $ncol - ($view ? 0 : 1);
 
 my $maxRow = scalar(@r)-1;
+my $actionStyle = "color: rgb(103,146,160); font-size: smaller;";
+# this includes everything but the rows
+# view need not be specified as there are no outbound URLs in view mode
+my $baseURL = "heatmap.cgi?" . join("&", "orgId=$orgId", @rtargs, map { "c=$_" } @c);
 foreach my $iRow (0..$maxRow) {
+  my $editURL = join("&", $baseURL, "edit=$iRow", map { "r=$_" } @r);
   my $rowspec = $r[$iRow];
+  my $rmURL = join("&", $baseURL, map { "r=$_" } grep { $_ ne $rowspec } @r);
+
+  my @td = ();
+  unless ($view) {
+    push @td, td( a({ -href => $rmURL, -title => "remove", -style => $actionStyle}, $rmmark),
+                  a({ -href => $editURL, -title => "edit text" , -style => $actionStyle}, $editmark) );
+  }
+
   if ($rowspec =~ m/^_l\d+$/) {
-    my $text = $cgi->param("rt.$rowspec");
-    $text = " " if !defined $text;
-    push @trows, $cgi->Tr(td( { -colspan => $ncol }, $text));
+    push @td, td({-colspan => $ncolLabel}, $cgi->param("rt.$rowspec") );
   } else {
     my $locusId = $rowspec;
     die "Invalid row $rowspec" unless exists $genes{$locusId};
@@ -198,17 +263,14 @@ foreach my $iRow (0..$maxRow) {
     my @out = (); # fields for each column
     my $controls = "&nbsp;";
     unless ($view) {
-      my $baseURL = "heatmap.cgi?" . join("&", "orgId=$orgId", @rtargs, map { "c=$_" } @c);
       my @pieces = ();
-      my $rmURL = join("&", $baseURL, map { "r=$_" } grep { $_ ne $rowspec } @r);
-      push @pieces, a({-href => $rmURL, -title => "remove"}, "-");
       if ($iRow > 0) {
         my @newr = ();
         push @newr, @r[0..($iRow-2)] if $iRow >= 2;
         push @newr, $r[$iRow], $r[$iRow-1];
         push @newr, @r[($iRow+1)..$maxRow] if $iRow < $maxRow;
         my $URL = join("&", $baseURL, map { "r=$_" } @newr);
-        push @pieces, a({-href => $URL, -title => "move up"}, "&uarr;");
+        push @pieces, a({-href => $URL, -title => "move up", -style => $actionStyle}, "&uarr;");
       }
       if ($iRow < $maxRow) {
         my @newr = ();
@@ -216,16 +278,24 @@ foreach my $iRow (0..$maxRow) {
         push @newr, $r[$iRow+1], $r[$iRow];
         push @newr, @r[($iRow+2)..$maxRow] if $iRow+2 <= $maxRow;
         my $URL = join("&", $baseURL, map {"r=$_" } @newr);
-        push @pieces, a({-href => $URL, -title => "move down"}, "&darr;");
+        push @pieces, a({-href => $URL, -title => "move down", -style => $actionStyle}, "&darr;");
       }
-      $controls = span({ -style => "color: darkblue; font-weight: bold;" },
-                       @pieces);
+      $controls = join(" ", @pieces);
     }
-    push @out, td($controls);
+    push @td, td($controls);
     my $name =  Utils::gene_link($dbh, $gene, "name", "myFitShow.cgi");
     $name .= " " . "(" . $gene->{gene} . ")" if $gene->{gene};
-    push @out, td($name);
-    push @out, td(Utils::gene_link($dbh, $gene, "desc", "domains.cgi"));
+    push @td, td($name);
+    my $rt = $cgi->param("rt.$locusId");
+    if (defined $rt && $rt ne "") {
+      my $anno = "Original annotation: " . $gene->{desc};
+      my $alt_desc = Utils::alt_descriptions($dbh,$gene->{orgId},$gene->{locusId});
+      $anno .= "; $alt_desc" if $alt_desc;
+      push @td, td( a({ -href => "domains.cgi?orgId=$orgId&locusId=$locusId",
+                         -title => $anno }, $rt));
+    } else {
+      push @td, td(Utils::gene_link($dbh, $gene, "desc", "domains.cgi"));
+    }
     foreach my $expName (@c) {
       my $showId = $gene->{sysName} || $gene->{locusId};
       my $fit = $gene->{fit}{$expName}{fit};
@@ -238,10 +308,10 @@ foreach my $iRow (0..$maxRow) {
                     -style => "color:rgb(0,0,0)" },
                   sprintf("%.1f", $fit));
       }
-      push @out, td({ -bgcolor => Utils::fitcolor($fit) }, $show);
+      push @td, td({ -bgcolor => Utils::fitcolor($fit) }, $show);
     }
-    push @trows, Tr(@out);
   }
+  push @trows, Tr(@td);
 }
 
 
@@ -253,21 +323,6 @@ print "</div></div>"; # end page, end main
 print table( { cellspacing => 0, cellpadding => 3,
                -style => "table-layout: auto; overflow-x: scroll" },
              @trows) if @r > 0;
-
-my @hidden = (); # all of the common (static) arguments as hidden fields
-# Do not save view as it never needs to be set by a hidden field (a form can only turn it off)
-push @hidden, hidden('orgId', $orgId );
-foreach my $r (@r) {
-  push @hidden, hidden(-name => 'r', -default => $r, -override => 1);
-}
-foreach my $r (@r) {
-  my $arg = "rt.$r";
-  my $value = $cgi->param($arg);
-  push @hidden, hidden($arg, $value) if defined $value;
-}
-foreach my $c (@c) {
-  push @hidden, hidden(-name => 'c', -default => $c, -override => 1);
-}
 
 my $nlabel = 0;
 while (grep($_ eq "_l$nlabel", @r)) {
@@ -317,7 +372,7 @@ if ($view) {
                  -name => 'input', -method => 'GET', -action => 'heatmap.cgi'),
       "Add genes:",
       join("", @hidden),
-      textfield( -name => 'addrow', -default => "", -override => 1, -size => 10, -maxLength => 1000 ),
+      textfield( -name => 'addrow', -default => "", -override => 1, -size => 10, -maxLength => 100 ),
       " at $selectRowAt $go",
       end_form,
       start_form(-style => "display: inline;",
@@ -325,7 +380,7 @@ if ($view) {
       " or comment:",
       join("", @hidden),
       hidden(-name => 'addrow', -default => "_l$nlabel", -override => 1),
-      textfield( -name => "rt._l$nlabel", -default => "", -override => 1, -size => 10, -maxLength => 100 ),
+      textfield( -name => "rt._l$nlabel", -default => "", -override => 1, -size => 10, -maxLength => 500 ),
       " at $selectRowAt $go",
         end_form);
 
