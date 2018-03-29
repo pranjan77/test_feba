@@ -31,6 +31,7 @@ singleFit.cgi -- show table of fitness data for one gene (if it has data)
 	for each row, compare => orthFit.cgi
 	add a gene => genesFit.cgi
 	show all => showAll=1 option
+        choose conditions => heatmap.cgi
 	show nearby => genesFit.cgi with around
 	sequence  => getSeq.cgi
 	check homologs => mySeqSearch.cgi
@@ -49,6 +50,12 @@ genesFit.cgi -- show fitness of multiple genes or nearby genes
         fitness cell => strainTable.cgi
 	add or remove genes => locusId or addgene options
 	show all => showAll=1 option
+        choose experiments => heatmap.cgi
+heatmap.cgi -- build a heatmap with selected conditions and experiments
+	Mostly links to itself to allow customization of the view.
+        each gene => showFit.cgi, domains.cgi
+	each experiment => exp.cgi
+	top conditions for genes => genesFit.cgi
 cofit.cgi -- top cofit hits for a gene
 	each hit => myFitShow.cgi or compareGenes.cgi or domains.cgi
 	checkboxes => genesFit.cgi
@@ -100,6 +107,7 @@ org.cgi -- links to experiments (exps.cgi), specific phenotypes (spec.cgi),
 	metabolic maps (keggmap.cgi and keggmaplist.cgi),
         SEED subsystems (seedsubsystemsOrg.cgi),
         MetaCyc pathways (pathwaysOrg.cgi)
+	heatmap builder (heatmap.cgi)
         and downloads
         (createFitData.cgi, createCofitData.cgi, spec.cgi, createExpData.cgi, orgSeqs.cgi)
 spec.cgi -- specific phenotypes of a certain type for an organism
