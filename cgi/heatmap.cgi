@@ -132,13 +132,6 @@ foreach my $locusId (@locusIds) {
   $genes{$locusId} = $gene;
 }
 
-my $title1 = @locusIds > 0 ? "Fitness Heatmap for " . scalar(@locusIds) . " genes in "
-  : "Build Fitness Heatmap for";
-
-print $cgi->header,
-  Utils::start_page($title1 . " " . $genome),
-  h2($title1, a({-href => "org.cgi?orgId=$orgId"}, $genome));
-
 my $maxC = 50;
 my $maxR = 200;
 if (@c > $maxC) {
@@ -149,6 +142,13 @@ if (@r > $maxR) {
   $#r = $maxR-1;
   push @errors, "This page limits the number of rows to $maxR";
 }
+
+my $title1 = @locusIds > 0 ? "Heatmap for " . scalar(@locusIds) . " genes x " . scalar(@c) . " experiments in "
+  : "Build Heatmap in";
+
+print $cgi->header,
+  Utils::start_page($title1 . " " . $genome),
+  h2($title1, a({-href => "org.cgi?orgId=$orgId"}, $genome));
 
 foreach my $error (@errors) {
   print $cgi->h3($error);
