@@ -46,7 +46,7 @@ print
 
 Utils::fail($cgi, "No reannotations for this organism.") if @$reanno == 0;
 
-print p(scalar(@$reanno), "genes with updated annotations");
+print p(scalar(@$reanno), "genes with updated annotations:");
 
 foreach my $row (@$reanno) {
     my $showId = $row->{sysName} || $row->{locusId};
@@ -68,6 +68,12 @@ foreach my $row (@$reanno) {
             small("KEGG:", $kegg_desc || "no annotation"), br(),
             small("Rationale:", $row->{comment}));
 }
+
+print p("Or download reannotations for",
+        a({-href => "downloadReanno.cgi?orgId=$orgId"}, $orginfo->{$orgId}{genome}),
+        "or for",
+        a({-href => "downloadReanno.cgi"}, "all organisms"),
+       "as tab-delimited tables");
 
 $dbh->disconnect();
 Utils::endHtml($cgi);
