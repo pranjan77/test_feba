@@ -79,7 +79,7 @@ experiment, where we use the number of reads for each strain's barcode
 as a proxy for its abundance. The gene fitness is normalized so that
 the typical gene has a fitness of zero. For genes on large
 chromosomes, the gene fitness values are also normalized for changes
-in copy number along the chromosome.
+in copy number along the chromosome. For details see <A HREF="http://mbio.asm.org/content/6/3/e00306-15.full#sec-11">here</A> (especially in "BarSeq data analysis and calculation of gene fitness" and figure S4).
 
 <P>Although most experiments are based on growth, this site also includes assays of motility or survival. For a motility assay, the experimental samples might be the cells that reached the outer ring of an agar plate, or that stayed in the inner ring where the cells were originally placed.
 For a survival assay, the cells are stressed or starved for a period of time; then, to distinguish viable cells from dead cells,
@@ -88,7 +88,7 @@ all cells are transferred to a rich medium and recovered for a few generations.
 <H3><A name="t" style="color: black;"><i>t</i> scores</A></H3>
 
 The t-like test statistic indicates how reliably a gene fitness values is
-different from zero. Ideally, they are on the same scale
+different from zero. Ideally, these scores are on the same scale
 as <i>z</i> scores or <i>t</i> scores. However, since there are thousands of genes
 in each experiment, and there can be hundreds of fitness experiments
 for a gene, a higher threshold is needed. We usually ignore any
@@ -96,7 +96,9 @@ fitness effects with <i>|t| &lt; 4</i>. In most cases, you can gain
 confidence in a fitness effect by comparing the phenotype of a gene in
 replicate experiments, or in similar experiments (such as different
 concentrations of the same inhibitory compound), or for <A
-HREF="#ortholog">orthologous</A> genes.
+HREF="#ortholog">orthologous</A> genes. The t-like scores are described
+<A HREF="http://mbio.asm.org/content/6/3/e00306-15.full#sec-11">here</A>
+(especially in "t-like test statistic" and figure S5).
 
 <H3><A name="cofitness" style="color: black;">Cofitness</A></H3>
 
@@ -105,7 +107,7 @@ Alternatively, if two genes in the same organism have similar fitness patterns, 
 
 <P>If two genes have similar fitness patterns (cofitness &gt; 0.75), and they are among the most cofit genes (rank = 1 or rank = 2), then they are likely to function in the same pathway. For genes with strong fitness patterns, often the most cofit genes are other genes in the same operon, so we look a little farther down the list to find genes that may have related functions.</P>
 
-<P>Conserved cofitness: If two genes have cofitness &gt; 0.6, and their orthologs have cofitness &gt 0.6, then this is stronger evidence of a functional relationship.
+<P>Conserved cofitness: If two genes have cofitness &gt; 0.6, and their orthologs have cofitness &gt 0.6, then this is also evidence of a functional relationship.
 
 <P>If we have relatively little data for an organism, then cofitness results will not be available for any of its genes.
 
@@ -177,9 +179,10 @@ not BLAST. However, <A HREF="blastSearch.cgi">single sequence search</A> and the
 <H3><A name="downloads" style="color: black;">Data Downloads</A></H3>
 
 <ul>
-<li>You can download various tables for each organism from the links at the bottom of each organism's page.
+<li>You can download tables for each organism from the links at the bottom of each organism's page.
+<li>For the current version of the Fitness Browser, you can download <A HREF="../cgi_data/aaseqs">all protein sequences</A> or the main <A HREF="../cgi_data/feba.db">sqlite3 database</A> (large! ~5 GB as of July 2017).
 <li>The June 2017 release of the Fitness Browser is available in its entirety <A HREF="https://doi.org/10.6084/m9.figshare.5134840">here</A>.
-<li>For this current version of the Fitness Browser, you can download <A HREF="../cgi_data/aaseqs">all protein sequences</A> or the main <A HREF="../cgi_data/feba.db">sqlite3 database</A> (large! ~5 GB as of July 2017).
+<li>You can download all of the reannotations <A HREF="downloadReanno.cgi">here</A> (tab-delimited, and includes protein sequences)
 </ul>
 
 <H3><A name="code" style="color: black;">About the code</A></H3>
@@ -187,15 +190,6 @@ not BLAST. However, <A HREF="blastSearch.cgi">single sequence search</A> and the
 <p>The code for this web site is <A HREF="https://bitbucket.org/berkeleylab/feba/src">freely available at bitbucket.org</A>.
 The code was written by <A HREF="http://morgannprice.org/">Morgan Price</A>, Victoria Lo, and Wenjun Shao
 in the <A HREF="http://genomics.lbl.gov">Arkin lab</A>.</p>
-
-<H3><A name="sources" style="color: black;">References</A></H3>
-
-<UL>
-<LI><A HREF="http://genomics.lbl.gov/supplemental/rbarseq/">Wetmore et al 2015</A> -- carbon source experiments for <i>Escherichia coli</i> BW25113, <i>Shewanella oneidensis</I> MR-1, <I>Shewanella amazonensis</I> SB2B, <i>Phaeobacter inhibens</i> BS107, and Pseudomonas stutzeri</i> RCH2
-<LI><A HREF="http://www.pnas.org/content/early/2015/10/26/1519220112.abstract">Rubin et al 2015</A> -- the mutant library for <i>Synechococcus elongatus</i> PCC 7942
-</ul>
-
-<p>Most of the data is not published. Contact <A HREF="mailto:AMDeutschbauer.lbl.gov">Adam Deutschbauer</A> for more information about the unpublished data.
 
 <H3><A name="ack" style="color: black;">Funding</A></H3>
 
@@ -210,5 +204,22 @@ DE-AC02-05CH11231.
 END
     ;
 
-print div({-id=>"ntcontent"}, $helpcontent);
+my $pubs = $dbh->selectall_arrayref(qq{ SELECT pubId, title, URL, COUNT(*) as nExp
+                                        FROM Publication JOIN Experiment USING (pubId)
+                                        GROUP BY pubId
+                                        ORDER BY nExp DESC },
+                                    { Slice => {} } );
+my @trows = ();
+push @trows, Tr( th({-width => "75%"}, "Paper"),
+                 th({-width => "10%"}, "#Experiments") );
+foreach my $row (@$pubs) {
+  push @trows, Tr(td(a({ -href => $row->{URL} }, $row->{title}) . " (" . $row->{pubId} . ")"),
+                  td({-align=>"right", -valign=>"top"}, $row->{nExp} ));
+}
+
+print div({-id=>"ntcontent"},
+          $helpcontent,
+          h3(a({-style => "color: black;", -name => "sources"}, "References")),
+          table({-cellpadding => 3, -cellspacing => 0 }, @trows));
+
 Utils::endHtml($cgi);
