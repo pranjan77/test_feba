@@ -127,12 +127,12 @@ If we have relatively little data for an organism, then there may not be any spe
 
 <H3><A name="ortholog" style="color: black;">Orthologs</A></H3>
 
-<P>We use "orthologs" to refer to similar proteins in different
-organisms that may carry out the same function, without regard to
-their evolutionary history. Thus they are putative functional
-orthologs, not evolutionary orthologs.  The "orthologs" in this web
-site are bidirectional best hits from protein BLAST. We also require
-that the BLAST alignment cover 80% of each protein.</P>
+<P>We use "orthologs" to refer to proteins in different organisms that
+have similar sequences and may carry out the same function, without
+regard to their evolutionary history. Thus they are putative
+functional orthologs, not evolutionary orthologs.  The "orthologs" in
+this web site are bidirectional best hits from protein BLAST. We also
+require that the BLAST alignment cover 80% of each protein.</P>
 
 <P>Many of these "orthologs" actually have different functions. If either gene has a strong fitness pattern, you may be able to use conserved phenotypes or conserved cofitness to confirm that the genes have conserved functions and are truly functional orthologs.</P>
 
@@ -151,9 +151,9 @@ For each protein, the Fitness Browser includes:
 
 <P>Information from <A HREF="http://www.jcvi.org/cgi-bin/tigrfams/index.cgi">TIGRFam</A>, <A HREF="http://www.genome.jp/kegg/">KEGG</A>,
 and <A HREF="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3965101/">SEED</A> is used to link proteins to
-enzyme commision (EC) numbers and hence to metabolic maps (from the last public release of KEGG).
+enzyme commision (EC) numbers and hence to metabolic maps (from the last public release of KEGG). The EC numbers are also used to link proteins to MetaCyc pathways, along with best hits to MetaCyc.
 
-<P>Fitness Browser includes links to other analysis tools (see the protein page) as well as a homologs page (computed using BLAST).
+<P>Fitness Browser includes links to other analysis tools (see the protein tab) as well as a homologs tab that shows the top homologs that we have fitness data for (as found by protein BLAST).
 
 <H3><A name="links" style="color: black;">Linking to the Fitness Browser</A></H3>
 
