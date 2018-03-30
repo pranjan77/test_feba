@@ -31,7 +31,7 @@ my $dbh = Utils::get_dbh();
 my $myDB = Utils::blast_db();
 
 my $orginfo = Utils::orginfo($dbh);
-die "Invalid orgI $orgId" if $orgId ne "" && !exists $orginfo->{$orgId};
+die "Invalid orgId $orgId" if $orgId ne "" && !exists $orginfo->{$orgId};
 
 # Ignore orgId if empty
 my $cmpfunc = $orgId eq "" ? "<>" : "=";
