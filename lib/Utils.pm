@@ -937,8 +937,42 @@ sub MetacycPathwayScore($$) {
   return $nFound - ($nSteps - $nFound) * 2.5;
 }
 
+# Given an organism, a metacyc reaction id, and its corresponding
+# KEGG reaction id (if any), find candidate genes
+# via BestHitMetacyc, SEED roles to KEGG reactions, or EC number.
+# Returns a reference to a hash of locusId => source => 1
+# where source is one of "BestHit" (to Metacyc), "SEED" (via SEEDReaction), or "EC"
+sub MetacycReactionCandidates($$$$) {
+  my ($dbh, $orgId, $rxnId, $keggrxnId) = @_;
+  my %out = (); # locusId => source => 1
+  my $bh = $dbh->selectcol_arrayref("SELECT locusId from BestHitMetacyc WHERE rxnId = ? AND orgId = ?",
+                                    {}, $rxnId, $orgId);
+  foreach my $locusId (@$bh) {
+    $out{$locusId}{"BestHit"} = 1;
+  }
+  if ($keggrxnId) {
+    my $loci = $dbh->selectcol_arrayref(qq{ SELECT DISTINCT locusId FROM SEEDReaction
+                                               JOIN SEEDRoleReaction USING (seedrxnId)
+                                               JOIN SeedAnnotationToRoles USING (seedrole)
+                                               JOIN SEEDAnnotation USING (seed_desc)
+                                               WHERE orgId = ? AND keggrxnId = ? },
+                                        {}, $orgId, $keggrxnId);
+    foreach my $locusId (@$loci) {
+      $out{$locusId}{"SEED"} = 1;
+    }
+  }
+  my $ecs = $dbh->selectcol_arrayref("SELECT ecnum FROM MetacycReactionEC WHERE rxnId = ?",
+                                     {}, $rxnId);
+  my $ecGenes = Utils::EcToGenes($dbh, $orgId, $ecs); # ec => locusId => 1
+  while (my ($ec, $hash) = each %$ecGenes) {
+    foreach my $locusId (keys %$hash) {
+      $out{$locusId}{"EC"} = 1;
+    }
+  }
+  return \%out;
+}
+
 # Given an organism and a metacyc pathway, find candidate genes
-# via BestHitMetacyc, SEED roles to reactions, or EC number.
 # Returns a reference to a hash of
 # rxnId => {isSpontaneous => 0 or 1, loci => list of locusIds }
 # Every reaction in the pathway is included, and for any given reaction,
@@ -952,35 +986,8 @@ sub MetacycPathwayCandidates($$$) {
   my %out = ();
   foreach my $row (@$rxns) {
     my ($rxnId, $keggrxnId, $isSpontaneous) = @$row;
-    my $bh = $dbh->selectall_arrayref("SELECT * from BestHitMetacyc WHERE rxnId = ? AND orgId = ?",
-                                      { Slice => {} }, $rxnId, $orgId);
-    my @loci = map { $_->{locusId} } @$bh;
-
-    if ($keggrxnId) {
-      my $loci = $dbh->selectcol_arrayref(qq{ SELECT DISTINCT locusId FROM SEEDReaction
-                                               JOIN SEEDRoleReaction USING (seedrxnId)
-                                               JOIN SeedAnnotationToRoles USING (seedrole)
-                                               JOIN SEEDAnnotation USING (seed_desc)
-                                               WHERE orgId = ? AND keggrxnId = ? },
-                                           {}, $orgId, $keggrxnId);
-      push @loci, sort @$loci;
-    }
-
-    my @lociEc = ();
-    my $ecs = $dbh->selectcol_arrayref("SELECT ecnum FROM MetacycReactionEC WHERE rxnId = ?",
-                                       {}, $rxnId);
-    my $ecGenes = Utils::EcToGenes($dbh, $orgId, $ecs); # ec => locusId => 1
-    while (my ($ec, $hash) = each %$ecGenes) {
-      push @lociEc, keys %$hash;
-    }
-    push @loci, sort @lociEc;
-
-    my @uniq = ();
-    my %seen = ();
-    foreach my $locusId (@loci) {
-      push @uniq, $locusId unless exists $seen{$locusId};
-      $seen{$locusId} = 1;
-    }
+    my $cand = &MetacycReactionCandidates($dbh, $orgId, $rxnId, $keggrxnId);
+    my @uniq = sort keys %$cand;
     $out{$rxnId} = { "isSpontaneous" => $isSpontaneous, "loci" => \@uniq };
   }
   return \%out;
