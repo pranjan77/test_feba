@@ -33,7 +33,6 @@ $orgId = "" if !defined $orgId;
 my $dbh = Utils::get_dbh();
 
 # gather all of the data needed
-print STDERR "getting data...\n";
 
 my $gene = $dbh->selectall_arrayref("SELECT orgId, locusId, sysName, gene FROM Gene WHERE orgId = ?", {Slice => {}}, $orgId);
 die "Illegal orgId" if scalar(@$gene) == 0;
@@ -48,14 +47,15 @@ print "Content-Disposition: attachment; filename=exp_organism_$orgId.txt\n\n";
 # open my $logFile, '>', "organism_$orgId.txt" or die "error trying to (over)write: $!";
 
 # print the header row
-print STDERR "writing headers...\n";
-print "orgId" . "\t" . "expName" . "\t" . "expDesc" . "\t" . "timeZeroSet" . "\t" . "num" . "\t" . "nMapped" . "\t" . "nPastEnd" . "\t" . "nGenic" . "\t" . "nUsed" . "\t" . "gMed" . "\t" . "gMedt0" . "\t" . "gMean" . "\t" . "cor12" . "\t" . "mad12" . "\t" . "mad12c" . "\t" . "mad12c_t0" . "\t" . "opcor" . "\t" . "adjcor" . "\t" . "gccor" . "\t" . "maxFit" . "\t" . "expGroup" . "\t" . "expDescLong" . "\t" . "mutantLibrary" . "\t" . "person" . "\t" . "dateStarted" . "\t" . "steName" . "\t" . "seqindex" . "\t" . "media" . "\t" . "temperature" . "\t" . "pH" . "\t" . "vessel" . "\t" . "aerobic" . "\t" . "liquid" . "\t" . "shaking" . "\t" . "condition_1" . "\t" . "units_1" . "\t" . "concentration_1" . "\t" . "condition_2" . "\t" . "units_2" . "\t" . "concentration_2" . "\t" . "growthPlate" . "\t" . "growthWells" . "\n";
-print "\n";
+my @fields = qw{orgId expName expDesc timeZeroSet num nMapped nPastEnd nGenic nUsed gMed gMedt0 gMean cor12 mad12 mad12c mad12c_t0 opcor adjcor gccor maxFit expGroup expDescLong mutantLibrary person dateStarted setName seqindex media temperature pH vessel aerobic liquid shaking condition_1 units_1 concentration_1 condition_2 units_2 concentration_2 growthPlate growthWells};
+print join("\t", @fields)."\n";
 
 # print the data row by row
-print STDERR "writing data...\n";
 foreach my $row(@$exp) {
-	print $row->{orgId} . "\t" . $row->{expName} . "\t" . $row->{expDesc} . "\t" . $row->{timeZeroSet} . "\t" . $row->{num} . "\t" . $row->{nMapped} . "\t" . $row->{nPastEnd} . "\t" . $row->{nGenic} . "\t" . $row->{nUsed} . "\t" . $row->{gMed} . "\t" . $row->{gMedt0} . "\t" . $row->{gMean} . "\t" . $row->{cor12} . "\t" . $row->{mad12} . "\t" . $row->{mad12c} . "\t" . $row->{mad12c_t0} . "\t" . $row->{opcor} . "\t" . $row->{adjcor} . "\t" . $row->{gccor} . "\t" . $row->{maxFit} . "\t" . $row->{expGroup} . "\t" . $row->{expDescLong} . "\t" . $row->{mutantLibrary} . "\t" . $row->{person} . "\t" . $row->{dateStarted} . "\t" . $row->{steName} . "\t" . $row->{seqindex} . "\t" . $row->{media} . "\t" . $row->{temperature} . "\t" . $row->{pH} . "\t" . $row->{vessel} . "\t" . $row->{aerobic} . "\t" . $row->{liquid} . "\t" . $row->{shaking} . "\t" . $row->{condition_1} . "\t" . $row->{units_1} . "\t" . $row->{concentration_1} . "\t" . $row->{condition_2} . "\t" . $row->{units_2} . "\t" . $row->{concentration_2} . "\t" . $row->{growthPlate} . "\t" . $row->{growthWells} . "\n";
+  my @out = ();
+  foreach my $field (@fields) {
+    die "Invalid field $field" unless exists $row->{$field};
+    push @out, $row->{$field};
+  }
+  print join("\t", @out)."\n";
 }
-
-print STDERR "done\n";
