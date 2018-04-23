@@ -235,7 +235,7 @@ CREATE TABLE 'SwissProtDesc' (
 
 /* Store best hits to the MetaCyc database (the central curated database,
    not the per-genome pathway databases). May have many rows for 1 hit so as to make
-   searching by ec# more efficient (but there is always just 1 hit). */
+   searching by ec# or rxnId more efficient (but there is always just 1 hit). */
 CREATE TABLE 'BestHitMetacyc' (
        orgId TEXT NOT NULL,
        locusId TEXT NOT NULL,
