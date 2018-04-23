@@ -44,9 +44,9 @@ print
     h2("Updated annotations for",
        a({-href => "org.cgi?orgId=$orgId"}, $orginfo->{$orgId}{genome}));
 
-Utils::fail($cgi, "No reannotations for this organism.") if @$reanno == 0;
+Utils::fail($cgi, "No genes in this organism have updated (or confirmed) annotations.") if @$reanno == 0;
 
-print p(scalar(@$reanno), "genes with updated annotations:");
+print p(scalar(@$reanno), "genes with updated (or confirmed) annotations:");
 
 foreach my $row (@$reanno) {
     my $showId = $row->{sysName} || $row->{locusId};
