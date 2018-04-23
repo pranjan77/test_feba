@@ -49,7 +49,7 @@ foreach my $row (@$subsys) {
   my $subsys = $row->{subsystem};
   my $nice = $subsys; $nice =~ s/_/ /g;
   my $catShow = $row->{category} eq "" ? $row->{toplevel} : "$row->{toplevel} : $row->{category}";
-  my @trow = ( td( $catShow eq $lastCat ? "&nbsp;" : $catShow ),
+  my @trow = ( td( defined $lastCat && $catShow eq $lastCat ? "&nbsp;" : $catShow ),
                td( a( { -href => "seedsubsystem.cgi?orgId=$orgId&subsystem=$subsys" }, $nice) ),
                td( { -style => "text-align: right;"}, $row->{nGenes} ) );
   $lastCat = $catShow;
