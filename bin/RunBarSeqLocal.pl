@@ -7,15 +7,23 @@ use Getopt::Long;
 use FindBin '$Bin';
 use lib "$Bin/../lib";
 
+my $linesPerPiece = 20*1000*1000;
+my $minQuality = 0;
+
 my $usage = <<END
-Usage: RunBarSeqLocal.pl  [-minQuality 0 ] [ -pieceLines 20000000 ]
-	  [-nosplit] [-debug] [ -limit 1000 ]
-          [ -indexes BarSeqPrimersH48 | -n25 | -bs3 ]
-          organism_directory setname fastq.gz_file_or_directory_with_fastq.gz_files
-   e.g.:
-   feba/bin/RunBarSeqLocal.pl g/Keio Keio_ML9_set1 fastq/Keio_ML9_set1
-   feba/bin/RunBarSeqLocal.pl -indexes feba/primers/BarSeqPrimersH48 g/MR1 MR1_ML3_set1 fastq/MR1_ML3_set1
-   feba/bin/RunBarSeqLocal.pl -indexes feba/primers/BarSeqPrimersH48 g/psRCH2 psRCH2_ML7_set1 fastq/7341.4.68147.fastq.gz 
+Usage:
+RunBarSeqLocal.pl [ -indexes BarSeqPrimersH48 | -n25 | -bs3 ]
+    organism_directory setname fastq.gz_file_or_directory_with_fastq.gz_files
+or
+RunBarSeqLocal.pl [ -indexes BarSeqPrimersH48 | -n25 | -bs3 ]
+    -in fastq.gz_file_or_directory_with_fastq.gz_files
+    -sets organism1_libraryname1_setname1,...,organismN_libraryN_setnameN
+
+Examples:
+feba/bin/RunBarSeqLocal.pl g/Keio Keio_ML9_set1 fastq/Keio_ML9_set1
+feba/bin/RunBarSeqLocal.pl -indexes feba/primers/BarSeqPrimersH48 g/MR1 MR1_ML3_set1 fastq/MR1_ML3_set1
+feba/bin/RunBarSeqLocal.pl -indexes feba/primers/BarSeqPrimersH48 g/psRCH2 psRCH2_ML7_set1 fastq/7341.4.68147.fastq.gz 
+feba/bin/RunBarSeqLocal.pl -n25 -in HiSeq_barcodes/FEBA_BS_186 -sets MR1_ML3_set12,Koxy_ML2_set9
 
 RunBarSeq.pl has two phases -- the first phase counts the barcodes in
 the fastq file(s).  If the BarSeq was run with the newer style of
@@ -27,19 +35,21 @@ _10_TAGCTT_ to indicate which sample it is from. There can be more
 than one file per sample. If using primers with 2:5 Ns, use the -n25
 argument.
 
-For older experiments, where the primers have names like H01 or M01,
+(For older experiments, where the primers have names like H01 or M01,
 use the -indexes argument to describe which primers were used.
 RunBarSeq.pl will use this information to demultiplex the reads.  If
 -indexes is used, then RunBarSeq.pl can accept as input either a
 directory that contains fastq or fastq.gz files or a single
 large_fastq.gz file. Given a single fastq.gz file, it will split it
-and process each piece in parallel.
+and process each piece in parallel.)
 
 The second phase aggregates the counts of these barcodes. To save
 memory, it ignores barcodes that do not match the pool file, which is
 expected to be in
 
     organism_directory/pool or pool.n10
+
+(If using the -sets argument, organism directory is set to g/organism1, etc.)
 
 Output files are in organism_directory/ --
 setname.colsum -- total parsed reads per index
@@ -48,6 +58,13 @@ setname.poolcount -- counts for strains in the pool
 setname.codes.ignored -- all the counts for the barcodes
 	that did not match the pool.
 
+Other options:
+  -minQuality -- Set the minimum quality for each nucleotide in the barcode
+	(default is $minQuality)
+  -pieceLines $linesPerPiece -- number of lines per piece
+  -nosplit -- do not run split, use existing pieces
+  -debug -- do not do any work, just show what commands would be run
+  -limit -- limit the #reads analyzed per sample (mostly for debugging)
 END
     ;
 
@@ -55,12 +72,12 @@ sub maybeRun($); # run command unless $debug is defined
  
 my $debug = undef;
 {
-    my $linesPerPiece = 20*1000*1000;
     my $nosplit = undef;
-    my $minQuality = 0;
     my $limitReads = undef;
     my $barcodes = undef;
     my ($n25, $bs3);
+    my $setspec = undef;
+    my $fastq = undef;
 
     die $usage unless GetOptions('debug' => \$debug,
                                  'n25' => \$n25,
@@ -69,22 +86,68 @@ my $debug = undef;
                                  'minQuality=i' => \$minQuality,
                                  'pieceLines=i' => \$linesPerPiece,
 				 'limit=i' => \$limitReads,
-				 'indexes=s' => \$barcodes)
-        && @ARGV == 3;
-    my ($gdir, $setname, $fastq) = @ARGV;
+				 'indexes=s' => \$barcodes,
+                                 'in=s' => \$fastq,
+                                 'sets=s' => \$setspec);
+    my @gdirs = ();
+    my @setnames = ();
+    if (defined $setspec) {
+      die $usage unless defined $fastq && @ARGV == 0;
+      @setnames = split /,/, $setspec;
+      foreach my $setname (@setnames) {
+        my @setparts = split /_/, $setname;
+        die "Invalid set name: $setname" unless @setparts > 1;
+        my $gdir = undef;
+        if ($setname =~ m/^(.*)_ML/i) {
+          my $org = $1;
+          $gdir = "g/$org" if -d "g/$org";
+        }
+        my $beg = join("_", $setparts[0], $setparts[1]);
+        if (!defined $gdir) {
+          $gdir = "g/$beg" if -d "g/$beg";
+        }
+        if (!defined $gdir) {
+          # Try to use glob to find the mapping from the first two parts of the library name to an organism
+          my @hits = glob("g/*/$beg*");
+          die "Could not convert $setname to an organism, and $gdir does not exist"
+            unless @hits > 0;
+          my $hit1 = $hits[0];
+          my @parts = split "/", $hit1;
+          $gdir = "g/$parts[1]";
+          print STDERR "Set $setname matches directory $gdir\n";
+        }
+        die unless -d $gdir;
+        push @gdirs, $gdir;
+      }
+    } else {
+      die $usage unless @ARGV == 3;
+      my ($gdir, $setname);
+      ($gdir, $setname, $fastq) = @ARGV;
+      die "No such directory: $gdir" unless -d $gdir;
+      push @setnames, $setname;
+      push @gdirs, $gdir;
+    }
     die "No such file: $fastq" unless -e $fastq;
-    die "No such directory: $gdir" unless -d $gdir;
     die "No such file: $barcodes" unless !defined $barcodes || -e $barcodes;
+    # And check that all gdir are unique
+    my %gdirs = map { $_ => 1 } @gdirs;
+    die "Each organism can be included only once in the -sets argument\n"
+      unless scalar(keys %gdirs) == scalar(@gdirs);
 
-    my $poolfile = "$gdir/pool";
-    $poolfile = "$poolfile.n10" if !-e $poolfile;
-    die "Cannot find $poolfile (or withut .n10)" unless -e $poolfile;
+    my @poolfiles = ();
+    foreach my $gdir (@gdirs) {
+      my $poolfile = "$gdir/pool";
+      $poolfile = "$poolfile.n10" if !-e $poolfile;
+      die "Cannot find $poolfile (or withut .n10)" unless -e $poolfile;
+      push @poolfiles, $poolfile;
+    }
 
     # design the parts
     my $prefix = $fastq;
     my @parts;
     my @codes;
     my $codeGlob;
+    my $setname1 = $setnames[0]; # for naming the parts
     if (-d $fastq) {
 	@parts = glob("$fastq/*fastq.gz");
 	@parts = grep { !m/^[.]/ }  @parts;
@@ -107,8 +170,8 @@ my $debug = undef;
 	if (! -d $prefix) {
 	    mkdir($prefix) || die "Cannot mkdir $prefix; $!";
 	}
-        @parts = glob("$prefix/${setname}_BarSeq.part*[0-9]");
-        $codeGlob = "$prefix/${setname}_BarSeq.part*[0-9].codes";
+        @parts = glob("$prefix/${setname1}_BarSeq.part*[0-9]");
+        $codeGlob = "$prefix/${setname1}_BarSeq.part*[0-9].codes";
         @codes = glob($codeGlob); # only the preexisting files
     }
     print STDERR "See " . scalar(@parts) . " parts and " . scalar(@codes) . " codes files; codes files will be overwritten\n"
@@ -122,17 +185,17 @@ my $debug = undef;
                 if scalar(@codes) > 0 && ! defined $debug;
         } else {
             # do the splitting
-            maybeRun("rm $prefix/${setname}_BarSeq.part*") if (scalar(@parts) > 0 || scalar(@codes) > 0);
-            my $cmd = "gunzip -c $fastq | split -l $linesPerPiece -d - $prefix/${setname}_BarSeq.part";
+            maybeRun("rm $prefix/${setname1}_BarSeq.part*") if (scalar(@parts) > 0 || scalar(@codes) > 0);
+            my $cmd = "gunzip -c $fastq | split -l $linesPerPiece -d - $prefix/${setname1}_BarSeq.part";
             maybeRun($cmd);
-            system("touch $prefix/${setname}_BarSeq.part00") if defined $debug;
-	    @parts = glob("$prefix/${setname}_BarSeq.part*[0-9]"); # now @parts is actually there
+            system("touch $prefix/${setname1}_BarSeq.part00") if defined $debug;
+	    @parts = glob("$prefix/${setname1}_BarSeq.part*[0-9]"); # now @parts is actually there
         }
     }
 
     # build the list of commands, and update @codes to be what we'll make
     @codes = (); # will update with expected results
-    my $cmdsfile = "$prefix/${setname}_BarSeq.codecmds";
+    my $cmdsfile = "$prefix/${setname1}_BarSeq.codecmds";
     maybeRun("rm $cmdsfile*") if -e $cmdsfile;
     maybeRun("rm -f $codeGlob");
     open(CMDS, ">", $cmdsfile) || die "Cannot write to $cmdsfile";
@@ -227,13 +290,16 @@ my $debug = undef;
 			     $nReads,
 			     $nMulti, 100.0*$nMulti/($nReads+0.1),
 			     $nUsable, 100.0*$nUsable/($nReads+0.1),
-			     $setname,
+			     $setname1,
 			     $nFiles);
 	
     }
-    print STDERR "Combining codes files $codeGlob\n";
-    my $cmd = "$Bin/combineBarSeq.pl $gdir/${setname} $poolfile $codeGlob";
-    maybeRun($cmd);
+    foreach my $i (0..(scalar(@gdirs)-1)) {
+      my $path = $gdirs[$i] . "/" . $setnames[$i];
+      print STDERR "Combining codes files $codeGlob into $path\n";
+      my $cmd = "$Bin/combineBarSeq.pl $path $poolfiles[$i] $codeGlob";
+      maybeRun($cmd);
+    }
 }
 
 sub maybeRun($) {
