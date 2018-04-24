@@ -8,8 +8,6 @@ use FindBin qw($Bin);
 my $usage =<<END
 Usage: BarSeqTest.pl -org organism [ -n25 | -bs3 ] -index S1:S2:S3 -desc Time0:Lactate:Glucose
 	    -fastqdir directory
-           [ -pool g/organism/pool.n10 ]
-	   [ -outdir g/organism/barseqtest ]
 
 Assumes that g/organism includes all the typical files, including a pool.n10
 or pool file, and writes to g/organism/barseqtest by default.
@@ -18,6 +16,11 @@ The fastq directory should include file(s) named _index_*.fastq.gz or
 index_*.fastq.gz for each index. BarSeqTest looks in subdirectories,
 not just in the directory itself.
 
+Optional arguments:
+  -pool g/organism/pool.n10
+  -outdir g/organism/barseqtest
+  -hascodes -- use the *.codes files that already exist in the fastq directory
+  -test -- do not actually run any commands
 END
     ;
 
@@ -26,7 +29,7 @@ my $test = undef; # check for files, but do no work
 
 {
     my ($org, $indexSpec, $descSpec, $fastqdir, $pool, $outdir);
-    my ($n25, $bs3);
+    my ($n25, $bs3, $hascodes);
 
     GetOptions('org=s' => \$org,
 	       'index=s' => \$indexSpec,
@@ -36,6 +39,7 @@ my $test = undef; # check for files, but do no work
 	       'test' => \$test,
                'n25' => \$n25,
                'bs3' => \$bs3,
+               'hascodes' => \$hascodes,
 	       'outdir=s' => \$outdir) || die $usage;
     @ARGV == 0 || die $usage;
     die $usage unless defined $org && defined $indexSpec && defined $descSpec && defined $fastqdir;
@@ -66,28 +70,40 @@ my $test = undef; # check for files, but do no work
     # -H means follow symbolic link if it is the argument
     my @files = `find -H $fastqdir -name '*.fastq.gz'`;
     foreach my $file (@files) {
-	chomp $file;
-	foreach my $index (@indexes) {
-	    if ($file =~ m/^${index}_/ || $file =~ m/_${index}_/) {
-		push @{ $fastqFiles{$index} }, $file;
-		print STDERR "fastq for index $index: $file\n";
-		last;
-	    }
-	}
+      chomp $file;
+      foreach my $index (@indexes) {
+        my $index2 = $index;
+        $index2 =~ s/IT0+/Index/;
+        if ($file =~ m/^${index}_/ || $file =~ m/_${index}_/
+            || $file =~ m/^${index2}_/ || $file =~ m/_${index2}_/) {
+          push @{ $fastqFiles{$index} }, $file;
+          print STDERR "fastq for index $index: $file\n";
+          last;
+        }
+      }
     }
 
     $outdir = "g/$org/barseqtest" if !defined $outdir;
     mkdir($outdir) if ! -d $outdir && !defined $test;
     my @codesFiles = ();
     foreach my $index (@indexes) {
-	die "No fastq files for $index in $fastqdir\n" if !exists $fastqFiles{$index};
-	my @filenames = @{ $fastqFiles{$index} };
-	my $pathSpec = join(" ", @filenames);
-	push @codesFiles, "$outdir/$index.codes";
+      die "No fastq files for $index in $fastqdir\n" if !exists $fastqFiles{$index};
+      my @filenames = @{ $fastqFiles{$index} };
+      if (defined $hascodes) {
+        my @codesThis = @filenames;
+        s/[.]fastq[.]gz$/.codes/ for @codesThis;
+        foreach my $file (@codesThis) {
+          die "No such file: $file\n" unless -e $file;
+          push @codesFiles, $file;
+        }
+      } else {
+        my $pathSpec = join(" ", @filenames);
+        push @codesFiles, "$outdir/$index.codes";
         my $extraopt = "";
         $extraopt = "-n25" if defined $n25;
         $extraopt = "-bs3" if defined $bs3;
-	&maybeRun("zcat $pathSpec | $Bin/MultiCodes.pl $extraopt -minQuality 0 -index $index -out $outdir/$index");
+        &maybeRun("zcat $pathSpec | $Bin/MultiCodes.pl $extraopt -minQuality 0 -index $index -out $outdir/$index");
+      }
     }
     &maybeRun("$Bin/combineBarSeq.pl $outdir/test $pool " . join(" ", @codesFiles));
     unless (defined $test) {
