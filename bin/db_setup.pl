@@ -30,6 +30,7 @@ Other optional arguments:
 	with 4 columns)
     -publications $publicationsFile
     -test -- skip cofitness and strain fitness
+    -bad -- include experiments with poor quality metrics in the database
 
     Sets up the cgi_data/ directory, especially the sqlite database, by reading from
     the html directories indir/nickname1 ... indir/nicknameN
@@ -89,7 +90,7 @@ sub WorkPutHash($@); # hash and list of fields to use
 sub ExpToPubId($$$);
 
 {
-    my ($dbfile,$indir,$outdir,$orgfile,$orthfile,$pubfile,$reannofile,$test);
+    my ($dbfile,$indir,$outdir,$orgfile,$orthfile,$pubfile,$reannofile,$test,$bad);
     (GetOptions('db=s' => \$dbfile,
                 'orginfo=s' => \$orgfile,
                 'orth=s' => \$orthfile,
@@ -102,7 +103,8 @@ sub ExpToPubId($$$);
                 'reanno=s' => \$reannofile,
                 'subsys=s' => \$subsysfile,
                 'publications=s' => \$publicationsFile,
-               'test' => \$test)
+                'test' => \$test,
+                'bad' => \$bad)
      && defined $indir && defined $orgfile && defined $orthfile)
         || die $usage;
     my @orgs = @ARGV;
@@ -170,6 +172,8 @@ sub ExpToPubId($$$);
     push @workCommands, "UPDATE KEGGCompound SET mass = NULL WHERE mass = 'NULL';";
 
     print STDERR "Reading " . scalar(@orgs) . " organisms from $indir\n";
+    print STDERR "Warning: including bad experiments\n"
+      if defined $bad;
 
     my $tmpdir = $ENV{TMPDIR} || "/tmp";
     my $tmpdbfile = "$tmpdir/db.$$.sqlite3";
@@ -328,7 +332,8 @@ sub ExpToPubId($$$);
 
         my $nExpsRead = scalar(@q);
         # only successful experiments
-        @q = grep { $_->{u} eq "TRUE" } @q;
+        @q = grep { $_->{u} eq "TRUE" } @q
+          unless defined $bad;
         my $nExpsSucceeded = scalar(@q);
         if (defined $pubfile) {
           foreach my $q (@q) {
@@ -337,7 +342,7 @@ sub ExpToPubId($$$);
           @q = grep { defined $_->{pubId} } @q;
         }
         my $nFiltered = scalar(@q);
-        print STDERR "$org: read $nExpsRead experiments, $nExpsSucceeded successful";
+        print STDERR "$org: read $nExpsRead experiments, $nExpsSucceeded kept";
         print STDERR ", filtered to $nFiltered" if $nFiltered < $nExpsSucceeded;
         print STDERR "\n";
         print STDERR "Warning, no experiments to show for $org\n" if $nFiltered == 0;
@@ -406,7 +411,8 @@ sub ExpToPubId($$$);
     # Create db.GeneFitness.* and, if enough experiments, db.Cofit.*
     my %orgCofit = (); # org => 1 if organism has cofitness
     foreach my $org (@orgs) {
-        my $fit_file = "$indir/$org/fit_logratios_good.tab";
+        my $fit_file = defined $bad ? "$indir/$org/fit_logratios.tab"
+          : "$indir/$org/fit_logratios_good.tab";
         my @fitNames = &ReadColumnNames($fit_file);
         my @colNamesFull = grep m/^set/, @fitNames;
         my @colNames = @colNamesFull;
