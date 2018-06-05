@@ -234,7 +234,10 @@ sub LoadKEGGMap($$) {
         if ($type == 1) { # ec number
             my ($ecdesc) = $dbh->selectrow_array("SELECT ecdesc FROM ECInfo WHERE ecnum = ?",
                                              {}, $objectId);
-            $url = "myFitShow.cgi?gene=ec:$objectId" unless $objectId =~ m/-/;
+            unless ($objectId =~ m/-/) {
+              $url = "myFitShow.cgi?gene=ec:$objectId";
+              $url .= "&orgId=$orgId" if $orgId;
+            }
             my $ecobj = { ecnum => $objectId, ecdesc => $ecdesc || $objectId,
                           coord => $coord, url => $url };
             push @ecnums, $ecobj;
