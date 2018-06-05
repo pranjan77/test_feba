@@ -206,6 +206,8 @@ foreach my $rxnId (@rxnIds) {
   ($ecdesc) = $dbh->selectrow_array("SELECT ecdesc FROM ECInfo WHERE ecnum = ? LIMIT 1",
                                      {}, $ecs->[0])
     if @$ecs > 0;
+  my @eclinks = map a({-href => "myFitShow.cgi?orgId=$orgId&gene=ec:$_" }, $_), @$ecs;
+
   # Ignore reaction names that are just EC numbers
   my $rxnName = $rxn->{rxnName};
   $rxnName = "" if $rxnName =~ m/^[0-9][.][0-9]+[.]/;
@@ -276,7 +278,7 @@ foreach my $rxnId (@rxnIds) {
                        ($rxnName ? $rxnName . ":" . br() : "")
                        . join(" + ", @left) . "&rarr;" . join(" + ", @right)),
                      $spontaneous,
-                     @$ecs > 0 ? "(EC " . join("; ", @$ecs) . ")" : ""));
+                     @$ecs > 0 ? "(EC " . join("; ", @eclinks) . ")" : ""));
   if (@locirows > 0) {
     push @trows, @locirows;
   } else {
