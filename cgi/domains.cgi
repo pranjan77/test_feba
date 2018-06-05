@@ -392,10 +392,13 @@ if (keys(%ecall) > 0) {
                             $ec );
         }
     }
+    my @curatedlinks = map a({-href => "http://papers.genomics.lbl.gov/cgi-bin/genomeSearch.cgi?orgId=$orgId&query=$_&word=1" },
+                             $_), @ec;
     print
         h3("Isozymes"),
         scalar(@links) > 0 ? p("Compare fitness of isozymes for:", join(", ", @links))
-        : "No predicted isozymes";
+          : "No predicted isozymes",
+        p("Use Curated BLAST to search for", join(" or ", @curatedlinks));
 }
 print "\n";
 
