@@ -198,70 +198,74 @@ if ($geneSpec =~ m/^ec:([0-9A-Za-z.-]+)$/i) {
         print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
         print "\n";
     }
-    &end() if $count >= 100;
-    my $kgroups = $dbh->selectcol_arrayref("SELECT kgroup FROM KgroupEC WHERE ecnum = ?", {}, $ecnum);
-    my $hits2 = Utils::matching_kgroup($dbh, $orgSpec, $kgroups);
-    @$hits2 = grep { !exists $used{ $_->{orgId} }{ $_->{locusId} } } @$hits2;
-    if (@$hits2 > 0) {
+    if ($count < 100) {
+      my $kgroups = $dbh->selectcol_arrayref("SELECT kgroup FROM KgroupEC WHERE ecnum = ?", {}, $ecnum);
+      my $hits2 = Utils::matching_kgroup($dbh, $orgSpec, $kgroups);
+      @$hits2 = grep { !exists $used{ $_->{orgId} }{ $_->{locusId} } } @$hits2;
+      if (@$hits2 > 0) {
         print h3(b("Match by KEGG's EC number for $ecnum"));
         my @trows = ();
         push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
-			  $cgi->th( [ 'Gene ID','Gene Name','KO','KO Description','Genome','Fitness' ] ) );
-
+                              $cgi->th( [ 'Gene ID','Gene Name','KO','KO Description','Genome','Fitness' ] ) );
         my $kgroupSpec = join(",", map {"'".$_."'"} map {$_->{kgroup}} @$hits2);
         my $kgroupDesc = $dbh->selectall_hashref("SELECT * from KgroupDesc WHERE kgroup IN ($kgroupSpec)",
                                                  "kgroup");
         foreach my $gene (@$hits2) {
-            $used{ $gene->{orgId} }{ $gene->{locusId} } = 1;
-            next if $count >= 100;
-            $count++;
-            my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
-            my @trow = map $cgi->td($_), (
-                Utils::gene_link($dbh, $gene, "name", "geneOverview.cgi"),
-                $gene->{gene},
-                a( {href => "http://www.kegg.jp/dbget-bin/www_bget?ko:".$gene->{kgroup} },
-                   $gene->{kgroup}),
-                $kgroupDesc->{$gene->{kgroup}}{desc},
-                $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
-                a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
-                   $fitstring));
-            push @trows, $cgi->Tr(@trow);
+          $used{ $gene->{orgId} }{ $gene->{locusId} } = 1;
+          next if $count >= 100;
+          $count++;
+          my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
+          my @trow = map $cgi->td($_), (
+                                        Utils::gene_link($dbh, $gene, "name", "geneOverview.cgi"),
+                                        $gene->{gene},
+                                        a( {href => "http://www.kegg.jp/dbget-bin/www_bget?ko:".$gene->{kgroup} },
+                                           $gene->{kgroup}),
+                                        $kgroupDesc->{$gene->{kgroup}}{desc},
+                                        $cgi->a({href => "org.cgi?orgId=". $orginfo->{$gene->{orgId}}->{orgId}}, "$orginfo->{$gene->{orgId}}->{genome}"),
+                                        a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle, },
+                                           $fitstring));
+          push @trows, $cgi->Tr(@trow);
         }
         print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
         print "\n";
+      }
     }
-    &end() if $count >= 100;
-    my $seedquery = qq{SELECT orgId,locusId,seed_desc,sysName,gene,desc
+    if ($count < 100) {
+      my $seedquery = qq{SELECT orgId,locusId,seed_desc,sysName,gene,desc
                        FROM SEEDClass JOIN SEEDAnnotation USING (orgId,locusId)
                        JOIN Gene USING (orgId,locusId)
                        WHERE num = ? };
-    $seedquery .= qq{ AND orgId = "$orgSpec" } if $orgSpec ne "";
-    my $hits3 = $dbh->selectall_arrayref($seedquery, { Slice => {} }, $ecnum);
-    @$hits3 = grep { !exists $used{ $_->{orgId} }{ $_->{locusId} } } @$hits3;
-    if (@$hits3 > 0) {
+      $seedquery .= qq{ AND orgId = "$orgSpec" } if $orgSpec ne "";
+      my $hits3 = $dbh->selectall_arrayref($seedquery, { Slice => {} }, $ecnum);
+      @$hits3 = grep { !exists $used{ $_->{orgId} }{ $_->{locusId} } } @$hits3;
+      if (@$hits3 > 0) {
         print h3(b("Match by SEED's EC number for $ecnum"));
         my @trows = ();
         push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'},
                               $cgi->th( [ 'Gene ID','Gene Name', 'Seed Annotation', 'Genome','Fitness' ] ) );
         foreach my $gene (@$hits3) {
-            $used{ $gene->{orgId} }{ $gene->{locusId} } = 1;
-            next if $count >= 100;
-            $count++;
-            my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
-            my @trow = map td($_),
-              ( Utils::gene_link($dbh, $gene, "name", "geneOverview.cgi"),
-                $gene->{gene},
-                a( {href => "domains.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"},
-                   $gene->{seed_desc} ),
-                a( {href => "org.cgi?orgId=$gene->{orgId}"}, $orginfo->{$gene->{orgId}}{genome}),
-                a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle},
-                   $fitstring));
-            push @trows, Tr(@trow);
-
+          $used{ $gene->{orgId} }{ $gene->{locusId} } = 1;
+          next if $count >= 100;
+          $count++;
+          my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
+          my @trow = map td($_),
+            ( Utils::gene_link($dbh, $gene, "name", "geneOverview.cgi"),
+              $gene->{gene},
+              a( {href => "domains.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}"},
+                 $gene->{seed_desc} ),
+              a( {href => "org.cgi?orgId=$gene->{orgId}"}, $orginfo->{$gene->{orgId}}{genome}),
+              a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle},
+                 $fitstring));
+          push @trows, Tr(@trow);
         }
         print $cgi->table({ cellspacing=>0, cellpadding=>3 }, @trows);
         print "\n";
+      }
     }
+    print p("Or search using",
+            a({-href => "http://papers.genomics.lbl.gov/cgi-bin/genomeSearch.cgi?orgId=$orgSpec&query=$ecnum&word=1"},
+              "Curated BLAST"))
+      if $orgSpec ne "";
     &end();
 }
 
@@ -417,6 +421,11 @@ if (@$domains >= 1) {
     }
     print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
 }
+
+print p(qq{Or search for '$geneSpec' in $orginfo->{$orgSpec}{genome} using},
+        a({-href => "http://papers.genomics.lbl.gov/cgi-bin/genomeSearch.cgi?orgId=$orgSpec&query=$geneSpec"},
+          "Curated BLAST"))
+  if $orgSpec ne "";
 
 &end();
 
