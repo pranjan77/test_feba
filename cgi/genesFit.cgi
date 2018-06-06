@@ -55,7 +55,7 @@ if ($addgene) {
 	$addgene_error = "Invalid gene to add";
     } else {
 	my ($locusId) = $dbh->selectrow_array(qq{ SELECT locusId FROM Gene WHERE orgId = ?
-                                                  AND (locusId = ? OR sysName = ? OR gene = ? COLLATE NOCASE) LIMIT 1 },
+                                                  AND (locusId = ? OR sysName = ? COLLATE NOCASE OR gene = ? COLLATE NOCASE) LIMIT 1 },
 					      {}, $orgId, $addgene, $addgene, $addgene);
 	if (defined $locusId) {
 	    if (sum(map { $_ eq $locusId } @locusIds) > 0) {

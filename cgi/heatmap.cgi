@@ -71,7 +71,7 @@ foreach my $add (@addrow) {
       push @errors, "Invalid gene to add";
     } else {
       my ($locusId) = $dbh->selectrow_array(qq{ SELECT locusId FROM Gene WHERE orgId = ?
-                                                  AND (locusId = ? OR sysName = ? OR gene = ? COLLATE NOCASE) LIMIT 1 },
+                                                  AND (locusId = ? OR sysName = ? COLLATE NOCASE OR gene = ? COLLATE NOCASE) LIMIT 1 },
                                             {}, $orgId, $add, $add, $add);
       if (!defined $locusId) {
         push @errors, qq{Cannot find gene "$addrow"};
@@ -372,25 +372,21 @@ if ($view) {
       join("", @hidden),
       textfield( -name => 'addrow', -default => "", -override => 1, -size => 10, -maxLength => 100 ),
       " at $selectRowAt $go",
-      end_form,
-      start_form(-style => "display: inline;",
+      end_form),
+    p(start_form(-style => "display: inline;",
                  -name => 'input', -method => 'GET', -action => 'heatmap.cgi'),
-      " or comment:",
+      "Add comment:",
       join("", @hidden),
       hidden(-name => 'addrow', -default => "_l$nlabel", -override => 1),
       textfield( -name => "rt._l$nlabel", -default => "", -override => 1, -size => 10, -maxLength => 500 ),
       " at $selectRowAt $go",
-        end_form);
-
-  print
-    start_form(-name => 'input', -method => 'GET', -action => 'heatmap.cgi'),
-      p("Add experiments:",
-        join("", @hidden),
-        textfield( -name => 'addcol', -default => "", -override => 1, -size => 15, -maxLength => 100 ),
-        " at $selectColAt $go"),
-          end_form;
-
-  print
+        end_form),
+    p(start_form(-name => 'input', -method => 'GET', -action => 'heatmap.cgi'),
+      "Add experiments:",
+      join("", @hidden),
+      textfield( -name => 'addcol', -default => "", -override => 1, -size => 15, -maxLength => 100 ),
+      " at $selectColAt $go",
+      end_form),
     p(start_form(-style => "display: inline;", -name => 'input', -method => 'GET', -action => 'heatmap.cgi'),
       join("", @hidden),
       hidden(-name => 'view', -default => 1, -override => 1),
