@@ -190,21 +190,25 @@ END
         # Clean up condition_1,2,3 and warn if not a known compound -- but skip this for Time0 samples
         # as sometimes they have condition set to Time0
         foreach my $field (qw{Condition_1 Condition_2 Condition_3}) {
-            if (exists $exp->{$field} && $exp->{Group} ne "Time0") {
-                $exp->{$field} =~ s/$alpha/a/g;
-                $exp->{$field} =~ s/^ +//;
-                $exp->{$field} =~ s/ +$//;
-                $exp->{$field} = "" if lc($exp->{$field}) eq "none";
-                $exp->{$field} = "" if $exp->{$field} eq "NA";
-                if ($exp->{$field} ne "") {
-                    my $compound = FindCompound($exp->{$field});
-                    if (!defined $compound) {
-                        $unknownCompound{$exp->{$field}} = 1;
-                    } else {
-                        $exp->{$field} = $compound;
-                    }
-                }
+          if (exists $exp->{$field} && $exp->{Group} ne "Time0") {
+            $exp->{$field} =~ s/$alpha/a/g;
+            $exp->{$field} =~ s/^ +//;
+            $exp->{$field} =~ s/ +$//;
+            $exp->{$field} = "" if lc($exp->{$field}) eq "none";
+            $exp->{$field} = "" if $exp->{$field} eq "NA";
+            if ($exp->{$field} ne "") {
+              my $compound = FindCompound($exp->{$field});
+              $compound = $exp->{$field} if !defined $compound
+                && ( defined GetMediaComponents($exp->{$field})
+                     || defined GetMixComponents($exp->{$field}) );
+              if (!defined $compound) {
+                $unknownCompound{$exp->{$field}} = 1
+                  unless $exp->{$field} =~ m/ exudates?$/ || $exp->{$field} =~ m/^supernatant; /i;
+              } else {
+                $exp->{$field} = $compound;
+              }
             }
+          }
         }
     }
     print STDERR join("\t","No media for",@noMedia)."\n" if scalar(@noMedia) > 0;
