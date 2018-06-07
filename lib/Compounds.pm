@@ -15,7 +15,7 @@ our (@ISA,@EXPORT);
              FindCompound GetCompoundCAS GetCompoundMW
              ListValidUnits
              LoadMedia
-             GetMedias GetMediaComponents GetUndefMedia GetUnknownComponents WarnReusedComponents
+             GetMedias GetMediaComponents GetUndefMedia GetUnknownComponents WarnReusedComponents GetMixComponents
              SynToKey GetSynonymMap);
 
 sub LoadCompounds($); # metadata directory; no return value
@@ -31,6 +31,8 @@ sub GetMediaAttributes($); # media name => hash of attributes such as Descriptio
 sub GetMediaComponents($); # for each component, a list of [ compound, concentration, units, mix ]
 #	where mix indicates which mix it was from (if any)
 sub WarnReusedComponents(); # report to STDOUT on components that are in a medium more than once
+
+sub GetMixComponents($); # for a given mix, a list of [ compounds, concentration, units ]
 
 # From a compound name or synonym to a key to look up.
 # Only alphanumeric characters, +, or - are considered -- everything else is removed. Also, case is ignored.
@@ -76,7 +78,12 @@ sub LoadCompounds($) {
         $compounds{$compound} = [ $compound, $cas, $mw ];
 
         my @syns = $compound;
-        push @syns, split /, /, $row->{Synonyms};
+        if ($row->{Synonyms} =~ m/;/) {
+          # allow semicolon separators instead of comma separators
+          push @syns, split /; /, $row->{Synonyms};
+        } else {
+          push @syns, split /, /, $row->{Synonyms};
+        }
         foreach my $syn (@syns) {
             my $key = SynToKey($syn);
             next if $key eq "";
@@ -282,6 +289,13 @@ sub GetMediaComponents($) {
         }
     }
     return $out;
+}
+
+# Like GetMediaComponents but for mixes; returns a list of [compound,concentration,units]
+sub GetMixComponents($) {
+  my ($mix) = @_;
+  return undef if !exists $mix{$mix};
+  return $mix{$mix};
 }
 
 sub GetUnknownComponents() {
