@@ -319,11 +319,13 @@ sub ExpToPubId($$$);
                                  Condition_1 Units_1 Concentration_1
                                  Condition_2 Units_2 Concentration_2});
         my %exps = map {$_->{name} => $_} @exps;
-        # fields that are usually in exps but are not enforced
-        my @optional = qw{Temperature pH Shaking Growth.Method Liquid.v..solid Aerobic_v_Anaerobic Growth.Plate.ID Growth.Plate.wells};
+        # fields that are often in exps but are not enforced
+        my @optional = qw{MediaStrength Temperature pH Shaking Growth.Method Liquid.v..solid Aerobic_v_Anaerobic
+                          Growth.Plate.ID Growth.Plate.wells};
         foreach my $field (@optional) {
             if (!exists $exps[0]{$field}) {
-                print STDERR "Field $field is not in $indir/$org/expsUsed -- using blank values\n";
+                print STDERR "Field $field is not in $indir/$org/expsUsed -- using blank values\n"
+                  unless $field eq "MediaStrength"; # usually missing
                 while (my ($name,$exp) = each %exps) {
                     $exp->{$field} = "";
                 }
@@ -389,10 +391,24 @@ sub ExpToPubId($$$);
             $row->{condition_1} = "" if $row->{condition_1} eq "None";
 
             $row->{pubId} = "" if !defined $row->{pubId};
+
+            # Compute mediaStrength from MediaStrength, which should have an x suffix
+            if ($exp->{MediaStrength} ne "") {
+              my $strength = $exp->{MediaStrength};
+              $strength =~ s/^\s+//;
+              $strength =~ s/\s+$//;
+              if ($strength =~ m/^(\d*[.]?\d*)x$/i && $1 ne "." && $1 ne "") {
+                $row->{mediaStrength} = $1;
+              } else {
+                print STDERR "Warning: cannot parse media strength $exp->{MediaStrength} for experiment $exp->{orgId} $exp->{expName} $exp->{expDesc} -- it should be something like 0.9x or 1x\n";
+              }
+            }
+            $row->{mediaStrength} = 1 if !defined $row->{mediaStrength};
             WorkPutHash($row, qw{orgId expName expDesc timeZeroSet num nMapped nPastEnd nGenic
                                  nUsed gMed gMedt0 gMean cor12 mad12 mad12c mad12c_t0
                                  opcor adjcor gccor maxFit
-                                 expGroup expDescLong mutantLibrary person dateStarted setName seqindex media
+                                 expGroup expDescLong mutantLibrary person dateStarted setName seqindex
+                                 media mediaStrength
                                  temperature pH vessel aerobic liquid shaking
                                  condition_1 units_1 concentration_1
                                  condition_2 units_2 concentration_2

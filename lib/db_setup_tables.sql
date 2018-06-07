@@ -67,8 +67,9 @@ CREATE TABLE Experiment(
    person        TEXT       NOT NULL,
    dateStarted   TEXT       NOT NULL,
    setName       TEXT       NOT NULL,
-   seqindex      TEXT       NOT NULL,
+   seqindex      TEXT       NOT NULL, /* i.e., IT001 */
    media         TEXT       NOT NULL,
+   mediaStrength REAL       NOT NULL, /* usually 1 */
    /* These fields may be absent, but this should be represented as empty strings */
    temperature   TEXT       NOT NULL, /* should be in celsius */
    pH            TEXT       NOT NULL,
