@@ -20,7 +20,8 @@ use strict;
 use CGI qw(:standard Vars -nosticky);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
-sub CompoundToHTML($);
+sub CompoundToHTML($$$$);
+sub MediaComponentsHTML($$);
 
 use lib "../lib";
 use Utils;
@@ -103,13 +104,13 @@ if ($help) {
 my @fit = (); # sorted list of fitness values to show
 my $header = undef;
 if ($show eq "") {
-    my ($html1,$html2);
-    $html1 = CompoundToHTML( $exp->{condition_1} );
-    $html2 = CompoundToHTML( $exp->{condition_2} );
-    my $cond1 = $exp->{condition_1} ? join(" ", $html1,
-                                           $exp->{concentration_1}, $exp->{units_1}) : "";
-    my $cond2 = $exp->{condition_2} ? join(" ", $html2,
-                                           $exp->{concentration_2}, $exp->{units_2}) : "";
+    my $mediaList = $dbh->selectall_arrayref("SELECT DISTINCT media FROM MediaComponents");
+    my %mediaOrMix = map { $_->[0] => 1 } @$mediaList;
+    my $cond1 = CompoundToHTML( $exp->{condition_1}, $exp->{concentration_1}, $exp->{units_1},
+                                \%mediaOrMix );
+    my $cond2 = CompoundToHTML( $exp->{condition_2}, $exp->{concentration_2}, $exp->{units_2},
+                             \%mediaOrMix );
+
     my $media = $exp->{media};
     $media .= " ($exp->{mediaStrength}x)" if $exp->{mediaStrength} != 1;
     if ($cond2) {
@@ -117,7 +118,7 @@ if ($show eq "") {
     } elsif ($cond1) {
         $media = join(" + ", $media, $cond1);
     }
-    $media .= " pH=$exp->{pH}" if $exp->{pH} ne "";
+    $media .= ", pH=$exp->{pH}" if $exp->{pH} ne "";
     my @culture = ("Culturing: ". $exp->{mutantLibrary});
     push @culture, $exp->{vessel} if $exp->{vessel} ne "";
     push @culture, $exp->{aerobic} if $exp->{aerobic} ne "";
@@ -136,30 +137,37 @@ if ($show eq "") {
     }
 
     my $mediaComponents = $dbh->selectall_arrayref(qq{SELECT * from MediaComponents LEFT JOIN Compounds USING (compound)
-                                                          WHERE media = ? },
+                                                      WHERE media = ? },
                                                    { Slice => {} },
                                                    $exp->{media});
     if (@$mediaComponents > 0) {
-        my %compStrings = (); # mix => list of components; note mix = "" for most
-        foreach my $row (@$mediaComponents) {
-            my $compString = $row->{CAS} ?
-                a({-href => "http://commonchemistry.org/ChemicalDetail.aspx?ref=$row->{CAS}"}, $row->{compound})
-                :  $row->{compound};
-            if ($row->{concentration} && $row->{units}) {
-              my $conc = $row->{concentration} * $exp->{mediaStrength};
-              $compString = join(" ", $conc, $row->{units}, $compString);
-              $row->{mix} = "" if !defined $row->{mix};
-              push @{ $compStrings{$row->{mix}} }, $compString;
-            }
-        }
-        my $comp = "Media components: " . join(", ", @{ $compStrings{""} });
-        foreach my $mix (sort keys %compStrings) {
-            next if $mix eq "";
-            $comp .= ", $mix " . small("(" . join(", ", @{ $compStrings{$mix} }) . ")");
-        }
-        $comp .= " " . small("(final concentrations)") if $exp->{mediaStrength} != 1;
-        push @pieces, $comp;
-      }
+      my $html = MediaComponentHTML($mediaComponents, $exp->{mediaStrength});
+      $html .= " " . small("(final concentrations)") if $exp->{mediaStrength} != 1;
+      push @pieces, "Media components: $html";
+    }
+    if (exists $mediaOrMix{$exp->{condition_1}}
+        && lc( $exp->{units_1} ) eq "x"
+        && $exp->{concentration_1} =~ m/^\d+[.]?\d*$/) {
+      my $comp = $dbh->selectall_arrayref(qq{SELECT * FROM MediaComponents LEFT JOIN Compounds USING (compound)
+                                              WHERE media = ? },
+                                           { Slice => {} },
+                                           $exp->{condition_1});
+      my $html = MediaComponentHTML($comp, $exp->{concentration_1});
+      $html .= " " . small("(final concentrations)") if $exp->{concentration_1} != 1;
+      push @pieces, "$exp->{condition_1} $exp->{concentration_1}x includes: $html";
+    }
+    if (exists $mediaOrMix{$exp->{condition_2}}
+        && lc( $exp->{units_2} ) eq "x"
+        && $exp->{concentration_2} =~ m/^\d+[.]?\d*$/) {
+      my $comp = $dbh->selectall_arrayref(qq{SELECT * FROM MediaComponents LEFT JOIN Compounds USING (compound)
+                                              WHERE media = ? },
+                                           { Slice => {} },
+                                           $exp->{condition_2});
+      my $html = MediaComponentHTML($comp, $exp->{concentration_2});
+      $html .= " " . small("(final concentrations)") if $exp->{concentration_2} != 1;
+      push @pieces, "$exp->{condition_2} $exp->{concentration_2}x includes: $html";
+    }
+
     if ($exp->{growthPlate} ne "" && $exp->{growthWells} ne "") {
         push @pieces, "Growth plate: $exp->{growthPlate} $exp->{growthWells}";
     }
@@ -359,11 +367,38 @@ if ($show ne "specific") {
 $dbh->disconnect();
 Utils::endHtml($cgi);
 
-sub CompoundToHTML($) {
-    my ($compound) = @_;
-    return $compound if ! $compound;
-    $compound =~ s/^supernat[ea]nt; /supernatant from /i;
+sub CompoundToHTML($$$$) {
+    my ($compound, $concentration, $units, $mediaOrMix) = @_;
+    return "" if $compound eq "";
+    return "$concentration$units $compound" if exists $mediaOrMix->{$compound};
     my ($cas) = $dbh->selectrow_array("SELECT CAS FROM Compounds WHERE compound=?", {}, $compound);
-    return $cas ? a({-href => "http://commonchemistry.org/ChemicalDetail.aspx?ref=$cas"}, $compound)
-        : $compound;
+    $compound =~ s/^supernat[ea]nt; /supernatant from /i;
+    my $html = $cas ? a({-href => "http://commonchemistry.org/ChemicalDetail.aspx?ref=$cas"}, $compound)
+      : $compound;
+    return join(" ", $html, $concentration, $units);
+}
+
+sub MediaComponentHTML($$) {
+  my ($components, $strength) = @_;
+  # mix => list of components; note mix = "" for most
+  my %compStrings = ("" => []);
+  foreach my $row (@$components) {
+    my $compString = $row->{CAS} ?
+      a({-href => "http://commonchemistry.org/ChemicalDetail.aspx?ref=$row->{CAS}"}, $row->{compound})
+        :  $row->{compound};
+    if ($row->{concentration} && $row->{units}) {
+      my $conc = $row->{concentration} * $strength;
+      $compString = join(" ", $conc, $row->{units}, $compString);
+      $row->{mix} = "" if !defined $row->{mix};
+      push @{ $compStrings{$row->{mix}} }, $compString;
+    }
+  }
+  # The non-mix components
+  my $html = join(", ", @{ $compStrings{""} });
+  # The mix components get a label
+  foreach my $mix (sort keys %compStrings) {
+    next if $mix eq "";
+    $html .= ", $mix " . small("(" . join(", ", @{ $compStrings{$mix} }) . ")");
+  }
+  return $html;
 }
