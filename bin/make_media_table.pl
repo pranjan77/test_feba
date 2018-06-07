@@ -12,15 +12,18 @@ my $metadir = "$Bin/../metadata";
 my $usage = <<END
 make_media_table.pl [ -out . ] [ -db feba.db ]
              [ -metadir $metadir ]
-        The metadata driectory should include a media file and a FEBA_COMPOUND_sheet file.
+        The metadata driectory should include a media file, a mixes
+	file, and a Compounds.tsv file.
 
-	The compound file is tab-delimited with the first five fields
+	Compounds.tsv file is tab-delimited with the first five fields
 	being a unique id, CAS no, source, catalog no, molecular
 	weight, and also contains a field named Synonyms.
 
 	media has a single field with the media named followed by
 	lines of the form compound name, concentration, concentration
 	units, where valid units are $unitString.
+
+	mixes is in the same format.
 
         writes db.Compounds and db.MediaComponents to output directory.
         If -db is specified, also loads these into the sqlite3 database.
@@ -78,6 +81,15 @@ END
             print COMPONENTS join("\t", $media, $compound, $concentration, $units, $mix)."\n";
         }
     }
+    foreach my $mix (GetMixes) {
+      my $list = GetMixComponents($mix);
+      foreach my $row (@$list) {
+        my ($compound, $concentration, $units) = @$row;
+        my $mix2 = "";
+        print COMPONENTS join("\t", $mix, $compound, $concentration, $units, $mix2)."\n";
+      }
+    }
+
     close(COMPONENTS) || die "Error writing to $DbComponentsFile";
     print STDERR "Wrote $DbComponentsFile\n";
 
