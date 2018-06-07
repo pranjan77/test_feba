@@ -6,7 +6,6 @@ Compound	CAS	Company	CatalogNumber	FW	Synonyms	Hans80Anti	Hans80metals	FEBA_carb
 1-ethyl-3-methylimidazolium acetate	143314-17-4	Sigma	689483	170.21						yes	
 1-ethyl-3-methylimidazolium chloride	65039-09-0			146.62						yes	
 1-ethyl-3-methylimidazolium lysine										yes	
-1,2-dimethyl-5-nitroimidazole	551-92-8	TCI	d4081	141.13	Dimetridazole	yes					
 18-Crown-6	17455-13-9	Sigma	186651-5G	264.32		yes					
 2-bromo-2-nitro-1,3-propanediol	52-51-7	Sigma	134708-100g	199.99		yes					
 2-Deoxy-D-Ribose	533-67-5	Sigma	D5899	134.13				yes			
@@ -24,7 +23,7 @@ Compound	CAS	Company	CatalogNumber	FW	Synonyms	Hans80Anti	Hans80metals	FEBA_carb
 3-hydroxybenzoic acid	99-06-9	Sigma	H20008	138.12							
 3-methyl-1-butanol	123-51-3			88.15							
 3-methyl-2-butenol	556-82-1			86.132							
-3-methyl-3-butenol	763-32-6			86.13							
+3-methyl-3-butenol	763-32-6			86.13	3-methyl-3-buten-1-ol						
 3-Methylcatechol	488-17-5	Sigma	M34006	124.14							
 4-Aminobenzoic acid	150-13-0	Sigma	A9878	137.14	p-Aminobenzoic acid, para-aminobenzoic acid						
 4-Hydroxyacetophenone	99-93-4	Sigma	278564	136.15			yes				
@@ -39,7 +38,7 @@ Compound	CAS	Company	CatalogNumber	FW	Synonyms	Hans80Anti	Hans80metals	FEBA_carb
 5-Hydroxymethylfurfural	67-47-0	Sigma	W501808	126.11						yes	
 5-Keto-D-Gluconic Acid potassium salt	91446-96-7	Sigma	K4125	232.23				yes			
 5'-Deoxy-5'-(methylthio)adenosine	2457-80-9	Sigma	D5011	297.33							
-8-hydroxy-nitroquinolone	4008-48-4	Sigma	140325-5g	190.16		yes					
+8-hydroxy-nitroquinoline	4008-48-4	Sigma	140325-5g	190.16		yes					
 a-Cyclodextrin	10016-20-3	Sigma	C4642	160.1026				yes			
 a-Ketoglutaric acid disodium salt hydrate	305-72-6	Sigma	K3752	190.06				yes			
 acetaldehyde	75-07-0	Sigma	402788	44.05							
@@ -63,7 +62,7 @@ Ammonium Sulfamate	7773-06-0	Sigma	228745	114.12			no
 Ammonium Sulfate	7783-20-2	Sigma	A4418	132.14	Mascagnite		no				
 Ammonium sulfite monohydrate	7783-11-1	Sigma	358983	134.16			no				
 Amoxicillin	26787-78-0	Sigma	A8523-1G	365.4		yes	no				
-Ampicillin sodium salt	69-52-3	Sigma	A9518	371.39		yes	no				
+Ampicillin sodium salt	69-52-3	Sigma	A9518	371.39	Ampicillin	yes	no				
 Anhydrotetracycline hydrochloride	13803-65-1	fluka	37919	462.88		yes	no				
 Antimycin A	1397-94-0	Sigma	a8674-100mg	548.63		yes	no				
 AQDS	853-68-9			412.3	anthraquinone-2,6-disulfonate		no				
@@ -93,7 +92,7 @@ Calcium nitrate tetrahydrate	13477-34-4	Sigma	C1396	236.15			no
 calcium pantothenate	137-08-6	Sigma	C8731	238.27	(R)-(+)-N-(2,4-Dihydroxy-3,3-dimethyl-1-oxobutyl)-_-alanine hemicalcium salt, Calcium D-pantothenate, Vitamin B5, pantothenic acid, Pantothenic acid dicalcium salt, Calcium D,L-pantothenate		no				
 CAPS	1135-40-6	Sigma	C2632	221.32	3-(Cyclohexylamino)-1-propanesulfonic acid		no				
 capsaicin	404-86-4			305.42			no				
-Carbenicillin disodium salt	4800-94-6	Sigma	C1389-5G	422.36		yes	no			yes	
+Carbenicillin disodium salt	4800-94-6	Sigma	C1389-5G	422.36	Carbenicillin	yes	no			yes	
 Carnitine Hydrochloride	461-05-2	Sigma	C9500	197.66			no	yes	yes		
 casamino acids	65072-00-6	BD	223120		CAS amino acids		no	yes	yes		
 Casein	9000-71-9	Sigma	C7078				no				
@@ -195,7 +194,7 @@ Formamide	75-12-7	Sigma	F9037-100ML	45.04
 Formic Acid	64-18-6	Sigma	251364	46.03							
 Furaltadone hydrochloride	3759-92-1	Sigma	F9255-25G	360.75		yes					
 Furfuryl Alcohol	98-00-0	Sigma	185930	98.1						yes	
-Fusidic acid sodium salt	751-94-0	Sigma	F0881-1G	538.69						yes	
+Fusidic acid sodium salt	751-94-0	Sigma	F0881-1G	538.69	Fusidic acid					yes	
 G418 disulfate salt solution	108321-42-2	Sigma	G8168	692.71	G418					yes	
 Gallic Acid	149-91-7	Sigma	G7384	170.12			yes				
 Gelatin	9000-70-8	Sigma	G1890					yes	yes		
@@ -541,5 +540,34 @@ Levan - from Erwinia herbicola	9013-95-0	sigma	L8647-1G
 polygalacturonic acid	25990-10-7	sigma	P3889-5G								
 cellulose (fibers,medium)	9004-34-6	sigma	C6288-100G								
 Amylose from potato	9005-82-7	sigma	A0512-1G								
-dextran					dextran, Mw ~1,270; dextran, Mw ~200,000						
+dextran	9004-54-0										
+dextran, Mw ~1,270											
+dextran, Mw ~200,000											
 Avidin	1405-69-2	sigma									
+Methanol	67-56-1										
+Acriflavine	8048-52-0										
+Berberine	633-65-8										
+Fusaric acid	536-69-6										
+Naringin	10236-47-2										
+Phloretin	60-82-2										
+2-Deoxyadenosine 5-monophosphate	653-63-4	Sigma	D6375	331.22							
+Adenosine 3,5-Cyclic Monophosphate	60-92-4	Sigma	A9501	329.21	Adenosine 3',5'-Cyclic Monophosphate						
+2-Deoxycytidine 5-monophosphate	1032-65-1	Sigma	D7750	307.2							
+Uridine 5-monophosphate disodium salt	3387-36-8	Sigma	U6375	368.15							
+2'-Deoxycytidine	951-77-9	Sigma	D3897	227.22							
+2-Deoxyadenosine monohydrate	16373-93-6	Sigma	D7400	269.26							
+2'-Deoxyinosine	890-38-0	Sigma	D5287	252.23							
+2-Deoxy-D-glucose	154-17-6	Sigma	D6134	164.16							
+Phenylacetic acid	103-82-2	Sigma	P16621	136.15							
+4-Aminobutyric acid	56-12-2	Sigma	8003020100	103.12							
+5-Aminovaleric acid	660-88-8	Sigma	123188-25G	117.15							
+BC Lignin Sorghum		JBEI									
+Disodium Glutarate	13521-83-0			191.09							
+DL-2-Aminoadipic acid	542-32-5	Sigma	A0637	161.16							
+Acridine orange	494-38-2			265.4							
+Ethidium Bromide	1239-45-8			394.294							
+Potassium iodide	7681-11-0			166							
+Nicotinamide N-oxide	1986-81-8			138.12							
+Proteose Peptone	91079-38-8	Sigma	82450								
+Calf brains											
+Beef heart											

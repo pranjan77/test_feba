@@ -105,7 +105,6 @@ L-Phenylalanine	0.5	mM
 L-tyrosine disodium salt	0.5	mM
 L-Tryptophan	0.5	mM
 		
-# Hualan Liu, 05/23/17		
 Media	Mineral 3B solution	
 Description	mineral mix for B. theta defined medium	
 X	1	
@@ -118,3 +117,30 @@ Cobalt chloride hexahydrate	4.2	uM
 Manganese (II) chloride tetrahydrate	50.5	uM
 Ammonium chloride	9.3	mM
 Sodium sulfate	1.75	mM
+		
+Media	Mineral 3B solution minus Nitrogen	
+Description	mineral mix for B. theta defined medium without nitrogen	
+X	1	
+Controlled vocabulary	Concentration	Units
+Potassium phosphate monobasic	6.6	mM
+Sodium Chloride	15.4	mM
+Magnesium chloride hexahydrate	98	uM
+Calcium chloride dihydrate	176.5	uM
+Cobalt chloride hexahydrate	4.2	uM
+Manganese (II) chloride tetrahydrate	50.5	uM
+Sodium sulfate	1.75	mM
+		
+Media	Thauer's vitamin mix no Biotin	
+Description	1000X vitamin solution (based on Thauer's formulation)	
+X	1000	
+Controlled vocabulary	Concentration	Units
+pyridoxine HCl	10	mg/L
+4-Aminobenzoic acid	5	mg/L
+Lipoic acid	5	mg/L
+Nicotinic Acid	5	mg/L
+Riboflavin	5	mg/L
+thiamine HCl	5	mg/L
+calcium pantothenate	5	mg/L
+Folic Acid	2	mg/L
+Cyanocobalamin	0.1	mg/L
+Choline chloride	200	mg/L
