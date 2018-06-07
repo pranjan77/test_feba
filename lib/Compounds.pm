@@ -15,7 +15,8 @@ our (@ISA,@EXPORT);
              FindCompound GetCompoundCAS GetCompoundMW
              ListValidUnits
              LoadMedia
-             GetMedias GetMediaComponents GetUndefMedia GetUnknownComponents WarnReusedComponents GetMixComponents
+             GetMedias GetMediaComponents GetUndefMedia GetUnknownComponents WarnReusedComponents
+             GetMixes GetMixComponents
              SynToKey GetSynonymMap);
 
 sub LoadCompounds($); # metadata directory; no return value
@@ -289,6 +290,10 @@ sub GetMediaComponents($) {
         }
     }
     return $out;
+}
+
+sub GetMixes() {
+    return sort keys %mix;
 }
 
 # Like GetMediaComponents but for mixes; returns a list of [compound,concentration,units]
