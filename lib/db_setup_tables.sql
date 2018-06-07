@@ -165,12 +165,14 @@ CREATE TABLE Compounds(
         PRIMARY KEY (compound)
 );
 
+/* This table describes the components of both media and mixes */
 CREATE TABLE MediaComponents(
-	media TEXT NOT NULL,
+	media TEXT NOT NULL, /* this could be a mix instead */
         compound TEXT NOT NULL,
         concentration REAL,
         units TEXT,
-        mix TEXT                /* which mix this component came from, or empty */
+        mix TEXT             /* which mix this component came from, or empty.
+                                Also is empty if media is actually a mix. */
 );
 CREATE INDEX 'MediaComponentsByMedia' on MediaComponents('media' ASC);
 
