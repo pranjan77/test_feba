@@ -393,10 +393,11 @@ sub ExpToPubId($$$);
             $row->{pubId} = "" if !defined $row->{pubId};
 
             # Compute mediaStrength from MediaStrength, which should have an x suffix
-            if ($exp->{MediaStrength} ne "") {
-              my $strength = $exp->{MediaStrength};
-              $strength =~ s/^\s+//;
-              $strength =~ s/\s+$//;
+            my $strength = $exp->{MediaStrength};
+            $strength =~ s/^\s+//;
+            $strength =~ s/\s+$//;
+            $strength = "" if $strength eq "NA";
+            if ($strength ne "") {
               if ($strength =~ m/^(\d*[.]?\d*)x$/i && $1 ne "." && $1 ne "") {
                 $row->{mediaStrength} = $1;
               } else {
