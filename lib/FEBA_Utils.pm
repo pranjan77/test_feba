@@ -9,7 +9,7 @@ use strict;
 use File::stat;
 our (@ISA,@EXPORT);
 @ISA = qw(Exporter);
-@EXPORT = qw( ReadTable ReadColumnNames ReadFasta NewerThan ReadFastaDesc reverseComplement );
+@EXPORT = qw( ReadTable ReadColumnNames ReadFasta NewerThan ReadFastaDesc ReadFastaEntry reverseComplement );
 
 # filename and list of required fields => list of hashes, each with field->value
 # The list can be a single name or a reference to a list
@@ -111,6 +111,44 @@ sub ReadFastaDesc($) {
         return('error' => "No sequence for id:\n$name\n") if ($len{$name} == 0);
     }
     return("desc" => \%desc, "seq" => \%seq, "len" => \%len);
+}
+
+# Read one entry at a time from a fasta file
+# The first argument is a hash to keep track of saved state, i.e.:
+#   my $state = {};
+#   while(my ($header,$sequence) = ReadFastaEntry($fh,$state)) { ... }
+# (header will have the ">" removed)
+sub ReadFastaEntry {
+  my ($fh, $state) = @_;
+  die unless ref $state;
+  return () if exists $state->{DONE}; # end state
+  # initialization
+  if (!defined $state->{header}) {
+    $state->{header} = "";
+    $state->{sequence} = "";
+  }
+  while (my $line = <$fh>) {
+    chomp $line;
+    if ($line =~ m/^>(.*)/) {
+      my $old_header = $state->{"header"};
+      my $old_sequence = $state->{"sequence"};
+      $state->{"header"} = $1;
+      die "Empty header in $line" if $state->{header} eq "";
+      $state->{"sequence"} = "";
+      return ($old_header, $old_sequence) if $old_header ne "";
+    } else {
+      die "Unexpected sequence with no header" if $state->{"header"} eq "";
+      $line =~ s/ //g;
+      $line = uc($line);
+      # allow - or . as used in alignments and * as used for stop codons
+      die "Invalid sequence line $line" unless $line =~ m/^[A-Z*.-]*$/;
+      $state->{sequence} .= $line;
+    }
+  }
+  # reached end of file
+  $state->{DONE} = 1;
+  return () if $state->{header} eq ""; # empty file
+  return ($state->{header}, $state->{sequence});
 }
 
 sub NewerThan($$) {
