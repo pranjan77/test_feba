@@ -95,16 +95,16 @@ if (scalar(@expCand) > 0) {
 	my $checked = $isFirst ? "CHECKED" : "";
 	push @trows, $cgi->Tr({-valign => 'top', -align => 'left'},
 			      $cgi->td([ qq{<input type="radio" name="expName$choosing" value="$exp->{expName}" $checked >},
-					 $cgi->a({href => "exp.cgi?orgId=$orgId&$exp->{expName}"}, $exp->{expName}),
+					 $cgi->a({href => "exp.cgi?orgId=$orgId&expName=$exp->{expName}"}, $exp->{expName}),
 					 $exp->{expGroup}, $exp->{condition_1}, $exp->{expDesc} ]));
 	$isFirst = 0;
     }
 
   my $start = Utils::start_page("Select experiment to compare to");
     print $start, '<div id="ntcontent">',
-	p("Selected experiment will be compared to "
-	  . a( { href => "exp.cgi?orgId=$orgId&expName=$expNameConst" }, $expConst->{expName} )
-	  . " : $expConst->{expDescLong}"),
+	p("Select an experiment to compare to ",
+	  a( { href => "exp.cgi?orgId=$orgId&expName=$expNameConst" }, $expConst->{expName} ),
+	  "($expConst->{expDescLong})"),
 	start_form(-name => 'input', -method => 'GET', -action => 'compareExps.cgi'),
 	hidden('orgId', $orgId),
 	hidden("expName$notChoosing", $expNameConst),
