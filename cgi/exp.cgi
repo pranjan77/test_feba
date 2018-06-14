@@ -21,7 +21,7 @@ use CGI qw(:standard Vars -nosticky);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
 sub CompoundToHTML($$$$);
-sub MediaComponentsHTML($$);
+sub MediaComponentHTML($$);
 
 use lib "../lib";
 use Utils;
