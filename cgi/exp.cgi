@@ -126,7 +126,11 @@ if ($show eq "") {
     push @culture, "shaken=$exp->{shaking}" if $exp->{shaking} ne "";
     push @culture, "($exp->{liquid})" if $exp->{liquid} ne "" && lc($exp->{liquid}) ne "liquid";
 
-    my @pieces = ("Media: $media", join(", ",@culture), "By: $exp->{person} on $exp->{dateStarted}");
+    my @pieces = ("Media: $media", join(", ",@culture));
+    push @pieces, sprintf("Growth: about %.1f ", $exp->{nGenerations})
+      . a({-href => "help.cgi#growth"}, "generations")
+        if $exp->{nGenerations};
+    push @pieces, "By: $exp->{person} on $exp->{dateStarted}";
     if ($exp->{pubId}) {
       my $pub = $dbh->selectrow_hashref("SELECT * from Publication WHERE pubId = ?",
                                         {}, $exp->{pubId});
@@ -167,7 +171,6 @@ if ($show eq "") {
       $html .= " " . small("(final concentrations)") if $exp->{concentration_2} != 1;
       push @pieces, "$exp->{condition_2} $exp->{concentration_2}x includes: $html";
     }
-
     if ($exp->{growthPlate} ne "" && $exp->{growthWells} ne "") {
         push @pieces, "Growth plate: $exp->{growthPlate} $exp->{growthWells}";
     }

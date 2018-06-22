@@ -155,6 +155,23 @@ enzyme commision (EC) numbers and hence to metabolic maps (from the last public 
 
 <P>Fitness Browser includes links to other analysis tools (see the protein tab) as well as a homologs tab that shows the top homologs that we have fitness data for (as found by protein BLAST).
 
+<H3><A name="growth" style="color: black;">Growth</A></H3>
+
+<P>For most of the experiments, optical density was used to estimate
+the number of cells at the start of the experiment and at the end.
+The optical density at the start of the experiment is usually measured
+indirectly from the OD a more concentrated sample before inoculation.
+The log2 ratio of the end OD versus the start OD gives an estimate of
+the number of generations of growth during the fitness assay.  The
+number of generations might be underestimated for experiments that
+reached a high density. For example, an experiment with 6 generations
+might be estimated as 5 generations.  In <A
+HREF="http://genomics.lbl.gov/supplemental/bigfit/">this paper</A>, we
+described how we calibrated some of the OD measurements, but those
+calibrations are not reflected in the Fitness Browser.
+
+<P>For experiments that do not have a measurement of the final optical density, you may be able to use the scale of the fitness values to get a rough estimate of the number of generations. In principle, genes that are absolutely required for growth should have fitness -n, where n is the number of generations. This is more likely to work for defined media experiments, where many mutants that are present in the library have strong fitness defects.
+
 <H3><A name="links" style="color: black;">Linking to the Fitness Browser</A></H3>
 
 Most of the genomes in this web site were taken
@@ -209,17 +226,19 @@ my $pubs = $dbh->selectall_arrayref(qq{ SELECT pubId, title, URL, COUNT(*) as nE
                                         GROUP BY pubId
                                         ORDER BY nExp DESC },
                                     { Slice => {} } );
-my @trows = ();
-push @trows, Tr( th({-width => "75%"}, "Paper"),
-                 th({-width => "10%"}, "#Experiments") );
-foreach my $row (@$pubs) {
-  push @trows, Tr(td(a({ -href => $row->{URL} }, $row->{title}) . " (" . $row->{pubId} . ")"),
-                  td({-align=>"right", -valign=>"top"}, $row->{nExp} ));
+my $pubtable = "";
+if (@$pubs > 0) {
+  my @trows = ();
+  push @trows, Tr( th({-width => "75%"}, "Paper"),
+                   th({-width => "10%"}, "#Experiments") );
+  foreach my $row (@$pubs) {
+    push @trows, Tr(td(a({ -href => $row->{URL} }, $row->{title}) . " (" . $row->{pubId} . ")"),
+                    td({-align=>"right", -valign=>"top"}, $row->{nExp} ));
+  }
+  $pubtable = h3(a({-style => "color: black;", -name => "sources"}, "References"))
+    . " " . table({-cellpadding => 3, -cellspacing => 0 }, @trows);
 }
-
 print div({-id=>"ntcontent"},
           $helpcontent,
-          h3(a({-style => "color: black;", -name => "sources"}, "References")),
-          table({-cellpadding => 3, -cellspacing => 0 }, @trows));
-
+          $pubtable);
 Utils::endHtml($cgi);
