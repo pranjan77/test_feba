@@ -85,6 +85,7 @@ CREATE TABLE Experiment(
    concentration_2 TEXT     NOT NULL,
    growthPlate TEXT NOT NULL,
    growthWells TEXT NOT NULL,
+   nGenerations REAL NOT NULL,  /* Total.Generations in R tables */
    pubId TEXT NOT NULL,
    PRIMARY KEY (orgId, expName)
 );

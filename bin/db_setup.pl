@@ -359,7 +359,7 @@ sub ExpToPubId($$$);
 
             my $id = $row->{name};
             my $exp = $exps{$id} || die "No matching metadata for experiment $org $id";
-            # put fields from exps into output with a new name (new name => new name)
+            # put fields from exps into output with a new name (new name => original name)
             my %remap = ( "expDescLong" => "Description",
                           "mutantLibrary" => "Mutant.Library",
                           "expGroup" => "Group",
@@ -373,7 +373,8 @@ sub ExpToPubId($$$);
                           "liquid" => "Liquid.v..solid",
                           "pH" => "pH",
                           "growthPlate" => "Growth.Plate.ID",
-                          "growthWells" => "Growth.Plate.wells"
+                          "growthWells" => "Growth.Plate.wells",
+                          "nGenerations" => "Total.Generations"
                 );
             # and lower case these fields
             foreach my $field (qw{Person Media Condition_1 Units_1 Concentration_1
@@ -382,6 +383,13 @@ sub ExpToPubId($$$);
             }
             while (my ($new,$old) = each %remap) {
                 $row->{$new} = $exp->{$old} eq "NA" ? "" : $exp->{$old};
+            }
+            # and compute nGenerations from StartOD and EndOD
+            if ($row->{nGenerations} eq ""
+                && $exp->{StartOD} ne "" && $exp->{StartOD} ne "NA" && $exp->{StartOD} > 0
+                && $exp->{EndOD} ne "" && $exp->{EndOD} ne "NA" && $exp->{EndOD} > 0) {
+              my $lr = log( $exp->{EndOD} / $exp->{StartOD} ) / log(2);
+              $row->{nGenerations} = $lr if $lr > 0;
             }
             # ad-hoc fixes for issues in the spreadsheets that the metadata was entered in:
             # hidden spaces at end, expGroup not lowercase, or condition_1 = "None" instead of empty
@@ -413,7 +421,7 @@ sub ExpToPubId($$$);
                                  temperature pH vessel aerobic liquid shaking
                                  condition_1 units_1 concentration_1
                                  condition_2 units_2 concentration_2
-                                 growthPlate growthWells pubId});
+                                 growthPlate growthWells nGenerations pubId});
         }
         EndWork();
     }
