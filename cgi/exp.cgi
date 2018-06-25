@@ -20,6 +20,7 @@ use strict;
 use CGI qw(:standard Vars -nosticky);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
+use IO::Handle; # for autoflush
 sub CompoundToHTML($$$$);
 sub MediaComponentHTML($$);
 
@@ -80,17 +81,8 @@ print $start, $tabs,
     qq[</P></div></div>],
     h3($exp->{expDescLong});
 
-# print qq[<div style="position: relative;"><div class="floatbox">],
-#     start_form(-name => 'input', -method => 'GET', -action => 'compareExps.cgi'),
-#     hidden('orgId', $orgId),
-#     hidden('expName2', $expName),
-#     "Compare to another experiment: ",
-#     textfield(-name => 'query1', -value => '', -size => 20, -maxlength => 100),
-#     end_form,
-#     qq[</P></div></div>],
-
 if ($help) {
-        print qq[<div class="helpbox">
+  print qq[<div class="helpbox">
         <b><u>About this page:</u></b><BR><ul>
         <li>View the genes that had strong and specific phenotypes in this experiment. </li>
         <li>To get to this page, search for any experiment and click on the "Specific" tab.</li> 
@@ -98,8 +90,10 @@ if ($help) {
         <li>To make a comparative heatmap, check the genes of interest and click the "Heatmap" link at the bottom.</li>
         <li>For more about how we define a specific phenotype, see the <A HREF="help.cgi#specific">help page</A>.
         </ul></div>];
-    }
+}
 
+autoflush STDOUT 1; # so preliminary results appear
+print "\n";
 
 my @fit = (); # sorted list of fitness values to show
 my $header = undef;
@@ -289,6 +283,7 @@ if (@fit > 0) { # show the table
     }
     print $cgi->table({cellpadding => 3, cellspacing => 0}, @trows);
 }
+print "\n";
 
 if ($show ne "specific") {
 
@@ -309,7 +304,7 @@ if ($show ne "specific") {
         }
     }
 }
-
+print "\n";
 
 if ($exp->{condition_1} ne "") {
     print
@@ -318,54 +313,104 @@ if ($exp->{condition_1} ne "") {
             ($show eq "specific" ? "Specific phenotypes for" : "For")
             . " $exp->{expGroup} $exp->{condition_1} across organisms"));
 }
+print "\n";
 
 if ($show ne "specific") {
-    print
-        h3("Metabolic Maps"),
-        p("Color code by fitness: see",
-          a({href => "keggmap.cgi?mapId=01100&orgId=$orgId&expName=$expName"}, "overview map"),
-          "or",
-          a({href => "keggmaplist.cgi?orgId=$orgId&expName=$expName"}, "list of maps")."." );
+  print h3("Metabolic Maps"),
+    p("Color code by fitness: see",
+      a({href => "keggmap.cgi?mapId=01100&orgId=$orgId&expName=$expName"}, "overview map"),
+      "or",
+      a({href => "keggmaplist.cgi?orgId=$orgId&expName=$expName"}, "list of maps")."." );
 
-    if (@$spec > 0) {
-        # try to highlight useful maps that contain genes with specific phenotypes
-        my $locusIn = join(",", map "'".$_->{locusId}."'", @$spec);
-        my %specEc = (); # ec => 1 for those locusIds
-        my $ecTIGR = $dbh->selectcol_arrayref(
-            "SELECT ec FROM GeneDomain WHERE orgId = ? AND locusId IN ( $locusIn );",
-            {}, $orgId);
-        foreach my $ec (@$ecTIGR) { $specEc{$ec} = 1; }
-        my $ecKEGG = $dbh->selectcol_arrayref(
-            qq{ SELECT ecnum FROM BestHitKEGG
-                JOIN KEGGMember USING (keggOrg,keggId)
-                JOIN KgroupEC USING (kgroup)
-                WHERE orgId = ? AND locusId IN ( $locusIn ); },
-            {}, $orgId);
-        foreach my $ec (@$ecKEGG) { $specEc{$ec} = 1; }
-        my $ecSEED = $dbh->selectcol_arrayref(
-            "SELECT num FROM SEEDClass WHERE orgId = ? AND locusId IN ( $locusIn ) AND type = 1;",
-            {}, $orgId);
-        foreach my $ec (@$ecSEED) { $specEc{$ec} = 1; }
-        if (keys(%specEc) > 0) {
-            my $ecIn = join(",", map "'".$_."'", keys %specEc);
-            my $maps = $dbh->selectall_arrayref(
-                qq{ SELECT mapId, title, COUNT(DISTINCT objectId) nEc
-                    FROM KEGGConf JOIN KEGGMap USING (mapId)
-                    WHERE objectId IN ( $ecIn ) AND type=1
-                    GROUP BY mapId
-                    ORDER BY nEc DESC });
-            if (scalar(@$maps) > 0) {
-                my @mapShow = ();
-                foreach my $map (@$maps) {
-                    my ($mapId,$title,$nEc) = @$map;
-                    push @mapShow, li(a({href => "keggmap.cgi?orgId=$orgId&expName=$expName&mapId=$mapId"},
-                                        $title));
-                }
-                print p("Maps containing gene(s) with specific phenotypes:",
-                        ul(@mapShow));
-            }
-        }
+  if (@$spec > 0) {
+    # try to highlight useful maps that contain genes with specific phenotypes
+    my %ec = ();
+    my %rxn = ();
+    foreach my $gene (@$spec) {
+      my $locusId = $gene->{locusId};
+      $ec{$locusId} = Utils::GeneToEc($dbh, $orgId, $locusId);
+      $rxn{$locusId} = Utils::GeneToRxn($dbh, $orgId, $locusId, $ec{$locusId});
     }
+    my %specEc = (); # ec => 1 for those locusIds
+    foreach my $list (values %ec) {
+      foreach my $ec (@$list) {
+        $specEc{$ec} = 1;
+      }
+    }
+    my %specRxn = ();
+    foreach my $list (values %rxn) {
+      foreach my $rxn (@$list) {
+        $specRxn{$rxn} = 1;
+      }
+    }
+
+    if (keys(%specEc) > 0) {
+      my $ecIn = join(",", map "'".$_."'", keys %specEc);
+      my $maps = $dbh->selectall_arrayref(qq{ SELECT mapId, title, COUNT(DISTINCT objectId) nEc
+                                                FROM KEGGConf JOIN KEGGMap USING (mapId)
+                                                WHERE objectId IN ( $ecIn ) AND type=1
+                                                GROUP BY mapId
+                                                ORDER BY nEc DESC });
+      if (scalar(@$maps) > 0) {
+        my @mapShow = ();
+        foreach my $map (@$maps) {
+          my ($mapId,$title,$nEc) = @$map;
+          push @mapShow, li(a({href => "keggmap.cgi?orgId=$orgId&expName=$expName&mapId=$mapId"},
+                              $title));
+        }
+        print p("Maps containing gene(s) with specific phenotypes:",
+                  ul(@mapShow));
+      }
+    }
+    print "\n";
+
+    # Map reactions to pathways
+    if (keys %specRxn > 0) {
+      my $rxnSpec = join(",", map { "'" . $_ . "'" } keys %specRxn);
+      my $rxnPath = $dbh->selectall_arrayref(qq{ SELECT * FROM MetaCycPathwayReaction
+                                                 JOIN MetaCycPathway USING (pathwayId)
+                                                 WHERE rxnId IN ($rxnSpec) },
+                                             { Slice => {} });
+      my %path = (); # pathway to hash of pathwayId, pathwayName, nSpecific, etc.
+      foreach my $row (@$rxnPath) {
+        my $pathId = $row->{pathwayId};
+        unless (exists $path{$pathId}) {
+          $path{$pathId} = { "pathwayId" => $pathId, "pathwayName" => $row->{pathwayName}, "nSpecific" => 0 };
+        }
+        $path{$pathId}{nSpecific}++;
+      }
+      my @path = values %path;
+      if (@path > 0) {
+        foreach my $row (@path) {
+          my $cov = $dbh->selectrow_hashref("SELECT * FROM MetacycPathwayCoverage WHERE orgId = ? AND pathwayId = ?",
+                                             { Slice => {} }, $orgId, $row->{pathwayId});
+          foreach my $field (qw{nSteps nFound}) {
+            $row->{$field} = $cov->{$field};
+          }
+        }
+
+        my @trows = ();
+        push @trows, $cgi->Tr(th(["Pathway", "#Steps", "#Present", "#Specific"]));
+        @path = sort { $b->{nSpecific} / $b->{nSteps} <=> $a->{nSpecific} / $a->{nSteps}
+                         || $b->{nFound} / $b->{nSteps} <=> $a->{nFound} / $a->{nSteps}
+                           || $b->{nSteps} <=> $a->{nSteps} } @path;
+        foreach my $row (@path) {
+          push @trows,
+            $cgi->Tr(td([ a({ -href => "pathway.cgi?orgId=$orgId&expName=$expName&pathwayId=$row->{pathwayId}" },
+                            $row->{pathwayName}),
+                          $row->{nSteps},
+                          $row->{nFound},
+                          $row->{nSpecific} ]));
+        }
+        print
+          h3("MetaCyc Pathways"),
+            p(a({ -href => "pathwaysOrg.cgi?orgId=$orgId" }, "Pathways"),
+              "that contain genes with specific phenotypes:"),
+              $cgi->table({cellpadding => 3, cellspacing => 0}, @trows),
+                "\n";
+      }
+    }
+  }
 }
 $dbh->disconnect();
 Utils::endHtml($cgi);
