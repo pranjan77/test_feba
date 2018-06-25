@@ -993,7 +993,50 @@ sub MetacycPathwayCandidates($$$) {
   return \%out;
 }
 
-#END 
+# Returns a reference to list of distinct EC numbers
+sub GeneToEc($$$) {
+  my ($dbh, $orgId, $locusId) = @_;
+  my @comb = ();
+  push @comb, @{ $dbh->selectcol_arrayref("SELECT ecnum FROM ReannotationEC WHERE orgId = ? AND locusId = ?",
+                                          {}, $orgId, $locusId) };
+  push @comb, @{ $dbh->selectcol_arrayref(qq{SELECT ec FROM GeneDomain WHERE orgId = ? AND locusId = ? AND ec <> ""},
+                                          {}, $orgId, $locusId) };
+  push @comb, @{ $dbh->selectcol_arrayref(qq{ SELECT ecnum
+                                              FROM BestHitKEGG JOIN KEGGMember USING (keggOrg, keggId)
+                                              JOIN KgroupEC USING (kgroup)
+	                                      WHERE orgId = ? AND locusId = ? },
+                                          {}, $orgId, $locusId) };
+  # SEEDClass.type = 1 means EC number
+  push @comb, @{ $dbh->selectcol_arrayref("SELECT num FROM SEEDClass WHERE type = 1 AND orgId = ? AND locusId = ?",
+                                          {}, $orgId, $locusId) };
+  my %ec = map { $_ => 1 } @comb;
+  my @uniq = sort keys %ec;
+  return \@uniq;
+}
+
+# Returns a reference to a list of distinct metacyc reaction ids
+sub GeneToRxn($$$$) {
+  my ($dbh, $orgId, $locusId, $ecs) = @_;
+  my @comb = ();
+  push @comb, @{ $dbh->selectcol_arrayref("SELECT rxnId FROM BestHitMetaCyc WHERE orgId = ? AND locusId = ?",
+                                          {}, $orgId, $locusId) };
+  push @comb, @{ $dbh->selectcol_arrayref(qq{ SELECT DISTINCT rxnId FROM SEEDAnnotation
+                                              JOIN SEEDAnnotationToRoles USING (seed_desc)
+                                              JOIN SeedRoleReaction USING (seedrole)
+                                              JOIN SEEDReaction USING (seedrxnId)
+                                              JOIN MetacycReaction USING (keggrxnId)
+                                              WHERE orgId = ? AND locusId = ? AND keggrxnId <> "" },
+                                          {}, $orgId, $locusId) };
+  foreach my $ec (@$ecs) {
+    push @comb, @{ $dbh->selectcol_arrayref(qq{ SELECT rxnId FROM MetacycReactionEC WHERE ecnum = ? },
+                                            {}, $ec) };
+  }
+  my %rxnId = map { $_ => 1 } @comb;
+  my @uniq = sort keys %rxnId;
+  return \@uniq;
+}
+
+#END
 
 return 1;
 
