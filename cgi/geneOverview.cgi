@@ -150,6 +150,11 @@ if (@$hits == 0) {
     push @lines, $alt_desc if $alt_desc;
     push @lines, "Type $type: $typeName";
     push @lines, "Located on scaffold $scaffold, $strand strand, nucleotides $beginC to $endC";
+    push @lines, join(" ",
+                      "See nucleotide sequence around",
+                      a({-href => "getNtSeq.cgi?orgId=$orgId&locusId=$locusId" }, "$idShow"),
+                      "or for all of",
+                      a({-href => "getNtSeq.cgi?orgId=$orgId&scaffoldId=$scaffold"}, "scaffold $scaffold"));
 
     print
       $start, $tabs,
