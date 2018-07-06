@@ -475,5 +475,9 @@ END
     
 print h3("Per-strain Table"), small(table({ cellspacing => 0, cellpadding => 3, }, @trows));
 
+print p("Or see this region's",
+        a({ -href => "getNtSeq.cgi?orgId=$orgId&scaffoldId=$scaffoldId&begin=$begin&end=$end" },
+          "nucleotide sequence"));
+
 $dbh->disconnect();
 Utils::endHtml($cgi);
