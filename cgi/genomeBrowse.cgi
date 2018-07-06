@@ -20,7 +20,7 @@ use strict;
 #	object is shown as unstranded if strand is absent
 #	use 1 for + strand, not "+", because of CGI encoding issues
 #	d is shown as popup text and is optional
-# begin, end -- which part of the scaffold to show
+# begin, end -- which part of the scaffold to show (optional)
 # zoom = "in" or "out"
 # pan = "left" or "right"
 #
@@ -78,6 +78,8 @@ $begin = 1 if $begin < 1;
 if (!defined $end) {
   $end = $begin + 8000;
   $end = $sclen if $end > $sclen;
+  $begin = $sclen - 8000 if $begin > $end-4000;
+  $begin = 1 if $begin < 1;
 }
 die "End is too low\n" if $end < 1;
 $begin < $end || die "begin must be less than end\n";
@@ -124,11 +126,13 @@ my $title = "Genes";
 my $nobj = scalar(@objects);
 $title .= " (and $nobj objects)" if $nobj;
 
+my $scaffoldShow = $scaffoldId;
 print header,
   Utils::start_page("Browse $genome"),
   q{<div id="ntcontent">},
-  h2("Browse", a({-href => "org.cgi?orgId=$orgId"}, $genome));
-  p($title, "for nucleotides", Utils::commify($begin), "to", Utils::commify($end), "on scaffold $scaffoldId:");
+  h2("Browse", a({-href => "org.cgi?orgId=$orgId"}, $genome)),
+  p($title, "for nucleotides", Utils::commify($begin), "to",
+    Utils::commify($end), "on scaffold $scaffoldId:");
 
 my $genes = $dbh->selectall_arrayref("SELECT * FROM Gene WHERE orgId = ? AND scaffoldId = ? AND Gene.end >= ? AND Gene.begin <= ? ORDER by Gene.begin",
                                      { Slice => {} }, $orgId, $scaffoldId, $begin, $end);
@@ -156,9 +160,13 @@ print
   end_form;
 
 
-print p("Or see this region's",
-        a({ -href => "getNtSeq.cgi?orgId=$orgId&scaffoldId=$scaffoldId&begin=$begin&end=$end" },
-          "nucleotide sequence"));
+print br(),
+  p("Or see this region's",
+    a({ -href => "getNtSeq.cgi?orgId=$orgId&scaffoldId=$scaffoldId&begin=$begin&end=$end" },
+      "nucleotide sequence"),
+    "or the entire sequence of scaffold",
+    a({ -href => "getNtSeq.cgi?orgId=$orgId&scaffoldId=$scaffoldId" },
+      $scaffoldId));
 
 print q{</div>};
 $dbh->disconnect();
