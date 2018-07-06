@@ -494,3 +494,11 @@ CREATE TABLE Publication (
 	URL TEXT NOT NULL, /* usually of the form https://doi.org/DOI */
         PRIMARY KEY (pubId)
 );
+
+CREATE TABLE ScaffoldSeq (
+  orgId TEXT NOT NULL,
+  scaffoldId TEXT NOT NULL,
+  sequence TEXT NOT NULL,
+  PRIMARY KEY (orgId,scaffoldId)
+);
+

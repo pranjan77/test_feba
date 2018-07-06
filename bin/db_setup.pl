@@ -144,6 +144,7 @@ sub ExpToPubId($$$);
             die "Missing file: $indir/$org/$file" unless -e "$indir/$org/$file";
         }
         die "No aaseq2 file for $org in $gdir/$org/aaseq2" unless -e "$gdir/$org/aaseq2";
+        die "No genome.fna file for $org in $gdir/$org/aaseq2" unless -e "$gdir/$org/genome.fna";
         die "No swissprot hits for $org in $gdir/blast_results/sprot_$org.m8"
             unless -e "$gdir/blast_results/sprot_$org.m8";
         print STDERR "Warning, no seedanno.tab file in $gdir/$org\n"
@@ -272,6 +273,21 @@ sub ExpToPubId($$$);
         }
         EndWork();
     }
+
+    # Create db.ScaffoldSeq
+    StartWorkFile("ScaffoldSeq", "db.ScaffoldSeq");
+    foreach my $orgId (@orgs) {
+      my $fnafile = "g/$orgId/genome.fna";
+      open(my $fh, "<", $fnafile) || die "Cannot read $fnafile";
+      my $state = {};
+      while (my ($scaffoldId, $sequence) = ReadFastaEntry($fh, $state)) {
+        $scaffoldId =~ s/\s.*//;
+        die "Invalid header $scaffoldId in $fnafile" if $scaffoldId eq "";
+        WorkPutRow($orgId, $scaffoldId, $sequence);
+      }
+      close($fh) || die "Error reading $fnafile";
+    }
+    EndWork();
 
     # Create db.Ortholog
     # Do not use ReadTable as it may be quite large
@@ -760,7 +776,7 @@ sub ExpToPubId($$$);
             print STDERR "Filled $tab\n";
         }
 
-        $dbh->disconnect();    
+        $dbh->disconnect();
 
         # Build the SpecOG table
         system("$Bin/db_setup_specOG.pl", "-db", $tmpdbfile, "-dir", $outdir) == 0
