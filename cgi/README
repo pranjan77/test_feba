@@ -33,7 +33,6 @@ singleFit.cgi -- show table of fitness data for one gene (if it has data)
 	show all => showAll=1 option
         choose conditions => heatmap.cgi
 	show nearby => genesFit.cgi with around
-	sequence  => getSeq.cgi
 	check homologs => mySeqSearch.cgi
 	cofitness => cofit.cgi
 myFitShow.cgi -- show list of matching genes, or forward to singleFit.cgi for a single gene
@@ -68,9 +67,12 @@ domains.cgi -- the proteins page
         and the protein sequence
         [or redirects to geneOverview.cgi if not a protein-coding gene]
 geneOverview.cgi -- the gene overview page
-	links to geneOverview.cgi and domains.cgi for each nearby gene, as well as singleFit.cgi
+	links to geneOverview.cgi and domains.cgi for each nearby gene, as well as singleFit.cgi,
+	and links to getNtSeq.cgi for this gene or for this scaffold
 mySeqSearch.cgi -- a list of hits, linking to myFitShow.cgi for each (if it has data), domains.cgi
 	also each organism links to org.cgi
+strainTable.cgi -- the overview graphic and the strain table link to singleFit.cgi
+	Also links to org.cgi, exp.cgi and getNtSeq.cgi
 #
 compareGenes.cgi -- compare fitness of two genes
 	=> geneOverview.cgi and domains.cgi for each gene,
