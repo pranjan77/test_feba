@@ -632,14 +632,19 @@ sub tabsExp($$$$$$$) {
 
 }
 
-# create svg of arrows according to locations of genes. default dimensions 800 (set by $width) x 100. assumes that genes are in order.
-# geneSpec can be an empty string if you don't want any of the arrows to be highlighted in red.
+# create svg of arrows according to locations of genes.
+# Dimensions are 800 x 100
+# Use geneSpec to choose which arrow to highlight in red.
 # begin and end can be derived from the list if they are not defined
+# The list of genes includes rows from the Gene table (as hashes);
+# it can also include arbitrary objects that must include the field object,
+# as well as begin, end, name, and optionally strand and desc.
+# The list of genes should be sorted by position.
 sub geneArrows($$$$) {
     my ($genes, $geneSpec, $begin, $end) = @_;
     $geneSpec = "" if !defined $geneSpec;
 
-    # need extra space for the arrow heads because the are shown slightly past the actual binaries of the gene
+    # need extra space for the arrow heads because the are shown slightly past the actual boundaries of the gene
     $begin = $genes->[0]->{begin} - 20 if !defined $begin;
     $end = $genes->[-1]->{end} + 20 if !defined $end;
     return "" if $begin > $end;
@@ -649,7 +654,6 @@ sub geneArrows($$$$) {
     my $xScale = 50 * $factor;
     my $scale = 550 * $factor;
     my $xScaleMid = ($xScale+$scale)/2;
-    # print $factor;
     # xmlns="http://www.w3.org/2000/svg" height="100" width="$width" viewBox="0 -10 $width 50"
 
     my $svg = qq[
@@ -693,7 +697,7 @@ sub geneArrows($$$$) {
         x1="$xScale" y1="55" x2="$scale" y2="55" style="stroke:black;stroke-width:2" />
     <text x="$xScaleMid" y="50" font-family="Verdana" font-size="10" fill="black" text-anchor="middle">500 nt</text>
     ];
-  
+
     my $pos = 0; # which of 3 rows to put it in
     foreach my $row (@$genes) {
         my $xLeft = ($row->{begin} - $begin) * $factor;
@@ -703,26 +707,48 @@ sub geneArrows($$$$) {
         my $lineY = ($pos+0.1)* 20;
         my $textY = $lineY - 6;
         my $color = "black";
-        my $text = "#00A8C6";
-        my $head = "marker-end='url(#rightarrow)'";
-        $head = "marker-start='url(#leftarrow)'" if $row->{strand} eq "-";
-        my $bgcolor = undef;
-        if ($row->{locusId} eq $geneSpec) {
-            $color = "red";
-            $text = "red";
-            $head = "marker-end='url(#rightarrow2)'";
-            $head = "marker-start='url(#leftarrow2)'" if $row->{strand} eq "-";
-            $bgcolor = "#FFFFFF";
+        my $textcolor = "#00A8C6";
+        my $head = "";
+        my $strand = exists $row->{strand} ? $row->{strand} : "";
+        if ($strand eq "+" || $strand eq "1") {
+          $head = "marker-end='url(#rightarrow)'";
+        } elsif ($strand eq "-" || $strand eq "-1") {
+          $head = "marker-start='url(#leftarrow)'";
+        } else {
+          $head = "";
         }
-        my $label = $row->{gene} || $row->{sysName}; #|| $row->{locusId};
-        my $label2 =  $row->{gene} || $row->{sysName} || $row->{locusId};
-        my $label3 = $label2;
-        $label3 =~ s/^.*_/_/ if $row->{sysName} || $row->{locusId};
-        $label2 = $row->{sysName}. ": " . $label2 if $row->{sysName};
-
+        my ($name, $popup, $onclick);
+        my $mouseover = "";
+        if (exists $row->{object}) {
+          $name = $row->{name};
+          $popup = $row->{desc} || $row->{name};
+          $color = "orange";
+          $textcolor = "black";
+        } else {
+          if ($row->{locusId} eq $geneSpec) {
+            $color = "red";
+            $textcolor = "red";
+            $head = $row->{strand} eq "+" ? "marker-end='url(#rightarrow2)'" : "marker-start='url(#leftarrow2)'";
+          }
+          my $label = $row->{gene} || $row->{sysName}; #|| $row->{locusId};
+          my $label2 =  $row->{gene} || $row->{sysName} || $row->{locusId};
+          my $label3 = $label2;
+          $label3 =~ s/^.*_/_/ if $row->{sysName} || $row->{locusId};
+          $label2 = $row->{sysName}. ": " . $label2 if $row->{sysName};
+          $popup = "$label2 - $row->{desc}";
+          $name = $label3;
+          $onclick = qq{onclick="window.location.href='singleFit.cgi?orgId=$row->{orgId}&locusId=$row->{locusId}'"};
+          $mouseover = qq{onmouseover="this.style.fill='#CC0024'" onmouseout="this.style.fill='#00A8C6'"};
+        }
+        my $commbeg = &commify($row->{begin});
+        my $commend = &commify($row->{end});
+        my $mousecmd = "";
         $svg .= qq[
-        <g class="click" onclick="window.location.href='singleFit.cgi?orgId=$row->{orgId}&locusId=$row->{locusId}'"><title>$label2 - $row->{desc}, at $row->{begin} to $row->{end}</title><line id='arrow-line' $head x1="$xLeft" y1="$lineY" x2="$xRight" y2="$lineY" style="stroke:$color;stroke-width:2" />
-        <text x="$textXAdj" y="$textY" font-family="Verdana" font-size="13" fill="$text" onmouseover="this.style.fill='#CC0024'" onmouseout="this.style.fill='#00A8C6'">$label3</text></g>];
+        <g class="click" $onclick >
+        <title>$popup, at $commbeg to $commend</title>
+        <line id='arrow-line' $head x1="$xLeft" y1="$lineY" x2="$xRight" y2="$lineY" style="stroke:$color;stroke-width:2" />
+        <text x="$textXAdj" y="$textY" font-family="Verdana" font-size="13" fill="$textcolor" $mouseover >$name</text>
+        </g>];
 
         $pos = ($pos+1) % 3;
     }
