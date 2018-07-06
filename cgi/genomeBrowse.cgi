@@ -70,13 +70,18 @@ if (@objects > 0 && (!defined $begin || !defined $end)) {
   }
 }
 
-$begin = 1 if $begin < 1;
-die "End is too low\n" if $end < 1;
-$begin < $end || die "begin must be less than end";
-
 my ($sclen) = $dbh->selectrow_array("SELECT length(sequence) FROM ScaffoldSeq WHERE orgId = ? AND scaffoldId = ?",
                                     {}, $orgId, $scaffoldId);
 die "Invalid scaffold $scaffoldId" unless $sclen;
+
+$begin = 1 if $begin < 1;
+if (!defined $end) {
+  $end = $begin + 8000;
+  $end = $sclen if $end > $sclen;
+}
+die "End is too low\n" if $end < 1;
+$begin < $end || die "begin must be less than end\n";
+
 unless ($end <= $sclen) {
   print header;
   Utils::fail($cgi, "End is past the end of the scaffold");
@@ -122,7 +127,7 @@ $title .= " (and $nobj objects)" if $nobj;
 print header,
   Utils::start_page("Browse $genome"),
   q{<div id="ntcontent">},
-  h2("Browse $genome"),
+  h2("Browse", a({-href => "org.cgi?orgId=$orgId"}, $genome));
   p($title, "for nucleotides", Utils::commify($begin), "to", Utils::commify($end), "on scaffold $scaffoldId:");
 
 my $genes = $dbh->selectall_arrayref("SELECT * FROM Gene WHERE orgId = ? AND scaffoldId = ? AND Gene.end >= ? AND Gene.begin <= ? ORDER by Gene.begin",
