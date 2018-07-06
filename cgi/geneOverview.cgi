@@ -188,7 +188,6 @@ if (@$hits == 0) {
     print $cgi->p("Links: " . join(", ", @links)) if (@links > 0);
 
     print $cgi->h3({style=>'text-align:center'},"Nearby Genes");
-
     print Utils::geneArrows(\@genes, $locusId, undef, undef);
 
     my @trows = ( Tr({-valign => "top", -align => 'center'},
@@ -226,6 +225,13 @@ if (@$hits == 0) {
       $prevrow = $row;
     }
     print table({cellspacing => 0, cellpadding => 3}, @trows);
+
+    my $browsebegin = $genes[0]{begin};
+    my $browseend = $genes[-1]{end};
+    print p("Or",
+            a({-href => "genomeBrowse.cgi?orgId=$orgId&scaffoldId=$scaffold&begin=$browsebegin&end=$browseend&zoom=out"},
+              "browse"),
+            "nearby genes");
 }
 
 print "<br><br>";
