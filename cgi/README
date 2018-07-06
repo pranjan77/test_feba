@@ -69,6 +69,10 @@ domains.cgi -- the proteins page
 geneOverview.cgi -- the gene overview page
 	links to geneOverview.cgi and domains.cgi for each nearby gene, as well as singleFit.cgi,
 	and links to getNtSeq.cgi for this gene or for this scaffold
+	and link to genomeBrowse.cgi for more flexible browsing
+genomeBrowse.cgi -- genome browser
+	links to singleFit.cgi for the genes
+	and links to getNtSeq.cgi for sequence of region or entire scaffold
 mySeqSearch.cgi -- a list of hits, linking to myFitShow.cgi for each (if it has data), domains.cgi
 	also each organism links to org.cgi
 strainTable.cgi -- the overview graphic and the strain table link to singleFit.cgi
@@ -110,6 +114,7 @@ org.cgi -- links to experiments (exps.cgi), specific phenotypes (spec.cgi),
         SEED subsystems (seedsubsystemsOrg.cgi),
         MetaCyc pathways (pathwaysOrg.cgi)
 	heatmap builder (heatmap.cgi)
+        links to genome browser for each scaffold
         and downloads
         (createFitData.cgi, createCofitData.cgi, spec.cgi, createExpData.cgi, orgSeqs.cgi)
 spec.cgi -- specific phenotypes of a certain type for an organism
