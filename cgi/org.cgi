@@ -129,6 +129,22 @@ if (scalar(@$reanno) > 0) {
           "Updated annotations for " . scalar(@$reanno) . " genes");
 }
 
+my $sc = $dbh->selectall_arrayref("SELECT scaffoldId, length(sequence) AS len FROM ScaffoldSeq WHERE orgId=? ORDER BY len DESC",
+                                  { Slice => {} }, $orgId);
+my @scaffoldIds = map { $_->{scaffoldId} } @$sc;
+my %scLabels = map { $_->{scaffoldId} => $_->{scaffoldId} . " (" . Utils::commify($_->{len}) . " nt)" } @$sc;
+
+print h3("Scaffolds");
+print
+  start_form(-name => 'scaffolds', -method => 'GET', -action => 'genomeBrowse.cgi'),
+  hidden('orgId'),
+  p("Scaffold",
+    popup_menu(-name => 'scaffoldId', -values => \@scaffoldIds, -labels => \%scLabels),
+    "at",
+    textfield( -name      => 'begin', -size => 8, -maxlength => 8 ),
+    submit( -style => 'display: inline; text-align: left;', -name => 'Browse')),
+  end_form;
+
 # No COUNT DISTINCT in sqlite3 so use GROUP BY as workaround
 my $loci = $dbh->selectcol_arrayref("SELECT locusId FROM ConservedCofit WHERE orgId = ? GROUP BY locusId",
                                           {}, $orgId);
