@@ -70,8 +70,10 @@ if (my $locusId = $cgi->param('locusId')) {
   my $begin = $cgi->param('begin');
   my $end = $cgi->param('end');
   if ($begin && $end) {
-    die "begin $begin is out of range" unless $begin >= 1 && $begin <= length($seq);
-    die "end $end is out of range" unless $end >= 1 && $end <= length($seq);
+    $begin = 1 if $begin < 1;
+    $end = 1 if $end < 1;
+    $begin = length($seq) if $begin > length($seq);
+    $end = length($seq) if $end > length($seq);
     my ($strand, $subseq);
       if ($begin <= $end) {
         $strand = "+";
