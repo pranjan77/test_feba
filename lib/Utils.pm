@@ -717,7 +717,8 @@ sub geneArrows($$$$) {
         } else {
           $head = "";
         }
-        my ($name, $popup, $onclick);
+        my ($name, $popup);
+        my $onclick = "";
         my $mouseover = "";
         if (exists $row->{object}) {
           $name = $row->{name};

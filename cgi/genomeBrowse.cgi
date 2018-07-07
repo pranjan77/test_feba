@@ -34,12 +34,15 @@ use lib "../lib";
 use Utils;
 
 my $cgi=CGI->new;
-my $orgId = $cgi->param('orgId') || die "No orgId found";
 my $dbh = Utils::get_dbh();
+
+my $orgId = $cgi->param('orgId') || die "No orgId found";
 my $orginfo = Utils::orginfo($dbh);
-my $genome = $orginfo->{$orgId}{genome} || die "Invalid orgId $orgId";
+my $genome = $orginfo->{$orgId}{genome} || die "Unknown orgId $orgId\n";
 my $scaffoldId = $cgi->param('scaffoldId') || die "Invalid scaffoldId";
-my ($begin, $end);
+my $begin = $cgi->param('begin');
+my $end = $cgi->param('end');
+
 my %keynames = ("b" => "begin", "e" => "end", "s" => "strand", "n" => "name", "d" => "desc");
 my @objects = ();
 foreach my $objspec ($cgi->param('object')) {
@@ -58,8 +61,6 @@ foreach my $objspec ($cgi->param('object')) {
 }
 @objects = sort { $a->{begin} <=> $b->{begin} } @objects;
 
-my $begin = $cgi->param('begin');
-my $end = $cgi->param('end');
 if (@objects > 0 && (!defined $begin || !defined $end)) {
   $begin = $objects[0]{begin} - 100;
   $end = $objects[-1]{end} + 100;
