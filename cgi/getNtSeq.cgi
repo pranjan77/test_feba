@@ -15,6 +15,7 @@
 # locusId -- which gene to fetch sequence around
 # scaffoldId -- which scaffold to fetch the sequence of
 # begin,end -- which part of the scaffold to fetch
+#	end < begin means use - strand
 
 use strict;
 use CGI qw(-nosticky :standard Vars);
