@@ -57,6 +57,11 @@ foreach my $objspec ($cgi->param('object')) {
   }
   die "Invalid object $objspec\n"
     unless exists $row->{begin} && exists $row->{end} && exists $row->{name};
+  # To build the URL for getNtSeq.cgi, may need to reverse begin and end
+  my ($begin, $end) = ($row->{begin}, $row->{end});
+  ($begin,$end) = ($end,$begin)
+    if exists $row->{strand} && ($row->{strand} eq "-" || $row->{strand} eq "-1");
+  $row->{URL} = "getNtSeq.cgi?orgId=$orgId&scaffoldId=$scaffoldId&begin=$begin&end=$end";
   push @objects, $row;
 }
 @objects = sort { $a->{begin} <=> $b->{begin} } @objects;
