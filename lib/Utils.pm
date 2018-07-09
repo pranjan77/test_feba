@@ -638,7 +638,7 @@ sub tabsExp($$$$$$$) {
 # begin and end can be derived from the list if they are not defined
 # The list of genes includes rows from the Gene table (as hashes);
 # it can also include arbitrary objects that must include the field object,
-# as well as begin, end, name, and optionally strand and desc.
+# as well as begin, end, name, and optionally strand and desc and URL.
 # The list of genes should be sorted by position.
 sub geneArrows($$$$) {
     my ($genes, $geneSpec, $begin, $end) = @_;
@@ -718,13 +718,14 @@ sub geneArrows($$$$) {
           $head = "";
         }
         my ($name, $popup);
-        my $onclick = "";
         my $mouseover = "";
+        my $URL;
         if (exists $row->{object}) {
           $name = $row->{name};
           $popup = $row->{desc} || $row->{name};
           $color = "orange";
           $textcolor = "black";
+          $URL = $row->{URL} if exists $row->{URL};
         } else {
           if ($row->{locusId} eq $geneSpec) {
             $color = "red";
@@ -738,9 +739,12 @@ sub geneArrows($$$$) {
           $label2 = $row->{sysName}. ": " . $label2 if $row->{sysName};
           $popup = "$label2 - $row->{desc}";
           $name = $label3;
-          $onclick = qq{onclick="window.location.href='singleFit.cgi?orgId=$row->{orgId}&locusId=$row->{locusId}'"};
+          $URL = "singleFit.cgi?orgId=$row->{orgId}&locusId=$row->{locusId}";
           $mouseover = qq{onmouseover="this.style.fill='#CC0024'" onmouseout="this.style.fill='#00A8C6'"};
         }
+        my $onclick = "";
+        $onclick = qq{onclick="window.location.href='$URL'"} if defined $URL && $URL ne "";
+
         my $commbeg = &commify($row->{begin});
         my $commend = &commify($row->{end});
         my $mousecmd = "";
