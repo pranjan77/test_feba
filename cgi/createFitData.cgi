@@ -33,7 +33,6 @@ $orgId = "" if !defined $orgId;
 my $dbh = Utils::get_dbh();
 
 # gather all of the data needed
-print STDERR "getting data...\n";
 
 my $gene = $dbh->selectall_arrayref("SELECT orgId, locusId, sysName, gene FROM Gene WHERE orgId = ?", {Slice => {}}, $orgId);
 die "Illegal orgId" if scalar(@$gene) == 0;
@@ -53,7 +52,6 @@ print "Content-Disposition: attachment; filename=fit_organism_$orgId.txt\n\n";
 # open my $logFile, '>', "organism_$orgId.txt" or die "error trying to (over)write: $!";
 
 # print the header row
-print STDERR "writing headers...\n";
 print 'orgID' ."\t". 'geneName'. "\t". 'locusID' ."\t" . 'sysName';
 	foreach my $titlerow (@$exp) {
 		print "\t" . $titlerow->{expName} ." ". $titlerow->{expDesc};
@@ -61,7 +59,6 @@ print 'orgID' ."\t". 'geneName'. "\t". 'locusID' ."\t" . 'sysName';
 print "\n";
 
 # print the data row by row
-print STDERR "writing data...\n";
 foreach my $row (@$gene) {
 	my $locus = $row->{locusId};
 	next if !exists $fit{$locus};
@@ -76,5 +73,3 @@ foreach my $row (@$gene) {
 	};
 	print "\n";
 };
-
-print STDERR "done\n";
