@@ -94,6 +94,8 @@ exp.cgi -- for an experiment, show metrics, or top genes, or specific genes
 	compare to => compareExps.cgi
 	across all organisms => orthCond.cgi
         keggmaps => keggmap.cgi, keggmaplist.cgi
+        SEED subsystems => seedsubsystem.cgi
+	MetaCyc => pathway.cgi and pathwaysOrg.cgi
 compareExps.cgi -- interactive scatterplot to compare two experiments
 	links to exp.cgi
 	link to itself to change which experiments to show
@@ -132,6 +134,7 @@ seedsubsystem.pl -- show all the genes in a subsystem
         heatmap (genesFit.cgi)
 	Also links to EC # search (myFitShow.cgi) if the role contains an EC #,
         to help find alternate genes for these steps.
+	And links to exp.cgi and strainTable.cgi if showing fitness data
 seedsubsystemsOrg.cgi -- links to organism page and to
 	seedsubsystem.pl
 pathway.cgi -- show a metacyc pathway and candidate genes
