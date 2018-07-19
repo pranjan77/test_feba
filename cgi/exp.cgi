@@ -316,13 +316,35 @@ if ($exp->{condition_1} ne "") {
 print "\n";
 
 if ($show ne "specific") {
-  print h3("Metabolic Maps"),
-    p("Color code by fitness: see",
-      a({href => "keggmap.cgi?mapId=01100&orgId=$orgId&expName=$expName"}, "overview map"),
-      "or",
-      a({href => "keggmaplist.cgi?orgId=$orgId&expName=$expName"}, "list of maps")."." );
 
   if (@$spec > 0) {
+    # Show the relevant SEED subsystems
+    # Need to use SEEDAnnotation => SEEDAnnotationToRoles => SEEDRoles.subsystem
+    my %subsys = (); # seed subsystem => # of genes
+    foreach my $gene (@$spec) {
+      my $subsys = $dbh->selectcol_arrayref(qq{ SELECT DISTINCT subsystem FROM SeedAnnotation
+                                                JOIN SeedAnnotationToRoles USING (seed_desc)
+                                                JOIN SeedRoles USING (seedrole)
+                                                WHERE orgId = ? AND locusId = ? },
+                                            {}, $orgId, $gene->{locusId});
+      foreach my $subsys (@$subsys) {
+        $subsys{$subsys}++;
+      }
+    }
+    my @subsys = sort { $subsys{$b} <=> $subsys{$a} || $a cmp $b } keys %subsys;
+    if (@subsys > 0) {
+      print h3("SEED Subsystems");
+      my @th = (th("Subsystem"), th("#Specific"));
+      my @trows = ( Tr(@th) );
+      foreach my $subsys (@subsys) {
+        my $subsysShow = $subsys; $subsysShow =~ s/_/ /g;
+        my @trow = (td(a({ -href => "seedsubsystem.cgi?orgId=$orgId&subsystem=$subsys&expName=$expName" }, $subsysShow)),
+                    td($subsys{$subsys}));
+        push @trows, Tr(@trow);
+      }
+      print table( { -cellpadding => 3, -cellspacing => 0}, @trows);
+    }
+
     # try to highlight useful maps that contain genes with specific phenotypes
     my %ec = ();
     my %rxn = ();
@@ -344,6 +366,11 @@ if ($show ne "specific") {
       }
     }
 
+    print h3("Metabolic Maps"),
+      p("Color code by fitness: see",
+        a({href => "keggmap.cgi?mapId=01100&orgId=$orgId&expName=$expName"}, "overview map"),
+        "or",
+        a({href => "keggmaplist.cgi?orgId=$orgId&expName=$expName"}, "list of maps")."." );
     if (keys(%specEc) > 0) {
       my $ecIn = join(",", map "'".$_."'", keys %specEc);
       my $maps = $dbh->selectall_arrayref(qq{ SELECT mapId, title, COUNT(DISTINCT objectId) nEc
