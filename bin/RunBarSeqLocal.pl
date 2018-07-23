@@ -32,8 +32,9 @@ argument.  In this case it will only accept a directory as input, and
 it will assume that each fastq or fastq.gz file in that directory is
 already demultiplexed, with a code in the filename such as _IT094_ or
 _10_TAGCTT_ to indicate which sample it is from. There can be more
-than one file per sample. If using primers with 2:5 Ns, use the -n25
-argument.
+than one file per sample. Usually the files are in the directory, but
+if not then it will look across all subdirectories. If using primers
+with 2:5 Ns, use the -n25 argument.
 
 (For older experiments, where the primers have names like H01 or M01,
 use the -indexes argument to describe which primers were used.
@@ -151,6 +152,8 @@ my $debug = undef;
     if (-d $fastq) {
 	@parts = glob("$fastq/*fastq.gz");
 	@parts = grep { !m/^[.]/ }  @parts;
+        # Ignored Undetermined_* files before deciding if subdirectories need to be searched
+        @parts = grep { !m/Undetermined_/ } @parts;
 	if (scalar(@parts) == 0) {
 	    die "No *.gz files in $fastq" if defined $barcodes;
 	    # Indexed runs sometimes have one directory per sample, with fastq.gz file(s) within each directory
@@ -225,9 +228,11 @@ my $debug = undef;
 		$index =~ s/ITO/IT0/;
 	    } elsif ($name =~ m/_(\d+)_[ACGT][ACGT][ACGT][ACGT][ACGT][ACGT]_/
 		     || $name =~ m/_Index(\d+)_[ACGT][ACGT][ACGT][ACGT][ACGT][ACGT]_/i
-                     || $name =~ m/_Index(\d+)_S\d+_/) {
+                     || $name =~ m/_Index(\d+)_S\d+_/
+                     || $i =~ m!_IT(\d\d\d)[/_.]!) {
                 # e.g. FEBA_BS_60_10_TAGCTT_L001_R1_001.fastq.gz
                 # e.g. FEBA_BS_125_Index10_S10_L001_R1_001.fastq.gz
+                # e.g. FEBA_BS_195_IT001/FEBA_BS_195_S97_L002_R1_001.fastq.gz
 		$index = sprintf("IT%03d", $1);
             } elsif ($name =~ m/_(\d+)_S\d+_L\d+_/) {
                 # e.g. FEBA_BS_117_24_S120_L002_R1_001.fastq.gz is IT024
