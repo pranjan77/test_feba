@@ -27,6 +27,9 @@ CREATE TABLE Gene(
    nTA              INT,     /* number of TA dinucleotides in the gene's sequence */
    PRIMARY KEY (orgId, locusId)
 );
+CREATE INDEX 'locusOrg' on Gene ('locusId' ASC, 'orgId' ASC);
+CREATE INDEX 'sysNameOrg' on Gene ('sysName' ASC, 'orgId' ASC);
+CREATE INDEX 'geneOrg' on Gene ('gene' ASC, 'orgId' ASC);
 
 CREATE TABLE Ortholog(
    orgId1           TEXT     NOT NULL,
