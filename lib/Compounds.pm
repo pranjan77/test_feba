@@ -74,6 +74,7 @@ sub LoadCompounds($) {
         $cas =~ s/ +$//;
         $cas =~ s/^ +//;
         $cas = "" if $cas eq "NA";
+        $cas =~ s! / .*!!; # occasionally have more than one CAS number separated by a /, just keep the first one
         die "Invalid cas number '$cas' for compound $compound in $compoundsFile\n"
             unless $cas eq "" || $cas =~ m/^\d+[0-9-]*\d$/;
         $compounds{$compound} = [ $compound, $cas, $mw ];
