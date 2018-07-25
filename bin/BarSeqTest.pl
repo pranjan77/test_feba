@@ -74,7 +74,8 @@ my $test = undef; # check for files, but do no work
       foreach my $index (@indexes) {
         my $index2 = $index;
         $index2 =~ s/IT0+/Index/;
-        if ($file =~ m/^${index}_/ || $file =~ m/_${index}_/
+        # Allow index to be at the end of the subdirectory name
+        if ($file =~ m/^${index}_/ || $file =~ m!_${index}[_/]!
             || $file =~ m/^${index2}_/ || $file =~ m/_${index2}_/) {
           push @{ $fastqFiles{$index} }, $file;
           print STDERR "fastq for index $index: $file\n";
