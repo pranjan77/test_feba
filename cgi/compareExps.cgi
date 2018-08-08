@@ -523,27 +523,47 @@ var tooltip = d3.select("body").append("div")
   */
 });
 
+// If a dot is clicked, and it is not already highlighted, then:
+// its isset attribute is set to "1"
+// its color is set using selectColors[] and iSelected++
+// its r (radius) is set to 5
+// a row is added to the table, and the row's locusId attribute is set
+
 function dotClick(d) {
     var col = selectColors[(iSelected++) % selectColors.length];
-    d3.select(this).style("fill",col).attr("r",5);
-    columns = [ d.sysName, d.gene, d.desc ];
-    var tr = d3.select("#genesel").append("tr").attr("class","reset2").attr("valign","middle").style("color", col);
-    var showId = d.sysName === "" ? d.locusId : d.sysName;
-    var URL = "myFitShow.cgi?orgId=" + org + "&gene=" + d.locusId;
-    var beginHref = "<A target='_blank' style='color: " + col + "' HREF='" + URL + "'>";
-    tr.append("td").attr("class","locusId").attr("locusId",d.locusId).html(beginHref + showId + "</A>");
-    tr.append("td").html(d.gene);
-    tr.append("td").html(d.desc);
-    var hrefX = "strainTable.cgi?orgId=" + org + "&expName=" + xName + "&locusId=" + d.locusId;
-    var hrefY = "strainTable.cgi?orgId=" + org + "&expName=" + yName + "&locusId=" + d.locusId;
-    tr.append("td").html("<A TITLE='t = " + d.tx.toFixed(1) + "' HREF='" + hrefX + "'>" + d.x.toFixed(1) + "</A>");
-    tr.append("td").html("<A TITLE='t = " + d.ty.toFixed(1) + "' HREF='" + hrefY + "'>" + d.y.toFixed(1) + "</A>");
-    tr.append("td").html("<button type='button' onclick='removeRow(this)'>remove</button>");
+    if (this.getAttribute("isset") !== "1") {
+      this.setAttribute("isset", "1");
+      d3.select(this).style("fill",col).attr("r",5);
+      columns = [ d.sysName, d.gene, d.desc ];
+      var tr = d3.select("#genesel").append("tr").attr("class","reset2").attr("valign","middle").style("color", col);
+      var showId = d.sysName === "" ? d.locusId : d.sysName;
+      var URL = "myFitShow.cgi?orgId=" + org + "&gene=" + d.locusId;
+      var beginHref = "<A target='_blank' style='color: " + col + "' HREF='" + URL + "'>";
+      tr.append("td").attr("class","locusId").attr("locusId",d.locusId).html(beginHref + showId + "</A>");
+      tr.append("td").html(d.gene);
+      tr.append("td").html(d.desc);
+      var hrefX = "strainTable.cgi?orgId=" + org + "&expName=" + xName + "&locusId=" + d.locusId;
+      var hrefY = "strainTable.cgi?orgId=" + org + "&expName=" + yName + "&locusId=" + d.locusId;
+      tr.append("td").html("<A TITLE='t = " + d.tx.toFixed(1) + "' HREF='" + hrefX + "'>" + d.x.toFixed(1) + "</A>");
+      tr.append("td").html("<A TITLE='t = " + d.ty.toFixed(1) + "' HREF='" + hrefY + "'>" + d.y.toFixed(1) + "</A>");
+      tr.append("td").html("<button type='button' onclick='removeRow(this)'>remove</button>");
+      tr.attr("locusId", d.locusId);
+  }
 }
 
+// When the remove button is hit, remove the row and set the dot to have:
+// isset = 0, r = 3, color = black
 function removeRow(a) {
-    row = a.parentNode.parentNode; // href to td to row
+    row = a.parentNode.parentNode; // button to td to row
+    // just using row.locusId does not work, not sure why not
+    locusId = row.getAttribute("locusId");
     row.parentNode.removeChild(row);
+    // and uncolor the point
+    d3.selectAll(".dot")
+      .filter(function(d,i) { return d.locusId == locusId })
+        .style("fill","black")
+        .attr("r",3)
+        .attr("isset", 0);
 }
 
 function geneList() {
