@@ -23,6 +23,19 @@ Ammonium chloride	0.25	g/L
 Wolfe's mineral mix	1	X
 Wolfe's vitamin mix	1	X
 		
+Media	ALP_defined_noN	
+Description	Defined media for Dechlorosoma suillum PS minus nitrogen, pH should be 7.2	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Sodium phosphate monobasic monohydrate	0.49	g/L
+Potassium phosphate dibasic	0.97	g/L
+Potassium Chloride	0.1	g/L
+Sodium D,L-Lactate	40	mM
+Sodium pyruvate	1.1	g/L
+Sodium acetate	0.8203	g/L
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+		
 Media	ALP_rich	
 Description	Rich media for Dechlorosoma suillum PS, pH should be 7.2	
 Minimal	FALSE	
@@ -192,6 +205,18 @@ Description	E. coli defined media
 Minimal	TRUE	
 Controlled vocabulary	Concentration	Units
 D-Glucose	4	g/L
+Magnesium sulfate	2	mM
+Calcium chloride	0.1	mM
+Sodium phosphate dibasic heptahydrate	12.8	g/L
+Potassium phosphate monobasic	3	g/L
+Sodium Chloride	0.5	g/L
+Ammonium chloride	1	g/L
+		
+Media	M9_1percentGlucose	
+Description	E. coli defined media	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+D-Glucose	10	g/L
 Magnesium sulfate	2	mM
 Calcium chloride	0.1	mM
 Sodium phosphate dibasic heptahydrate	12.8	g/L
@@ -873,6 +898,20 @@ Zinc sulfate heptahydrate	0.002	g/L
 Manganese (II) chloride tetrahydrate	0.002	g/L
 Cobalt chloride hexahydrate	0.002	g/L
 		
+Media	Fungal_growth_media_mCAFEs_v2	
+Description	Growth media for diverse fungi	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+D-Glucose	5	g/L
+Magnesium Sulfate Heptahydrate	0.2	g/L
+Potassium phosphate dibasic	0.9	g/L
+Potassium Chloride	0.2	g/L
+Ammonium Nitrate	1	g/L
+Iron (II) sulfate heptahydrate	0.002	g/L
+Zinc sulfate heptahydrate	0.002	g/L
+Manganese (II) chloride tetrahydrate	0.002	g/L
+Cobalt chloride hexahydrate	0.002	g/L
+		
 Media	Fungal_growth_media_mCAFEs_v1_noCarbon	
 Description	Growth media for diverse fungi with no carbon	
 Minimal	TRUE	
@@ -947,3 +986,70 @@ Disodium phosphate	2.5	g/L
 L-Cysteine	1	g/L
 Sodium bicarbonate	2	g/L
 Hemin	0.005	g/L
+		
+Media	Varel_Bryant_medium_Glucose_PIPES	
+Description	Defined medium for B.theta with Glucose	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Mineral 3B solution	1	X
+Hemin	15	uM
+L-methionine	134	uM
+Iron (II) sulfate heptahydrate	15	uM
+L-Cysteine	8.25	mM
+Sodium bicarbonate	23.8	mM
+D-Glucose	20	mM
+PIPES sesquisodium salt	30	mM
+		
+Media	Varel_Bryant_medium_Glucose_HOMOPIPES	
+Description	Defined medium for B.theta with Glucose	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Mineral 3B solution	1	X
+Hemin	15	uM
+L-methionine	134	uM
+Iron (II) sulfate heptahydrate	15	uM
+L-Cysteine	8.25	mM
+Sodium bicarbonate	23.8	mM
+D-Glucose	20	mM
+HOMOPIPES	30	mM
+		
+Media	BHIS_PIPES	
+Description	Brain heart infusion salt broth	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Calf brains	7.7	g/L
+Beef heart	9.8	g/L
+Proteose Peptone	10	g/L
+Sodium Chloride	5	g/L
+Disodium phosphate	2.5	g/L
+L-Cysteine	1	g/L
+Sodium bicarbonate	2	g/L
+Hemin	0.005	g/L
+PIPES sesquisodium salt	30	mM
+		
+Media	BHIS_HOMOPIPES	
+Description	Brain heart infusion salt broth	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Calf brains	7.7	g/L
+Beef heart	9.8	g/L
+Proteose Peptone	10	g/L
+Sodium Chloride	5	g/L
+Disodium phosphate	2.5	g/L
+L-Cysteine	1	g/L
+Sodium bicarbonate	2	g/L
+Hemin	0.005	g/L
+HOMOPIPES	30	mM
+		
+Media	Varel_Bryant_medium_Glucose_MES	
+Description	Defined medium for B.theta with Glucose	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Mineral 3B solution	1	X
+Hemin	15	uM
+L-methionine	134	uM
+Iron (II) sulfate heptahydrate	15	uM
+L-Cysteine	8.25	mM
+Sodium bicarbonate	23.8	mM
+D-Glucose	20	mM
+MES	30	mM
