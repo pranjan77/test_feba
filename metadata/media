@@ -1053,3 +1053,46 @@ L-Cysteine	8.25	mM
 Sodium bicarbonate	23.8	mM
 D-Glucose	20	mM
 MES	30	mM
+		
+Media	MELiSSA_defined_50mMCarbonate_noCarbon	
+Description	Defined medium for R. rubrum	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Manganese (II) chloride tetrahydrate	0.051	mM
+Magnesium Sulfate Heptahydrate	0.0811	mM
+Sodium sulfate	3.801	mM
+Ammonium chloride	35.33	mM
+Calcium chloride dihydrate	0.34	mM
+EDTA	0.068	mM
+Potassium phosphate monobasic	3.601	mM
+Iron (II) sulfate heptahydrate	0.072	mM
+Sodium bicarbonate	50	mM
+MOPS	100.4	mM
+Potassium phosphate dibasic	2.985	mM
+Nickel (II) sulfate hexahydrate	1.902	uM
+Zinc sulfate heptahydrate	0.348	uM
+Copper (II) sulfate pentahydrate	0.02	uM
+Boric Acid	1.623	uM
+Sodium Molybdate Dihydrate	0.207	uM
+biotin	0.06	uM
+		
+Media	SMN_rich	
+Description	Rich medium for R. rubrum	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Potassium phosphate monobasic	0.6	g/L
+Potassium phosphate dibasic	0.9	g/L
+Magnesium Sulfate Heptahydrate	0.2	g/L
+Calcium chloride dihydrate	0.075	g/L
+Iron (II) sulfate heptahydrate	0.012	g/L
+EDTA	0.02	g/L
+D,L-Malic Acid	6	g/L
+Ammonium Sulfate	1.25	g/L
+Peptone	3	g/L
+Yeast Extract	3	g/L
+biotin	0.000015	mg/L
+Boric Acid	0.0028	mg/L
+Manganese(II) sulfate tetrahydrate	0.0021	mg/L
+Sodium Molybdate Dihydrate	0.00075	mg/L
+Zinc sulfate heptahydrate	0.00024	mg/L
+Copper(II) Nitrate Trihydrate	0.00004	mg/L

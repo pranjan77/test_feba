@@ -144,3 +144,11 @@ calcium pantothenate	5	mg/L
 Folic Acid	2	mg/L
 Cyanocobalamin	0.1	mg/L
 Choline chloride	200	mg/L
+		
+Media	Ile_Leu_Val_mix	
+Description	amino acid mix for R. rubrum	
+X	1	
+Controlled vocabulary	Concentration	Units
+L-Valine	10	mM
+L-Isoleucine	10	mM
+L-Leucine	10	mM
