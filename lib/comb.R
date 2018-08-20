@@ -36,6 +36,7 @@
 # Programmer Utilities:
 # Use LoadOrgs(list of organism nicknames) to create the data structures
 #     Then use SetupEssentials() as well to load essentiality information.
+#     Use CensorExperiments() to remove experiments from the data set.
 # Use names(orgs) to list which FEBA nicknames are included
 # Use get_genes(), get_exps(), get_fit(), get_t(), all_cofitness() to get at data items
 
@@ -49,12 +50,19 @@
 #	t -- similarly for t values (but includes all experiments)
 #	specsick -- specific phenotypes [these can be positive, actually, so "sick" is a misnomer]
 #	cofit -- most cofit hits for each gene
+# If global is TRUE, then these are also computed:
 # specsicks -- the union of the specific phenotypes across all organisms
 # css -- specific phenotypes that are conserved for orthologs genes (conserved specific sick)
 # ccofit -- cofitness that is conserved for orthologous pairs (conserved cofit)
 # 	 only has pairs in the order locus1 < locus2
+# para -- information about paralogs (and orgs[[org]]$para and $parahits are built from it)
 
-LoadOrgs = function(orgnames, base="data/FEBA/", html=paste(base,"/html/",sep=""), debug=F) {
+
+LoadOrgs = function(orgnames,
+	base="data/FEBA/",
+        html=paste(base,"/html/",sep=""),
+        global=TRUE,
+	debug=F) {
 	orgs = list();
 	for(n in orgnames) {
 	       cat("Loading ",n,"\n",sep="");
@@ -120,33 +128,33 @@ LoadOrgs = function(orgnames, base="data/FEBA/", html=paste(base,"/html/",sep=""
 				 pfam=pfam, tigrfam=tigrfam);
 	}
 
-	d = lapply(orgs, function(x) x$specsick);
-	for(i in names(d)) {
+        if (global) {
+	  d = lapply(orgs, function(x) x$specsick);
+	  for(i in names(d)) {
 	    if(nrow(d[[i]]) > 0) {
 	        d[[i]]$org = i;
 	    } else {
 	        d[[i]] = NULL; # remove it;
 	    }
-	}
-	if (!is.null(d) && length(d) > 0) {
+	  }
+	  if (!is.null(d) && length(d) > 0) {
 	   specsicks <<- do.call(rbind,d);
-	} else {
+	  } else {
 	   cat("Warning: all specific_phenotypes files were empty\n");
 	   specsicks <<- NULL;
- 	}
+ 	  }
 
-	css <<- read.delim(paste(base,"css",sep=""), as.is=T); # conserved specific sick
-
-	ccofit <<- read.delim(paste(base,"comb_cofit.pairs",sep=""),as.is=T);
-
-	para <<- read.delim(paste(base,"aaseqs.para",sep=""), as.is=T, header=F, col.names=words("org locusId para bits ratio"));
-	para <<- split(para, para$org);
-	for(org in names(orgs)) {
+	  css <<- read.delim(paste(base,"css",sep=""), as.is=T); # conserved specific sick
+	  ccofit <<- read.delim(paste(base,"comb_cofit.pairs",sep=""),as.is=T);
+	  para <<- read.delim(paste(base,"aaseqs.para",sep=""), as.is=T, header=F, col.names=words("org locusId para bits ratio"));
+	  para <<- split(para, para$org);
+	  for(org in names(orgs)) {
 	    if (!is.null(para[[org]])) {
 	        orgs[[org]]$parahits = para[[org]];
 	        orgs[[org]]$para = aggregate(para[[org]][,"ratio",drop=F], para[[org]][,"locusId",drop=F], max);
 	    }
-	}
+	  }
+        }
 
 	orgs <<- orgs;
 
@@ -258,10 +266,11 @@ gene_info = function(org, loci, n=5, minStrong=2, minT=4) {
 	    locusShow = locusId;
 	    if (!is.null(info$VIMSS)) locusShow = paste(locusShow, "VIMSS", info$VIMSS[info$locusId %in% locusId]);
 	    if(locusId %in% info$locusId[!info$class %in% c("Essential","No data")]) {
-		out = specsicks[specsicks$org %in% org & specsicks$locusId %in% locusId,words("name short lrn t")];
+                out = orgs[[org]]$specsick;
+		out = out[out$locusId %in% locusId,words("name short lrn t")];
 		# need to go from specsicks$short to a Condition_1
 		out = merge(out, orgs[[org]]$exps[,words("Condition_1 name")]);
-		out$conserved = out$Condition_1 %in% css$cond[css$locusId %in% locusId & css$tax %in% org];
+                if (exists("css")) out$conserved = out$Condition_1 %in% css$cond[css$locusId %in% locusId & css$tax %in% org];
 		cat("\nSpecific phenotypes for", locusShow,
 			info$sysName[info$locusId %in% locusId],
 			info$desc[info$locusId %in% locusId], "\n");
@@ -269,14 +278,14 @@ gene_info = function(org, loci, n=5, minStrong=2, minT=4) {
 
 		if(!is.null(cofit)) {
 		    out = cofit[cofit$locusId %in% locusId & cofit$rank <= n,];
-		    out$conserved = out$hitId %in% ccofit$locus2[ccofit$tax == org & ccofit$locus1 %in% locusId] |
-					out$hitId %in% ccofit$locus1[ccofit$tax == org & ccofit$locus2 %in% locusId];
 		    out = merge(out, genes[,words("locusId name")], by.x="hitId", by.y="locusId");
 		    names(out)[names(out)=="name"] = "hitName";
 		    out = out[order(out$rank),];
 		    row.names(out) = 1:nrow(out);
 		    out2 = out;
-		    out2 = out2[,words("cofit hitId hitSysName hitName hitDesc conserved")];
+		    out2 = out2[,words("cofit hitId hitSysName hitName hitDesc")];
+		    if(exists("ccofit")) out2$conserved = out2$hitId %in% ccofit$locus2[ccofit$tax == org & ccofit$locus1 %in% locusId] |
+					                 out2$hitId %in% ccofit$locus1[ccofit$tax == org & ccofit$locus2 %in% locusId];
 		    out2$hitDesc = sub("(NCBI ptt file)","", out2$hitDesc, fixed=T);
 		    if(!is.null(out$VIMSS)) out2$VIMSS = out$VIMSS;
 		    cat("\nTop cofit hits for", locusShow,
@@ -595,4 +604,27 @@ words = function(s, by=" ", ...) { strsplit(s[1], by, ...)[[1]]; }
 is.unique = function(x) {
 	counts = as.data.frame.table(table(x), dnn="x");
 	return(x %in% counts$x[counts$Freq==1]);
+}
+
+# Remove some experiments from the data set
+CensorExperiments = function(org, expRemove) {
+  oldexps = orgs[[org]]$exps;
+  oldq = orgs[[org]]$q;
+  stopifnot(all(expRemove %in% oldexps$name));
+  newexp = setdiff(metadata_by_exp(org)$name, expRemove);
+
+  out = orgs[[org]];
+  out$lrn = out$lrn[, newexp];
+  out$t = out$t[, newexp];
+
+  out$exps = subset(out$exps, !name %in% expRemove);
+  out$q = subset(out$q, !name %in% expRemove);
+
+  out$specsick = subset(out$specsick, !name %in% expRemove);
+
+  # keep the column names but not any actual rows
+  out$cofit =   out$cofit[0,];
+
+  orgs[[org]] <<- out;
+  cat("#Successful experiments for", org, "reduced from", sum(oldq$u), "to", sum(out$q$u), "\n");
 }
