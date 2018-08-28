@@ -257,7 +257,7 @@ sub CompareExperiments($$) {
 sub matching_exps($$$) {
     my ($dbh,$orgId,$expSpec) = @_;
     die if !defined $dbh || !defined $orgId || !defined $expSpec;
-    # make the query safe to include in SQL
+    # make the query safe to include in SQL. Note use of " in the query so ' is ok
     $expSpec =~ s/^ +//;
     $expSpec =~ s/ +$//;
     $expSpec =~ s/[\"\n\r]//g;
@@ -267,9 +267,9 @@ sub matching_exps($$$) {
              WHERE (expName = "$expSpec"
 	            OR Condition_1 LIKE "$expSpec%" OR Condition_1 LIKE "% $expSpec%"  OR Condition_1 LIKE "%-$expSpec%"
 		    OR Condition_2 LIKE "$expSpec%" OR Condition_2 LIKE "% $expSpec%"  OR Condition_2 LIKE "%-$expSpec%"
-	     	    OR expGroup = '$expSpec'
-	            OR expDesc = '$expSpec' OR expDesc LIKE "$expSpec %" OR expDesc LIKE "% $expSpec" OR expDesc LIKE "% $expSpec %"
-	            OR expDescLong = '$expSpec' OR expDescLong LIKE "$expSpec %" OR expDescLong LIKE "% $expSpec" OR expDescLong LIKE "% $expSpec %")
+	     	    OR expGroup = "$expSpec"
+	            OR expDesc = "$expSpec" OR expDesc LIKE "$expSpec %" OR expDesc LIKE "% $expSpec" OR expDesc LIKE "% $expSpec %"
+	            OR expDescLong = "$expSpec" OR expDescLong LIKE "$expSpec %" OR expDescLong LIKE "% $expSpec" OR expDescLong LIKE "% $expSpec %")
 	     $orgClause
 	     ORDER BY genus, species, strain, expGroup, condition_1, concentration_1, expDesc;};
          # die $sql;
@@ -282,7 +282,7 @@ sub matching_genes($$$) {
     # make the query safe to include in SQL
     $geneSpec =~ s/^ +//;
     $geneSpec =~ s/ +$//;
-    $geneSpec =~ s/[\"\n\r]//g;
+    $geneSpec =~ s/[\"\n\r]//g; # use " not ' as delimitor below
 
     my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
     my $sql = qq{SELECT * from Organism JOIN Gene USING (orgId)
@@ -303,7 +303,8 @@ sub matching_exact($$$) {
     # make the query safe to include in SQL, remove leading/trailing space
     $geneSpec =~ s/^ +$//;
     $geneSpec =~ s/ +$//;
-    $geneSpec =~ s/[\"\n\r]//g;
+    $geneSpec =~ s/[\"\n\r]//g; # note use " not ' as delimiter within query
+    # (Also note \ is not replaced because SQL uses '' not \')
 
     my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
     my $sql = qq{SELECT * from Organism JOIN Gene USING (orgId)
