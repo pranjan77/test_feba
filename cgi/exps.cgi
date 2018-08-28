@@ -32,7 +32,7 @@ my $expSpec = $cgi->param('query');
 $expSpec = "" if !defined $expSpec;
 $expSpec =~ s/ +$//;
 $expSpec =~ s/^ +$//;
-$expSpec =~s/[\'\"\n\r\;\\]//g;
+$expSpec =~s/[\"\n\r\;\\]//g; # ' is allowed, handled in matching_exps
 
 my $expGroup = $cgi->param('expGroup');
 my $condition1 = $cgi->param('condition1');
