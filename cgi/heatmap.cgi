@@ -74,7 +74,7 @@ foreach my $add (@addrow) {
                                                   AND (locusId = ? OR sysName = ? COLLATE NOCASE OR gene = ? COLLATE NOCASE) LIMIT 1 },
                                             {}, $orgId, $add, $add, $add);
       if (!defined $locusId) {
-        push @errors, qq{Cannot find gene "$addrow"};
+        push @errors, qq{Cannot find gene "$add"};
       } elsif (sum(map { $_ eq $locusId } @r) > 0) {
         push @errors, qq{Gene "$add" (locus $locusId) is already included};
       } else {
