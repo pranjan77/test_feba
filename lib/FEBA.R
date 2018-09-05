@@ -570,6 +570,7 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	d$comb = paste(d$sysName, d$desc); # for MeV
 	if (sum(fit$q$u) == 0) {
 		cat("Warning: 0 OK experiments\n");
+                d = d[order(d$locusId),]; # ensure same order as other tables
 	} else {
 		d = merge(d, cbind(locusId=fit$g,fit$lrn[,fit$q$u]));
 		names(d)[-(1:4)] = paste(fit$q$name,fit$q$short)[fit$q$u];
