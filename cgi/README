@@ -102,9 +102,10 @@ compareExps.cgi -- interactive scatterplot to compare two experiments
 	link to itself to change which experiments to show
 	can interactively or programmatically build a gene table
 		link to myFitShow.cgi per gene or genesFit.cgi for multi-gene heatmap
+                or to heatmap builder
         in dynamic table, fitness values => strainTable.cgi
         in outlier mode, also => domains.cgi, orthFit.cgi
-	download link => createFitData.cgi
+	download link => createFitData.cgi or to itself in tsv mode
 # condition-wise pages
 cond.cgi -- list all conditions in a group
 	links to exps.cgi and orthCond.cgi for each condition
