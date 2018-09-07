@@ -121,10 +121,10 @@ if ($addcol) {
         Utils::start_page("$title1 $genome"),
             h2($title1, a({ -href => "org.cgi?orgId=$orgId" }, $genome));
       if (scalar(@keep) == scalar(@$exps)) {
-        print p(scalar(@keep), "experiments matched '$addcol'.",
+        print p(scalar(@keep), qq{experiments matched "$addcol".},
                 "Check the ones you want to add to the heatmap:");
       } else {
-        print p("Of", scalar(@$exps), "experiments that matched '$addcol',",
+        print p("Of", scalar(@$exps), qq{experiments that matched "$addcol",},
                 scalar(@keep), "are not in the heatmap.",
                 "Check the ones you want to add:");
       }
