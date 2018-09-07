@@ -56,7 +56,7 @@ foreach my $frow(@$fitness) {
 	$fit{$locusId}{$expName} = $fit;
 }
 
-my $outfile = @expNames == 0 ? "fit_organism_${orgId}.txt" : "fit_organism_${orgId}_selected.txt";
+my $outfile = @expNames == 0 ? "fit_organism_${orgId}.tsv" : "fit_organism_${orgId}_selected.tsv";
 print ("Content-Type:application/x-download\n");
 print "Content-Disposition: attachment; filename=$outfile\n\n";
 
