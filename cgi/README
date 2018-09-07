@@ -55,6 +55,7 @@ heatmap.cgi -- build a heatmap with selected conditions and experiments
         each gene => showFit.cgi, domains.cgi
 	each experiment => exp.cgi
 	top conditions for genes => genesFit.cgi
+	download link => createFitData.cgi
 cofit.cgi -- top cofit hits for a gene
 	each hit => myFitShow.cgi or compareGenes.cgi or domains.cgi
 	checkboxes => genesFit.cgi
@@ -103,6 +104,7 @@ compareExps.cgi -- interactive scatterplot to compare two experiments
 		link to myFitShow.cgi per gene or genesFit.cgi for multi-gene heatmap
         in dynamic table, fitness values => strainTable.cgi
         in outlier mode, also => domains.cgi, orthFit.cgi
+	download link => createFitData.cgi
 # condition-wise pages
 cond.cgi -- list all conditions in a group
 	links to exps.cgi and orthCond.cgi for each condition
