@@ -124,6 +124,7 @@ if (scalar(@expCand) > 0) {
 	hidden('orgId', $orgId),
         HiddenList($notChoosing, \@expNamesConst),
 	table( {cellpadding => 3, cellspacing => 0}, @trows),
+        p("If you select more than one experiment, then the plot will show the average."),
 	submit('Go'),
 	end_form;
     Utils::endHtml($cgi);
@@ -163,13 +164,13 @@ if ($tsv || $outlier) {
   my %found = (); # 1 if have data for this experiment
 
   foreach my $expName (@expNamesBoth) {
-    my $fit = $dbh->selectall_arrayref("SELECT * FROM 'FitByExp_${orgId}' WHERE expName = ?",
-                                       { Slice => {} }, $expName);
+    my $fit = $dbh->selectall_arrayref("SELECT locusId,fit,t FROM 'FitByExp_${orgId}' WHERE expName = ?",
+                                       {}, $expName);
     foreach my $row (@$fit) {
-      my $locusId = $row->{locusId};
+      my ($locusId, $fit, $t) = @$row;
       die "Unrecognized locus $locusId for org $orgId" unless exists $genes->{$locusId};
       $found{$expName} = 1;
-      $fit{ $locusId }{ $expName } = [ $row->{fit}, $row->{t} ];
+      $fit{ $locusId }{ $expName } = [ $fit, $t ];
     }
   }
   foreach my $expName (@expNames1, @expNames2) {
@@ -704,7 +705,7 @@ sub DescExpList {
               join("; ", @descs));
 }
 
-sub HiddenList {
+sub HiddenList($$) {
   my ($num, $list) = @_;
   return join("",
     map qq{<input type="hidden" name="expName${num}" value="$_" />}, @$list);
