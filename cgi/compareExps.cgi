@@ -373,6 +373,7 @@ my $bottom = p("Download",
 my $tx_name = @expNames1 > 1 ? "combined t" : "t";
 my $ty_name = @expNames2 > 1 ? "combined t" : "t";
 
+my $heatmapColumnSpec = join("&", map { "c=$_" } (@expNames1,@expNames2));
 print <<END
 $start
 <script src="../d3js/d3.min.js"></script>
@@ -427,7 +428,8 @@ $hiddenExpNames2
 </TABLE>
 </P>
 <P>
-<A href="#" onclick="geneList()">Heatmap for selected genes</A>
+Heatmap for these genes: <A HREF="#" title="show heatmap in a new window" onclick="geneList(0)">top phenotypes</A>
+or <A HREF="#" title="show heatmap builder in a new window" onclick="geneList(1)">these experiments</A>
 
 <P>
 <form method="get" action="compareExps.cgi" enctype="multipart/form-data" name="input">
@@ -645,21 +647,28 @@ function removeRow(a) {
         .attr("isset", 0);
 }
 
-function geneList() {
-    var tds = document.getElementsByClassName("locusId");
-    if (tds.length > 0) {
-	var URL;
-	if (tds.length == 1) {
-	    URL = "myFitShow.cgi?orgId=" + org + "&gene=" + tds[0].getAttribute("locusId");
-	} else {
-            var i;
-	    URL = "genesFit.cgi?orgId=" + org;
-            for (i = 0; i < tds.length; i++ ) {
-                URL += "&locusId=" + tds[i].getAttribute("locusId");
-            }
-	}
-        window.open(URL);
-   }
+// style 0 means all relevant conditions
+// style 1 means custom heatmap builder
+function geneList(style) {
+  var tds = document.getElementsByClassName("locusId");
+  if (tds.length == 0) { return(0); }
+  // else
+  var URL;
+  if (style==1) {
+    URL = "heatmap.cgi?orgId=" + org + "&" + "$heatmapColumnSpec";
+    for (i = 0; i < tds.length; i++ ) {
+      URL += "&r=" + tds[i].getAttribute("locusId");
+    }
+  } else if (tds.length == 1) {
+    URL = "myFitShow.cgi?orgId=" + org + "&gene=" + tds[0].getAttribute("locusId");
+  } else {
+    var i;
+    URL = "genesFit.cgi?orgId=" + org;
+    for (i = 0; i < tds.length; i++ ) {
+      URL += "&locusId=" + tds[i].getAttribute("locusId");
+    }
+  }
+  window.open(URL);
 }
 
 </script>
