@@ -14,6 +14,7 @@
 # Optional: tsv -- use tsv=1 to fetch the data instead
 #	outlier -- list outlying genes (xlow, xhigh, ylow, or yhigh)
 #       with minabs -- minimum |abs| on selected axis.
+#	flip -- if not empty, swap expNames1 and expNames2
 # help -- 1 if on help/tutorial mode
 
 use strict;
@@ -23,17 +24,21 @@ use DBI;
 
 use lib "../lib";
 use Utils;
+# Given a list of experiment names, and the global $orgId,
+# return a list of experiment objects
+sub FetchExps;
+
+# Detailed description of a list of experiment objects
+sub DescExpList;
+
+# 1 or 2 and reference to list of names
+sub HiddenList($$);
 
 my $cgi=CGI->new;
-print $cgi->header;
 
 my $orgId = $cgi->param('orgId');
-my $expName1 = $cgi->param('expName1') || "";
-$expName1 =~ s/^[ \t]+//;
-$expName1 =~ s/[ \t\r\n]+$//;
-my $expName2 = $cgi->param('expName2') || "";
-$expName2 =~ s/^[ \t]+//;
-$expName2 =~ s/[ \t\r\n]+$//;
+my @expNames1 = $cgi->param('expName1');
+my @expNames2 = $cgi->param('expName2');
 my $query1 = $cgi->param('query1') || "";
 $query1 =~ s/^[ \t]+//;
 $query1 =~ s/[ \t\r\n]+$//;
@@ -45,9 +50,9 @@ my $help = $cgi->param('help') || "";
 my $outlier = $cgi->param('outlier');
 die "Must specify orgId" unless defined $orgId && $orgId ne "";
 die "Must specify expName1 or query1"
-    if $expName1 eq "" && $query1 eq "";
+    if @expNames1 == 0 && $query1 eq "";
 die "Must specify expName2 or query2"
-    if $expName2 eq "" && $query2 eq "";
+    if @expNames2 == 0 && $query2 eq "";
 die "Cannot query both 1 and 2" if $query1 ne "" && $query2 ne "";
 
 my $dbh = Utils::get_dbh();
@@ -57,36 +62,41 @@ Utils::fail($cgi, "Unknown organism: $orgId") unless exists $orginfo->{$orgId};
 my @expCand = ();
 my $choosing = undef;
 if (defined $query1 && $query1 ne "") {
-    my @exps = @{ Utils::matching_exps($dbh,$orgId,$query1) };
-    Utils::fail($cgi, qq{No experiment matching "$query1"}) if @exps == 0;
-    @exps = grep { $_->{expName} ne $expName2 } @exps if @exps > 1;
-    if (@exps == 1) {
-	$expName1 = $exps[0]{expName};
-    } else {
-	@expCand = @exps;
-	$choosing = 1;
-    }
+  my @exps = @{ Utils::matching_exps($dbh,$orgId,$query1) };
+  Utils::fail($cgi, qq{No experiment matching "$query1"}) if @exps == 0;
+  my %expNames2 = map { $_ => 1 } @expNames2;
+  @exps = grep { !exists $expNames2{ $_->{expName} } } @exps;
+  if (@exps == 1) {
+    @expNames1 = ( $exps[0]{expName} );
+  } elsif (@exps == 0) {
+    Utils::fail($cgi, qq{The only experiments matching "$query1" are in the experiments being compared to.});
+  } else {
+    @expCand = @exps;
+    $choosing = 1;
+  }
 } elsif (defined $query2 && $query2 ne "") {
-    my @exps = @{ Utils::matching_exps($dbh,$orgId,$query2) };
-    Utils::fail($cgi, qq{No experiment matching "$query2"}) if @exps == 0;
-    @exps = grep { $_->{expName} ne $expName1 } @exps if @exps > 1;
-    if (@exps == 1) {
-	$expName2 = $exps[0]{expName};
-    } else {
-	@expCand = @exps;
-	$choosing = 2;
-    }
+  my @exps = @{ Utils::matching_exps($dbh,$orgId,$query2) };
+  Utils::fail($cgi, qq{No experiment matching "$query2"}) if @exps == 0;
+  my %expNames1 = map { $_ => 1 } @expNames1;
+  @exps = grep { !exists $expNames1{ $_->{expName } } } @exps;
+  if (@exps == 1) {
+    @expNames2 = ( $exps[0]{expName} );
+  } elsif (@exps == 0) {
+    Utils::fail($cgi, qq{The only experiments matching "$query2" are in the experiments being compared to.});
+  } else {
+    @expCand = @exps;
+    $choosing = 2;
+  }
 }
 
 if (scalar(@expCand) > 0) {
     die "Cannot use tsv mode with queries" if $tsv;
     # show table of these experiments
-    my $expNameConst = $choosing == 1 ? $expName2 : $expName1;
-    my $expConst = $dbh->selectrow_hashref("SELECT * from Experiment WHERE orgId = ? AND expName = ?",
-					   {}, $orgId, $expNameConst);
-    die "Unknown experiment: $expNameConst" unless exists $expConst->{expName};
+    my @expNamesConst = ();
+    @expNamesConst = @expNames1 if $choosing != 1;
+    @expNamesConst = @expNames2 if $choosing != 2;
+    my @expConst = FetchExps(@expNamesConst);
     my $notChoosing = $choosing == 1 ? 2 : 1;
-
     my @trows = ();
     my @headings = qw{&nbsp; name group condition description};
     push @trows, $cgi->Tr({-valign => 'top', -align => 'center'}, $cgi->th(\@headings));
@@ -94,77 +104,126 @@ if (scalar(@expCand) > 0) {
     foreach my $exp (@expCand) {
 	my $checked = $isFirst ? "CHECKED" : "";
 	push @trows, $cgi->Tr({-valign => 'top', -align => 'left'},
-			      $cgi->td([ qq{<input type="radio" name="expName$choosing" value="$exp->{expName}" $checked >},
+			      $cgi->td([ qq{<input type="checkbox" name="expName$choosing" value="$exp->{expName}" $checked >},
 					 $cgi->a({href => "exp.cgi?orgId=$orgId&expName=$exp->{expName}"}, $exp->{expName}),
 					 $exp->{expGroup}, $exp->{condition_1}, $exp->{expDesc} ]));
 	$isFirst = 0;
     }
-
-  my $start = Utils::start_page("Select experiment to compare to");
-    print $start, '<div id="ntcontent">',
-	p("Select an experiment to compare to ",
-	  a( { href => "exp.cgi?orgId=$orgId&expName=$expNameConst" }, $expConst->{expName} ),
-	  "($expConst->{expDescLong})"),
+    die "No experiments to compare to" unless @expConst > 0;
+    my $start = Utils::start_page("Select experiment to compare to");
+    my $avgConstString = DescExpList(@expConst);
+    print $cgi->header, $start, '<div id="ntcontent">',
+	p("Choose the experiment(s) to compare to $avgConstString"),
 	start_form(-name => 'input', -method => 'GET', -action => 'compareExps.cgi'),
 	hidden('orgId', $orgId),
-	hidden("expName$notChoosing", $expNameConst),
+        HiddenList($notChoosing, \@expNamesConst),
 	table( {cellpadding => 3, cellspacing => 0}, @trows),
 	submit('Go'),
 	end_form;
     Utils::endHtml($cgi);
 }
 
+if ($cgi->param('flip')) {
+  my @tmp = @expNames1;
+  @expNames1 = @expNames2;
+  @expNames2 = @tmp;
+}
+
+# And check that the two lists are nonempty and do not overlap
+# (These problems should not be possible from the UI)
+Utils::fail($cgi, qq{No experiments for the x axis}) if @expNames1 == 0;
+Utils::fail($cgi, qq{No experiments for the y axis}) if @expNames2 == 0;
+# And check that they do not overlap  
+my %expNames1 = map { $_ => 1 } @expNames1;
+my @intersect = grep { exists $expNames1{$_} } @expNames2;
+Utils::fail($cgi, qq{The lists of experiments for the x and y axis overlap.})
+  if @intersect > 0;
+
 # else
 
-my $exp1 = $dbh->selectrow_hashref("SELECT * from Experiment WHERE orgId = ? AND expName = ?",
-				   {}, $orgId, $expName1);
-die "Unknown experiment: $expName1" unless exists $exp1->{expName};
-
-my $exp2 = $dbh->selectrow_hashref("SELECT * from Experiment WHERE orgId = ? AND expName = ?",
-				   {}, $orgId, $expName2);
-die "Unknown experiment: $expName2" unless exists $exp2->{expName};
+my @exp1 = FetchExps(@expNames1);
+my @exp2 = FetchExps(@expNames2);
 
 my $genes; # locusId => genes => attribute, with additional values x, y, tx, ty
 
 if ($tsv || $outlier) {
-    # fetch the data
-    $genes = $dbh->selectall_hashref("SELECT * FROM Gene where orgId = ?", "locusId", {}, $orgId);
-    die "No genes" unless scalar(keys %$genes) > 0;
-    # these tables are ordered by experiment, so faster than using GeneFitness
-    # (Quoting is necessary in case orgId has - in it.)
-    my $fit = $dbh->selectall_arrayref("SELECT * FROM 'FitByExp_${orgId}' WHERE expName IN (?,?)",
-				       { Slice => {} }, $expName1, $expName2);
-    my $found1 = 0;
-    my $found2 = 0;
+  # fetch the data
+  my %fit = (); # locusId => expName => [fit,t]
+  $genes = $dbh->selectall_hashref("SELECT * FROM Gene where orgId = ?", "locusId", {}, $orgId);
+  die "No genes" unless scalar(keys %$genes) > 0;
+  # these tables are ordered by experiment, so faster than using GeneFitness
+  # (Quoting is necessary in case orgId has - in it.)
+  my @expNamesBoth = (@expNames1, @expNames2);
+  my %found = (); # 1 if have data for this experiment
+
+  foreach my $expName (@expNamesBoth) {
+    my $fit = $dbh->selectall_arrayref("SELECT * FROM 'FitByExp_${orgId}' WHERE expName = ?",
+                                       { Slice => {} }, $expName);
     foreach my $row (@$fit) {
-	my $locusId = $row->{locusId};
-	die "Unrecognized locus $locusId for org $orgId" unless exists $genes->{$locusId};
-	my $gene = $genes->{$locusId};
-	if ($row->{expName} eq $expName1) {
-	    $gene->{x} = $row->{fit};
-	    $gene->{tx} = $row->{t};
-	    $found1 = 1;
-	}
-	if ($row->{expName} eq $expName2) {
-	    $gene->{y} = $row->{fit};
-	    $gene->{ty} = $row->{t};
-	    $found2 = 1;
-	}
+      my $locusId = $row->{locusId};
+      die "Unrecognized locus $locusId for org $orgId" unless exists $genes->{$locusId};
+      $found{$expName} = 1;
+      $fit{ $locusId }{ $expName } = [ $row->{fit}, $row->{t} ];
     }
-    Utils::fail($cgi, "No fitness values for $expName1 in $orgId") unless $found1 > 0;
-    Utils::fail($cgi, "No fitness values for $expName2 in $orgId") unless $found2 > 0;
+  }
+  foreach my $expName (@expNames1, @expNames2) {
+    Utils::fail($cgi, "No fitness values for $expName in $orgId") unless exists $found{$expName};
+  }
+
+  # And compute averaged x, y, tx, and ty for each gene
+  while (my ($locusId,$gene) = each %$genes) {
+    if (exists $fit{$locusId}) {
+      my $f = $fit{$locusId};
+      my @f1 = map { $f->{$_}[0] } @expNames1;
+      my @t1 = map { $f->{$_}[1] } @expNames1;
+      my @f2 = map { $f->{$_}[0] } @expNames2;
+      my @t2 = map { $f->{$_}[1] } @expNames2;
+      $gene->{x} = Utils::mean(@f1);
+      $gene->{tx} = Utils::mean(@t1) * sqrt(@t1);
+      $gene->{y} = Utils::mean(@f2);
+      $gene->{ty} = Utils::mean(@t2) * sqrt(@t2);
+    }
+  }
 }
 
 if ($tsv) { # tab delimited values, not a page
-    print join("\t", qw{locusId sysName gene desc x tx y ty})."\n";
-    while (my ($locusId,$gene) = each %$genes) {
-	next unless exists $gene->{x} && exists $gene->{y};
-	print join("\t", $locusId, $gene->{sysName}, $gene->{gene},
-                   $gene->{desc},
-		   $gene->{x}, $gene->{tx}, $gene->{y}, $gene->{ty})."\n";
-    }
+  print $cgi->header('text/tab-separated-values');
+  print join("\t", qw{locusId sysName gene desc x tx y ty})."\n";
+  while (my ($locusId,$gene) = each %$genes) {
+    next unless exists $gene->{x} && exists $gene->{y};
+    print join("\t", $locusId, $gene->{sysName}, $gene->{gene},
+               $gene->{desc},
+               $gene->{x}, $gene->{tx}, $gene->{y}, $gene->{ty})."\n";
+  }
     exit 0;
-} elsif ($outlier) { # table of outlying genes
+}
+
+print $cgi->header;
+
+# For describing the experiments
+my $expDesc1 = $exp1[0]{expDesc};
+$expDesc1 = "avg(" . scalar(@expNames1) . " experiments: $expDesc1)" if @expNames1 > 1;
+my $expDesc2 = $exp2[0]{expDesc};
+$expDesc2 = "avg(" . scalar(@expNames2) . " experiments: $expDesc2)" if @expNames2 > 1;
+# ensure compatability with javascript
+$expDesc1 =~ s/"//g;
+$expDesc2 =~ s/"//g;
+my @exps1 = FetchExps(@expNames1);
+my @exps2 = FetchExps(@expNames2);
+# Use the 1st in the list for convenient naming
+my $expName1 = $expNames1[0];
+my $expName2 = $expNames2[0];
+my $exp1 = $exps1[0];
+my $exp2 = $exps2[0];
+
+my $desc_all_exp = join(" ",
+                        p(i("x"), "axis is ", DescExpList(@exps1)),
+                        p(i("y"), "axis is", DescExpList(@exps2)));
+
+my $hiddenExpNames1 = HiddenList(1, \@expNames1);
+my $hiddenExpNames2 = HiddenList(2, \@expNames2);
+
+if ($outlier) { # table of outlying genes
     my $minabs = $cgi->param('minabs');
     $minabs = 2 unless defined $minabs && $minabs > 0;
 
@@ -210,27 +269,22 @@ if ($tsv) { # tab delimited values, not a page
 	@genesShow = sort { $b->{y} <=> $a->{y} } @genesShow;
     }
 
-my $start = Utils::start_page("Outlier genes from $orginfo->{$orgId}{genome}");
+    my $start = Utils::start_page("Outlier genes from $orginfo->{$orgId}{genome}");
     
     print $start, '<div id="ntcontent">',
-	h2("Outlier genes from $orginfo->{$orgId}{genome}");
+      h2("Outlier genes from $orginfo->{$orgId}{genome}");
 
-if ($help) {
-    print qq[<div class="helpbox">
-    <b><u>About this page:</u></b><BR><ul>
-    <li>View genes that have different fitness in the two experiments: they are important for fitness in $exp2->{expDesc} but not in $exp1->{expDesc}.</li>
-    <li>The most important genes in $exp2->{expDesc} are shown first.
-    <li>To get to this page, use the outlier button when viewing the scatterplot comparing two experiments.</li> 
-    <li>You can also view a heatmap of the top genes (link at bottom).</li>
-    </ul></div>];
-  }
+    if ($help) {
+      print qq[<div class="helpbox">
+        <b><u>About this page:</u></b><BR><ul>
+        <li>View genes that have different fitness in the two experiments: they are important for fitness in $expDesc2 but not in $expDesc1.</li>
+        <li>The most important genes in $expDesc2 are shown first.
+        <li>To get to this page, use the outlier button when viewing the scatterplot comparing two experiments.</li> 
+        <li>You can also view a heatmap of the top genes (link at bottom).</li>
+        </ul></div>];
+    }
 
-
-	print h3($outlierCode),
-	p(qq{<i>x</i> is fitness in <A HREF="exp.cgi?orgId=$orgId&expName=$expName1">$expName1</A>: $exp1->{expDescLong} }
-	  . "<BR>"
-	  . qq{<i>y</i> is fitness in <A HREF="exp.cgi?orgId=$orgId&expName=$expName2">$expName2</A>: $exp2->{expDescLong} }),
-	p(scalar(@genesShow) . " genes found");
+    print h3($outlierCode), $desc_all_exp, p(scalar(@genesShow) . " genes found");
     if (@genesShow > 0) {
 	my @trows = ();
 	my @headings = qw{gene name description x y};
@@ -251,12 +305,18 @@ if ($help) {
 				  $cgi->td($gene->{gene}),
                                   $cgi->td(Utils::gene_link($dbh, $gene, "desc", "domains.cgi")),
 				  $cgi->td({ -bgcolor => Utils::fitcolor($gene->{x}) },
-					   $cgi->a({title => sprintf("t = %.1f. Click for conservation.", $gene->{tx}),
-                                                    href => "$orthFitBase&$GroupCond1" },
+					   $cgi->a({-title => sprintf("%st = %.1f. Click for conservation.",
+                                                                      @expNames1 > 1 ? "combined " : "",
+                                                                      $gene->{tx}),
+                                                    -style => "color: black;",
+                                                    -href => "$orthFitBase&$GroupCond1" },
 						   sprintf("%.1f", $gene->{x}))),
 				  $cgi->td({ -bgcolor => Utils::fitcolor($gene->{y}) },
-					   $cgi->a({title => sprintf("t = %.1f. Click for conservation", $gene->{ty}),
-                                                    href => "$orthFitBase&$GroupCond2" },
+					   $cgi->a({-title => sprintf("%st = %.1f. Click for conservation",
+                                                                      @expNames2 > 1 ? "combined " : "",
+                                                                      $gene->{ty}),
+                                                    -style => "color: black;",
+                                                    -href => "$orthFitBase&$GroupCond2" },
 						   sprintf("%.1f", $gene->{y}))) );
 	}
 	my $limitString = "";
@@ -288,13 +348,24 @@ if ($help) {
     <li>Each point shows the fitness of a gene in the two experiments</A>
     <li>To get to this page, search for any experiment and add another experiment to compare to.</li> 
     <li>Hover on a point to see what gene it is, or click to add the gene to the table.</li>
-    <li>Or make a table of all the genes that are outliers, i.e., use "Low y" to list genes that are only important in $exp2->{expDesc}.</li>
+    <li>Or make a table of all the genes that are outliers, i.e., use "Low y" to list genes that are only important in $expDesc2.</li>
     </ul></div>];
 }
 
-my $bottom = p("Download", 
-               a( { -href => "createFitData.cgi?orgId=$orgId&expName=$expName1&expName=$expName2" },
-                  "fitness data for these experiments"));
+my $tsvURL = "compareExps.cgi?"
+  . join("&", "tsv=1", "orgId=$orgId",
+         (map { "expName1=$_" } @expNames1),
+         map { "expName2=$_" } @expNames2);
+
+my $bottom = p("Download",
+               a( { -href => "createFitData.cgi?orgId=$orgId&"
+                    . join("&", map { "expName=$_" } (@expNames1,@expNames2)) },
+                  "fitness values for these experiments"),
+               "or",
+               a( { -href => $tsvURL }, "averaged fitness values and combined t values") );
+
+my $tx_name = @expNames1 > 1 ? "combined t" : "t";
+my $ty_name = @expNames2 > 1 ? "combined t" : "t";
 
 print <<END
 $start
@@ -304,10 +375,7 @@ $start
 
 <H2>$title</H2>
 
-<P>
-<i>x</i> axis: Fitness in <A HREF="exp.cgi?orgId=$orgId&expName=$expName1">$expName1</A>, $exp1->{expDescLong}
-<BR>
-<i>y</i> axis: Fitness in <A HREF="exp.cgi?orgId=$orgId&expName=$expName2">$expName2</A>, $exp2->{expDescLong}
+$desc_all_exp
 
 $helptext
 
@@ -326,22 +394,22 @@ Please try another browser if this message remains
 
 <form method="get" action="compareExps.cgi" enctype="multipart/form-data" name="input">
 <input type="hidden" name="orgId" value="$orgId" />
-<input type="hidden" name="expName2" value="$expName2" />
+$hiddenExpNames2
 Change x axis: <input type="text" name="query1"  size="20" maxlength="100" />
 <button type='submit'>Go</button>
 </form>
 
 <form method="get" action="compareExps.cgi" enctype="multipart/form-data" name="input">
 <input type="hidden" name="orgId" value="$orgId" />
-<input type="hidden" name="expName1" value="$expName1" />
+$hiddenExpNames1
 Change y axis: <input type="text" name="query2"  size="20" maxlength="100" />
 <button type='submit'>Go</button>
 </form>
 
 <form method="get" action="compareExps.cgi" enctype="multipart/form-data" name="input">
 <input type="hidden" name="orgId" value="$orgId" />
-<input type="hidden" name="expName1" value="$expName2" />
-<input type="hidden" name="expName2" value="$expName1" />
+$hiddenExpNames1
+$hiddenExpNames2
 <input type="submit" name="flip" value="Flip axes" />
 </form>
 </p>
@@ -358,12 +426,13 @@ Change y axis: <input type="text" name="query2"  size="20" maxlength="100" />
 <P>
 <form method="get" action="compareExps.cgi" enctype="multipart/form-data" name="input">
 <input type="hidden" name="orgId" value="$orgId" />
-<input type="hidden" name="expName1" value="$expName1" />
-<input type="hidden" name="expName2" value="$expName2" />
+$hiddenExpNames1
+$hiddenExpNames2
 <b>Or see outliers with
+
 <select name="outlier">
    <option value="lowx">Low <i>x</i></option>
-   <option value="lowy">Low <i>y</i></option>
+   <option value="lowy" selected="selected">Low <i>y</i></option>
    <option value="highx">High <i>x</i></option>
    <option value="highy">High <i>y</i></option>
 </select>
@@ -384,8 +453,8 @@ and |fit| &gt; <select name="minabs" style="width: 60px;">
 var org = "$orgId";
 var xName = "$expName1";
 var yName = "$expName2";
-var xDesc = "$exp1->{expDesc}";
-var yDesc = "$exp2->{expDesc}";
+var xDesc = "$expDesc1";
+var yDesc = "$expDesc2";
 
 var margin = {top: 20, right: 20, bottom: 50, left: 50},
     width = 500 - margin.left - margin.right,
@@ -417,7 +486,7 @@ var svg = d3.select("#left").append("svg")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 d3.select("#loading").html("Fetching data...");
-var tsvUrl = "compareExps.cgi?tsv=1&orgId=" + org + "&expName1=" + xName + "&expName2=" + yName;
+var tsvUrl = "$tsvURL";
 d3.tsv(tsvUrl, function(error, data) {
   if (error || data.length == 0) {
       d3.select("#loading").html("Cannot load data from " + tsvUrl + "<BR>Error: " + error);
@@ -548,8 +617,8 @@ function dotClick(d) {
       tr.append("td").html(d.desc);
       var hrefX = "strainTable.cgi?orgId=" + org + "&expName=" + xName + "&locusId=" + d.locusId;
       var hrefY = "strainTable.cgi?orgId=" + org + "&expName=" + yName + "&locusId=" + d.locusId;
-      tr.append("td").html("<A TITLE='t = " + d.tx.toFixed(1) + "' HREF='" + hrefX + "'>" + d.x.toFixed(1) + "</A>");
-      tr.append("td").html("<A TITLE='t = " + d.ty.toFixed(1) + "' HREF='" + hrefY + "'>" + d.y.toFixed(1) + "</A>");
+      tr.append("td").html("<A TITLE='${tx_name} = " + d.tx.toFixed(1) + "' HREF='" + hrefX + "'>" + d.x.toFixed(1) + "</A>");
+      tr.append("td").html("<A TITLE='${ty_name} = " + d.ty.toFixed(1) + "' HREF='" + hrefY + "'>" + d.y.toFixed(1) + "</A>");
       tr.append("td").html("<button type='button' onclick='removeRow(this)'>remove</button>");
       tr.attr("locusId", d.locusId);
   }
@@ -595,3 +664,31 @@ $bottom
 </html>
 END
 ;
+
+sub FetchExps {
+  my (@expNames) = @_;
+  my @exps = ();
+  foreach my $expName (@expNames) {
+    my $exp = $dbh->selectrow_hashref("SELECT * from Experiment WHERE orgId = ? AND expName = ?",
+                                      {}, $orgId, $expName);
+    die "Unknown experiment: $expName" unless exists $exp->{expName};
+    push @exps, $exp;
+  }
+  return @exps;
+}
+
+sub DescExpList {
+  my (@exps)= @_;
+  my @descs = map { join(": ",
+                         a({ -href => "exp.cgi?orgId=$orgId&expName=$_->{expName}" }, $_->{expName}),
+                         $_->{expDesc} ) } @exps;
+  return $descs[0] if @exps == 1;
+  return join(" ", "the average of" , scalar(@exps), "experiments:",
+              join("; ", @descs));
+}
+
+sub HiddenList {
+  my ($num, $list) = @_;
+  return join("",
+    map qq{<input type="hidden" name="expName${num}" value="$_" />}, @$list);
+}
