@@ -17,6 +17,7 @@ use warnings;
 use DBI;
 use Time::HiRes;
 use Carp;
+use List::Util qw(sum);
 
 sub start_page($);
 sub get_style();
@@ -31,6 +32,8 @@ sub blast_db();
 sub tmp_dir();
 sub orginfo($);
 sub get_orths($$$);
+sub mean(@);
+sub sum(@);
 
 #--------------------------------------------------------
 
@@ -1067,6 +1070,12 @@ sub GeneToRxn($$$$) {
   my @uniq = sort keys %rxnId;
   return \@uniq;
 }
+
+sub mean(@) {
+  my (@in) = @_;
+  return @in == 0 ? undef : sum(@in) / scalar(@in);
+}
+
 
 #END
 
