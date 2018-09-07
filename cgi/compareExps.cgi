@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #######################################################
-## compareExps.cgi -- interactive scatterplot for two experiments
+## compareExps.cgi -- interactive scatterplot for experiments
 ##
 ## Copyright (c) 2015 University of California
 ##
@@ -8,14 +8,20 @@
 ## Morgan Price
 #######################################################
 #
-# Key parameters: orgId, expName1 or query1, expName2 or query2
-#	If query1 is set, expName1 is ignored, and similarly for query2
-#	Cannot query on both simultaneously, however
-# Optional: tsv -- use tsv=1 to fetch the data instead
-#	outlier -- list outlying genes (xlow, xhigh, ylow, or yhigh)
-#       with minabs -- minimum |abs| on selected axis.
-#	flip -- if not empty, swap expNames1 and expNames2
-# help -- 1 if on help/tutorial mode
+# Key parameters:
+# orgId: the organism
+# The x axis must be specified by either expName1 or query1
+# expName1 (can have mutliple values) is the experiment(s) to show on the x axis
+#	Average them if more than one experiment
+# query1 is a query for selecting experiments
+# Similarly, expName2 or query2 specify the y axis
+#
+# Optional:
+# tsv -- use tsv=1 to fetch the data instead
+# outlier -- list outlying genes (xlow, xhigh, ylow, or yhigh)
+# minabs -- the minimum |abs| on selected axis for outliers
+# flip -- if not empty, swap expNames1 and expNames2
+# help -- 1 if in help/tutorial mode
 
 use strict;
 use CGI qw(:standard Vars -nosticky);
