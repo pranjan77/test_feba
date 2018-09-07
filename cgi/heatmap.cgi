@@ -25,9 +25,10 @@
 # addrowAt -- -1 or 1 for top or bottom
 # addcol -- ditto but may add multiple experiments
 # addcolAt -- -1 or 1 for left or right
-#
+# ca -- additional columns that may be added at left or right
 
 use strict;
+sub SetupHidden();
 
 # use oldstyle urls to ignore ; as a potential separator of queries.
 use CGI qw(-nosticky -oldstyle_urls :standard Vars);
@@ -59,6 +60,11 @@ $addrow =~ s/[ ,\t\r\n]+$//;
 $addrow =~ s/^[ ,\t\r\n]+//;
 my @addrow = split /[ ,\t\r\n]+/, $addrow;
 my $addrowAt = $cgi->param('addrowAt') || 0;
+
+# To be set by SetupHidden()
+# Do not save view as it never needs to be set by a hidden field (a form can only turn it off)
+my @hidden = (); # all of the common (static) arguments as hidden fields
+my %hiddenrt = (); # row specifier => the hidden field for its text (if any)
 
 foreach my $add (@addrow) {
   my $r = undef; # the row to add, if set
@@ -94,6 +100,8 @@ foreach my $add (@addrow) {
 my $addcol = $cgi->param('addcol') || "";
 $addcol =~ s/[ \t]+$//;
 $addcol =~ s/^[ \t]+//;
+my $addcolAt = $cgi->param('addcolAt') || "";
+
 if ($addcol) {
   my $exps = Utils::matching_exps($dbh,$orgId,$addcol);
   if (@$exps == 0) {
@@ -104,14 +112,60 @@ if ($addcol) {
     my @ignore = grep exists $c{$_->{expName}}, @$exps;
     if (@keep == 0) {
       push @errors, scalar(@ignore) . " matching experiments are already shown";
+    } elsif (@keep >= 5) {
+      # Show checkbox form to choose which of these to include
+      # I can just reuse the c parameter for each checkbox -- it only gets
+      # added to the list if it is specified
+      my $title1 = "Select experiments to include in heatmap for";
+      print $cgi->header,
+        Utils::start_page("$title1 $genome"),
+            h2($title1, a({ -href => "org.cgi?orgId=$orgId" }, $genome));
+      if (scalar(@keep) == scalar(@$exps)) {
+        print p(scalar(@keep), "experiments matched '$addcol'.",
+                "Check the ones you want to add to the heatmap:");
+      } else {
+        print p("Of", scalar(@$exps), "experiments that matched '$addcol',",
+                scalar(@keep), "are not in the heatmap.",
+                "Check the ones you want to add:");
+      }
+      SetupHidden();
+      print
+        start_form(-name => 'select', -method => 'GET', -action => 'heatmap.cgi'),
+          join("", @hidden),
+            hidden(-name => 'addcolAt');
+      my @th = qw{Name Description};
+      my @trows = ();
+      push @trows, Tr(th(\@th));
+      foreach my $exp (@keep) {
+        my @td = (checkbox(-name => "ca", -checked => 0, -value => $exp->{expName},
+                           -label => $exp->{expName}),
+                  a({ -href => "exp.cgi?orgId=$orgId&expName=$exp->{expName}" },
+                    $exp->{expDesc}));
+        push @trows, Tr(td(\@td));
+      }
+      print table({cellspacing => 0, cellpadding => 3}, @trows),
+        p(qq{<BUTTON type='submit'>Add</BUTTON>}),
+          end_form;
+      $dbh->disconnect();
+      Utils::endHtml($cgi); # exits
     } else {
-      my $addcolAt = $cgi->param('addcolAt') || "";
+      # small #experiments matched, just add them
       if ($addcolAt eq "-1") {
         unshift @c, map $_->{expName}, @keep;
       } else {
         push @c, map $_->{expName}, @keep;
       }
     }
+  }
+}
+
+# Add the selected subset of experiments, at left or right
+my @ca = $cgi->param('ca');
+if (@ca) {
+  if ($addcolAt eq "-1") {
+    unshift @c, @ca;
+  } else {
+    push @c, @ca;
   }
 }
 
@@ -154,27 +208,7 @@ foreach my $error (@errors) {
   print $cgi->h3($error);
 }
 
-my @hidden = (); # all of the common (static) arguments as hidden fields
-my %hiddenrt = (); # row specifier => the hidden field for its text (if any)
-
-# Do not save view as it never needs to be set by a hidden field (a form can only turn it off)
-push @hidden, hidden('orgId', $orgId );
-foreach my $r (@r) {
-  push @hidden, hidden(-name => 'r', -default => $r, -override => 1);
-}
-foreach my $r (@r) {
-  my $arg = "rt.$r";
-  my $value = $cgi->param($arg);
-  if (defined $value) {
-    my $h = hidden($arg, $value);
-    push @hidden, $h;
-    $hiddenrt{$r} = $h;
-  }
-}
-foreach my $c (@c) {
-  push @hidden, hidden(-name => 'c', -default => $c, -override => 1);
-}
-
+SetupHidden();
 
 my @rtargs = ();
 foreach my $r (@r) {
@@ -344,15 +378,17 @@ my $selectColAt = qq{
 
 my $go = "<BUTTON type='submit'>Go</BUTTON>";
 
-my $page_URL = "http://" . $ENV{SERVER_NAME} . $ENV{REQUEST_URI};
-
-my $tinyform = join("",
-                    start_form(-style => "display: inline;",
-                               -name => 'tiny', -method => 'POST', target => "blank",
-                               -action => 'https://tinyurl.com/create.php'),
-                    hidden(-name => 'url', -default => $page_URL, -override => 1),
-                    " <BUTTON type='submit'>TinyURL</BUTTON> ",
-                    end_form);
+my $tinyform = "";
+if ($ENV{SERVER_NAME}) { # not set if testing from command line
+  my $page_URL = "http://" . $ENV{SERVER_NAME} . $ENV{REQUEST_URI};
+  $tinyform = join("",
+                   start_form(-style => "display: inline;",
+                              -name => 'tiny', -method => 'POST', target => "blank",
+                              -action => 'https://tinyurl.com/create.php'),
+                   hidden(-name => 'url', -default => $page_URL, -override => 1),
+                   " <BUTTON type='submit'>TinyURL</BUTTON> ",
+                   end_form);
+}
 
 if ($view) {
   # this form need not set view back to 0 as that is the default
@@ -409,3 +445,21 @@ if ($view) {
 $dbh->disconnect();
 Utils::endHtml($cgi);
 
+sub SetupHidden() {
+  push @hidden, hidden('orgId', $orgId );
+  foreach my $r (@r) {
+    push @hidden, hidden(-name => 'r', -default => $r, -override => 1);
+  }
+  foreach my $r (@r) {
+    my $arg = "rt.$r";
+    my $value = $cgi->param($arg);
+    if (defined $value) {
+      my $h = hidden($arg, $value);
+      push @hidden, $h;
+      $hiddenrt{$r} = $h;
+    }
+  }
+  foreach my $c (@c) {
+    push @hidden, hidden(-name => 'c', -default => $c, -override => 1);
+  }
+}
