@@ -368,7 +368,9 @@ my $bottom = p("Download",
                     . join("&", map { "expName=$_" } (@expNames1,@expNames2)) },
                   "fitness values for these experiments"),
                "or",
-               a( { -href => $tsvURL }, "averaged fitness values and combined t values") );
+               a( { -href => $tsvURL },
+                  (@expNames1 > 1 || @expNames2 > 1 ? "averaged fitness scores and combined t values"
+                   : "fitness scores and t values")));
 
 my $tx_name = @expNames1 > 1 ? "combined t" : "t";
 my $ty_name = @expNames2 > 1 ? "combined t" : "t";
