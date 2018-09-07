@@ -283,14 +283,18 @@ my $title = "Compare Experiments for $orginfo->{$orgId}{genome}";
 my $start = Utils::start_page("$title");
 my $helptext = "";
 if ($help) {
-    $helptext = qq[<div class="helpbox">
+  $helptext = qq[<div class="helpbox">
     <b><u>About this page:</u></b><BR><ul>
     <li>Each point shows the fitness of a gene in the two experiments</A>
     <li>To get to this page, search for any experiment and add another experiment to compare to.</li> 
     <li>Hover on a point to see what gene it is, or click to add the gene to the table.</li>
     <li>Or make a table of all the genes that are outliers, i.e., use "Low y" to list genes that are only important in $exp2->{expDesc}.</li>
     </ul></div>];
-  }
+}
+
+my $bottom = p("Download", 
+               a( { -href => "createFitData.cgi?orgId=$orgId&expName=$expName1&expName=$expName2" },
+                  "fitness data for these experiments"));
 
 print <<END
 $start
@@ -586,8 +590,8 @@ function geneList() {
 </script>
 
 </div>
+$bottom
 </body>
 </html>
 END
 ;
-
