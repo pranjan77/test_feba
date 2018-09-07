@@ -357,12 +357,12 @@ my $tinyform = join("",
 if ($view) {
   # this form need not set view back to 0 as that is the default
   print
-    p($tinyform,
-      start_form(-style => "display: inline;",
+    p(start_form(-style => "display: inline;",
                  -name => 'input', -method => 'GET', -action => 'heatmap.cgi'),
       join("",@hidden),
       " <BUTTON type='submit'>Edit</BUTTON> ",
-      end_form);
+      end_form,
+      $tinyform);
 } else {
     # I should really use div and text-style: width=12em or whatever to make the text have a consistent width...
   print
@@ -399,6 +399,11 @@ if ($view) {
           a({ -href => "genesFit.cgi?orgId=$orgId&" . join("&", map "locusId=$_", @locusIds) },
             "top conditions for $nloci genes"))
     if $nloci > 1;
+  print p("Or download",
+          a({ -href => "createFitData.cgi?" . join("&", "orgId=$orgId", map { "expName=$_" } @c) },
+            "fitness data"),
+          "for these", scalar(@c), "experiments and all genes")
+    if @c  > 0;
 }
 
 $dbh->disconnect();
