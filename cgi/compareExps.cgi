@@ -374,6 +374,12 @@ my $bottom = p("Download",
                a( { -href => $tsvURL },
                   (@expNames1 > 1 || @expNames2 > 1 ? "averaged fitness scores and combined t values"
                    : "fitness scores and t values")));
+$bottom .= p(small("Combined", i("t"), "values are computed as sum(<i>t</i>)/<i>n</i>, where", i("n"),
+                   "is the number of experiments.",
+                   "If these experiments were compared to the same start or Time0 sample",
+                   "(usually, if they are in the same set and were done on the same date),",
+                   "then the", i("t"), "values may be inflated."))
+  if @expNames1 > 1 || @expNames2 > 1;
 
 my $tx_name = @expNames1 > 1 ? "combined t" : "t";
 my $ty_name = @expNames2 > 1 ? "combined t" : "t";
