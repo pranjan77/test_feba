@@ -55,15 +55,20 @@ my $tsv = $cgi->param('tsv') ? 1 : 0;
 my $help = $cgi->param('help') || "";
 my $outlier = $cgi->param('outlier');
 die "Must specify orgId" unless defined $orgId && $orgId ne "";
-die "Must specify expName1 or query1"
-    if @expNames1 == 0 && $query1 eq "";
-die "Must specify expName2 or query2"
-    if @expNames2 == 0 && $query2 eq "";
-die "Cannot query both 1 and 2" if $query1 ne "" && $query2 ne "";
 
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
+
+print $tsv ? $cgi->header('text/tab-separated-values') : $cgi->header();
+
 Utils::fail($cgi, "Unknown organism: $orgId") unless exists $orginfo->{$orgId};
+
+Utils::fail($cgi, "Must select an experiment for the x axis")
+    if (@expNames1 == 0 && $query1 eq "");
+Utils::fail($cgi, "Must select an experiment for the y axis")
+    if @expNames2 == 0 && $query2 eq "";
+die "Cannot query both 1 and 2" if $query1 ne "" && $query2 ne "";
+
 
 my @expCand = ();
 my $choosing = undef;
@@ -118,7 +123,7 @@ if (scalar(@expCand) > 0) {
     die "No experiments to compare to" unless @expConst > 0;
     my $start = Utils::start_page("Select experiment to compare to");
     my $avgConstString = DescExpList(@expConst);
-    print $cgi->header, $start, '<div id="ntcontent">',
+    print $start, '<div id="ntcontent">',
 	p("Choose the experiment(s) to compare to $avgConstString"),
 	start_form(-name => 'input', -method => 'GET', -action => 'compareExps.cgi'),
 	hidden('orgId', $orgId),
@@ -194,7 +199,6 @@ if ($tsv || $outlier) {
 }
 
 if ($tsv) { # tab delimited values, not a page
-  print $cgi->header('text/tab-separated-values');
   print join("\t", qw{locusId sysName gene desc x tx y ty})."\n";
   while (my ($locusId,$gene) = each %$genes) {
     next unless exists $gene->{x} && exists $gene->{y};
@@ -204,8 +208,6 @@ if ($tsv) { # tab delimited values, not a page
   }
     exit 0;
 }
-
-print $cgi->header;
 
 # For describing the experiments
 my $expDesc1 = $exp1[0]{expDesc};
