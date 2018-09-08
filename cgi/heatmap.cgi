@@ -143,9 +143,10 @@ if ($addcol) {
                     $exp->{expDesc}));
         push @trows, Tr(td(\@td));
       }
-      print table({cellspacing => 0, cellpadding => 3}, @trows),
+      print table({cellspacing => 0, cellpadding => 3 }, @trows),
         p(qq{<BUTTON type='submit'>Add</BUTTON>}),
-          end_form;
+        p(small("You can use % as a wild card when searching for experiments.")),
+        end_form;
       $dbh->disconnect();
       Utils::endHtml($cgi); # exits
     } else {
