@@ -129,7 +129,8 @@ if (scalar(@expCand) > 0) {
 	hidden('orgId', $orgId),
         HiddenList($notChoosing, \@expNamesConst),
 	table( {cellpadding => 3, cellspacing => 0}, @trows),
-        p("If you select more than one experiment, then the plot will show the average."),
+        p("If you select more than one experiment, then the plot will show the average.",
+          "You can use % as a wild card when searching for experiments."),
 	submit('Go'),
 	end_form;
     Utils::endHtml($cgi);
