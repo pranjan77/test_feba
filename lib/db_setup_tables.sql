@@ -103,9 +103,18 @@ CREATE TABLE GeneFitness(
 );
 
 /* There is also, for each organism, a table
-   FitByExp_org with fields expName,locusId,fit,t
+   FitByExp_orgId.
    It is stored by experiment so it is fast to look
    up all the data for an experiment this way.
+   For example:
+
+CREATE TABLE FitByExp_Keio(
+  expName TEXT NOT NULL,
+  locusId TEXT NOT NULL,
+  fit REAL NOT NULL,
+  t REAL NOT NULL,
+  PRIMARY KEY (expName,locusId)
+);
 */
 
 /* Most cofit genes for each gene.
