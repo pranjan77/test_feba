@@ -507,6 +507,7 @@ FEBA_Fit = function(expsUsed, all, genes,
 	} else {
 		cat("Only", sum(fit$q$u),"experiments of", nrow(fit$q)," passed quality filters!\n", file=stderr());
 	}
+        fit$high = HighFit(fit, genes, expsUsed);
 	return(fit);
 }
 
@@ -715,6 +716,9 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	  writeDelim(out, nameToPath("strong.tab"));
 	  wroteName("strong.tab");
 	}
+
+        writeDelim(fit$high, nameToPath("high_fitness.tab"));
+        wroteName("high_fitness.tab");
 
 	if(writeImage) {
 	    img = format(Sys.time(),"fit%Y%b%d.image"); # e.g., fit2013Oct24.image
@@ -1147,4 +1151,23 @@ SaveStrainUsage = function(fit, dir=".") {
 	write(fit$genesUsed, paste(dir,"/strainusage.genes",sep=""), ncol=1);
 	write(fit$genesUsed12, paste(dir,"/strainusage.genes12",sep=""), ncol=1);
         cat(sprintf("Wrote strain usage to %s/strainusage.*\n", dir));
+}
+
+# Note thresholds are different than in high_fit.pl
+HighFit = function(fit, genes, expsUsed, min.fit=4, min.t=5, max.se=2, min.gMean=10, max.below=8) {
+  high = which(fit$lrn >= min.fit & fit$t >= min.t, arr.ind=T);
+  high = data.frame(locusId=fit$g[high[,1]], expName=names(fit$lrn)[high[,2]], fit=fit$lrn[high], t=fit$t[high]);
+  # t ~= fit/standard_error, so estimate s.e. = fit/t
+  high$se = high$fit/high$t;
+  high = subset(high, se <= max.se);
+
+  # which experiments are ok
+  exps = expsUsed[, words("name Group Condition_1 Concentration_1 Units_1 Media short")];
+  exps = merge(exps, fit$q[,words("name u short maxFit gMean")]);
+  high = merge(high, exps, by.x="expName", by.y="name");
+  high = subset(high, gMean >= min.gMean & fit >= maxFit - max.below);
+  names(high)[names(high)=="u"] = "used";
+  high = merge(genes[,c("locusId","sysName","desc")], high);
+  high = high[order(high$expName, -high$fit),];
+  return(high);
 }
