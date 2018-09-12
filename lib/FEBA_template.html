@@ -59,6 +59,9 @@
 </UL>
 <LI><A HREF="cofit">Top cofitness hits</A>
 <LI><A HREF="specific_phenotypes">Specific phenotypes</A>
+<LI><A HREF="high_fitness.tab">Genes with high fitness</A> (includes high-confidence cases from experiments that did not meet quality metrics)
+<UL><LI>short, used, maxFit, and gMean refer to the experiment, not the gene
+</UL>
 <LI><A HREF="gene_counts.tab">Counts per gene per sample</A> (#reads, summed over strains)
 </UL>
 
@@ -256,6 +259,10 @@ The R image includes:
 <UL>
 <LI><B>cofit</B> -- top cofitness hits for each gene
 <LI><B>specphe</B> -- specific phenotypes. A genes' phenotype is considered specific for a condition if abs(fit) > 1 and abs(fit) > percentileFit + 0.5 and abs(t) > 5, where percentileFit is the 95th percentile of abs(fit) for that gene. A gene may have more than one specific phenotypes.
+<LI><B>high</B> -- cases of significantly high fitness, including in experiments that did not meet quality metrics. This is especially useful for experiments where mutants in a few genes took over the population.
+<UL><LI>As of September 12, 2018, the criteria are fit &ge; 4; t &ge; 5; standard error = fit/t &le; 2;
+  gMean &ge; 10 (for the experiment); and fit &ge; maxFit - 8, where maxFit is for this experiment
+</UL>
 </UL></UL>
 <LI><B>expsUsed</B> -- a table of experiments
 </UL>
