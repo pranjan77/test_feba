@@ -256,6 +256,12 @@ my @headings = ();
 push @headings, "&nbsp;" unless $view; # delete/edit/up/down controls
 push @headings, qw{Gene Description};
 foreach my $expName (@c) {
+  print p({ -style => "color: red;" }, "Ignoring invalid experiment $expName (no longer in the Fitness Browser?)")
+    unless exists $expinfo->{$expName};
+}
+@c = grep { exists $expinfo->{$_} } @c;
+
+foreach my $expName (@c) {
   die "Invalid column: $expName" unless exists $expinfo->{$expName};
   my $exp = $expinfo->{$expName};
   my $show = a( {-href => "exp.cgi?orgId=$orgId&expName=$expName", -title => $expName},
