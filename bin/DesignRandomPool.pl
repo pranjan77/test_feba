@@ -60,6 +60,7 @@ END
     die $usage if !defined $poolfile;
     die $usage if !defined $genesfile;
     die "No such file: $genesfile" unless -e $genesfile;
+    die "minN must be at least 2\n" unless $minN >= 2;
 
     my $nMapped = 0; # reads considered
     my $nSkipQBeg = 0; # reads ignored because qBeg > maxQBeg
@@ -122,11 +123,10 @@ END
 	$totcodes++;
         next unless $nTot >= $minN;
         $nMulti++;
-        
-        # Is there a location that accounts for most of the reads, including the past-end reads?
-        my @nAt = sort {$a<=>$b} map { $_->[0] } values(%$hash);
-        my $nMax = $nAt[-1];
 
+        # Is there a location that accounts for most of the reads, including the past-end reads?
+        my @at = sort { $hash->{$b}[0] <=> $hash->{$a}[0] } keys(%$hash);
+        my $nMax = @at == 0 ? 0 : $hash->{$at[0]}[0];
         if ($nPastEnd >= $nTot/2 || $nPastEnd >= $nMax) {
             $nInCategory{"PastEnd"}++;
             my $n2 = $nMax || 0; # note we do not report secondary location (doubt it matters)
@@ -139,7 +139,7 @@ END
             next;
         }
 
-        my $maxAt = (grep { $hash->{$_}[0] == $nMax } (keys %$hash))[0];
+        my $maxAt = $at[0];
 
         # checking unique & qbeg=1 -- but the latter part may be redundant with maxQBeg
         my $nGood = $hash->{$maxAt}[1] || 0;
@@ -148,11 +148,11 @@ END
             next;
         }
 
-        my $nNext = @nAt > 1 ? $nAt[-2] : 0;
-        my $nextAt = "::"; # second-most-common key
-        if ($nNext >= 2) {
-            my @nextAt = grep {$hash->{$_}[0] == $nNext} (keys %$hash);
-            $nextAt = $nextAt[0];
+        my $nextAt = "::";
+        my $nNext = 0;
+        if (@at > 1) {
+          $nextAt = $at[1];
+          $nNext = $hash->{$nextAt}[0];
         }
         unless($nMax >= $minRatio * $nNext) {
             $nInCategory{"LoRatio"}++;
