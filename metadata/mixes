@@ -152,3 +152,11 @@ Controlled vocabulary	Concentration	Units
 L-Valine	10	mM
 L-Isoleucine	10	mM
 L-Leucine	10	mM
+		
+Media	Glu_DLac_Acetate_mix	
+Description	carbon source mix used by Trenton	
+X	1	
+Controlled vocabulary	Concentration	Units
+D-Glucose	8	mM
+Sodium D-Lactate	8	mM
+Potassium acetate	8	mM

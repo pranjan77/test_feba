@@ -788,6 +788,14 @@ Yeast Extract	1	g/L
 Magnesium sulfate	0.8	mM
 Calcium chloride	0.5	mM
 		
+Media	PYE_noCalcium	
+Description	Rich media for Caulobacter without calcium	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Peptone	2	g/L
+Yeast Extract	1	g/L
+Magnesium sulfate	0.8	mM
+		
 Media	Varel_Bryant_medium	
 Description	Defined medium for B.theta without Carbon	
 Minimal	TRUE	
@@ -885,7 +893,7 @@ Magnesium Sulfate Heptahydrate	0.05	g/L
 Sodium pyruvate	0.3	g/L
 		
 Media	Fungal_growth_media_mCAFEs_v1	
-Description	Growth media for diverse fungi	
+Description	Growth media for diverse fungi with 20 g/L D-Glucose	
 Minimal	TRUE	
 Controlled vocabulary	Concentration	Units
 D-Glucose	20	g/L
@@ -899,10 +907,24 @@ Manganese (II) chloride tetrahydrate	0.002	g/L
 Cobalt chloride hexahydrate	0.002	g/L
 		
 Media	Fungal_growth_media_mCAFEs_v2	
-Description	Growth media for diverse fungi	
+Description	Growth media for diverse fungi with 5 g/L D-Glucose	
 Minimal	TRUE	
 Controlled vocabulary	Concentration	Units
 D-Glucose	5	g/L
+Magnesium Sulfate Heptahydrate	0.2	g/L
+Potassium phosphate dibasic	0.9	g/L
+Potassium Chloride	0.2	g/L
+Ammonium Nitrate	1	g/L
+Iron (II) sulfate heptahydrate	0.002	g/L
+Zinc sulfate heptahydrate	0.002	g/L
+Manganese (II) chloride tetrahydrate	0.002	g/L
+Cobalt chloride hexahydrate	0.002	g/L
+		
+Media	Fungal_growth_media_mCAFEs_v3	
+Description	Growth media for diverse fungi with 20 mM D-Glucose	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+D-Glucose	20	mM
 Magnesium Sulfate Heptahydrate	0.2	g/L
 Potassium phosphate dibasic	0.9	g/L
 Potassium Chloride	0.2	g/L
@@ -1096,3 +1118,34 @@ Manganese(II) sulfate tetrahydrate	0.0021	mg/L
 Sodium Molybdate Dihydrate	0.00075	mg/L
 Zinc sulfate heptahydrate	0.00024	mg/L
 Copper(II) Nitrate Trihydrate	0.00004	mg/L
+		
+Media	MOKA	
+Description	Rich medium for Xanthomonas	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Potassium phosphate dibasic	2	g/L
+Magnesium Sulfate Heptahydrate	1	mM
+Yeast Extract	4	g/L
+casamino acids	8	g/L
+		
+Media	MMX_casamino	
+Description	Defined media for Xanthomonas with casamino acids	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Potassium phosphate dibasic	60	mM
+Potassium phosphate monobasic	33	mM
+Ammonium Sulfate	7.5	mM
+Magnesium Sulfate Heptahydrate	1	mM
+D-Glucose	20	mM
+casamino acids	1.5	g/L
+		
+Media	MMX_dropout	
+Description	Defined media for Xanthomonas with dropout mix	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Potassium phosphate dibasic	60	mM
+Potassium phosphate monobasic	33	mM
+Ammonium Sulfate	7.5	mM
+Magnesium Sulfate Heptahydrate	1	mM
+D-Glucose	20	mM
+Takara_DO_Supp_MinusHisLeuTrp	1.5	g/L
