@@ -1149,3 +1149,14 @@ Ammonium Sulfate	7.5	mM
 Magnesium Sulfate Heptahydrate	1	mM
 D-Glucose	20	mM
 Takara_DO_Supp_MinusHisLeuTrp	1.5	g/L
+		
+Media	Varel_Bryant_medium_Glucose_noMET	
+Description	Defined medium for B.theta with Glucose and no L-methionine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Mineral 3B solution	1	X
+Hemin	15	uM
+Iron (II) sulfate heptahydrate	15	uM
+L-Cysteine	8.25	mM
+Sodium bicarbonate	23.8	mM
+D-Glucose	20	mM
