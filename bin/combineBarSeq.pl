@@ -34,7 +34,6 @@ my $save_ignore = 0; # make a file of ignored lines (out.codes.ignored) ?
     }
     close(POOL) || die "Error reading $poolfile";
     die "No entries in pool file $poolfile" unless scalar(keys %pool) > 0;
-    print STDERR "Read " . scalar(keys %pool) . " pool entries from $poolfile\n";
 
     if ($save_ignore) {
 	open(IGNORE, ">", "$out.codes.ignored") || die "Cannot write to $out.codes.ignored";
@@ -130,9 +129,10 @@ my $save_ignore = 0; # make a file of ignored lines (out.codes.ignored) ?
 	close(IN) || die "Error reading from $file";
 	print STDERR "Warning: no entries in $file\n" if $nThisFile == 0;
     }
-    print STDERR "Read $nUsed lines for codes in pool and $nIgnore ignored lines across " . scalar(@codesFiles) . " files\n";
+    print STDERR sprintf("Pool %s entries %.1fK saw %.1fK lines ignored %.1fK lines from %d files\n",
+                         $poolfile, scalar(keys %pool)/1000.0, $nUsed/1000.0, $nIgnore/1000.0, scalar(@codesFiles));
     if ($save_ignore) {
-	close(IGNORE) || die "Error writing to $out.codes.ignored";
+      close(IGNORE) || die "Error writing to $out.codes.ignored";
     }
 
     # categorize reads
@@ -159,18 +159,16 @@ my $save_ignore = 0; # make a file of ignored lines (out.codes.ignored) ?
 	    }
 	}
     }
-    print STDERR sprintf("Indexes %d Success %d LowCount %d LowFraction %d Total Reads (millions): %.3f \n",
+    print STDERR sprintf("  Indexes %d Success %d LowCount %d LowFraction %d Total Reads (millions): %.3f \n",
 			 scalar(@indexes), scalar(@okI), scalar(@lowcountI), scalar(@lowhitI), $totalReads/1e6);
-    print STDERR sprintf("Median Fraction (LowCount Excluded) %.3f Median for Success %.3f\n",
+    print STDERR sprintf("  Median Fraction (LowCount Excluded) %.3f Median for Success %.3f\n",
 			 &median(@fractions),
                          scalar(@fractionsS) > 0 ? &median(@fractionsS) : "")
       if scalar(@fractions) > 0;
-    print STDERR "Success " . &ShortList(@okI) . "\n" if @okI > 0;
-    print STDERR sprintf("LowCount (median %d) %s\n",
+    print STDERR "  Success " . &ShortList(@okI) . "\n" if @okI > 0;
+    print STDERR sprintf("  LowCount (median %d) %s\n",
 			 &median(@lowcounts), &ShortList(@lowcountI))
 	if @lowcountI > 0;
-    print STDERR "LowFraction " . &ShortList(@lowhitI) . "\n"
-	if @lowhitI > 0;
 
     open(COUNT, ">", "$out.poolcount") || die "Cannot write to $out.poolcount";
     print COUNT join("\t", "barcode", "rcbarcode", "scaffold", "strand", "pos", @indexes)."\n";
@@ -202,7 +200,7 @@ my $save_ignore = 0; # make a file of ignored lines (out.codes.ignored) ?
 	print COUNT join("\t", @out)."\n";
     }
     close(COUNT) || die "Error writing to $out.poolcount";
-    print STDERR "Wrote $out.poolcount\n";
+    print STDERR "  Wrote $out.poolcount\n";
 
     open(SUM, ">", "$out.colsum") || die "Cannot write to $out.colsum";
     print SUM join("\t", qw{Index nReads nUsed fraction})."\n";
@@ -210,7 +208,7 @@ my $save_ignore = 0; # make a file of ignored lines (out.codes.ignored) ?
 	print SUM join("\t", $indexes[$i], $colSums[$i], $colSumsUsed[$i], $colSumsUsed[$i]/(0.5 + $colSums[$i]))."\n";
     }
     close(SUM) || die "Error writing to $out.colsum";
-    print STDERR "Wrote $out.colsum\n";
+    print STDERR "  Wrote $out.colsum\n";
 }
 
 sub median {

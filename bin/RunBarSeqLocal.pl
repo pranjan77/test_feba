@@ -110,7 +110,7 @@ my $debug = undef;
         if (!defined $gdir) {
           # Try to use glob to find the mapping from the first two parts of the library name to an organism
           my @hits = glob("g/*/$beg*");
-          die "Could not convert $setname to an organism, and $gdir does not exist"
+          die "Could not convert $setname to an organism, and gdir does not exist"
             unless @hits > 0;
           my $hit1 = $hits[0];
           my @parts = split "/", $hit1;
@@ -291,13 +291,12 @@ my $debug = undef;
 		print STDERR "Warning: no log file $log\n";
 	    }
 	}
-	print STDERR sprintf("Total reads %d Multi %d (%.1f%%) Usable %d (%.1f%%) for %s from %d files\n",
-			     $nReads,
-			     $nMulti, 100.0*$nMulti/($nReads+0.1),
-			     $nUsable, 100.0*$nUsable/($nReads+0.1),
-			     $setname1,
-			     $nFiles);
-	
+	print STDERR sprintf("Total reads (in millions) %.1f Multi %.1f (%.1f%%) Usable %.1f (%.1f%%) from %d files%s\n",
+			     $nReads/1e6,
+			     $nMulti/1e6, 100.0*$nMulti/($nReads+0.1),
+			     $nUsable/1e6, 100.0*$nUsable/($nReads+0.1),
+			     $nFiles,
+			     defined $setspec ? "" : "for $setname1");
     }
     foreach my $i (0..(scalar(@gdirs)-1)) {
       my $path = $gdirs[$i] . "/" . $setnames[$i];
