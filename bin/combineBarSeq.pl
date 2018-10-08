@@ -163,7 +163,7 @@ my $save_ignore = 0; # make a file of ignored lines (out.codes.ignored) ?
 			 scalar(@indexes), scalar(@okI), scalar(@lowcountI), scalar(@lowhitI), $totalReads/1e6);
     print STDERR sprintf("  Median Fraction (LowCount Excluded) %.3f Median for Success %.3f\n",
 			 &median(@fractions),
-                         scalar(@fractionsS) > 0 ? &median(@fractionsS) : "")
+                         scalar(@fractionsS) > 0 ? &median(@fractionsS) : "NaN")
       if scalar(@fractions) > 0;
     print STDERR "  Success " . &ShortList(@okI) . "\n" if @okI > 0;
     print STDERR sprintf("  LowCount (median %d) %s\n",
