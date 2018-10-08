@@ -1162,7 +1162,9 @@ HighFit = function(fit, genes, expsUsed, min.fit=4, min.t=5, max.se=2, min.gMean
   high = subset(high, se <= max.se);
 
   # which experiments are ok
-  exps = expsUsed[, words("name Group Condition_1 Concentration_1 Units_1 Media short")];
+  fields = words("name Group Condition_1 Concentration_1 Units_1 Media short");
+  fields = fields[fields %in% names(expsUsed)];
+  exps = expsUsed[, fields];
   exps = merge(exps, fit$q[,words("name u short maxFit gMean")]);
   high = merge(high, exps, by.x="expName", by.y="name");
   high = subset(high, gMean >= min.gMean & fit >= maxFit - max.below);
