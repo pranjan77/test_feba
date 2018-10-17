@@ -61,7 +61,7 @@ sub sum(@); # sum of a list of values
 
 my $preseq = undef; # before the barcode
 my $postseq = undef; # after (for 50 nt reads this needs to be shortened to AGA)
-my $nPreExpected = 0; # nt between prefix and preseq
+my $nPreExpected; # nt between prefix and preseq
 my $nPreExpectedMin;
 my $nPreExpectedMax;
 my $debug = 0;
@@ -101,7 +101,7 @@ my $doOff1 = undef;
 	    $postseq = "CGATGAATT";
 	} else {
 	    $preseq = "CAGCGTACG";
-	    $nPreExpected = defined $iname ? 14 : 9
+	    $nPreExpected = (defined $iname ? 14 : 9)
               unless defined $nPreExpected;
 	    $postseq = "AGAGACCTC";
 	}
