@@ -392,7 +392,7 @@ if (keys(%ecall) > 0) {
                             $ec );
         }
     }
-    my @curatedlinks = map a({-href => "http://papers.genomics.lbl.gov/cgi-bin/genomeSearch.cgi?orgId=$orgId&query=$_&word=1" },
+    my @curatedlinks = map a({-href => "http://papers.genomics.lbl.gov/cgi-bin/genomeSearch.cgi?gdb=FitnessBrowser&gid=$orgId&orgId=$orgId&query=$_&word=1" },
                              $_), @ec;
     print
         h3("Isozymes"),

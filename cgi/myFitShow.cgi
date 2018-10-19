@@ -263,7 +263,7 @@ if ($geneSpec =~ m/^ec:([0-9A-Za-z.-]+)$/i) {
       }
     }
     print p("Or search using",
-            a({-href => "http://papers.genomics.lbl.gov/cgi-bin/genomeSearch.cgi?orgId=$orgSpec&query=$ecnum&word=1"},
+            a({-href => "http://papers.genomics.lbl.gov/cgi-bin/genomeSearch.cgi?gdb=FitnessBrowser&gid=$orgSpec&orgId=$orgSpec&query=$ecnum&word=1"},
               "Curated BLAST"))
       if $orgSpec ne "";
     &end();
@@ -423,7 +423,7 @@ if (@$domains >= 1) {
 }
 
 print p(qq{Or search for '$geneSpec' in $orginfo->{$orgSpec}{genome} using},
-        a({-href => "http://papers.genomics.lbl.gov/cgi-bin/genomeSearch.cgi?orgId=$orgSpec&query=$geneSpec"},
+        a({-href => "http://papers.genomics.lbl.gov/cgi-bin/genomeSearch.cgi?gdb=FitnessBrowser&gid=$orgSpec&orgId=$orgSpec&query=$geneSpec"},
           "Curated BLAST"))
   if $orgSpec ne "";
 
