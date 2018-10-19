@@ -38,7 +38,7 @@ Usage: MapTnSeq.pl [ -debug ] [ -limit maxReads ] [ -minQuality $minQuality ]
             [-flanking $flanking]  [ -wobble $wobbleAllowed ]
             [ -minIdentity $minIdentity ] [ -minScore $minScore ]
             [ -tileSize $tileSize ] [ -stepSize $stepSize ]
-            [-tmpdir $tmpdir ] [ -unmapped saveTo ]
+            [-tmpdir $tmpdir ] [ -unmapped saveTo ] [ -trunc saveTo ]
             -genome fasta_file -model model_file -first fastq_file > output_file
 
     The fastq file should have phred+33 ("sanger") encoding of quality scores
@@ -75,6 +75,15 @@ Usage: MapTnSeq.pl [ -debug ] [ -limit maxReads ] [ -minQuality $minQuality ]
     tileSize and stepSize are parameters for BLAT.  If the portion of
     the read after the junction is short, try a lower stepSize.  Also
     see BLAT's documentation.
+
+    Use -unmapped or -trunc to save the portion of the reads past the
+    junction. Only reads with barcodes and junctions are
+    saved. -unmapped writes only the unmapped reads, in fasta format,
+    with the barcode and the read name as the definition line. -trunc
+    writes the remaining part of all of the reads with junctions, in
+    fastq format, and it appends :barcode to the end of the read name
+    (but before the space).
+
 END
     ;
 
@@ -90,11 +99,13 @@ sub BLAT8($$$$$$$$); # BLAT to a blast8 format file
     my $modelFile = undef;
     my $blatcmd = -e "$Bin/blat" ? "$Bin/blat" : "blat";
     my $unmappedFile = undef;
+    my $truncFile = undef;
     
     my $minGenomeId = 90;
 
     (GetOptions('debug' => \$debug, 'limit=i' => \$limit, 'minQuality=i' => \$minQuality,
 		'unmapped=s' => \$unmappedFile,
+                'trunc=s' => \$truncFile,
                 'flanking=i' => \$flanking, 'minIdentity=i' => \$minIdentity, 'minScore=i' => \$minScore,
                 'tileSize=i' => \$tileSize,'stepSize=i' => \$stepSize,
                 'tmpdir=s' => \$tmpdir,
@@ -152,6 +163,11 @@ sub BLAT8($$$$$$$$); # BLAT to a blast8 format file
     my $tmpFna = $tmpdir . "/MapTnSeq_" . $$ . "_$rand.fna";
     open(TMPFNA, ">", $tmpFna) || die "Cannot write to $tmpFna";
 
+    my $trunc_fh;
+    if ($truncFile) {
+      open($trunc_fh, ">", $truncFile) || die "Cannot write to $truncFile";
+    }
+
     my $nReads = 0;
     my $nTryToMap = 0;
     # read name => 1 if mapped or pastEnd, 0 otherwise
@@ -189,17 +205,25 @@ sub BLAT8($$$$$$$$); # BLAT to a blast8 format file
         my ($barcode,$obsStart) = FindBarcode($seq,$quality,$model,$barcodeStart,$barcodeEnd);
         next unless defined $barcode;
 
-        $name =~ s/ .*$//;
-        die "Duplicate read name: $name" if exists $nameToBarcode{$name};
-        $nameToBarcode{$name} = $barcode;
+        my $shortname = $name; $shortname =~ s/ .*$//;
+        die "Duplicate read name: $shortname" if exists $nameToBarcode{$shortname};
+        $nameToBarcode{$shortname} = $barcode;
 
         my $transposonEnd = FindModelEnd($seq,$model,$obsStart - $barcodeStart);
         if (defined $transposonEnd && length($seq) >= $transposonEnd + $minScore) {
-            print STDERR "Try to map $name\n" if $debug;
+            print STDERR "Try to map $shortname\n" if $debug;
             my $inGenome = substr($seq, $transposonEnd+1);
-            print TMPFNA ">$name\n$inGenome\n";
+            print TMPFNA ">$shortname\n$inGenome\n";
             $nTryToMap++;
-	    $mapnames{$name} = 0 if defined $unmappedFile;
+	    $mapnames{$shortname} = 0 if defined $unmappedFile;
+            if ($truncFile) {
+              my @words = split / /, $name;
+              $words[0] .= ":$barcode";
+              print $trunc_fh join(" ", @words), "\n",
+                substr($seq, $transposonEnd), "\n",
+                "+", "\n",
+                substr($quality, $transposonEnd), "\n";
+            }
         }
     }
 
@@ -207,6 +231,9 @@ sub BLAT8($$$$$$$$); # BLAT to a blast8 format file
     close(FASTQ) || ($pipe && defined $limit) || die "Error reading from $fastqFile: $!";
     close(TMPFNA) || die "Error writing to $tmpFna";
     print STDERR "Read $nReads reads\n";
+    if ($truncFile) {
+      close($trunc_fh) || die "Error writing to $truncFile";
+    }
 
     if ($nTryToMap == 0) {
       print STDERR "None of the reads are candidates for mapping (none match the model and are long enough)\n";
