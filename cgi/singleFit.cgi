@@ -78,10 +78,21 @@ if (@$hits == 0) {
 
     print
       $start, $tabs,
-        $cgi->h3("$idShow $gene->{gene}: $gene->{desc} in " . $orginfo->{$gene->{orgId}}{genome}),
-          $alt_desc ? p($alt_desc) : "",
-          $cgi->p("Sorry, no fitness data for $idShow");
-    } else {
+      h3("$idShow $gene->{gene}: $gene->{desc} in " . $orginfo->{$gene->{orgId}}{genome}),
+      $alt_desc ? p($alt_desc) : "",
+      p("Sorry, no fitness data for $idShow.",
+              "This gene might not have mapped insertions due to chance,",
+              "or its mutants might be at low abundance after recovery from the freezer,",
+              "or its mutants might grow poorly in the conditions that were used to make the mutant library.");
+    my $exps = $dbh->selectall_arrayref("SELECT * from Experiment WHERE orgId = ? LIMIT 1", { Slice => {} }, $orgId);
+    if (scalar(@$exps) > 0) {
+      my $expName = $exps->[0]{expName};
+      print p("You can the insertions near $idShow that have per-strain fitness values",
+              a({href => "strainTable.cgi?orgId=$orgId&locusId=$locusId&expName=$expName"}, "here") . ".",
+              "Insertions that are at low abundance after recovery from the freezer",
+              "or that lack unique barcodes are not shown.");
+    }
+  } else {
       # show fitness data for gene
       my @fit = @{ $dbh->selectall_arrayref("SELECT expName,fit,t from GeneFitness where orgId=? AND locusId=?",
                                             { Slice => {} },
