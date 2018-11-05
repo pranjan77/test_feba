@@ -87,7 +87,7 @@ if (@$hits == 0) {
     my $exps = $dbh->selectall_arrayref("SELECT * from Experiment WHERE orgId = ? LIMIT 1", { Slice => {} }, $orgId);
     if (scalar(@$exps) > 0) {
       my $expName = $exps->[0]{expName};
-      print p("You can the insertions near $idShow that have per-strain fitness values",
+      print p("You can see the insertions near $idShow that have per-strain fitness values",
               a({href => "strainTable.cgi?orgId=$orgId&locusId=$locusId&expName=$expName"}, "here") . ".",
               "Insertions that are at low abundance after recovery from the freezer",
               "or that lack unique barcodes are not shown.");
