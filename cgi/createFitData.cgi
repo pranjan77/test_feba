@@ -10,15 +10,18 @@
 #######################################################
 #
 # This page generates output to STDOUT and presents it as
-# a download, which includes all of the experimental FITNESS data
-# for a single organism. It is run from org.cgi. 
-# 
+# a download, which includes all of the experimental fitness data
+# for a single organism. It is run from org.cgi. By default
+# it makes a file of fitness values, but it can
+# save t values instead.
+#
 #
 # Required CGI parameters:
 # orgId -- which organism to search for
 #
 # Optional CGI parameters:
 # expName -- which experiments to include. If not specified, include all experiments.
+# t -- report t values rather than fitness values
 
 use strict;
 use CGI qw(:standard Vars);
@@ -31,8 +34,9 @@ use Utils;
 my $cgi = CGI->new;
 
 my $orgId = $cgi->param('orgId');
-$orgId = "" if !defined $orgId;
+die "Must specify orgId" unless defined $orgId;
 my @expNames = $cgi->param('expName');
+my $show_t = $cgi->param('t');
 
 my $dbh = Utils::get_dbh();
 
@@ -48,19 +52,22 @@ foreach my $expName (@expNames) {
     unless exists $exp{$expName};
 }
 
-my $fitness = $dbh->selectall_arrayref("SELECT locusId, expName, fit FROM GeneFitness WHERE orgId = ?", {}, $orgId);
+my $fetchname = $show_t ? "t" : "fit";
+my $fitness = $dbh->selectall_arrayref("SELECT locusId, expName, $fetchname FROM GeneFitness WHERE orgId = ?", {}, $orgId);
 
+# This may store t values rather than actual fitness values
 my %fit=();
 foreach my $frow(@$fitness) {
 	my ($locusId, $expName, $fit) = @$frow;
 	$fit{$locusId}{$expName} = $fit;
 }
 
-my $outfile = @expNames == 0 ? "fit_organism_${orgId}.tsv" : "fit_organism_${orgId}_selected.tsv";
+my $prefix = $show_t ? "t" : "fit";
+my @pieces = ($prefix, "organism", $orgId);
+push @pieces, "selected" if @expNames > 0;
+my $outfile = join("_", @pieces) . ".tsv";
 print ("Content-Type:application/x-download\n");
 print "Content-Disposition: attachment; filename=$outfile\n\n";
-
-# open my $logFile, '>', "organism_$orgId.txt" or die "error trying to (over)write: $!";
 
 @expNames = map { $_->{expName} } @$exp
   if @expNames == 0;
