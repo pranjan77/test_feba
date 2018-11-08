@@ -2,7 +2,7 @@
 #######################################################
 ## myFitShow.cgi
 ##
-## Copyright (c) 2015 University of California
+## Copyright (c) 2015-2018 University of California
 ##
 ## Authors:
 ## Victoria Lo, Wenjun Shao (wjshao@berkeley.edu) and 
@@ -22,10 +22,13 @@ use CGI qw(:standard Vars -nosticky);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
 use IO::Handle;
+use URI::Escape;
 
 use lib "../lib";
 use Utils;
-sub end;
+
+# takes one argument -- ec if searching by ec, empty if searching by text, special if another type of search
+sub end($);
 
 my $cgi=CGI->new;
 
@@ -133,7 +136,7 @@ if ($geneSpec =~ m/^ko:(K\d+)$/i) {
         print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
         print "\n";
     }
-    &end();
+    &end("special");
 }
 
 # Handle queries like EC:1.4.3.1
@@ -141,7 +144,8 @@ if ($geneSpec =~ m/^ec:([0-9A-Za-z.-]+)$/i) {
     my $ecnum = $1;
     my ($ecdesc) = $dbh->selectrow_array("SELECT ecdesc FROM ECInfo WHERE ecnum = ? ;", {}, $ecnum);
     $ecdesc = "unknown" if !defined $ecdesc;
-    print p("Searching for Enyzme Commission number $ecnum ($ecdesc) by Reannotation, by TIGRFam, by KEGG ortholog group, and then by SEED annotation");
+    print p("Searching for Enyzme Commission number $ecnum ($ecdesc)",
+            "by Reannotation, by TIGRFam, by KEGG ortholog group, by SEED annotation, or by best hit in MetaCyc");
     my $reannoquery = qq{SELECT orgId, locusId, new_annotation, sysName, gene
                          FROM Gene JOIN Reannotation USING (orgId,locusId) JOIN ReannotationEC USING (orgId,locusId)
                          WHERE ecnum = ? };
@@ -262,11 +266,41 @@ if ($geneSpec =~ m/^ec:([0-9A-Za-z.-]+)$/i) {
         print "\n";
       }
     }
-    print p("Or search using",
-            a({-href => "http://papers.genomics.lbl.gov/cgi-bin/genomeSearch.cgi?gdb=FitnessBrowser&gid=$orgSpec&orgId=$orgSpec&query=$ecnum&word=1"},
-              "Curated BLAST"))
-      if $orgSpec ne "";
-    &end();
+    if ($count < 100) {
+      # rxnId or rxnName is not useful, so, just show the hit
+      my $metacycquery = qq{SELECT orgId, locusId, sysName, gene, desc, sprotAccession, identity
+                            FROM BestHitMetacyc JOIN Gene USING (orgId,locusId)
+                            WHERE ecnum = ? };
+      $metacycquery .= qq{ AND orgId = "$orgSpec" } if $orgSpec ne "";
+      my $hits4 = $dbh->selectall_arrayref($metacycquery, { Slice => {} }, $ecnum);
+      @$hits4 = grep { !exists $used{ $_->{orgId} }{ $_->{locusId} } } @$hits4;
+      if (@$hits4 > 0) {
+        print h3(b("Match by EC number of best hit in MetaCyc"));
+        my @trows = ();
+        push @trows, $cgi->Tr({-align => 'CENTER', -valign => 'TOP'},
+                              $cgi->th( ['Gene ID','Gene Name', 'Description', 'Genome', '%Identity', 'Fitness' ] ));
+        foreach my $gene (@$hits4) {
+          $used{ $gene->{orgId} }{ $gene->{locusId} } = 1;
+          next if $count >= 100;
+          $count++;
+          my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $gene->{orgId}, $gene->{locusId});
+          my @trow = map td($_),
+            ( Utils::gene_link($dbh, $gene, "name", "geneOverview.cgi"),
+              $gene->{gene},
+              Utils::gene_link($dbh, $gene, "desc", "domains.cgi"),
+              a( {href => "org.cgi?orgId=$gene->{orgId}"}, $orginfo->{$gene->{orgId}}{genome}),
+              a( {href => "http://www.uniprot.org/uniprot/" . $gene->{sprotAccession},
+                  title => "Similar to " . $gene->{sprotAccession} },
+                 $gene->{identity} . "%"),
+              a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle},
+                 $fitstring));
+          push @trows, Tr(@trow);
+        }
+        print $cgi->table({ cellspacing=>0, cellpadding=>3 }, @trows);
+        print "\n";
+      }
+    }
+    &end("ec");
 }
 
 # match by reannotation
@@ -422,20 +456,33 @@ if (@$domains >= 1) {
     print $cgi->table( { cellspacing=>0, cellpadding=>3 }, @trows);
 }
 
-print p(qq{Or search for '$geneSpec' in $orginfo->{$orgSpec}{genome} using},
-        a({-href => "http://papers.genomics.lbl.gov/cgi-bin/genomeSearch.cgi?gdb=FitnessBrowser&gid=$orgSpec&orgId=$orgSpec&query=$geneSpec"},
-          "Curated BLAST"))
-  if $orgSpec ne "";
+&end("");
 
-&end();
-
-sub end {
-    if ($count >= 100) {
-	print "<BR> Only the first 100 results are shown. <br>";
-    } elsif ($count == 0) {
-        print $cgi->h3("No gene found for $geneSpec", $orgDescriptor);
+sub end($) {
+  my ($mode) = @_;
+  my $show_curated = $orgSpec ne "" && $mode ne "special";
+  if ($count >= 100) {
+    print p("Only the first 100 results are shown.");
+  } elsif ($count == 0) {
+    print p("No gene found for $geneSpec", $orgDescriptor);
+  } elsif (! $show_curated) {
+    # show something at bottom so is clear search is done
+    print p("Done searching.");
+  }
+  if ($show_curated) {
+    # link to curated BLAST
+    my $query = $geneSpec;
+    my $word = 0;
+    if ($mode eq "ec") {
+      $query =~ s/^ec://;
+      $word = 1;
     }
-    $dbh->disconnect();
-    Utils::endHtml($cgi);
-    exit(0);
+    my $URL = "http://papers.genomics.lbl.gov/cgi-bin/genomeSearch.cgi?gdb=FitnessBrowser&gid=$orgSpec&orgId=$orgSpec&word=$word"
+      . "&query=" . uri_escape($query);
+    print p(qq{Or search for '$query' in $orginfo->{$orgSpec}{genome} using},
+            a({-href => $URL}, "Curated BLAST"));
+  }
+  $dbh->disconnect();
+  Utils::endHtml($cgi);
+  exit(0);
 }
