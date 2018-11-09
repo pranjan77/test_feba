@@ -43,8 +43,10 @@ my $dbh = Utils::get_dbh();
 # or to orgAll.cgi if displaying all experiments
 if ($orgId ne "" && !defined $expGroup && ($cgi->param("All experiments") || $expSpec eq "")) {
     print redirect(-url=>"org.cgi?orgId=$orgId");
+    exit(0);
 } elsif ($orgId eq "" && !$expSpec && !$expGroup && !$condition1) {
   print redirect(-url=>"orgAll.cgi");
+  exit(0);
 } 
 
 my $specShow = $expSpec;

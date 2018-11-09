@@ -40,6 +40,7 @@ if ($gene->{type} != 1) {
     # this can be reached by some links from gene descriptions
     # redirect to the gene overview page if not a protein
     print redirect(-url => "geneOverview.cgi?orgId=$orgId&gene=$locusId");
+    exit(0);
 }
 
 # write the title
