@@ -199,6 +199,25 @@ if ($tsv || $outlier) {
   }
 }
 
+my $tsvURL = "compareExps.cgi?"
+  . join("&", "tsv=1", "orgId=$orgId",
+         (map { "expName1=$_" } @expNames1),
+         map { "expName2=$_" } @expNames2);
+my $bottom = p("Download",
+               a( { -href => "createFitData.cgi?orgId=$orgId&"
+                    . join("&", map { "expName=$_" } (@expNames1,@expNames2)) },
+                  "fitness values for these experiments"),
+               "or",
+               a( { -href => $tsvURL },
+                  (@expNames1 > 1 || @expNames2 > 1 ? "averaged fitness scores and combined t values"
+                   : "fitness scores and t values")));
+$bottom .= p("Combined", i("t"), "values are computed as sum(<i>t</i>)/<i>sqrt(n)</i>, where", i("n"),
+                   "is the number of experiments being averaged.",
+                   "If these experiments were compared to the same start or Time0 sample",
+                   "(usually, if they are in the same set and were done on the same date),",
+                   "then the", i("t"), "values may be inflated.")
+  if @expNames1 > 1 || @expNames2 > 1;
+
 if ($tsv) { # tab delimited values, not a page
   print join("\t", qw{locusId sysName gene desc x tx y ty})."\n";
   while (my ($locusId,$gene) = each %$genes) {
@@ -297,7 +316,10 @@ if ($outlier) { # table of outlying genes
     print h3($outlierCode), $desc_all_exp, p(scalar(@genesShow) . " genes found");
     if (@genesShow > 0) {
 	my @trows = ();
-	my @headings = qw{gene name description x y};
+        my $tname1 = @expNames1 > 1 ? "combined t" : "t";
+        my $tname2 = @expNames2 > 1 ? "combined t" : "t";
+	my @headings = ("gene", "name", "description", "x", "y",
+                        "${tname1}<sub>x</sub>", "${tname2}<sub>y</sub>");
 	push @trows, $cgi->Tr({-align=>'center',-valign=>'top'}, $cgi->th(\@headings));
         my $GroupCond1 = "expGroup=$exp1->{expGroup}&condition1=$exp1->{condition_1}";
         my $GroupCond2 = "expGroup=$exp2->{expGroup}&condition1=$exp2->{condition_1}";
@@ -315,33 +337,37 @@ if ($outlier) { # table of outlying genes
 				  $cgi->td($gene->{gene}),
                                   $cgi->td(Utils::gene_link($dbh, $gene, "desc", "domains.cgi")),
 				  $cgi->td({ -bgcolor => Utils::fitcolor($gene->{x}) },
-					   $cgi->a({-title => sprintf("%st = %.1f. Click for conservation.",
-                                                                      @expNames1 > 1 ? "combined " : "",
-                                                                      $gene->{tx}),
+					   $cgi->a({-title => "Click for conservation",
                                                     -style => "color: black;",
                                                     -href => "$orthFitBase&$GroupCond1" },
 						   sprintf("%.1f", $gene->{x}))),
 				  $cgi->td({ -bgcolor => Utils::fitcolor($gene->{y}) },
-					   $cgi->a({-title => sprintf("%st = %.1f. Click for conservation",
-                                                                      @expNames2 > 1 ? "combined " : "",
-                                                                      $gene->{ty}),
+					   $cgi->a({-title => "Click for conservation",
                                                     -style => "color: black;",
                                                     -href => "$orthFitBase&$GroupCond2" },
-						   sprintf("%.1f", $gene->{y}))) );
+						   sprintf("%.1f", $gene->{y}))),
+                                  $cgi->td({-align => "right"}, abs($gene->{tx}) > 4 ? $tx : small($tx)),
+                                  $cgi->td({-align => "right"}, abs($gene->{ty}) > 4 ? $ty : small($ty)));
 	}
-	my $limitString = "";
-	if (@genesShow > 20) {
-	    @genesShow = @genesShow[0..19];
-	    $limitString = "top 20";
-	}
+        @genesShow = @genesShow[0..19] if @genesShow >= 20;
 	my $heatURL = "genesFit.cgi?orgId=$orgId&" . join("&", map { "locusId=" . $_->{locusId} } @genesShow);
+        my @genesShow10 = @genesShow;
+        @genesShow10 = @genesShow[0..9] if @genesShow >= 10;
+        my $heatURL10 = "genesFit.cgi?orgId=$orgId&" . join("&", map { "locusId=" . $_->{locusId} } @genesShow10);
 
 	print
 	    table({cellpadding=>3, cellspacing=>0}, @trows),
-	    p(a({href => $heatURL}, "Heatmap for $limitString genes"));
-	    
+	    p("See heatmap for",
+              a({href => $heatURL10}, "top 10"),
+              "or",
+              a({href => $heatURL}, "top 20"),
+              "genes");
     }
-    print p(a({href => "compareExps.cgi?orgId=$orgId&expName1=$expName1&expName2=$expName2"},"Show scatterplot"));
+    my $plotLink = "compareExps.cgi?orgId=$orgId"
+      . "&" . join("&", map "expName1=$_", @expNames1)
+      . "&" . join("&", map "expName2=$_", @expNames2);
+    print p(a({href => $plotLink},"See scatterplot")),
+      $bottom;
 
     $dbh->disconnect();
     Utils::endHtml($cgi);
@@ -361,26 +387,6 @@ if ($help) {
     <li>Or make a table of all the genes that are outliers, i.e., use "Low y" to list genes that are only important in $expDesc2.</li>
     </ul></div>];
 }
-
-my $tsvURL = "compareExps.cgi?"
-  . join("&", "tsv=1", "orgId=$orgId",
-         (map { "expName1=$_" } @expNames1),
-         map { "expName2=$_" } @expNames2);
-
-my $bottom = p("Download",
-               a( { -href => "createFitData.cgi?orgId=$orgId&"
-                    . join("&", map { "expName=$_" } (@expNames1,@expNames2)) },
-                  "fitness values for these experiments"),
-               "or",
-               a( { -href => $tsvURL },
-                  (@expNames1 > 1 || @expNames2 > 1 ? "averaged fitness scores and combined t values"
-                   : "fitness scores and t values")));
-$bottom .= p(small("Combined", i("t"), "values are computed as sum(<i>t</i>)/<i>n</i>, where", i("n"),
-                   "is the number of experiments.",
-                   "If these experiments were compared to the same start or Time0 sample",
-                   "(usually, if they are in the same set and were done on the same date),",
-                   "then the", i("t"), "values may be inflated."))
-  if @expNames1 > 1 || @expNames2 > 1;
 
 my $tx_name = @expNames1 > 1 ? "combined t" : "t";
 my $ty_name = @expNames2 > 1 ? "combined t" : "t";
