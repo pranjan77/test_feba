@@ -32,6 +32,7 @@
 #	each name should be like "setH5", or a list of replicates or near-replicates
 #	genes with |t1| < minT are in grey
 #
+# PlotSpecList -- make a specific phenotypes plot
 
 # Programmer Utilities:
 # Use LoadOrgs(list of organism nicknames) to create the data structures
@@ -627,4 +628,72 @@ CensorExperiments = function(org, expRemove) {
 
   orgs[[org]] <<- out;
   cat("#Successful experiments for", org, "reduced from", sum(oldq$u), "to", sum(out$q$u), "\n");
+}
+
+# like the old PlotCSS
+# but with sysName on left, no organism info, and user-specified label on right
+# Each subplot is separated by horizontal lines (unless lines=FALSE)
+# Sections can be indicated by loci=""
+# Expressions are allowed in labels for loci but not labels for sections 
+# Each row of condspec specifies which conditions are colored that way and
+# must include Group, Condition_1, and col.
+#   Optionally, Concentration_1 or other fields from the metadata_by_exp table can be specified in condspec
+#   These can set for some rows and missing (empty or NA) for others.
+#   These are all matched in a case insensitive way.
+# Rows of condspec can also set cex or pch
+#
+PlotSpecList = function(org, loci, labels=rep("",length(loci)), condspec,
+			default.col=1, default.cex=1, default.pch=20,
+                        label.cex=1, jitterBy=0.25,
+			xlim=c(-4,4),
+			xlab="Gene Fitness", main="", lines=TRUE, stripes=FALSE, stripeColor="lightyellow",
+                        shortlabels=FALSE, blanklabels=F) {
+	# The y layout is to jitter by +/- jitterBy, centered at nrow(locispec):1
+        # And the separator lines are at +/- 0.5
+	plot(xlim, c(0.5,length(loci)+0.4), bty="n", xlab=xlab, ylab="", yaxt="n", pch=NA, yaxs="i", main=main);
+        if(lines) segments(xlim[1], (2:length(loci))-0.5, xlim[2], (2:length(loci))-0.5);
+        stopifnot(c("Group","Condition_1","col") %in% names(condspec));
+
+	# Set up per-experiment colors
+        meta = metadata_by_exp(org);
+	is_simple = IsSimpleCond(meta$Group, meta$Condition_1, meta$Condition_2);
+	col=rep(default.col, nrow(meta));
+        assigned = rep(FALSE, nrow(meta));
+        cex=rep(default.cex, nrow(meta));
+        pch=rep(default.pch, nrow(meta));
+	for (j in 1:nrow(condspec)) {
+            u = !assigned;
+            for (n in intersect(names(condspec), names(meta))) {
+              if (condspec[[n]][j] != "" && !is.na(condspec[[n]][j]))
+                u = u & tolower(meta[[n]]) %in% tolower(condspec[[n]][j]);
+            }
+            if (sum(u) == 0) cat("Warning: no matches for row", j, "of condspec\n");
+            assigned[u] = TRUE;
+            col[u] = if(is.character(default.col)) as.character(condspec$col[j]) else condspec$col[j];
+	    if(!is.null(condspec$pch)) pch[u] = condspec$pch[j];
+	    if(!is.null(condspec$cex)) cex[u] = condspec$cex[j];
+	}
+	for (i in 1:length(loci)) {
+	    if(as.character(loci[i]) == "") next; # to allow deliberate spacing
+            if (stripes && (i %% 2) == 1)
+              rect(-100, 1+length(loci)-i-0.5, 100, 1+length(loci)-i+0.5, col=stripeColor, border=NA, xpd=T);
+	    locusId = get_genes(org, loci[i]);
+	    if(length(locusId) != 1) stop("Multiple genes from ", loci[i]);
+	    if(is.na(locusId)) stop("Unrecognized gene in org ", org, " : ", loci[i]);
+	    x = get_fit(org,locusId);
+	    if(any(is.na(x))) stop("No fitness data for ", locusId," ",loci[i]," in org ",org);
+
+	    y = jitterBy * (runif(length(x)) - 0.5) * 2;
+	    points(pmax(xlim[1], pmin(xlim[2], x)), y + length(loci) - i + 1,
+		cex=cex, pch=pch, col=col);
+            # emphasize assigned points by replotting on top?
+	    points(pmax(xlim[1], pmin(xlim[2], x)), y + length(loci) - i + 1,
+		cex=cex, pch=pch, col=ifelse(assigned, col, NA));
+	}
+        if (!blanklabels)
+	  mtext(if(shortlabels) sub("^.*_", "_", loci, perl=T) else loci,
+              at=length(loci):1, side=2, line=0, las=2, cex=label.cex);
+	mtext(ifelse(as.character(loci)=="", "", labels), at=length(loci):1, side=4, line=0, las=2, cex=label.cex, xpd=T);
+        # Bold font does not show up unless convert labels to character
+	text(xlim[1], length(loci):1, ifelse(as.character(loci)=="", as.character(labels), ""), font=2, cex=label.cex, adj=c(0,0.5), xpd=T);
 }
