@@ -6,10 +6,14 @@ use lib "$Bin/../lib";
 use FEBA_Utils; # for ReadFastaEntry
 
 my $usage = <<END
-Usage: fastare.pl [ -both ] -query pattern < fasta > out.table
-The pattern must be in IUPAC form, such as ACGTNNNNACGT.
-Multiple values of query can be given.
-By default only searches on the + strand (because patterns are often palindromic anyway).
+Usage: fastare.pl -query pattern < fasta > out.table
+or     fastare.pl -queryfile patternfile < fasta > out.table
+The pattern must be in IUPAC form, such as ACGTNNNNACGT. Multiple values of query can be given.
+A pattern file just has one pattern per line. Empty lines and lines starting with # are ignored.
+By default, this only searches on the + strand (because patterns are often palindromic anyway).
+Other options:
+  -both -- search both strands
+  -debug -- some debugging printouts
 END
 ;
 
@@ -25,12 +29,23 @@ my %codes = ("R" => "AG",
              "V" => "ACG",
              "N" => "ACGT");
 
-my ($debug, $both);
+my ($debug, $both, $queryfile);
 my @query;
 die $usage
-  unless GetOptions('debug' => \$debug, 'both' => \$both, 'query=s{1,}' => \@query)
-  && @ARGV == 0
-  && @query > 0;
+  unless GetOptions('debug' => \$debug, 'both' => \$both, 'query=s{1,}' => \@query, 'queryfile=s' => \$queryfile)
+  && @ARGV == 0;
+die $usage unless @query > 0 || defined $queryfile;
+if (defined $queryfile) {
+  open(QUERY, "<", $queryfile) || die "Cannot read $queryfile\n";
+  while(<QUERY>) {
+    next if m/^#/;
+    s/[ \t\r\n]+$//;
+    push @query, $_ if $_ ne "";
+  }
+  close(QUERY) || die "Error reading $queryfile";
+  die "No queries in $queryfile\n" if @query == 0;
+  print STDERR "Found " . scalar(@query) . " queries in $queryfile\n" if $debug;
+}
 my @regexp;
 foreach my $query (@query) {
   $query =~ m/^[ACGTURYSWKMBDHVN]+$/ || die "Invalid query $query -- must use IUPAC codes only\n";
