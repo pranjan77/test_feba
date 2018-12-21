@@ -50,7 +50,9 @@ expected to be in
 
     organism_directory/pool or pool.n10
 
-(If using the -sets argument, organism directory is set to g/organism1, etc.)
+(If using the -sets argument, organism directory is set to g/organism1, etc.,
+and overwriting output files is not allowed. Also you can separate the sets
+by ; and optional whitespace instead of by ,.)
 
 Output files are in organism_directory/ --
 setname.colsum -- total parsed reads per index
@@ -94,7 +96,7 @@ my $debug = undef;
     my @setnames = ();
     if (defined $setspec) {
       die $usage unless defined $fastq && @ARGV == 0;
-      @setnames = split /,/, $setspec;
+      @setnames = split /[,;]\s*/, $setspec;
       foreach my $setname (@setnames) {
         my @setparts = split /_/, $setname;
         die "Invalid set name: $setname" unless @setparts > 1;
@@ -119,6 +121,20 @@ my $debug = undef;
         }
         die unless -d $gdir;
         push @gdirs, $gdir;
+      }
+      # and check that all of these are new
+      foreach my $i (0..(scalar(@setnames)-1)) {
+        my $setname = $setnames[$i];
+        my $gdir = $gdirs[$i];
+        my $out = "$gdir/$setname";
+        foreach my $file ("$out.colsum", "$out.poolcount") {
+          die join("\n",
+                   "Error: output for $gdir $setname already exists!",
+                   "See file $file",
+                   "Please remove the colsum and poolcount files or correct the set name",
+                   "")
+            if -s $file; # if not empty
+        }
       }
     } else {
       die $usage unless @ARGV == 3;
