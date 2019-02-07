@@ -51,7 +51,7 @@ while (my $cmp = ParsePTools($fhc)) {
   my @formula = ();
   foreach my $l (@{ $cmp->{"CHEMICAL-FORMULA"} }) {
     my $string = $l->{"value"};
-    die "Invalid component of chemical formula $string" unless $string =~ m/^[(]([A-Za-z]+) (\d+)[)]$/;
+    die "Invalid component of chemical formula $string" unless $string =~ m/^[(]([A-Za-z-]+) (\d+)[)]$/;
     my ($element, $cnt) = ($1,$2);
     push @formula, ucfirst(lc($element)) . $cnt;
   }
@@ -138,11 +138,12 @@ while (my $path = ParsePTools($fhpath)) {
     # a pathway can be listed as a predecessor; this means incorporate all predecessors from that pathway,
     # but will rely on SUB-PATHWAYS to explicitly incorporate subpathways
     if ($string =~ m/^[A-Z0-9+-]+$/) {
-      # igore;
+      # ignore;
     } else {
       $string =~ m/^[(]([^()]+)[)]$/ || die "Cannot parse PREDECESSORS for pathway $pathwayId: $string";
       my @pre = split / +/, $1;
       my $rxnId = shift @pre;
+      $rxnId = $1 if $rxnId =~ m/^"(.*)"$/; # not sure why but these are sometimes quoted
       push @{ $pred{$rxnId} }, @pre;
     }
   }
