@@ -446,8 +446,14 @@ open(OUT, ">", "$out/MetacycCompound.tab")
   || die "Cannot write to $out/MetacycCompound.tab";
 foreach my $compoundId (sort keys %compounds) {
   my $cmp = $compounds{$compoundId};
+  my $name = $cmp->{"compoundName"};
+  # Quote names for sqlite3's benefit
+  if ($name =~ m/"/) {
+    $name =~ s/"/""/g;
+    $name = '"' . $name . '"';
+  }
   print OUT join("\t", $compoundId,
-                 $cmp->{"compoundName"}, $cmp->{"keggLigand"}, $cmp->{"formula"},
+                 $name, $cmp->{"keggLigand"}, $cmp->{"formula"},
                 0 # not a class
                 )."\n";
 }
