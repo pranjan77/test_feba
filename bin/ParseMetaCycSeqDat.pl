@@ -145,6 +145,7 @@ while (my $rxn = ParsePTools($fhRxn)) {
   my @ecs = ();
   @ecs = map $_->{value}, @{ $rxn->{"EC-NUMBER"}}
     if exists $rxn->{"EC-NUMBER"};
+  @ecs = map { s/^EC-//; $_ } @ecs; # MetaCyc entries usually have this prefix
   $rxnEc{$rxnId} = \@ecs;
 }
 close($fhRxn) || die "Error reading ${indir}/reactions.dat";
