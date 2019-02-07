@@ -3,7 +3,7 @@ use strict;
 use Getopt::Long;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
-use FEBA_Utils; # for ReadFasta()
+use FEBA_Utils; # for ReadFasta(), ReadTable()
 use DBI;
 
 my $gdir = "g";
@@ -66,13 +66,11 @@ foreach my $table (@metacyc_tables) {
 
 my $metaseqs = FEBA_Utils::ReadFasta($metaseqfile);
 
-my %links = (); # sprotId => list of [ rxnId, ecNum ]
-open(IDS, "<", $metaidsfile) || die "Cannot read $metaidsfile";
-while(my $line = <IDS>) {
-    chomp $line;
-    my ($rxnId, $ecNum, $sprotId) = split "\t", $line;
-    die "Cannot parse $line from $metaidsfile" unless defined $sprotId;
-    push @{ $links{$sprotId} }, [ $rxnId, $ecNum ];
+my %links = (); # sprotId => list of [ desc, rxnId, ecNum ]
+my @metaids = &ReadTable($metaidsfile, ["protId","desc","rxnId","EC"]);
+foreach my $row (@metaids) {
+  push @{ $links{$row->{protId}} },
+    [ $row->{desc}, $row->{rxnId}, $row->{EC} ];
 }
 
 my $nGenes = 0;
@@ -91,6 +89,7 @@ foreach my $org (@orgs) {
         next if $line =~ m/^#/; # comment lines in header
         my ($query,$subject,$identity,$alnlen,$mismatch,$gaps,$qstart,$qend,$sstart,$send,$log10E,$bits)
             = split /\t/, $line;
+        $subject =~ s/ .*//; # remove description
         die "Cannot parse\n$line\nfrom $hitsfile" unless defined $bits;
         die "No length for $query" unless exists $seqs->{$query};
         my $qlen = length( $seqs->{$query} );
@@ -106,14 +105,15 @@ foreach my $org (@orgs) {
         $nGenes++;
         my ($org2,$locusId) = split /:/, $query;
         die "Invalid query id $query" unless $org eq $org2 && defined $locusId && $locusId ne "";
-        my $links = $links{$subject};
-        die "No links for $subject the best hit of $query" unless defined $links;
+        my $protId = $subject; $protId =~ s/^gnl[|]META[|]//;
+        my $links = $links{$protId};
+        die "No links for $subject protId $protId the best hit of $query" unless defined $links;
         my %seenRxn = (); # prevent repeats of rxnIds
         foreach my $link (@$links) {
-            my ($rxnId, $ecNum) = @$link;
+            my ($desc, $rxnId, $ecNum) = @$link;
             next if exists $seenRxn{$rxnId};
             $seenRxn{$rxnId} = 1;
-            print OUT join("\t", $org, $locusId, $subject, $identity, $rxnId, $ecNum)."\n";
+            print OUT join("\t", $org, $locusId, $protId, $identity, $desc, $rxnId, $ecNum)."\n";
         }
     }
     close(HITS) || die "Error reading $hitsfile";

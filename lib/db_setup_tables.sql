@@ -255,11 +255,13 @@ CREATE TABLE 'SwissProtDesc' (
 CREATE TABLE 'BestHitMetacyc' (
        orgId TEXT NOT NULL,
        locusId TEXT NOT NULL,
-       sprotAccession TEXT NOT NULL, /* occasionaly a TReMBL not SwissProt accession */
+       protId TEXT NOT NULL, /* MetaCyc's monomer id */
        identity REAL NOT NULL,
-       rxnId TEXT NOT NULL, /* a metacyc reaction id */
+       desc TEXT NOT NULL, /* MetaCyc's description for the hit */
+       rxnId TEXT NOT NULL, /* a metacyc reaction id (or empty string) */
        /* If not fully qualified, metacyc EC #s are shorter instead of having trailing dashes */
-       ecnum TEXT, /* MetaCyc documentation says it may be null; not sure it happens; not handled by loading code */
+       /* And they may be the empty string */
+       ecnum TEXT,
        PRIMARY KEY(orgId,locusId,rxnId)
 );
 CREATE INDEX 'BestHitMetacycByEC' ON BestHitMetacyc ('ecnum','orgId');
