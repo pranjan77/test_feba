@@ -1053,7 +1053,8 @@ sub GeneToEc($$$) {
 sub GeneToRxn($$$$) {
   my ($dbh, $orgId, $locusId, $ecs) = @_;
   my @comb = ();
-  push @comb, @{ $dbh->selectcol_arrayref("SELECT rxnId FROM BestHitMetaCyc WHERE orgId = ? AND locusId = ?",
+  push @comb, @{ $dbh->selectcol_arrayref(qq{ SELECT rxnId FROM BestHitMetacyc
+                                              WHERE orgId = ? AND locusId = ? AND rxnId <> "" },
                                           {}, $orgId, $locusId) };
   push @comb, @{ $dbh->selectcol_arrayref(qq{ SELECT DISTINCT rxnId FROM SEEDAnnotation
                                               JOIN SEEDAnnotationToRoles USING (seed_desc)

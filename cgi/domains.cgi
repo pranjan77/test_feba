@@ -215,17 +215,17 @@ if (scalar(@$bhMetacyc) > 0) {
   my %ecSeen = ();
   # Multiple hits if gene is linked to >1 reaction
   foreach my $row (@$bhMetacyc) {
+    next if $row->{rxnId} eq "";
+    $metacycrxn{ $row->{rxnId} } = 1;
+    my $rxnName = $row->{rxnName} || "";
     my $ecnums = $dbh->selectcol_arrayref("SELECT ecnum from MetacycReactionEC WHERE rxnId = ?",
                                           {}, $row->{rxnId});
-    my $rxnName = $row->{rxnName} || "";
-    $metacycrxn{ $row->{rxnId} } = 1;
     foreach my $ec (@$ecnums) {
-      next if exists $ecSeen{$ec};
+      next if exists $ecSeen{$ec} || $ec eq "";
       $ecSeen{$ec} = 1;
       $ecall{$ec}{"MetaCyc"} = 1;
       push @showecs, $ec;
       # and maybe update the name
-
       # If no reaction name, or it is just some EC number(s) --
       # replace with KEGG description of first ec
       if ($rxnName eq "" || $rxnName =~ m/^[0-9][.][0-9.,]+$/) {
@@ -233,8 +233,8 @@ if (scalar(@$bhMetacyc) > 0) {
                                            {}, $ec);
         $rxnName = "" if !defined $rxnName;
       }
+      $rxnName = $row->{rxnId} if $rxnName eq "";
     }
-    $rxnName = $row->{rxnId} if $rxnName eq "";
     my $showrxn = a({ -href => "http://metacyc.org/META/NEW-IMAGE?type=REACTION&object=" . $row->{rxnId},
                       -title => "see $row->{rxnId} in MetaCyc" },
                  $rxnName);
@@ -245,13 +245,12 @@ if (scalar(@$bhMetacyc) > 0) {
     push @showrxns, $showrxn;
   }
   my $row = $bhMetacyc->[0];
-  my $acc = $row->{sprotAccession};
-  print
-      p("MetaCyc:",
-        sprintf("%.0f%% identical to", $row->{identity}),
-        a({ href => "http://www.uniprot.org/uniprot/$acc" }, $acc) . ": " .
-        join("; ", @showrxns)
-       );
+  my $URL = "http://metacyc.org/gene?orgId=META&id=" . $row->{protId};
+  my $desc = a({ href => $URL }, $row->{desc});
+  $desc .= br() . small(join("; ", @showrxns)) if @showrxns > 0;
+  print p( "MetaCyc:",
+           sprintf("%.0f%% identical to", $row->{identity}),
+           $desc );
 }
 print "\n";
 

@@ -268,7 +268,8 @@ if ($geneSpec =~ m/^ec:([0-9A-Za-z.-]+)$/i) {
     }
     if ($count < 100) {
       # rxnId or rxnName is not useful, so, just show the hit
-      my $metacycquery = qq{SELECT orgId, locusId, sysName, gene, desc, sprotAccession, identity
+      my $metacycquery = qq{SELECT orgId, locusId, sysName, gene, Gene.desc,
+                                   BestHitMetacyc.desc AS desc2, protId, identity
                             FROM BestHitMetacyc JOIN Gene USING (orgId,locusId)
                             WHERE ecnum = ? };
       $metacycquery .= qq{ AND orgId = "$orgSpec" } if $orgSpec ne "";
@@ -289,8 +290,8 @@ if ($geneSpec =~ m/^ec:([0-9A-Za-z.-]+)$/i) {
               $gene->{gene},
               Utils::gene_link($dbh, $gene, "desc", "domains.cgi"),
               a( {href => "org.cgi?orgId=$gene->{orgId}"}, $orginfo->{$gene->{orgId}}{genome}),
-              a( {href => "http://www.uniprot.org/uniprot/" . $gene->{sprotAccession},
-                  title => "Similar to " . $gene->{sprotAccession} },
+              a( {href => "http://metacyc.org/gene?orgId=META&id=" . $gene->{protId},
+                  title => "Similar to " . $gene->{desc2} },
                  $gene->{identity} . "%"),
               a( {href => "myFitShow.cgi?orgId=$gene->{orgId}&gene=$gene->{locusId}", title => $fittitle},
                  $fitstring));
