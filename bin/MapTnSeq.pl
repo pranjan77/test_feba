@@ -14,6 +14,7 @@ my $wobbleAllowed = 2; # uncertainty in location of barcode or end of transposon
 my $tmpdir = defined $ENV{TMPDIR} ? $ENV{TMPDIR} : "/tmp";
 my $minIdentity = 90; # minimum %identity for mapping to genome or past-end
 my $minScore = 15; # minimum score for mapping to genome or past-end
+my $delta = 5; # minimum difference in score for considering a hit unique
 my $debug = undef;
 # Parameters for BLAT. Thanks to Judy Savitskaya for these additions
 my $tileSize = 11; # size of an alignment tile
@@ -36,7 +37,7 @@ my %nameToBarcode = ();
 my $usage = <<END
 Usage: MapTnSeq.pl [ -debug ] [ -limit maxReads ] [ -minQuality $minQuality ]
             [-flanking $flanking]  [ -wobble $wobbleAllowed ]
-            [ -minIdentity $minIdentity ] [ -minScore $minScore ]
+            [ -minIdentity $minIdentity ] [ -minScore $minScore ] [ -delta $delta ]
             [ -tileSize $tileSize ] [ -stepSize $stepSize ]
             [-tmpdir $tmpdir ] [ -unmapped saveTo ] [ -trunc saveTo ]
             -genome fasta_file -model model_file -first fastq_file > output_file
@@ -107,6 +108,7 @@ sub BLAT8($$$$$$$$); # BLAT to a blast8 format file
 		'unmapped=s' => \$unmappedFile,
                 'trunc=s' => \$truncFile,
                 'flanking=i' => \$flanking, 'minIdentity=i' => \$minIdentity, 'minScore=i' => \$minScore,
+                'delta=i' => \$delta,
                 'tileSize=i' => \$tileSize,'stepSize=i' => \$stepSize,
                 'tmpdir=s' => \$tmpdir,
                 'blat=s' => \$blatcmd,
@@ -122,6 +124,7 @@ sub BLAT8($$$$$$$$); # BLAT to a blast8 format file
     die "tileSize must be at least 7" if $tileSize < 7;
     die "stepSize must be at least 1" if $stepSize < 1;
     die "Invalid minimum identity" if $minIdentity < 50 || $minIdentity > 100;
+    die "delta cannot be negative\n" if $delta < 0;
 
     open(MODEL, "<", $modelFile) || die "Cannot read $modelFile";
     my $model = <MODEL>;
@@ -414,7 +417,7 @@ sub HandleGenomeBLAT($$) {
     foreach my $row (@$rows) {
         my ($read2, $subject, $identity, $len, $mm, $gaps, $qBeg, $qEnd, $sBeg, $sEnd, $eval, $score) = @$row;
         die unless $read2 eq $read;
-        if (scalar(@besthits) == 0 || $score >= $besthits[0][$SCORE] - 5) {
+        if (scalar(@besthits) == 0 || $score >= $besthits[0][$SCORE] - $delta) {
             # convert from 0-based to 1-based position, and note that sBeg always < sEnd so flip if stranded
             push @besthits,  [ $subject, $sBeg, ($sBeg < $sEnd ? "+" : "-"), $score,
                                $identity, $qBeg, $qEnd ];
@@ -428,7 +431,7 @@ sub HandleGenomeBLAT($$) {
 
     # and output a mapping row (or none)
     if (exists $hitsPastEnd->{$read}) {
-        if ($hitsPastEnd->{$read} >= $score - 5) {
+        if ($hitsPastEnd->{$read} >= $score - $delta) {
             $nPastEndTrumps++;
             print STDERR "Past end trumps for $read\n" if $debug;
             return;
