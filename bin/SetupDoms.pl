@@ -43,7 +43,7 @@ use FEBA_Utils; # for NewerThan()
 		print CMDS "$hmmscan --cut_tc --domtblout g/$org/tigrfam.dom -o g/$org/tigrfam.hmmscan tigrfam.hmm g/$org/aaseq2 >& g/$org/tigrfam.log\n";
 	    }
 	    close(CMDS) || die "Error writing to $cmdsfile";
-	    system("feba/bin/submitter.pl $cmdsfile") == 0 || die "Jobs failed";
+	    system("$Bin/submitter.pl $cmdsfile") == 0 || die "Jobs failed";
 	}
     }
 
@@ -88,7 +88,7 @@ use FEBA_Utils; # for NewerThan()
             system("$Bin/RunRapSearch.pl",$org) == 0 || die "Error for rap search on $org";
         }
         print STDERR "Running KeggBestHit.pl on $org\n";
-        system("feba/bin/KeggBestHit.pl $org > g/$org/besthit.kegg") == 0
+        system("$Bin/KeggBestHit.pl $org > g/$org/besthit.kegg") == 0
             || die "Error for KeggBestHit.pl on $org";
         print STDERR "Running seed on $org\n";
         system("$Bin/run_seed.pl", $org);
