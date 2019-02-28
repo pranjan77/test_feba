@@ -271,8 +271,9 @@ if ($geneSpec =~ m/^ec:([0-9A-Za-z.-]+)$/i) {
       my $metacycquery = qq{SELECT orgId, locusId, sysName, gene, Gene.desc,
                                    BestHitMetacyc.desc AS desc2, protId, identity
                             FROM BestHitMetacyc JOIN Gene USING (orgId,locusId)
-                            WHERE ecnum = ? ORDER BY identity DESC };
+                            WHERE ecnum = ? };
       $metacycquery .= qq{ AND orgId = "$orgSpec" } if $orgSpec ne "";
+      $metacycquery .= " ORDER BY identity DESC";
       my $hits4 = $dbh->selectall_arrayref($metacycquery, { Slice => {} }, $ecnum);
       @$hits4 = grep { !exists $used{ $_->{orgId} }{ $_->{locusId} } } @$hits4;
       if (@$hits4 > 0) {
