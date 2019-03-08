@@ -16,7 +16,7 @@
 # qtype -- protein or nucleotide (default is protein)
 #
 # Optional CGI parameters in either mode:
-# numHit -- how many hits to show (default is 20)
+# numHit -- how many hits to show
 
 use strict;
 
@@ -33,11 +33,12 @@ use URI::Escape;
 
 my $cgi=CGI->new;
 my $style = Utils::get_style();
+my $nCPU = $ENV{MC_CORES} || 8;
 
 # read the input information
 my $query = $cgi->param('query') || "";
 my $qtype = $cgi->param('qtype') || "protein";
-my $numHit = $cgi->param('numHit') || 40;
+my $numHit = $cgi->param('numHit') || 100;
 my $locusSpec = $cgi->param('locusId') || "";
 my $orgId = $cgi->param('orgId') || "";
 my $dbh = Utils::get_dbh();
@@ -103,7 +104,8 @@ my $orginfo = Utils::orginfo($dbh);
 my $title = "";
 my $tabs = "";
 my $orth;
-if (defined $orgId and $locusSpec) {
+my $showOrth = $orgId && $locusSpec;
+if ($showOrth) {
     $title = "Homologs of $locusShow from $orginfo->{$orgId}{genome}";
     $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusSpec,0,1,"homo");
     $orth = $dbh->selectall_hashref("SELECT * FROM Ortholog WHERE orgId1 = ? AND locusId1 = ?",
@@ -122,10 +124,10 @@ autoflush STDOUT 1; # so header shows while blast is being run
 # run blast
 if ($qtype eq "nucleotide") {
     Utils::fail($cgi,qq($query is invalid. Please enter nucleotide sequence or choose sequence type as protein!)) unless ($seq =~ m/^[ATCGatcg]*$/);
-    system($blast,'-p','blastx','-e','1e-2','-d',$myDB,'-i',$seqFile,'-o',$blastOut,'-m','8')==0 || die "Error running blastx, are you sure this is a nucleotide query: $!";
+    system($blast,'-p','blastx','-e','1e-2','-d',$myDB,'-i',$seqFile,'-o',$blastOut,'-m','8','-a',$nCPU)==0 || die "Error running blastx, are you sure this is a nucleotide query: $!";
 } elsif ($qtype eq "protein") {
     Utils::fail($cgi,qq($query is invalid. Please enter correct protein sequence!)) unless ($seq =~ m/^[A-Za-z]*$/);
-    system($blast,'-p','blastp','-e','1e-2','-d',$myDB,'-i',$seqFile,'-o',$blastOut,'-m','8')==0 || die "Error running blastp, are you sure this is a protein query: $!";
+    system($blast,'-p','blastp','-e','1e-2','-d',$myDB,'-i',$seqFile,'-o',$blastOut,'-m','8','-a',$nCPU)==0 || die "Error running blastp, are you sure this is a protein query: $!";
 } else {
     die "Unknown query type $qtype";
 }
@@ -142,69 +144,79 @@ my $aln_preURL = $query ? "showAlign.cgi?query=$defencoded&querySequence=$seq"
   : "showAlign.cgi?query=$orgId:$locusSpec";
 
 open(RES,$blastSort) || die "Error reading $blastSort";
-my $cnt = 0;
-my @hits = ();
+my @hits = (); # each row is a simple list of the fields in the blast ouptut
 while(<RES>) {
-    chomp;
-    my ($queryId,$subjectId,$percIdentity,$alnLength,$mmCnt,$gapCnt,$queryStart,$queryEnd,$subjectStart,$subjectEnd,$eVal,$bitScore) = split /\t/, $_;
+  chomp;
+  my @F = split /\t/, $_;
+  die "Truncated blast output" unless @F == 12;
+  push @hits, \@F;
+}
+close(RES) || die "Error reading $blastOut";
+my $trunc = 0;
+if (defined $numHit && $numHit > 0 && @hits > $numHit) {
+  $trunc = 1;
+  $#hits = $numHit - 1
+}
+
+if (@hits > 0) {
+  print $cgi->p(($trunc ? "Top " : "") . scalar(@hits) . " hits (E < 0.01)");
+  my @header = (a({-title => "Potential ortholog (from bidirectional best hit)?", -style => "color: black;"}, 'Orth'),
+                'Species', 'Gene', 'Name', 'Description', 'Fitness',
+                a({-title => "Percent identity", -style=>"color: black;"}, '%Id'),
+                a({-title => "Percent coverage of query", -style=>"color: black;"}, 'Cov'));
+  # Hard code the widths to avoid annoying table resize during incremental rendering
+  my @widths = ("4%", "25%", "14%", "5%", "37%", "6%","4%","4%");
+  my @th = map th({width => $widths[$_]}, $header[$_]), 0..$#header;
+  shift @th unless $showOrth;
+  # hard-coding the table width prevents annoying resize during incremental updates
+  # and the strong bottom border on the table is distracting during incremental updates so remove it
+  print qq{<TABLE style="border-bottom: none;" cellspacing=0 cellpadding=3 width=99% >},
+    Tr(@th),
+    "\n";
+
+  foreach my $hit (@hits) {
+    my ($queryId,$subjectId,$percIdentity,$alnLength,$mmCnt,$gapCnt,
+        $queryStart,$queryEnd,$subjectStart,$subjectEnd,$eVal,$bitScore) = @$hit;
+    $bitScore =~ s/ +//;
     my ($orgId,$locusId) = split /:/, $subjectId;
     my $cov = sprintf("%.1f", 100*abs($queryEnd - $queryStart + 1)/length($seq));
     $percIdentity = sprintf("%.1f", $percIdentity);
-
     my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId = ? AND locusId = ?",
-                                                      undef, $orgId, $locusId);
-
+                                       undef, $orgId, $locusId);
     if (!defined $gene) {
-	print "Warning! Unknown hit $orgId:$locusId<BR>";
-	next;
+      print "Warning! Unknown hit $orgId:$locusId<BR>";
+      next;
     }
-
     my ($fitstring, $fittitle) = Utils::gene_fit_string($dbh, $orgId, $locusId);
     my $showId = $gene->{sysName} || $gene->{locusId};
     my $seqlen = length($seq);
-    my @hit = ($cgi->a({href => "org.cgi?orgId=$orgId"},$orginfo->{$orgId}->{genome}),
+    my $aln_URL = "$aln_preURL&subject=$subjectId"
+      unless $qtype eq "nucleotide";
+    my $cov_title = "Query $queryStart..$queryEnd of $seqlen aligns to $showId $subjectStart..$subjectEnd";
+    my $covShow = defined $aln_URL ? a({ title => $cov_title, href => $aln_URL }, $cov)
+      : a({ title => $cov_title }, $cov);
+    my @row = ($cgi->a({href => "org.cgi?orgId=$orgId"},$orginfo->{$orgId}->{genome}),
                Utils::gene_link($dbh, $gene, "name", "geneOverview.cgi"),
                $gene->{gene},
                Utils::gene_link($dbh, $gene, "desc", "domains.cgi"),
                $cgi->a({href => "myFitShow.cgi?orgId=$orgId&gene=$locusId", title => $fittitle }, $fitstring ),
                $cgi->a({title=>"evalue: $eVal ($bitScore bits)"},$percIdentity),
-               $cgi->a({ title=>"Query $queryStart..$queryEnd of $seqlen aligns to $showId $subjectStart..$subjectEnd",
-                         href => "$aln_preURL&subject=$subjectId" },
-                       $cov));
-    
-    if (defined $orgId and $locusSpec) {
-        # add ortholog indicator
-        if (exists $orth->{$orgId} && $orth->{$orgId}{locusId2} eq $locusId) {
-            unshift @hit, '<center><a title="ortholog">o</a></center>';
-        } else {
-            unshift @hit, ' ';
-        }
+               $covShow);
+    my @td = map td({width => $widths[$_+1]}, $row[$_]), (0..$#row);
+    if ($showOrth) {
+      my $o = exists $orth->{$orgId} && $orth->{$orgId}{locusId2} eq $locusId ?
+        '<center><a title="Potential ortholog (bidirectional best hit)">o</a></center>' : '&nbsp;';
+      unshift @td, td({width => $widths[0]}, $o);
     }
-    @hit = map td($_), @hit;
-    push @hits, $cgi->Tr({ -align => 'left', -valign => 'top', bgcolor=>'white' }, @hit );
-    $cnt++;
-}
-close(RES) || die "Error reading $blastOut";
-$#hits = $numHit-1 if defined $numHit && $numHit > 0 && @hits > $numHit;
-
-if ($cnt > 0) {
-
-    print $cgi->p("Top " . scalar(@hits) . " hits (E < 0.01)");
-    my @header = ('Orth?', 'Species','Gene','Name','Description','Fitness', '%Identity', '%Coverage');
-    shift @header if $query;
-    print $cgi->table(
-        { cellspacing=>0, cellpadding=>3 },
-        $cgi->Tr({-align=>'left',-valign=>'top'},
-		 $cgi->th( \@header )),
-            # $cgi->Tr({ -align => 'left', -valign => 'top' }, \@td), 
-            @hits
-    );
-
+    print $cgi->Tr({ -align => 'left', -valign => 'top', bgcolor=>'white' }, @td);
+    print "\n";
+  }
+  print "</TABLE>";
 } else {
-    print $cgi->p("No hits found!");
+  print $cgi->p("No hits found!");
 }
 
-    print qq[<br>Or search for homologs using
+print qq[<br>Or search for homologs using
 	<A HREF="http://papers.genomics.lbl.gov/cgi-bin/litSearch.cgi?query=>$def%0A$seq"
            TITLE="Find papers about this protein or its homologs">PaperBLAST</A>
        or
@@ -217,10 +229,4 @@ unlink($blastOut) || die "Error deleting $blastOut: $!";
 unlink($blastSort) || die "Error deleting $blastSort: $!";
 
 Utils::endHtml($cgi);
-
 exit 0;
-
-# END
-
-#----------------------------------------
-
