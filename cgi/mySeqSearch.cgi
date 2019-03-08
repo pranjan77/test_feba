@@ -55,6 +55,8 @@ my $blastOut = "$tmpDir/$filename.blast.out";
 my $blastSort = "$tmpDir/$filename.blast.sort";
 my $seq;
 my $locusShow;
+my $fastacmd = '../bin/blast/fastacmd';
+die "No such executable: $fastacmd" unless -x $fastacmd;
 
 print $cgi->header; # must be printed before using fail()
 
@@ -91,7 +93,6 @@ if ($query =~ m/[A-Za-z]/) {
     my $id = join(":",$orgId,$locusSpec);
     $locusShow = $gene->{gene} || $gene->{sysName} || $gene->{locusId};
     $def = $locusShow;
-    my $fastacmd = '../bin/blast/fastacmd';
     system($fastacmd,'-d',$myDB,'-s',$id,'-o',$seqFile)==0 || die "Error running $fastacmd -d $myDB -s $id -o $seqFile -- $!";
     my $in = Bio::SeqIO->new(-file => $seqFile,-format => 'fasta');
     $seq = $in->next_seq()->seq;
@@ -160,7 +161,7 @@ if (defined $numHit && $numHit > 0 && @hits > $numHit) {
 
 if (@hits > 0) {
   print $cgi->p(($trunc ? "Top " : "") . scalar(@hits) . " hits (E < 0.01)");
-  my @header = (a({-title => "Potential ortholog (from bidirectional best hit)?", -style => "color: black;"}, 'Orth'),
+  my @header = (a({-title => "Potential ortholog from bidirectional best hit?", -style => "color: black;"}, 'Orth'),
                 'Species', 'Gene', 'Name', 'Description', 'Fitness',
                 a({-title => "Percent identity", -style=>"color: black;"}, '%Id'),
                 a({-title => "Percent coverage of query", -style=>"color: black;"}, 'Cov'));
@@ -192,7 +193,18 @@ if (@hits > 0) {
     my $seqlen = length($seq);
     my $aln_URL = "$aln_preURL&subject=$subjectId"
       unless $qtype eq "nucleotide";
-    my $cov_title = "Query $queryStart..$queryEnd of $seqlen aligns to $showId $subjectStart..$subjectEnd";
+
+    # Compute length of the subject
+    open(my $fh, "-|", $fastacmd, '-d',$myDB, '-s', $subjectId)
+      || die "Cannot run fastacmd";
+    my $in = Bio::SeqIO->new(-fh => $fh, -format => 'fasta');
+    my $sseq = $in->next_seq()->seq;
+    die "No sequence for subject $subjectId in $myDB" unless $sseq;
+    my $slen = length($sseq);
+    close($fh) || die "Error running $fastacmd";
+
+    my $cov_title = "amino acids $queryStart:$queryEnd / $seqlen of query"
+      . " are similar to a.a. $subjectStart:$subjectEnd / $slen of $showId";
     my $covShow = defined $aln_URL ? a({ title => $cov_title, href => $aln_URL }, $cov)
       : a({ title => $cov_title }, $cov);
     my @row = ($cgi->a({href => "org.cgi?orgId=$orgId"},$orginfo->{$orgId}->{genome}),
@@ -205,8 +217,9 @@ if (@hits > 0) {
     my @td = map td({width => $widths[$_+1]}, $row[$_]), (0..$#row);
     if ($showOrth) {
       my $o = exists $orth->{$orgId} && $orth->{$orgId}{locusId2} eq $locusId ?
-        '<center><a title="Potential ortholog (bidirectional best hit)">o</a></center>' : '&nbsp;';
-      unshift @td, td({width => $widths[0]}, $o);
+        a({ -title => "Potential ortholog (bidirectional best hit with high coverage)"}, "o")
+          : '&nbsp;';
+      unshift @td, td({width => $widths[0], style=>"text-align: center;"}, $o);
     }
     print $cgi->Tr({ -align => 'left', -valign => 'top', bgcolor=>'white' }, @td);
     print "\n";
