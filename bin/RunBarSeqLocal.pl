@@ -97,6 +97,9 @@ my $debug = undef;
     if (defined $setspec) {
       die $usage unless defined $fastq && @ARGV == 0;
       @setnames = split /[,;]\s*/, $setspec;
+      my @misc = grep m/^misc_set/i, @setnames;
+      print STDERR "Not running combineBarSeq for miscellaneous sets: @misc\n" if @misc > 0;
+      @setnames = grep !m/^misc_set/i, @setnames;
       foreach my $setname (@setnames) {
         my @setparts = split /_/, $setname;
         die "Invalid set name: $setname" unless @setparts > 1;
