@@ -344,7 +344,7 @@ Potassium tellurite hydrate	123333-66-4	Sigma	P0677	253.79			yes
 Procaine hydrochloride	51-05-8	Sigma	P9879-50G	272.77		yes					
 Propidium iodide	25535-16-4	Sigma	P4170-10MG	668.39							
 Protocatechualdehyde	139-85-5	Sigma	D108405	138.12							
-Protocatechuic Acid	99-50-3	Sigma	37580	154.12							
+Protocatechuic Acid	99-50-3	Sigma	37580	154.12	3,4-dihydroxybenzoic acid						
 Puromycin dihydrochloride	58-58-2	Sigma	P7255-25MG	544.43							
 Putrescine Dihydrochloride	333-93-7	Sigma	P7505	161.07				yes	yes		
 Pyocyanin	85-66-5	Sigma	P0046-5MG	210.23							
@@ -634,3 +634,35 @@ adeninyl cobamide
 2-methyladeninyl cobamide											
 L-(+)-tartaric acid	87-69-4			150.09	L-tartaric acid						
 L-ascorbic acid	50-81-7			176.12							
+Heptanoic acid	111-14-8			130.18							
+Octanoic acid	124-07-2			144.21							
+Nonanoic acid	112-05-0			158.24							
+1,3-Butandiol	107-88-0			90.12							
+Lauric acid	143-07-7			200.32							
+Myristic acid	544-63-8			228.37							
+rac-3-Hydroxypentanoic Acid	10237-77-1			118.13							
+Decanoic acid	334-48-5			172.27							
+Bisabolol	23089-26-1			222.37							
+Bisabolene	17627-44-0			204.36							
+3-O-methyl-glucose	146-72-5			194.183							
+4-vinylphenol	2628-17-3			120.15							
+1,2-Propanediol	57-55-6			76.09							
+Crotonic acid	107-93-7			86.09							
+Trans-2-methyl-2-butenoic acid	80-59-1			100.12							
+Beta-alanine	107-95-9			89.09							
+2-methyl-1-butanol	137-32-6			88.15							
+1,5-Pentanediol	111-29-5			104.15							
+4-Methyl-2-oxopentanoic acid	4502-00-5			152.14							
+Hydroxy-L-Proline	51-35-4			132							
+Delta-Undecalactone	710-04-03			184.28							
+Delta-Dodecalactone	713-95-1			198.3							
+Delta-Decalactone	705-86-2			170.25							
+Delta-Nonalactone	3301-94-8			156.22							
+3-Hydroxypropionate	503-66-2			90.08							
+Malonic acid	141-82-2			104.061							
+3-hydroxybutyric acid	300-85-6			104.105							
+Pimelic acid	111-16-0			160.17							
+4-hydroxybutyric acid	591-81-1			104.1							
+D-Gluconic acid	526-95-4			196.16							
+Fumaric acid	110-17-8			116.07							
+L-Malic acid	97-67-6			134.09							
