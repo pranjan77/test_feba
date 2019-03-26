@@ -254,6 +254,7 @@ my $hiddenExpNames2 = HiddenList(2, \@expNames2);
 
 if ($outlier) { # table of outlying genes
     my $minabs = $cgi->param('minabs');
+    $minabs =~ s/[^0-9]//g; # should be an integer
     $minabs = 2 unless defined $minabs && $minabs > 0;
 
     my $outlierCode = "";
