@@ -25,6 +25,7 @@ use strict;
 use CGI qw(:standard Vars -nosticky);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
+use HTML::Entities;
 
 use lib "../lib";
 use URI::Escape;
@@ -60,8 +61,9 @@ foreach my $gene (@$hits) {
 }
 
 if (@$hits == 0) {
+  my $locusSafe = HTML::Entities::encode($locusId);
   print $start,'<div id="ntcontent">',
-    $cgi->h3("No gene found for $locusId in $orgSpec",
+    $cgi->h3("No gene found for $locusSafe",
              (exists $orginfo->{$orgSpec}{genome} ? " in " . $orginfo->{$orgSpec}{genome} : ""));
 
 } else {
