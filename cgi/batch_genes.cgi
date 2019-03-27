@@ -66,7 +66,8 @@ if (defined $searchSpec && $searchSpec =~ m/\S/) {
                    OR desc = "$searchSpec" OR desc LIKE "$searchSpec %"
                    OR desc LIKE "% $searchSpec" OR desc LIKE "% $searchSpec %"};
     # note that other specifiers are ignored if using search
-    $title = qq{Search Results for "$searchSpec" in $jobname};
+    my $searchSpecShow = HTML::Entities::encode($searchSpec);
+    $title = qq{Search Results for "$searchSpecShow" in $jobname};
 } else {
     if ($linkSpec eq "spec") {
         push @where, "hasSpecific=1";
