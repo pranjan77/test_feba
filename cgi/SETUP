@@ -66,8 +66,9 @@ Build kegg.faa:
 	tar xzf kegg/seq_pep.tar.gz
 	cat *.pep > ~/data/FEBA/kegg.faa
 Build metacyc.faa and metacyc_ids.tab:
-	feba/bin/ParseMetaCycSeq.pl < ~/data/metacyc.metacyc/uniprot-seq-ids.seq > metacyc.faa
-	feba/bin/ParseMetaCycSeqDat.pl < ~/data/metacyc.metacyc/uniprot-seq-ids.dat > metacyc_ids.tab
+	download metacyc into (say) ~/data/metacyc/22.6 and then
+	bin/ParseMetaCycSeqDat.pl -in ~/data/metacyc/22.6/data
+	bin/ParseMetaCycPathways.pl -in ~/data/metacyc/22.6/data
 Build uniprot_sprot.fasta:
 	wget ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
 	gunzip uniprot_sprot.fasta.gz
