@@ -9,7 +9,8 @@ use strict;
 use File::stat;
 our (@ISA,@EXPORT);
 @ISA = qw(Exporter);
-@EXPORT = qw( ReadTable ReadColumnNames ReadFasta NewerThan ReadFastaDesc ReadFastaEntry reverseComplement );
+@EXPORT = qw( ReadTable ReadColumnNames ReadFasta NewerThan ReadFastaDesc ReadFastaEntry reverseComplement
+              sqlite_quote );
 
 # filename and list of required fields => list of hashes, each with field->value
 # The list can be a single name or a reference to a list
@@ -172,5 +173,14 @@ length($seq) );
     return $seq;
 }
 
+# This is for uploading to sqlite3. 
+# sqlite3 expects CVS format, not exactly tab delimited format
+# So, need to replace any " with "" and surround the field with quotes.
+sub sqlite_quote($) {
+  my ($in) = @_;
+  return $in unless $in =~ m/"/;
+  $in =~ s/"/""/g;
+  return '"' . $in . '"';
+}
 
 1;
