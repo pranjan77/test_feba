@@ -4,6 +4,8 @@
 use strict;
 use Getopt::Long;
 use FindBin qw($Bin);
+use lib "$Bin/../lib";
+use FEBA_Utils qw(sqlite_quote);
 
 {
     my $usage = qq{
@@ -58,7 +60,7 @@ in the out directory
                 unless defined $locusId && defined $seed_desc;
             next if $seed_desc eq ""; # allow missing annotations
             $desc{$seed_desc} = 1;
-            print ANNO join("\t", $org, $locusId, $seed_desc)."\n";
+            print ANNO join("\t", $org, $locusId, sqlite_quote($seed_desc))."\n";
 
             # and parse out EC and TC number(s)
             # These will be in the description, of the form (EC 2.4.1.129)
@@ -102,15 +104,8 @@ in the out directory
         my ($toplevel, $category, $subsystem, $seedrole) = split /\t/, $line;
         die "No role in $line" unless defined $seedrole;
         $roles{$seedrole} = 1;
-        # To handle quotes in sqlite3, double the quotes and put quotes around the whole thing
-        if ($seedrole =~ m/"/) {
-          $seedrole =~ s/"/""/g;
-          $seedrole = '"' . $seedrole . '"';
-        }
-        die "Quotes in toplevel field not allowed: $line" if $toplevel =~ m/"/;
-        die "Quotes in category field not allowed: $line" if $category =~ m/"/;
-        die "Quotes in subsystem field not allowed: $line" if $subsystem =~ m/"/;
-        print ROLES join("\t", $toplevel, $category, $subsystem, $seedrole)."\n";
+        print ROLES join("\t", sqlite_quote($toplevel), sqlite_quote($category),
+                         sqlite_quote($subsystem), sqlite_quote($seedrole))."\n";
       }
       close(SUBSYS) || die "Error reading $subsysfile";
     }
@@ -125,7 +120,7 @@ in the out directory
         @roles = split " / ", $desc;
       }
       foreach my $role (@roles) {
-        print ANNOROLES join("\t", $desc, $role) . "\n"
+        print ANNOROLES join("\t", sqlite_quote($desc), sqlite_quote($role)) . "\n"
           if exists $roles{$role};
       }
     }
