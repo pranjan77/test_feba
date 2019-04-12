@@ -90,7 +90,9 @@ use FEBA_Utils; # for NewerThan()
         print STDERR "Running KeggBestHit.pl on $org\n";
         system("$Bin/KeggBestHit.pl $org > g/$org/besthit.kegg") == 0
             || die "Error for KeggBestHit.pl on $org";
-        print STDERR "Running seed on $org\n";
-        system("$Bin/run_seed.pl", $org);
+        unless(NewerThan("g/$org/seedanno.tab", "g/$org/aaseq")) {
+          print STDERR "Running seed on $org\n";
+          system("$Bin/run_seed.pl", $org);
+        }
     }
 }
