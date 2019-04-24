@@ -496,6 +496,18 @@ PIPES sesquisodium salt	30	mM
 Wolfe's mineral mix	1	X
 Wolfe's vitamin mix	1	X
 		
+Media	RCH2_defined_1percent_glucose	
+Description	Defined minimal media for soil and groundwater bacteria with glucose	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+D-Glucose	55.5	mM
+PIPES sesquisodium salt	30	mM
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+		
 Media	RCH2_defined_glucose_CAPS	
 Description	Defined minimal media for soil and groundwater bacteria with glucose and CAPS buffer	
 Minimal	TRUE	
@@ -574,6 +586,26 @@ Sodium phosphate monobasic monohydrate	0.6	g/L
 Sodium D,L-Lactate	20	mM
 PIPES sesquisodium salt	30	mM
 Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+		
+Media	RCH2_defined_noCarbon_minimalN	
+Description	Defined minimal media for soil and groundwater bacteria with no carbon, small amount of Nitrogen in Wolfe's minerals, but no other N source	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.49	g/L
+Potassium phosphate dibasic	0.97	g/L
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+		
+Media	RCH2_defined_noCarbon_noNitrogen_noNitrilotriacetic_acid	
+Description	Defined minimal media for soil and groundwater bacteria with no carbon; with no nitrogen and no Nitrilotriacetic acid	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.49	g/L
+Potassium phosphate dibasic	0.97	g/L
+Wolfe's mineral mix_minus_Nitrilotriacetic_acid	1	X
 Wolfe's vitamin mix	1	X
 		
 Media	RCH2_defined_TAPS	
