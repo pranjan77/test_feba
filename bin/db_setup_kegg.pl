@@ -3,6 +3,8 @@
 use strict;
 use Getopt::Long;
 use FindBin qw($Bin);
+use lib "$Bin/../lib";
+use FEBA_Utils qw{sqlite_quote};
 
 my $db;
 my $dir = ".";
@@ -50,6 +52,7 @@ while(<>) {
     while (@kgroups) {
         my $kgroup = shift @kgroups;
         my $kdesc = shift @kdescs;
+        $kdesc =~ s/"/''/g; # double quotes break sqlite3 and seem biologically questionable
         print MEMBER join("\t", $keggOrg, $keggId, $kgroup)."\n";
         next if exists $kgroupSeen{$kgroup};
         $kgroupSeen{$kgroup} = 1;
@@ -83,17 +86,29 @@ foreach my $table (qw{BestHitKEGG KEGGMember KgroupDesc KgroupEC}) {
 
 # Also load the SEEDRoleReaction and SEEDReaction tables, which link
 # SEED roles to KEGG reaction ids
-print SQLITE <<END
-DELETE FROM SEEDRoleReaction;
-.import $Bin/../kegg/modelseed_role_reactions.tab SEEDRoleReaction
-DELETE FROM SEEDReaction;
-.import $Bin/../kegg/modelseed_reactions.tab SEEDReaction
-END
-;
+# But first, I need to make sure these are quoted correctly
+my @files = (["$Bin/../kegg/modelseed_role_reactions.tab", "SEEDRoleReaction"],
+             ["$Bin/../kegg/modelseed_reactions.tab", "SEEDReaction"]);
+foreach my $row (@files) {
+  my ($infile, $table) = @$row;
+  die "No such file: $infile\n" unless -e $infile;
+  my $tmpfile = "$dir/db.$table";
+  open(my $fhIn, "<", $infile) || die "Cannot read $infile\n";
+  open(my $fhTmp, ">", $tmpfile) || die "Cannot write to $tmpfile\n";
+  while (my $line = <$fhIn>) {
+    chomp $line;
+    my @F = split /\t/, $line, -1;
+    print $fhTmp join("\t", map sqlite_quote($_), @F)."\n";
+  }
+  close($fhIn) || die "Error reading $infile";
+  close($fhTmp) || die "Error writing $tmpfile";
+  print SQLITE "DELETE FROM $table;\n";
+  print SQLITE ".import $tmpfile $table\n";
+}
 close(SQLITE) || die "Error running sqlite3 on $db";
 
 print STDERR "Done, removing temporary files\n";
-foreach my $table (qw{BestHitKEGG KEGGMember KgroupDesc KgroupEC}) {
+foreach my $table (qw{BestHitKEGG KEGGMember KgroupDesc KgroupEC SEEDRoleReaction SEEDReaction}) {
     unlink("$dir/db.$table");
 }
 
