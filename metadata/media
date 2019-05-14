@@ -744,6 +744,18 @@ Wolfe's mineral mix	1	X
 Wolfe's vitamin mix	1	X
 Yeast Extract	0.1	g/L
 		
+Media	DefinedMedia_AdamsLab_Glucose	
+Description	Defined minimal media for soil and groundwater bacteria with glucose; from Mike Adams lab	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	5	mM
+Sodium bicarbonate	2.5	g/L
+D-Glucose	20	mM
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+		
 Media	LB_10mMNitrate	
 Description	Luria-Bertani broth	
 Minimal	FALSE	
@@ -1264,3 +1276,12 @@ Potassium phosphate monobasic	0.68	g/L
 ferric malate solution	1	X
 Modified Wolfe's Minerals	1	X
 Wolfe's vitamin mix	1	X
+		
+Media	TSB	
+Description	Tryptic soy broth	
+Controlled vocabulary	Concentration	Units
+tryptone	17	g/L
+soytone	3	g/L
+glucose	2.5	g/L
+sodium chloride	5	g/L
+K2HPO4	2.5	g/L
