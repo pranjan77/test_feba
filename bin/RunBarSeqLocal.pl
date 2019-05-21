@@ -238,6 +238,7 @@ my $debug = undef;
 	    my $index = undef;
 	    # sometimes ITO (capital O) not IT0 (numeral zero)
 	    my @indexes2 = grep m/^ITO\d+$/, @pieces;
+	    my @indexes3 = grep m/IT0\d\d/, @pieces;
 
 	    if (@indexes == 1) {
 		$index = $indexes[0];
@@ -245,6 +246,9 @@ my $debug = undef;
 		# e.g. HiSeq_barcodes/FEBA_BS_81/Sample_FEBA_BS_81_ITO88/FEBA_BS_81_ITO88_GGCCTG_L001_R1_001.fastq.gz
 		$index = $indexes2[0];
 		$index =~ s/ITO/IT0/;
+              } elsif (@indexes3 == 1) {
+                $indexes3[0] =~ m/(IT0\d\d)/ || die;
+                $index = $1;
 	    } elsif ($name =~ m/_(\d+)_[ACGT][ACGT][ACGT][ACGT][ACGT][ACGT]_/
 		     || $name =~ m/_Index(\d+)_[ACGT][ACGT][ACGT][ACGT][ACGT][ACGT]_/i
                      || $name =~ m/_Index(\d+)_S\d+_/
