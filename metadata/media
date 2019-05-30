@@ -389,6 +389,29 @@ Sodium selenite pentahydrate	0.21	uM
 Sodium tungstate dihydrate	0.144	uM
 Thauer's vitamin mix	1	X
 		
+Media	MoLS4_no_ammonnia_noEDTA	
+Description	Lactate-sulfate media for sulfate-reducing bacteria with no ammonium, no YE, no edta pH should be 7.2	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Sodium sulfate	30	mM
+Sodium D,L-Lactate	60	mM
+Tris hydrochloride	30	mM
+Sodium sulfide nonahydrate	1	mM
+Magnesium chloride hexahydrate	8	mM
+Calcium chloride	0.6	mM
+Potassium phosphate dibasic	2	mM
+Iron (II) chloride tetrahydrate	60	uM
+Manganese (II) chloride tetrahydrate	15	uM
+Cobalt chloride hexahydrate	7.8	uM
+Zinc chloride	9	uM
+Sodium molybdate	1.26	uM
+Boric Acid	1.92	uM
+Nickel (II) sulfate hexahydrate	2.28	uM
+copper (II) chloride dihydrate	0.06	uM
+Sodium selenite pentahydrate	0.21	uM
+Sodium tungstate dihydrate	0.144	uM
+Thauer's vitamin mix	1	X
+		
 Media	MOPS minimal media_noCarbon	
 Description	MOPS minimal media with no carbon source	
 Minimal	TRUE	
@@ -1142,6 +1165,28 @@ Boric Acid	1.623	uM
 Sodium Molybdate Dihydrate	0.207	uM
 biotin	0.06	uM
 		
+Media	MELiSSA_defined_noCarbon_noNitrogen_phosphatebuffered	
+Description	Defined medium for R. rubrum with no ammonium, pH should be 6.9	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Manganese (II) chloride tetrahydrate	0.051	mM
+Magnesium Sulfate Heptahydrate	0.0811	mM
+Sodium sulfate	3.801	mM
+Calcium chloride dihydrate	0.34	mM
+EDTA	0.068	mM
+Potassium phosphate monobasic	3.601	mM
+Iron (II) sulfate heptahydrate	0.072	mM
+Sodium bicarbonate	50	mM
+Potassium phosphate dibasic	2.985	mM
+Nickel (II) sulfate hexahydrate	1.902	uM
+Zinc sulfate heptahydrate	0.348	uM
+Copper (II) sulfate pentahydrate	0.02	uM
+Boric Acid	1.623	uM
+Sodium Molybdate Dihydrate	0.207	uM
+biotin	0.06	uM
+Potassium phosphate monobasic	10	mM
+Potassium phosphate dibasic	0.597	mM
+		
 Media	SMN_rich	
 Description	Rich medium for R. rubrum	
 Minimal	FALSE	
@@ -1285,3 +1330,97 @@ soytone	3	g/L
 glucose	2.5	g/L
 sodium chloride	5	g/L
 K2HPO4	2.5	g/L
+		
+Media	RPMI_with_Fetal_bovine_serum	
+Description	RPMI 1640 Medium was originally developed to culture human leukemic cells in suspension	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Glycine	10	mg/L
+L-Arginine	200	mg/L
+L-Asparagine	50	mg/L
+L-Aspartic Acid	20	mg/L
+L-Cysteine hydrochloride monohydrate	65	mg/L
+L-Glutamic acid monopotassium salt monohydrate	20	mg/L
+L-Glutamine	300	mg/L
+L-Histidine	15	mg/L
+Hydroxy-L-Proline	20	mg/L
+L-Isoleucine	50	mg/L
+L-Leucine	50	mg/L
+L-Lysine	40	mg/L
+L-Methionine	15	mg/L
+L-Phenylalanine	15	mg/L
+L-Proline	20	mg/L
+L-Serine	30	mg/L
+L-Threonine	20	mg/L
+L-Tryptophan	5	mg/L
+L-tyrosine disodium salt	29	mg/L
+L-Valine	20	mg/L
+biotin	0.2	mg/L
+Choline chloride	3	mg/L
+calcium pantothenate	0.25	mg/L
+Folic Acid	1	mg/L
+m-Inositol	35	mg/L
+Nicotinamide	1	mg/L
+4-Aminobenzoic acid	1	mg/L
+Pyridoxine HCl	1	mg/L
+Riboflavin	0.2	mg/L
+Thiamine HCl	1	mg/L
+Cyanocobalamin	0.005	mg/L
+Calcium nitrate tetrahydrate	100	mg/L
+Magnesium sulfate	48.84	mg/L
+Potassium Chloride	400	mg/L
+Sodium bicarbonate	2000	mg/L
+Sodium Chloride	6000	mg/L
+Sodium phosphate dibasic heptahydrate	800	mg/L
+D-Glucose	2000	mg/L
+L-glutathione reduced	1	mg/L
+Phenol red	5	mg/L
+Fetal bovine serum	5	vol%
+Lipopolysaccharide	0.1	mg/L
+		
+Media	RPMI_with_Fetal_bovine_serum_Conditioned	
+Description	RPMI 1640 Medium conditioned with Mesenchymal Stromal Cells grown for 2 days	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Glycine	10	mg/L
+L-Arginine	200	mg/L
+L-Asparagine	50	mg/L
+L-Aspartic Acid	20	mg/L
+L-Cysteine hydrochloride monohydrate	65	mg/L
+L-Glutamic acid monopotassium salt monohydrate	20	mg/L
+L-Glutamine	300	mg/L
+L-Histidine	15	mg/L
+Hydroxy-L-Proline	20	mg/L
+L-Isoleucine	50	mg/L
+L-Leucine	50	mg/L
+L-Lysine	40	mg/L
+L-Methionine	15	mg/L
+L-Phenylalanine	15	mg/L
+L-Proline	20	mg/L
+L-Serine	30	mg/L
+L-Threonine	20	mg/L
+L-Tryptophan	5	mg/L
+L-tyrosine disodium salt	29	mg/L
+L-Valine	20	mg/L
+biotin	0.2	mg/L
+Choline chloride	3	mg/L
+calcium pantothenate	0.25	mg/L
+Folic Acid	1	mg/L
+m-Inositol	35	mg/L
+Nicotinamide	1	mg/L
+4-Aminobenzoic acid	1	mg/L
+Pyridoxine HCl	1	mg/L
+Riboflavin	0.2	mg/L
+Thiamine HCl	1	mg/L
+Cyanocobalamin	0.005	mg/L
+Calcium nitrate tetrahydrate	100	mg/L
+Magnesium sulfate	48.84	mg/L
+Potassium Chloride	400	mg/L
+Sodium bicarbonate	2000	mg/L
+Sodium Chloride	6000	mg/L
+Sodium phosphate dibasic heptahydrate	800	mg/L
+D-Glucose	2000	mg/L
+L-glutathione reduced	1	mg/L
+Phenol red	5	mg/L
+Fetal bovine serum	5	vol%
+Lipopolysaccharide	0.1	mg/L
