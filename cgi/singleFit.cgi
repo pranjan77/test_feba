@@ -39,11 +39,14 @@ my $orgSpec = $cgi->param('orgId') || "";
 my $locusId = $cgi->param('locusId');
 my $showAll = $cgi->param('showAll') ? 1 : 0;
 my $help = $cgi->param('help') || "";
-my $start = Utils::start_page("Fitness for $locusId ($orgSpec)");
+my $locusSafe = HTML::Entities::encode($locusId);
 
 # connect to database
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
+die "Invalid orgId argument" if $orgSpec ne "" && !exists $orginfo->{$orgSpec};
+
+my $start = Utils::start_page("Fitness for $locusSafe ($orgSpec)");
 
 my $query = qq{SELECT orgId, locusId, sysName, desc, gene, type FROM Gene
 		WHERE locusId = ? };
@@ -61,9 +64,8 @@ foreach my $gene (@$hits) {
 }
 
 if (@$hits == 0) {
-  my $locusSafe = HTML::Entities::encode($locusId);
   print $start,'<div id="ntcontent">',
-    $cgi->h3("No gene found for $locusSafe",
+    $cgi->h3("No gene found for",  $locusSafe,
              (exists $orginfo->{$orgSpec}{genome} ? " in " . $orginfo->{$orgSpec}{genome} : ""));
 
 } else {
