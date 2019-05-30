@@ -311,6 +311,7 @@ FEBA_Fit = function(expsUsed, all, genes,
 	    expsUsed = expsUsed[!expsUsed$name %in% ignore,];
 	    all = all[, !names(all) %in% ignore,];
 	}
+        if (nrow(expsUsed)==0) stop("No experiments left to analyze!");
 
 	if(!all(expsUsed$name %in% names(all)))
 		stop("names missing from all");
