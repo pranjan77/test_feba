@@ -165,8 +165,9 @@ if (@hits > 0) {
                 'Species', 'Gene', 'Name', 'Description', 'Fitness',
                 a({-title => "Percent identity", -style=>"color: black;"}, '%Id'),
                 a({-title => "Percent coverage of query", -style=>"color: black;"}, 'Cov'));
+  @header = map small($_), @header;
   # Hard code the widths to avoid annoying table resize during incremental rendering
-  my @widths = ("4%", "25%", "14%", "5%", "37%", "6%","4%","4%");
+  my @widths = ("4%", "23%", "14%", "5%", "37%", "6%","5%","5%");
   my @th = map th({width => $widths[$_]}, $header[$_]), 0..$#header;
   shift @th unless $showOrth;
   # hard-coding the table width prevents annoying resize during incremental updates
@@ -180,8 +181,8 @@ if (@hits > 0) {
         $queryStart,$queryEnd,$subjectStart,$subjectEnd,$eVal,$bitScore) = @$hit;
     $bitScore =~ s/ +//;
     my ($orgId,$locusId) = split /:/, $subjectId;
-    my $cov = sprintf("%.1f", 100*abs($queryEnd - $queryStart + 1)/length($seq));
-    $percIdentity = sprintf("%.1f", $percIdentity);
+    my $cov = int(0.5 + 100*abs($queryEnd - $queryStart + 1)/length($seq));
+    $percIdentity = int(0.5 + $percIdentity);
     my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId = ? AND locusId = ?",
                                        undef, $orgId, $locusId);
     if (!defined $gene) {
