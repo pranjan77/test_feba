@@ -70,24 +70,35 @@ unlink($seqFile) || die "Error deleting $seqFile: $!";
 
 my $sys = $gene->{sysName} || $gene->{locusId};
 
-my @toplines = ();
-push @toplines, "Name: $gene->{gene}" if $gene->{gene} ne "";
-push @toplines, "Description: $gene->{desc}";
-
 # Reannotation information, if any
 my $reanno = $dbh->selectrow_hashref("SELECT * from Reannotation WHERE orgId = ? AND locusId = ?",
                                      {}, $orgId, $locusId);
+
+my @toplines = ();
+push @toplines, "Name: $gene->{gene}" if $gene->{gene} ne "";
+my $desc_title = "Annotation";
 if ($reanno->{new_annotation}) {
     push @toplines,
-    "Updated annotation: $reanno->{new_annotation}",
-    small("Rationale:", $reanno->{comment} );
+      "Updated annotation (from data): $reanno->{new_annotation}",
+      "Rationale:  $reanno->{comment}";
+    $desc_title = "Original annotation";
 }
+push @toplines, "${desc_title}: $gene->{desc}";
 
 print
-    header, $start, $tabs, '<div id="tabcontent">',
-    h2("Protein Info for $sys in " . $cgi->a({href => "org.cgi?orgId=$orgId"},$orginfo->{$orgId}{genome})),
-    p(join("<BR>", @toplines)),
-    h3("Domains and Families");
+  header, $start, $tabs, '<div id="tabcontent">',
+  h2("Protein Info for $sys in " . $cgi->a({href => "org.cgi?orgId=$orgId"},$orginfo->{$orgId}{genome})),
+  p(join("<BR>", @toplines)),
+  p(small(qq{These analyses and tools can help you predict a protein's function, but be skeptical.
+             For enzymes, over 10% of annotations from KEGG or SEED are probably incorrect.
+             For other types of proteins, the error rates may be much higher.
+             MetaCyc and Swiss-Prot have low error rates,
+             but the best hits in these databases are often quite distant,
+             so this protein's function may not be the same.
+             TIGRFam has low error rates.
+             Finally, many experimentally-characterized proteins are not in any of these databases.
+             To find relevant papers, use PaperBLAST.})),
+  h3("Domains and Families");
 
 my %ecall = (); # ec number => source => 1
 # (source is one of TIGRFam, KEGG, SEED, reanno, MetaCyc)
@@ -396,7 +407,7 @@ if (keys(%ecall) > 0) {
                              $_), @ec;
     print
         h3("Isozymes"),
-        scalar(@links) > 0 ? p("Compare fitness of isozymes for:", join(", ", @links))
+        scalar(@links) > 0 ? p("Compare fitness of predicted isozymes for:", join(", ", @links))
           : "No predicted isozymes",
         p("Use Curated BLAST to search for", join(" or ", @curatedlinks));
 }
