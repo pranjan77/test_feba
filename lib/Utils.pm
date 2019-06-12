@@ -837,61 +837,95 @@ sub seed_desc($$$) {
     return ($seed_desc,$seed_classes);
 }
 
-# Caching to speed up alt_descriptions() on pages that list a gene more than once
-my %altdesccache = (); # org => locusId => text
-
-# dbh,orgId,locusId => text showing alternate descriptions for the gene (or an empty string)
+my %altdesccache = (); # org => locusId => type => description
+# dbh,orgId,locusId => hash of alternate descriptions for the gene
+# with keys reanno, seed, or kegg (all optional)
+#
 # Uses its own queries instead of kegg_info() and seed_desc() for performance.
 # (To really speed it up I could have the option of providing locusId as a list to
 # pre-cache all those genes with just 1 query)
+# Caching to speed up alt_descriptions() on pages that list a gene more than once
 sub alt_descriptions($$$) {
-    my ($dbh, $orgId, $locusId) = @_;
-    die "Invalid arguments to alt_descriptions"
-        unless defined $dbh && defined $orgId && defined $locusId
-        && $orgId ne "" && $locusId ne "";
-    return $altdesccache{$orgId}{$locusId} if exists $altdesccache{$orgId}{$locusId};
-
-    my ($reannotation) = $dbh->selectrow_array("SELECT new_annotation FROM Reannotation WHERE orgId = ? AND locusId = ?",
-                                               {}, $orgId, $locusId);
-    my ($seed_desc) = $dbh->selectrow_array("SELECT seed_desc FROM SEEDAnnotation WHERE orgId = ? AND locusId = ?",
-                                            {}, $orgId, $locusId);
-    my $kegg_descs = $dbh->selectcol_arrayref("SELECT DISTINCT KgroupDesc.desc
+  my ($dbh, $orgId, $locusId) = @_;
+  die "Invalid arguments to alt_descriptions"
+    unless defined $dbh && defined $orgId && defined $locusId
+      && $orgId ne "" && $locusId ne "";
+  return $altdesccache{$orgId}{$locusId}
+    if exists $altdesccache{$orgId}{$locusId};
+  my %altdescs = ();
+  my ($reannotation) = $dbh->selectrow_array("SELECT new_annotation FROM Reannotation WHERE orgId = ? AND locusId = ?",
+                                             {}, $orgId, $locusId);
+  $altdescs{reanno} = $reannotation if defined $reannotation;
+  my ($seed_desc) = $dbh->selectrow_array("SELECT seed_desc FROM SEEDAnnotation WHERE orgId = ? AND locusId = ?",
+                                          {}, $orgId, $locusId);
+  $altdescs{seed} = $seed_desc if defined $seed_desc;
+  my $kegg_descs = $dbh->selectcol_arrayref("SELECT DISTINCT KgroupDesc.desc
                                                FROM BestHitKEGG JOIN KEGGMember USING (keggOrg,keggId)
                                                JOIN KgroupDesc USING (kgroup)
                                                WHERE orgId = ? AND locusId = ? AND desc <> ''",
-                                              {}, $orgId, $locusId);
-
-    my @altdesc = ();
-    push @altdesc, "Reannotation: $reannotation" if defined $reannotation;
-    push @altdesc, "SEED: $seed_desc" if defined $seed_desc;
-    push @altdesc, "KEGG: " . join("; ", @$kegg_descs)
-            if scalar(@$kegg_descs) > 0;
-    $altdesccache{$orgId}{$locusId} = join("; ", @altdesc);
-    return $altdesccache{$orgId}{$locusId};
+                                            {}, $orgId, $locusId);
+  $altdescs{kegg} = join("; ", @$kegg_descs) if scalar(@$kegg_descs) > 0;
+  $altdesccache{$orgId}{$locusId} = \%altdescs;
+  return \%altdescs;
 }
 
-# a link to the gene by its description
+# Render a gene in HTML, usually as a link, and returns the HTML string
 # The first argument is the dbh
 # The second argument is the gene row
-# The third argument is whether to show the systematic name or the description ("name" or "desc")
-#	(if there is a gene name it should be shown separately)
-# The final argument is which cgi to use (usually myFitShow.cgi)
+# The third argument is whether to show the systematic name ("name"),
+#   the desoription ("desc"),
+#   a text description "text" (i.e. to use as the title of an HREF),
+#   or multiple "lines" with gene name and description (both in bold)
+#   and additional lines (not in bold), separated by <BR>
+#
+# In name or desc mode, it returns a link, and the final argument is
+# which cgi to link to (usually myFitShow.cgi if "name" or domains.cgi
+# if "desc").  Hover text shows (additional) annotations.
+#
+# In other modes, do not use the $cgiParam argument (or use undef)
 sub gene_link {
   my ($dbh, $gene, $showParam, $cgiParam) = @_;
-  die "Unrecognized $showParam" unless $showParam eq "name" || $showParam eq "desc";
-  die "Must specify cgi" unless $cgiParam;
-  my $desc = $gene->{desc};
-  $desc =~ s/"//g;
-  my $alt_desc = Utils::alt_descriptions($dbh,$gene->{orgId},$gene->{locusId});
+  die "Must specify cgi"
+    if ($showParam eq "desc" || $showParam eq "name") && ! $cgiParam;
+  die "Must not specify cgi with text"
+    if ($showParam eq "text" || $showParam eq "lines") && defined $cgiParam;
+  my $alt_descs = Utils::alt_descriptions($dbh,$gene->{orgId},$gene->{locusId});
+  my $original_desc = $gene->{desc};
+  $original_desc =~ s/"//g;
+  my $main_desc = $original_desc;
+  my @alt_descs = ();
+  if (exists $alt_descs->{reanno}) {
+    $main_desc = $alt_descs->{reanno};
+    $main_desc = CGI::b($main_desc) if $showParam eq "lines";
+    $main_desc .= " ";
+    my $paren = "(from data)";
+    $main_desc .= $showParam eq "desc" || $showParam eq "lines" ? CGI::small($paren) : $paren;
+    push @alt_descs, "Original annotation: $original_desc";
+  } else {
+    $main_desc = CGI::b($main_desc) if $showParam eq "lines";
+  }
+  push @alt_descs, "SEED: " . $alt_descs->{seed}
+    if exists $alt_descs->{seed};
+  push @alt_descs, "KEGG: " . $alt_descs->{kegg}
+    if exists $alt_descs->{kegg};
+  my $alt_descs_string = join("; ", @alt_descs);
   my $desc_long;
   if ($showParam eq "desc") {
-    $desc_long = $alt_desc || "No further information";
+    $desc_long = $alt_descs_string || "No further information";
+  } elsif ($showParam eq "name" || $showParam eq "text") {
+    $desc_long = $main_desc;
+    $desc_long .= "; $alt_descs_string" if $alt_descs_string;
+  } elsif ($showParam eq "lines") {
+    my @list = ( $main_desc );
+    $list[0] = CGI::b($gene->{gene}.":") . " " . $main_desc if $gene->{gene};
+    push @list, @alt_descs;
+    return join("<BR>", @list);
   } else {
-    $desc_long = $desc;
-    $desc_long .= "; $alt_desc" if $alt_desc;
+    die "Unrecognized showParam $showParam";
   }
   $desc_long =~ s/&nbsp;//g;
-  my $show = $showParam eq "name" ? $gene->{sysName} || $gene->{locusId} : $gene->{desc} || "no description";
+  return $desc_long if $showParam eq "text";
+  my $show = $showParam eq "name" ? $gene->{sysName} || $gene->{locusId} : $main_desc || "no description";
   return CGI::a({ -href => "$cgiParam?orgId=$gene->{orgId}&gene=$gene->{locusId}",
                   -title => $desc_long },
                 $show);
