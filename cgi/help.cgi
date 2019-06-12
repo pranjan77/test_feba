@@ -103,7 +103,7 @@ HREF="#ortholog">orthologous</A> genes. The t-like scores are described
 <H3><A name="cofitness" style="color: black;">Cofitness</A></H3>
 
 <P>Cofitness(gene 1, gene 2) is the linear (Pearson) correlation of their fitness patterns.
-Alternatively, if two genes in the same organism have similar fitness patterns, then we say that they are cofit.</P>
+If two genes in the same organism have similar fitness patterns, then we say that they are cofit.</P>
 
 <P>If two genes have similar fitness patterns (cofitness &gt; 0.75), and they are among the most cofit genes (rank = 1 or rank = 2), then they are likely to function in the same pathway. For genes with strong fitness patterns, often the most cofit genes are other genes in the same operon, so we look a little farther down the list to find genes that may have related functions.</P>
 
