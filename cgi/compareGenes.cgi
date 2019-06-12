@@ -190,12 +190,8 @@ if (Utils::gene_has_fitness($dbh,$orgId,$locus1) == 0) {
 my $showName1 = $gene1->{gene} || $gene1->{sysName} || $gene1->{locusId};
 my $showName2 = $gene2->{gene} || $gene2->{sysName} || $gene2->{locusId};
 
-my $showDesc1 = a({ -title => Utils::alt_descriptions($dbh,$orgId,$locus1) || "no other information",
-                    -href => "domains.cgi?orgId=$orgId&locusId=$locus1" },
-                  $gene1->{desc});
-my $showDesc2 = a({ -title => Utils::alt_descriptions($dbh,$orgId,$locus2) || "no other information",
-                    -href => "domains.cgi?orgId=$orgId&locusId=$locus2" },
-                  $gene2->{desc});
+my $showDesc1 = Utils::gene_link($dbh, $gene1, "desc", "domains.cgi");
+my $showDesc2 = Utils::gene_link($dbh, $gene2, "desc", "domains.cgi");
 
 print <<PART1
 $start

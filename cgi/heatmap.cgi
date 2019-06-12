@@ -327,11 +327,9 @@ foreach my $iRow (0..$maxRow) {
     push @td, td($name);
     my $rt = $cgi->param("rt.$locusId");
     if (defined $rt && $rt ne "") {
-      my $anno = "Original annotation: " . $gene->{desc};
-      my $alt_desc = Utils::alt_descriptions($dbh,$gene->{orgId},$gene->{locusId});
-      $anno .= "; $alt_desc" if $alt_desc;
       push @td, td( a({ -href => "domains.cgi?orgId=$orgId&locusId=$locusId",
-                         -title => $anno }, $rt));
+                         -title => Utils::gene_link($dbh, $gene, "text") },
+                      $rt));
     } else {
       push @td, td(Utils::gene_link($dbh, $gene, "desc", "domains.cgi"));
     }

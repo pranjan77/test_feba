@@ -61,6 +61,7 @@ die "No such executable: $fastacmd" unless -x $fastacmd;
 print $cgi->header; # must be printed before using fail()
 
 my $def = "";
+my $gene;
 if ($query =~ m/[A-Za-z]/) {
     # parse and write the input sequence
     $seq = "";
@@ -86,7 +87,7 @@ if ($query =~ m/[A-Za-z]/) {
     Utils::fail($cgi,qq($locusSpec is invalid. Please enter correct gene name!)) unless ($locusSpec =~ m/^[A-Za-z0-9_]*$/);
 
     # extract sequence for the given gene
-    my $gene = $dbh->selectrow_hashref("SELECT * from Gene where orgId=? AND locusId=?", {}, $orgId, $locusSpec);
+    $gene = $dbh->selectrow_hashref("SELECT * from Gene where orgId=? AND locusId=?", {}, $orgId, $locusSpec);
 
     Utils::fail($cgi, "no such gene: $locusSpec in $orgId") unless defined $gene->{locusId};
     Utils::fail($cgi, "homology search is only available for protein-coding genes") unless $gene->{type} == 1;
@@ -119,7 +120,9 @@ if ($showOrth) {
 }
 my $start = Utils::start_page($title);
 
-print $start, $tabs, $cgi->h2($title), "\n";
+print $start, $tabs, $cgi->h2($title);
+print p(Utils::gene_link($dbh, $gene, "lines")) if $showOrth;
+print "\n";
 autoflush STDOUT 1; # so header shows while blast is being run
 
 # run blast
@@ -160,7 +163,7 @@ if (defined $numHit && $numHit > 0 && @hits > $numHit) {
 }
 
 if (@hits > 0) {
-  print $cgi->p(($trunc ? "Top " : "") . scalar(@hits) . " hits (E < 0.01)");
+  print $cgi->p(($trunc ? "Top " : "") . scalar(@hits) . " hits from BLASTp (E < 0.01)");
   my @header = (a({-title => "Potential ortholog from bidirectional best hit?", -style => "color: black;"}, 'Orth'),
                 'Species', 'Gene', 'Name', 'Description', 'Fitness',
                 a({-title => "Percent identity", -style=>"color: black;"}, '%Id'),
@@ -227,7 +230,7 @@ if (@hits > 0) {
   }
   print "</TABLE>";
 } else {
-  print $cgi->p("No hits found!");
+  print $cgi->p("No hits found using BLASTp (E < 0.01)");
 }
 
 print qq[<br>Or search for homologs using

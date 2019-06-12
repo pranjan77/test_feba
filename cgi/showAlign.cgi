@@ -133,12 +133,8 @@ sub ProtInfo($) {
   my $showName = $gene->{sysName} || $gene->{locusId};
   $showName .= " " . $gene->{gene} if $gene->{gene};
   return join(" ",
-              a( { href => "geneOverview.cgi?orgId=$orgId&gene=$locusId",
-                   title => Utils::alt_descriptions($dbh, $orgId, $locusId) },
-                 "$showName : $gene->{desc}"),
+              Utils::gene_link($dbh, $gene, "desc", "domains.cgi"),
               "from",
               a( { href => "org.cgi?orgId=$orgId" },
                  $orginfo->{$orgId}{genome} ));
-
-
 }

@@ -31,23 +31,21 @@ Utils::fail($cgi, "$orgId is invalid. Please enter correct species name!") unles
 Utils::fail($cgi, "$locusId is invalid. Please enter correct locusId!") unless ($locusId =~ m/^[A-Za-z0-9_]*$/);
 
 my $dbh = Utils::get_dbh();
-my ($sysName,$geneName,$desc,$type) = $dbh->selectrow_array("SELECT sysName,gene,desc,type FROM Gene WHERE orgId=? AND locusId=?", undef,
-					    $orgId, $locusId);
-Utils::fail($cgi, "No locus $locusId in species $orgId") unless defined $sysName;
+my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId=? AND locusId=?",
+                                    undef, $orgId, $locusId);
+Utils::fail($cgi, "No locus $locusId in species $orgId") unless defined $gene;
 my ($genus,$species,$strain) = $dbh->selectrow_array("SELECT genus,species,strain FROM Organism WHERE orgId=?", undef, $orgId);
 Utils::fail($cgi, "No species information for $orgId") unless defined $species;
 
-my $showId = $sysName || $locusId;
-my $showName = $geneName || $showId;
+my $showId = $gene->{sysName} || $locusId;
+my $showName = $gene->{gene} || $showId;
 my $start = Utils::start_page("Cofitness for $showName ($genus $species $strain");
-my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusId,0,$type,"cofit");
-my $alt_desc = Utils::alt_descriptions($dbh,$orgId,$locusId);
+my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusId,0,$gene->{type},"cofit");
 
 print
   $start, $tabs,
   h2("Top cofit genes for $showId from " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$genus $species $strain")),
-  h3("$showId $geneName : $desc"),
-  $alt_desc ? p($alt_desc) : "";
+  p(Utils::gene_link($dbh, $gene, "lines"));
 
 if ($help) {
   print qq[<BR><BR><div class="helpbox">
@@ -62,10 +60,13 @@ if ($help) {
 
 
 my $cofitResults = $dbh->selectall_arrayref(qq{
-	SELECT hitId, rank, cofit, gene AS hitName, sysName AS hitSysName, desc AS hitDesc
+	SELECT Cofit.orgId, Cofit.hitId, Cofit.rank, Cofit.cofit,
+               Gene.locusId, Gene.sysName, Gene.gene, Gene.desc
 		FROM Cofit JOIN Gene ON Cofit.hitId=Gene.locusId AND Cofit.orgId=Gene.orgId
 		WHERE Cofit.orgId=? AND Cofit.locusId=?
-		ORDER BY rank LIMIT 20}, undef, $orgId, $locusId) || die;
+		ORDER BY rank LIMIT 20 },
+        { Slice => {} },
+        $orgId, $locusId) || die;
 if (@$cofitResults == 0) {
     print $cgi->p(qq{Cofitness results are not available for this gene, sorry.});
 } else {
@@ -76,12 +77,11 @@ if (@$cofitResults == 0) {
     my $iRow = 0;
 
     foreach  my $row (@$cofitResults) {
-	my ($hitId,$rank,$cofit,$hitName,$hitSysName,$hitDesc) = @$row;
-	my $showId = $hitSysName || $hitId;
-	my $rowcolor = $colors[ $iRow++ % scalar(@colors) ];
-	$cofit = sprintf("%.2f",$cofit);
-	my ( $cofitCons ) = $dbh->selectrow_array(qq{ SELECT max(cofit) FROM Ortholog o1, Ortholog o2, Cofit c
-                                 	WHERE o1.orgId1 = ? AND o1.locusId1 = ?
+      my $hitId = $row->{locusId};
+      my $rowcolor = $colors[ $iRow++ % scalar(@colors) ];
+      my $cofit = sprintf("%.2f",$row->{cofit});
+      my ( $cofitCons ) = $dbh->selectrow_array(qq{ SELECT max(cofit) FROM Ortholog o1, Ortholog o2, Cofit c
+                                 	 WHERE o1.orgId1 = ? AND o1.locusId1 = ?
 	                                 AND o1.orgId2 = c.orgId AND o1.locusId2 = c.locusId
 	                                 AND o2.orgId1 = o1.orgId1 AND o2.orgId2=o1.orgId2
 	                                 AND o2.locusId1 = ?
@@ -91,17 +91,12 @@ if (@$cofitResults == 0) {
 	$url2 .= "&help=1" if $help;
 	my $cofitUrl = "cofitCons.cgi?orgId=$orgId&locusId=$locusId&hitId=$hitId";
 	$cofitUrl .= "&help=1" if $help;
-        my $alt_desc_hit = Utils::alt_descriptions($dbh,$orgId,$hitId)
-          || "no other information";
 	push @trows,
           $cgi->Tr( {bgcolor => $rowcolor, align => 'left', valign => 'top' },
-                    $cgi->td($rank),
-                    $cgi->td($cgi->a( {href => "myFitShow.cgi?orgId=$orgId&gene=$hitId" },
-                                      $showId )),
-                    $cgi->td($hitName),
-                    $cgi->td(a{ -title => $alt_desc_hit,
-                                  -href => "domains.cgi?orgId=$orgId&locusId=$hitId" },
-                             $hitDesc),
+                    $cgi->td($row->{rank}),
+                    $cgi->td(Utils::gene_link($dbh, $row, "name", "myFitShow.cgi")),
+                    $cgi->td($row->{gene} || ""),
+                    $cgi->td(Utils::gene_link($dbh, $row, "desc", "domains.cgi")),
                     $cgi->td( $cgi->a({href => $cofitUrl},
                                       defined $cofitCons ? sprintf("%.2f", $cofitCons) : "no") ),
                     $cgi->td($cgi->a({title=>"Compare genes via scatterplot", href => "$url2"}, $cofit)),
@@ -109,7 +104,7 @@ if (@$cofitResults == 0) {
                   );
 
     }
-    my $name = $geneName || $showId;
+    my $name = $gene->{gene} || $showId;
     print
 	start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
 	hidden('orgId', $orgId),

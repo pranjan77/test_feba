@@ -73,18 +73,18 @@ if (@$hits == 0) {
   my $gene = $hits->[0];
   my $orgId = $gene->{orgId};
   my $locusId = $gene->{locusId};
-  my $alt_desc = Utils::alt_descriptions($dbh,$orgId,$locusId);
+
+  my $idShow = $gene->{sysName} || $gene->{locusId};
+  my $start = Utils::start_page("Fitness data for $idShow in $orginfo->{$orgId}{genome}");
+  my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusId,0,$gene->{type},"fitness");
+  print
+    $start,
+    $tabs,
+    h2("Fitness data for $idShow in " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
+    p(Utils::gene_link($dbh, $gene, "lines"));
 
   if ($hits->[0]{has_fitness} == 0) {
-    my $idShow = $gene->{sysName} || $gene->{locusId};
-    my $start = Utils::start_page("Fitness data for $idShow in $orginfo->{$orgId}{genome}");
-    my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusId,0,$gene->{type},"fitness");
-
-    print
-      $start, $tabs,
-      h3("$idShow $gene->{gene}: $gene->{desc} in " . $orginfo->{$gene->{orgId}}{genome}),
-      $alt_desc ? p($alt_desc) : "",
-      p("Sorry, no fitness data for $idShow.",
+    print p("Sorry, no fitness data for $idShow.",
               "This gene might not have mapped insertions due to chance,",
               "or its mutants might be at low abundance after recovery from the freezer,",
               "or its mutants might grow poorly in the conditions that were used to make the mutant library.");
@@ -121,28 +121,6 @@ if (@$hits == 0) {
         @fit = sort { $a->{fit} <=> $b->{fit} } @fit;
       }
 
-      my $idShow = $gene->{sysName} || $gene->{locusId};
-      my $start = Utils::start_page("Fitness for $idShow ($orginfo->{$orgId}{genome})");
-      my $title = "Fitness data for $idShow in $orginfo->{$orgId}{genome}";
-      my $tabs = Utils::tabsGene($dbh,$cgi,$orgSpec,$locusId,$showAll,$gene->{type},"fit");
-
-      print
-        $start, $tabs,
-          h2("Fitness data for $idShow in " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
-	    # corner compare box
-	    qq[<div style="position: relative;"><div class="floatbox">],
-              start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
-                "<br>Add gene: ",
-                  hidden( -name => 'orgId', -value => $orgId, -override => 1 ),
-                    hidden( -name => 'showAll', -value => $showAll, -override => 1  ),
-                      hidden( -name => 'locusId', -value => $locusId, -override => 1 ),
-                        textfield( -name => 'addgene', -default => "", -override => 1, -size => 20, -maxLength => 100 ),
-                          # submit('Go'),
-                          "<button type='submit'>Go</button>",
-                            end_form,
-                              qq[</P></div></div>],
-                                h3("$idShow $gene->{gene}: $gene->{desc}"),
-                                  $alt_desc ? p($alt_desc) : "";
       if ($help) {
           print qq[<div class="helpbox">
 		<b><u>About this page:</u></b><BR><ul>
@@ -164,6 +142,20 @@ if (@$hits == 0) {
             print $cgi->p("All " . scalar(@fit) . " fitness values, sorted by value");
           }
 	}
+
+      print
+	    qq[<div style="position: relative;"><div class="floatbox">],
+              start_form(-name => 'input', -method => 'GET', -action => 'genesFit.cgi'),
+                "<br>Add gene: ",
+                  hidden( -name => 'orgId', -value => $orgId, -override => 1 ),
+                    hidden( -name => 'showAll', -value => $showAll, -override => 1  ),
+                      hidden( -name => 'locusId', -value => $locusId, -override => 1 ),
+                        textfield( -name => 'addgene', -default => "", -override => 1, -size => 20, -maxLength => 100 ),
+                          # submit('Go'),
+                          "<button type='submit'>Go</button>",
+                            end_form,
+                              qq[</P></div></div>];
+
 
       my $option = "Or see ";
       if ($showAll == 0) {

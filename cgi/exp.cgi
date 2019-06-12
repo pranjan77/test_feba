@@ -209,33 +209,26 @@ print $cgi->h3($header) if defined $header;
 if (@fit > 0) { # show the table
   my @trows = ();
   foreach my $row (@fit) {
-    my $geneId = $row->{sysName} || $row->{locusId};
     my $strainUrl = "strainTable.cgi?orgId=$orgId&locusId=$row->{locusId}&expName=$expName";
     $strainUrl .= "&help=1" if $help;
     my $orthUrl = "orthFit.cgi?orgId=$orgId&locusId=$row->{locusId}"
       . "&expGroup=" . uri_escape($exp->{expGroup})
         . "&condition1=" . uri_escape($exp->{condition_1});
     $orthUrl .= "&help=1" if $help;
-    my $alt_desc = Utils::alt_descriptions($dbh,$orgId,$row->{locusId});
     push @trows,
       $cgi->Tr( {align => 'left', valign => 'top'},
                 td(checkbox('locusId',0,$row->{locusId},'')),
-                td(a({href => "myFitShow.cgi?orgId=$orgId&gene=$row->{locusId}",},
-                     # style => "color:rgb(0,0,0)"},
-                     $geneId)),
+                td(Utils::gene_link($dbh, $row, "name", "myFitShow.cgi")),
                 td($row->{gene}),
                 td({ -bgcolor => Utils::fitcolor($row->{fit}) },
                    a({ -href => $strainUrl,
                        -title => "per-strain data",
                        -style => "color:rgb(0,0,0)" },
-                       sprintf("%.1f", $row->{fit})) ),
+                     sprintf("%.1f", $row->{fit})) ),
                 td( sprintf("%.1f", $row->{t}) ),
-                td( a({ -title => $alt_desc || "no other information",
-                        -href => "domains.cgi?orgId=$orgId&locusId=$row->{locusId}" },
-                      $row->{desc}) ),
-                td(a({ 
-                      title => "Compare to data from similar experiments or orthologs",
-                      href => $orthUrl},
+                td(Utils::gene_link($dbh, $row, "desc", "domains.cgi")),
+                td(a({ title => "Compare to data from similar experiments or orthologs",
+                       href => $orthUrl},
                      exists $cons{$row->{locusId}} && $cons{$row->{locusId}} > 1?
                      "<i>conserved</i>" : "compare")) );
   }

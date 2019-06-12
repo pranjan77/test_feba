@@ -143,11 +143,10 @@ if (@$hits == 0) {
     my $start = Utils::start_page("Overview for $idShow ($orginfo->{$orgId}{genome})");
     my $title = "Gene Info for $idShow in $orginfo->{$orgId}{genome}";
     my $tabs = Utils::tabsGene($dbh,$cgi,$orgSpec,$geneSpec,$showAll,$gene->{type},"gene");
-    my $alt_desc = Utils::alt_descriptions($dbh,$orgId,$locusId);
     my $beginC = Utils::commify($begin);
     my $endC = Utils::commify($end);
     my @lines = ();
-    push @lines, $alt_desc if $alt_desc;
+    push @lines, Utils::gene_link($dbh, $gene, "lines");
     push @lines, "Type $type: $typeName";
     push @lines, "Located on scaffold $scaffold, $strand strand, nucleotides $beginC to $endC";
     push @lines, join(" ",
@@ -158,9 +157,8 @@ if (@$hits == 0) {
 
     print
       $start, $tabs,
-        h2("Gene info for $idShow in " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
-          h3("$idShow $gene->{gene}: $gene->{desc}"),
-            p(join(br(), @lines));
+      h2("Gene info for $idShow in " . $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}")),
+      p(join(br(), @lines));
 
     my @links = ();
     if ($gene->{locusId} =~ m/^\d+$/) {
@@ -212,12 +210,9 @@ if (@$hits == 0) {
       $bgcolor = "#FFFFFF" if $row->{locusId} eq $locusId;
       my ($phen, $tip) = Utils::gene_fit_string($dbh,$orgSpec,$row->{locusId});
       push @trows, Tr({ -valign => 'top', -align => 'left', -bgcolor => $bgcolor},
-                      td([ a({href => "geneOverview.cgi?orgId=$orgId&gene=$row->{locusId}"},$row->{sysName}||$row->{locusId}), #locus
+                      td([ Utils::gene_link($dbh, $row, "name", "geneOverview.cgi"),
                            a({href => "geneOverview.cgi?orgId=$orgId&gene=$row->{locusId}"},$row->{gene} || $row->{sysName}), 
-                           a({ -title => Utils::alt_descriptions($dbh,$orgId,$row->{locusId})
-                               || "no other information",
-                               -href => "domains.cgi?orgId=$orgId&locusId=$row->{locusId}" },
-                             $row->{desc}),
+                           Utils::gene_link($dbh, $row, "desc", "domains.cgi"),
                            $row->{strand},
                            a({title=>$difftitle},$diff), # $row->{begin},
                            a({href => "myFitShow.cgi?orgId=$orgId&gene=$row->{locusId}", title=>$tip},$phen),

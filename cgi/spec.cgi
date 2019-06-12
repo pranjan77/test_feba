@@ -78,7 +78,7 @@ print
     h2($title2);
 
 my $spec = $dbh->selectall_arrayref(
-    qq{SELECT condition, locusId, sysName, gene, desc,
+    qq{SELECT condition, locusId, sysName, gene, orgId, desc,
               minFit, maxFit, nInOG
        FROM SpecOG
        JOIN Gene USING (orgId,locusId)
@@ -113,16 +113,12 @@ foreach my $row (@$spec) {
     my $showFit = abs($row->{minFit}) > abs($row->{maxFit}) ? $row->{minFit} : $row->{maxFit};
     push @trows, Tr({ -valign => 'top', -align => 'left' },
                     td(a($condParams, $cond)),
-                    td(a({href=>"singleFit.cgi?orgId=$orgId&locusId=$row->{locusId}"},
-                         $row->{sysName}  || $row->{locusId})),
-                    td( a({ -title => Utils::alt_descriptions($dbh,$orgId,$row->{locusId})
-                                || "no other information",
-                                -href => "domains.cgi?orgId=$orgId&locusId=$row->{locusId}" },
-                          $row->{desc} || "No description") ),
+                    td(Utils::gene_link($dbh, $row, "name", "myFitShow.cgi")),
+                    td(Utils::gene_link($dbh, $row, "desc", "domains.cgi")),
                     td({ -bgcolor => Utils::fitcolor($showFit) },
-                       a( $fitAttr, 
-                          ( ($row->{minFit} < 0 && $row->{maxFit} < 0) || ($row->{minFit} > 0 && $row->{maxFit} > 0) ?
-                            sprintf("%.1f", $showFit) : "variable" ))),
+                       a($fitAttr,
+                         ( ($row->{minFit} < 0 && $row->{maxFit} < 0) || ($row->{minFit} > 0 && $row->{maxFit} > 0) ?
+                           sprintf("%.1f", $showFit) : "variable" ))),
                     td($row->{nInOG} > 1 ? "Yes" : "&nbsp;"));
 }
 print table({cellspacing => 0, cellpadding => 3}, @trows); # style=>"margin-left: 0px",
