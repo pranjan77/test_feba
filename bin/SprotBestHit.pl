@@ -157,6 +157,7 @@ while(<SPROT>) {
     my $tail = $2;
     my $org = "";
     my $gene = "";
+    $tail =~ s/ OX=\d+\b//; # remove the organism identifier
     if ($tail =~ m/^([^=]+) GN=(\S+)/ ) {
         $org = $1;
         $gene = $2;
