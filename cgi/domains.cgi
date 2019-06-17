@@ -228,7 +228,7 @@ if (scalar(@$bhMetacyc) > 0) {
   foreach my $row (@$bhMetacyc) {
     next if $row->{rxnId} eq "";
     $metacycrxn{ $row->{rxnId} } = 1;
-    my $rxnName = $row->{rxnName} || "";
+    my $rxnName = $row->{rxnName};
     my $ecnums = $dbh->selectcol_arrayref("SELECT ecnum from MetacycReactionEC WHERE rxnId = ?",
                                           {}, $row->{rxnId});
     foreach my $ec (@$ecnums) {
@@ -239,16 +239,13 @@ if (scalar(@$bhMetacyc) > 0) {
       # and maybe update the name
       # If no reaction name, or it is just some EC number(s) --
       # replace with KEGG description of first ec
-      if ($rxnName eq "" || $rxnName =~ m/^[0-9][.][0-9.,]+$/) {
+      if (!defined $rxnName || $rxnName eq "" || $rxnName =~ m/^[0-9][.][0-9.,]+$/) {
         ($rxnName) = $dbh->selectrow_array("SELECT ecdesc FROM ECInfo WHERE ecnum = ?",
                                            {}, $ec);
-        $rxnName = "" if !defined $rxnName;
       }
-      $rxnName = $row->{rxnId} if $rxnName eq "";
     }
     my $showrxn = a({ -href => "http://metacyc.org/META/NEW-IMAGE?type=REACTION&object=" . $row->{rxnId},
-                      -title => "see $row->{rxnId} in MetaCyc" },
-                 $rxnName);
+                      -title => "see $row->{rxnId} in MetaCyc" }, $rxnName || $row->{rxnId});
     if (@showecs > 0) {
       @showecs = map a({ -href => "https://metacyc.org/META/NEW-IMAGE?type=EC-NUMBER&object=EC-$_" }, $_), @showecs;
       $showrxn .= " [EC: " . join(", ", @showecs) . "]";
@@ -261,7 +258,7 @@ if (scalar(@$bhMetacyc) > 0) {
   $desc .= br() . small(join("; ", @showrxns)) if @showrxns > 0;
   print p( "MetaCyc:",
            sprintf("%.0f%% identical to", $row->{identity}),
-           $desc );
+           $desc);
 }
 print "\n";
 
