@@ -1187,6 +1187,29 @@ biotin	0.06	uM
 Potassium phosphate monobasic	10	mM
 Potassium phosphate dibasic	0.597	mM
 		
+Media	MELiSSA_defined_Malic_noNitrogen_phosphatebuffered	
+Description	Defined medium for R. rubrum with no ammonium, pH should be 6.9	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+D,L-Malic Acid	6	g/L
+Manganese (II) chloride tetrahydrate	0.051	mM
+Magnesium Sulfate Heptahydrate	0.0811	mM
+Sodium sulfate	3.801	mM
+Calcium chloride dihydrate	0.34	mM
+EDTA	0.068	mM
+Potassium phosphate monobasic	3.601	mM
+Iron (II) sulfate heptahydrate	0.072	mM
+Sodium bicarbonate	50	mM
+Potassium phosphate dibasic	2.985	mM
+Nickel (II) sulfate hexahydrate	1.902	uM
+Zinc sulfate heptahydrate	0.348	uM
+Copper (II) sulfate pentahydrate	0.02	uM
+Boric Acid	1.623	uM
+Sodium Molybdate Dihydrate	0.207	uM
+biotin	0.06	uM
+Potassium phosphate monobasic	10	mM
+Potassium phosphate dibasic	0.597	mM
+		
 Media	SMN_rich	
 Description	Rich medium for R. rubrum	
 Minimal	FALSE	
@@ -1424,3 +1447,199 @@ L-glutathione reduced	1	mg/L
 Phenol red	5	mg/L
 Fetal bovine serum	5	vol%
 Lipopolysaccharide	0.1	mg/L
+		
+Media	Modified_MS_plus_RCH2_0.2x_each	
+Description	Trenton plant growth media	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium Nitrate	900	mg/L
+Boric Acid	1.55	mg/L
+Calcium chloride	83.05	mg/L
+Cobalt chloride hexahydrate	0.00625	mg/L
+Copper (II) sulfate pentahydrate	0.00625	mg/L
+EDTA (disodium salt)	9.315	mg/L
+Iron (II) sulfate heptahydrate	6.95	mg/L
+Magnesium sulfate	45.175	mg/L
+Manganese sulfate 	4.225	mg/L
+Potassium iodide	0.2075	mg/L
+Potassium nitrate	975	mg/L
+Potassium phosphate monobasic	42.5	mg/L
+Sodium Molybdate Dihydrate	0.0625	mg/L
+Zinc sulfate heptahydrate	2.15	mg/L
+Ammonium chloride	5	g/L
+Potassium Chloride	0.02	g/L
+Sodium phosphate monobasic monohydrate	0.12	g/L
+PIPES sesquisodium salt	6	mM
+Wolfe's mineral mix	0.2	X
+Wolfe's vitamin mix	0.2	X
+		
+Media	Modified_MS_plus_RCH2_0.2x_each_no_Nitrate	
+Description	Trenton plant growth media	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Boric Acid	1.55	mg/L
+Calcium chloride	83.05	mg/L
+Cobalt chloride hexahydrate	0.00625	mg/L
+Copper (II) sulfate pentahydrate	0.00625	mg/L
+EDTA (disodium salt)	9.315	mg/L
+Iron (II) sulfate heptahydrate	6.95	mg/L
+Magnesium sulfate	45.175	mg/L
+Manganese sulfate 	4.225	mg/L
+Potassium iodide	0.2075	mg/L
+Potassium phosphate monobasic	42.5	mg/L
+Sodium Molybdate Dihydrate	0.0625	mg/L
+Zinc sulfate heptahydrate	2.15	mg/L
+Ammonium chloride	5	g/L
+Potassium Chloride	0.02	g/L
+Sodium phosphate monobasic monohydrate	0.12	g/L
+PIPES sesquisodium salt	6	mM
+Wolfe's mineral mix	0.2	X
+Wolfe's vitamin mix	0.2	X
+		
+Media	MRS_noGlucose	
+Description	Media for culturing lactobacilli without D-Glucose	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Proteose Peptone	10	g/L
+Beef extract	10	g/L
+Yeast Extract	5	g/L
+Tween 80	1	g/L
+Triammonium citrate	0.2	g/L
+Sodium acetate	0.5	g/L
+Potassium phosphate dibasic	0.2	g/L
+Magnesium sulfate	0.1	g/L
+Manganese (II) sulfate monohydrate	0.05	g/L
+L-Cysteine	8.25	mM
+		
+Media	MRS	
+Description	Media for culturing lactobacilli	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+D-Glucose	56	mM
+Proteose Peptone	10	g/L
+Beef extract	10	g/L
+Yeast Extract	5	g/L
+Tween 80	1	g/L
+Triammonium citrate	0.2	g/L
+Sodium acetate	0.5	g/L
+Potassium phosphate dibasic	0.2	g/L
+Magnesium sulfate	0.1	g/L
+Manganese (II) sulfate monohydrate	0.05	g/L
+L-Cysteine	8.25	mM
+		
+Media	ZMB	
+Description	Media for culturing Bifidobacterium	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+D-Glucose	15	g/L
+L-Histidine	0.17	g/L
+L-Isoleucine	0.24	g/L
+L-Leucine	1	g/L
+L-Methionine	0.06	g/L
+L-Valine	0.7	g/L
+L-Arginine	0.72	g/L
+m-Inositol	0.002	g/L
+Potassium phosphate dibasic	3.1	g/L
+Potassium phosphate monobasic	6.4	g/L
+L-Glutamic acid monopotassium salt monohydrate	0.6	g/L
+L-Phenylalanine	0.4	g/L
+L-Proline	0.7	g/L
+L-Asparagine	0.5	g/L
+L-Aspartic Acid	0.05	g/L
+L-Glutamine	0.6	g/L
+L-Serine	0.5	g/L
+L-Threonine	0.5	g/L
+L-Cysteine hydrochloride monohydrate	0.2	g/L
+L-Alanine	0.4	g/L
+Glycine	0.3	g/L
+L-Lysine	0.5	g/L
+L-Tryptophan	0.2	g/L
+L-tyrosine	0.3	g/L
+biotin	0.006	g/L
+calcium pantothenate	0.0012	g/L
+Nicotinic Acid	0.0009	g/L
+Pyridoxamine dihydrochloride	0.0048	g/L
+Riboflavin	0.0009	g/L
+Magnesium Sulfate Heptahydrate	1	g/L
+Iron (II) sulfate heptahydrate	0.004	g/L
+Zinc sulfate heptahydrate	0.005	g/L
+Folic Acid	0.00056	g/L
+4-Aminobenzoic acid	0.000056	g/L
+Thiamine HCl	0.00056	g/L
+Potassium acetate	0.9	g/L
+Lipoic acid	0.001	g/L
+Tween 80	0.5	g/L
+Adenine hydrochloride hydrate	0.011	g/L
+Guanine	0.0056	g/L
+Uracil	0.023	g/L
+Xanthine	0.0038	g/L
+Ammonium heptamolybdate tetrahydrate	0.00019	g/L
+Manganese (II) sulfate monohydrate	0.00038	g/L
+Calcium chloride dihydrate	0.04	g/L
+Cobalt chloride hexahydrate	0.00019	g/L
+Copper (II) sulfate pentahydrate	0.00019	g/L
+Boric Acid	0.00075	g/L
+Potassium iodide	0.00011	g/L
+EDTA	0.0075	g/L
+L-glutathione reduced	0.015	g/L
+Ammonium Sulfate	1	g/L
+Sodium Chloride	3	g/L
+MOPS	15	g/L
+		
+Media	ZMB_noFolicAcid	
+Description	Media for culturing Bifidobacterium minus folic acid	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+D-Glucose	15	g/L
+L-Histidine	0.17	g/L
+L-Isoleucine	0.24	g/L
+L-Leucine	1	g/L
+L-Methionine	0.06	g/L
+L-Valine	0.7	g/L
+L-Arginine	0.72	g/L
+m-Inositol	0.002	g/L
+Potassium phosphate dibasic	3.1	g/L
+Potassium phosphate monobasic	6.4	g/L
+L-Glutamic acid monopotassium salt monohydrate	0.6	g/L
+L-Phenylalanine	0.4	g/L
+L-Proline	0.7	g/L
+L-Asparagine	0.5	g/L
+L-Aspartic Acid	0.05	g/L
+L-Glutamine	0.6	g/L
+L-Serine	0.5	g/L
+L-Threonine	0.5	g/L
+L-Cysteine hydrochloride monohydrate	0.2	g/L
+L-Alanine	0.4	g/L
+Glycine	0.3	g/L
+L-Lysine	0.5	g/L
+L-Tryptophan	0.2	g/L
+L-tyrosine	0.3	g/L
+biotin	0.006	g/L
+calcium pantothenate	0.0012	g/L
+Nicotinic Acid	0.0009	g/L
+Pyridoxamine dihydrochloride	0.0048	g/L
+Riboflavin	0.0009	g/L
+Magnesium Sulfate Heptahydrate	1	g/L
+Iron (II) sulfate heptahydrate	0.004	g/L
+Zinc sulfate heptahydrate	0.005	g/L
+4-Aminobenzoic acid	0.000056	g/L
+Thiamine HCl	0.00056	g/L
+Potassium acetate	0.9	g/L
+Lipoic acid	0.001	g/L
+Tween 80	0.5	g/L
+Adenine hydrochloride hydrate	0.011	g/L
+Guanine	0.0056	g/L
+Uracil	0.023	g/L
+Xanthine	0.0038	g/L
+Ammonium heptamolybdate tetrahydrate	0.00019	g/L
+Manganese (II) sulfate monohydrate	0.00038	g/L
+Calcium chloride dihydrate	0.04	g/L
+Cobalt chloride hexahydrate	0.00019	g/L
+Copper (II) sulfate pentahydrate	0.00019	g/L
+Boric Acid	0.00075	g/L
+Potassium iodide	0.00011	g/L
+EDTA	0.0075	g/L
+L-glutathione reduced	0.015	g/L
+Ammonium Sulfate	1	g/L
+Sodium Chloride	3	g/L
+MOPS	15	g/L
