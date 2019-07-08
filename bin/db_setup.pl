@@ -667,28 +667,19 @@ sub ExpToPubId($$$);
       } # end loop over orgs
     } # end else (not test mode)
 
-    # Load SwissProt hits, or just use the existing files
+    # Load SwissProt hits
     if (defined $outdir) {
         my $bhfile = "$outdir/db.BestHitSwissProt";
         my $swfile = "$outdir/db.SwissProtDesc";
-        my $toRun = 1; # need to rerun BestHitSwissProt.pl
-        if (-e $bhfile && -e $swfile) {
-            $toRun = 0;
-            # are they up to date for each organism?
-            foreach my $org (@orgs) {
-                my $hitsFile = "$gdir/blast_results/sprot_$org.m8";
-                die "No such file: $hitsFile" unless -e $hitsFile;
-                $toRun = 1 unless NewerThan($bhfile, $hitsFile) && NewerThan($swfile, $hitsFile);
-            }
+        # do they exist for each organism?
+        foreach my $org (@orgs) {
+          my $hitsFile = "$gdir/blast_results/sprot_$org.m8";
+          die "No such file: $hitsFile" unless -e $hitsFile;
         }
-        if ($toRun) {
-            print STDERR "Running SprotBestHit.pl\n";
-            system("$Bin/SprotBestHit.pl","-gdir",$gdir,"-out",$outdir,@orgs) == 0
-                || die "SprotBestHit.pl failed";
-            die if ! -e $bhfile && -e $swfile;
-        } else {
-            print STDERR "Using pre-existing files db.BestHitSwissProt, db.SwissProtDesc in $outdir\n";
-        }
+        print STDERR "Running SprotBestHit.pl\n";
+        system("$Bin/SprotBestHit.pl","-gdir",$gdir,"-out",$outdir,@orgs) == 0
+          || die "SprotBestHit.pl failed";
+        die if ! -e $bhfile && -e $swfile;
         push @workCommands, ".import $bhfile BestHitSwissProt";
         push @workCommands, ".import $swfile SwissProtDesc";
     }
