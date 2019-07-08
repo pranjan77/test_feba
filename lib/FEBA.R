@@ -1156,10 +1156,11 @@ SaveStrainUsage = function(fit, dir=".") {
 
 # Note thresholds are different than in high_fit.pl
 HighFit = function(fit, genes, expsUsed, min.fit=4, min.t=5, max.se=2, min.gMean=10, max.below=8) {
-  high = which(fit$lrn >= min.fit & fit$t >= min.t, arr.ind=T);
-  high = data.frame(locusId=fit$g[high[,1]], expName=names(fit$lrn)[high[,2]], fit=fit$lrn[high], t=fit$t[high]);
+  wHigh = which(fit$lrn >= min.fit & fit$t >= min.t, arr.ind=T);
+  high = data.frame(locusId=fit$g[wHigh[,1]], expName=names(fit$lrn)[wHigh[,2]], fit=fit$lrn[wHigh], t=fit$t[wHigh]);
   # t ~= fit/standard_error, so estimate s.e. = fit/t
   high$se = high$fit/high$t;
+  high$sdNaive = fit$sdNaive[wHigh];
   high = subset(high, se <= max.se);
 
   # which experiments are ok
