@@ -83,7 +83,7 @@ if ($reanno->{new_annotation}) {
       "Rationale:  $reanno->{comment}";
     $desc_title = "Original annotation";
 }
-push @toplines, "${desc_title}: $gene->{desc}";
+push @toplines, "${desc_title}: " . ($gene->{desc} || "no description");
 
 print
   header, $start, $tabs, '<div id="tabcontent">',
