@@ -84,7 +84,7 @@ if ($query =~ m/[A-Za-z]/) {
     print FAA Utils::formatFASTA($id,$seq);
     close(FAA) || die "Error writing fasta file";    
 } elsif ($locusSpec ne "") {
-    Utils::fail($cgi,qq($locusSpec is invalid. Please enter correct gene name!)) unless ($locusSpec =~ m/^[A-Za-z0-9_]*$/);
+    Utils::fail($cgi,qq($locusSpec is invalid. Please enter correct gene name!)) unless ($locusSpec =~ m/^[A-Za-z0-9_.-]*$/);
 
     # extract sequence for the given gene
     $gene = $dbh->selectrow_hashref("SELECT * from Gene where orgId=? AND locusId=?", {}, $orgId, $locusSpec);
