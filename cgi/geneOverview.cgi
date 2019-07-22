@@ -42,7 +42,7 @@ if (!defined $geneSpec || $geneSpec eq "") {
 }
 
 # check user input
-Utils::fail($cgi, "$geneSpec is invalid. Please enter correct gene name!") unless ($geneSpec =~ m/^[A-Za-z0-9_-]*$/);
+Utils::fail($cgi, "$geneSpec is invalid. Please enter correct gene name!") unless ($geneSpec =~ m/^[A-Za-z0-9_.-]*$/);
 
 # connect to database
 my $dbh = Utils::get_dbh();
