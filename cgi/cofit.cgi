@@ -28,7 +28,7 @@ my $locusId = $cgi->param('locusId') || die "no gene identifier\n";
 my $help = $cgi->param('help') || "";
 
 Utils::fail($cgi, "$orgId is invalid. Please enter correct species name!") unless ($orgId =~ m/^[A-Za-z0-9_-]*$/);
-Utils::fail($cgi, "$locusId is invalid. Please enter correct locusId!") unless ($locusId =~ m/^[A-Za-z0-9_]*$/);
+Utils::fail($cgi, "$locusId is invalid. Please enter correct locusId!") unless ($locusId =~ m/^[A-Za-z0-9_.-]*$/);
 
 my $dbh = Utils::get_dbh();
 my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId=? AND locusId=?",
