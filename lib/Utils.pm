@@ -873,7 +873,7 @@ sub alt_descriptions($$$) {
 # The first argument is the dbh
 # The second argument is the gene row
 # The third argument is whether to show the systematic name ("name"),
-#   the desoription ("desc"),
+#   the description ("desc"),
 #   a text description "text" (i.e. to use as the title of an HREF),
 #   or multiple "lines" with gene name and description (both in bold)
 #   and additional lines (not in bold), separated by <BR>
@@ -901,13 +901,15 @@ sub gene_link {
     my $paren = "(from data)";
     $main_desc .= $showParam eq "desc" || $showParam eq "lines" ? CGI::small($paren) : $paren;
     push @alt_descs, "Original annotation: $original_desc";
-  } else {
-    $main_desc = CGI::b($main_desc) if $showParam eq "lines";
+  } elsif ($showParam eq "lines") {
+    $main_desc = CGI::b($main_desc) unless $main_desc eq "";
   }
   push @alt_descs, "SEED: " . $alt_descs->{seed}
     if exists $alt_descs->{seed};
   push @alt_descs, "KEGG: " . $alt_descs->{kegg}
     if exists $alt_descs->{kegg};
+  $main_desc = shift @alt_descs
+    if $main_desc eq "" && @alt_descs > 0;
   my $alt_descs_string = join("; ", @alt_descs);
   my $desc_long;
   if ($showParam eq "desc") {
@@ -916,9 +918,14 @@ sub gene_link {
     $desc_long = $main_desc;
     $desc_long .= "; $alt_descs_string" if $alt_descs_string;
   } elsif ($showParam eq "lines") {
-    my @list = ( $main_desc );
-    $list[0] = CGI::b($gene->{gene}.":") . " " . $main_desc if $gene->{gene};
+    my @list = ();
+    if ($main_desc || $gene->{gene}) {
+      my $first = $main_desc || "no description";
+      $first = CGI::b($gene->{gene}) . ": $first" if $gene->{gene};
+      push @list, $first;
+    }
     push @list, @alt_descs;
+    @list = ("no description") if @list == 0;
     return join("<BR>", @list);
   } else {
     die "Unrecognized showParam $showParam";
