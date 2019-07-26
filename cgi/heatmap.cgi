@@ -73,7 +73,7 @@ foreach my $add (@addrow) {
   } elsif ($add =~ m/^_l([0-9]+)$/) {
     $r = $add;
   } elsif ($add ne "") {
-    if ($add !~ m/^[A-Za-z90-9_-]*$/) {
+    if ($add !~ m/^[A-Za-z90-9_.-]*$/) {
       push @errors, "Invalid gene to add";
     } else {
       my ($locusId) = $dbh->selectrow_array(qq{ SELECT locusId FROM Gene WHERE orgId = ?
