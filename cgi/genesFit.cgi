@@ -51,7 +51,7 @@ my $addgene_error = undef;
 if ($addgene) {
     $addgene =~ s/[ \t]+$//;
     $addgene =~ s/^[ \t]+//;
-    if ($addgene !~ m/^[A-Za-z90-9_-]*$/) {
+    if ($addgene !~ m/^[A-Za-z90-9_.-]*$/) {
 	$addgene_error = "Invalid gene to add";
     } else {
 	my ($locusId) = $dbh->selectrow_array(qq{ SELECT locusId FROM Gene WHERE orgId = ?
