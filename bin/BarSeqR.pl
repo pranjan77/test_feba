@@ -25,10 +25,10 @@ Usage: BarSeqR.pl -org organism [ -indir g/organism ]
     By default, the input directory includes FEBA_BarSeq.tsv,
     genes.GC, and setname.poolcount, and the "all.poolcount" file is
     also written to this directory.  This script requires the genes
-    table to include the fields locusId, scaffoldId, begin, end, and
-    strand, and the experiments table to include the fields SetName,
-    Index, Description, and Date_pool_expt_started.  See ../lib/FEBA.R
-    for additional requirements for the R step.
+    table to include the fields locusId, sysName, scaffoldId, begin,
+    end, and strand, and the experiments table to include the fields
+    SetName, Index, Description, and Date_pool_expt_started.  See
+    ../lib/FEBA.R for additional requirements for the R step.
 
     By default, all sets in the experiments table are processed except
     for test sets, which are ignored.  If no set.poolcount is
@@ -215,7 +215,7 @@ END
     print STDERR join("\t","Unknown media", sort keys %unknownMedia)."\n" if scalar(keys %unknownMedia) > 0;
     print STDERR join("\t","Unknown compound", sort keys %unknownCompound)."\n" if scalar(keys %unknownCompound) > 0;
 
-    my @genes = &ReadTable($genesfile, qw{locusId scaffoldId begin end strand});
+    my @genes = &ReadTable($genesfile, qw{locusId scaffoldId sysName begin end strand});
     my %geneScaffolds = map { $_->{scaffoldId} => 1 } @genes;
     my %genesSorted = (); # scaffold to list of genes sorted by begin
     foreach my $gene (@genes) {
