@@ -32,6 +32,9 @@ use strict;
 # changeTrack and changeRight (+1 for another gene, -1 for fewer genes)
 # upTrack -- a track to move up
 # downTrack -- a track to move down
+#
+# Arguments for coloring:
+# colorOff -- offset to the color rotation
 
 use strict;
 use CGI qw(-nosticky :standard Vars);
@@ -271,6 +274,53 @@ my $padding = 30; # at left only
   print p({-style => "color: red;" }, join(br(), @warnings))
     if @warnings > 0;
 
+  # Compute colors -- first, compute groups
+  my %geneGroup = (); # orgId => locusId => iGroup
+  my $nGeneGroups = 0;
+  my %orth = (); # orgId => locusId => orgId => orthId
+  foreach my $track (@tracks) {
+    my $orgId = $track->{orgId};
+    foreach my $gene (@{ $track->{genes} }) {
+      $orth{$orgId}{ $gene->{locusId} } = {};
+    }
+  }
+  while (my ($orgId, $hash) = each %orth) {
+    while(my ($locusId, $ohash) = each %$hash) {
+      my $rows = $dbh->selectall_arrayref(qq{ SELECT orgId2,locusId2 FROM Ortholog
+                                              WHERE orgId1 = ? AND locusId1 = ? },
+                                          {}, $orgId, $locusId);
+      foreach my $row (@$rows) {
+        my ($orgId2,$locusId2) = @$row;
+        # Ignore orthologs that are not shown
+        $ohash->{$orgId2} = $locusId2 if exists $orth{$orgId2}{$locusId2};
+      }
+    }
+  }
+  foreach my $track (@tracks) {
+    my $orgId = $track->{orgId};
+    foreach my $gene (@{ $track->{genes} }) {
+      my $locusId = $gene->{locusId};
+      my $ohash = $orth{$orgId}{$locusId};
+      if (keys(%$ohash) > 0) {
+        while (my ($orgId2, $locusId2) = each %$ohash) {
+          if (exists $geneGroup{$orgId2}{$locusId2}) {
+            $geneGroup{$orgId}{$locusId} = $geneGroup{$orgId2}{$locusId2};
+            last;
+          }
+        }
+        if (!exists $geneGroup{$orgId}{$locusId}) {
+          $geneGroup{$orgId}{$locusId} = $nGeneGroups++;
+          while (my ($orgId2,$locusId2) = each %$ohash) {
+            $geneGroup{$orgId2}{$locusId2} = $geneGroup{$orgId}{$locusId};
+          }
+        }
+      }
+    }
+  }
+
+  my @colors = qw{Red Green Yellow Blue Orange Purple Cyan Magenta Lime Pink Teal Lavender Brown Beige Maroon MediumSpringGreen Olive Coral};
+  my $colorOff = param('colorOff') || 0;
+
   # Save the values to use for a URL or hidden form elements
   my @hidden = (['anchorOrg', $anchorOrg]);
   push @hidden, map ['anchorLoci', $_], @anchorLoci;
@@ -280,6 +330,7 @@ my $padding = 30; # at left only
       ['e', $track->{geneEnd}{locusId}],
       ['s', $track->{strand} eq "+" ? 1 : 0];
   }
+  push @hidden, [ 'colorOff', $colorOff ];
   my $tracksURL = "cmpbrowser.cgi?" . join("&", map $_->[0] . "=" . $_->[1], @hidden);
   my $tracksHidden = join("\n",
                           map qq{<input type="hidden" name="$_->[0]" value="$_->[1]">}, @hidden);
@@ -377,7 +428,11 @@ my $padding = 30; # at left only
         @points = ([$xstart,$bottom], [$xstart,$genetop], [$xstop,$geneymid]);
       }
       my $pointstr = join(" ", map { $_->[0].",".$_->[1] } @points);
-      my $color = "grey"; #TODO implement colors $genecolor{$track->{orgId}}{$gene->{locusId}} || "white";
+      my $color = "lightgrey"; # default color
+      if (exists $geneGroup{$orgId}{$gene->{locusId}}) {
+        my $iColor = ($colorOff + $geneGroup{$orgId}{$gene->{locusId}}) % scalar(@colors);
+        $color = $colors[$iColor];
+      }
       my $poly = qq{<polygon points="$pointstr" style="fill:$color; stroke:black; stroke-width:1;" />};
 
       my $showId = $gene->{gene} || $gene->{sysName} || $gene->{locusId};
@@ -413,7 +468,7 @@ my $padding = 30; # at left only
   #print p(a({-href => $tracksURL }, "self"));
   # Form for adding more tracks
   my @orgOptions = ("");
-  my %orgLabels = ("" => "Choose an organism:");
+  my %orgLabels = ("" => "Choose a genome:");
   my @orginfo = sort { $a->{genome} cmp $b->{genome} } values(%$orginfo);
   foreach my $hash (@orginfo) {
     my $orgId = $hash->{orgId};
@@ -427,7 +482,7 @@ my $padding = 30; # at left only
     p("Add genes by locus tags",
       textfield(-name => 'addRange', -size => 15, -maxlength => 50, -default => '', -override => 1),
       "or find orthologs in",
-      popup_menu(-style => 'width: 13em',
+      popup_menu(-style => 'width: 12em',
                  -name => 'addOrg',
                  -values => \@orgOptions, -labels => \%orgLabels,
                  -default => $orgOptions[0], -override => 1),
