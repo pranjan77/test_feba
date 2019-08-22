@@ -30,7 +30,6 @@ use strict;
 # removeTrack -- a track to remove
 # changeTrack and changeLeft  (+1 for another gene, -1 for fewer genes)
 # changeTrack and changeRight (+1 for another gene, -1 for fewer genes)
-# TODO
 # upTrack -- a track to move up
 # downTrack -- a track to move down
 
@@ -62,6 +61,7 @@ my $padding = 30; # at left only
   # Parse anchor parameters
   my $anchorOrg = param('anchorOrg') || die "Must specify anchorOrg";
   die "Invalid organism $anchorOrg" unless exists $orginfo->{$anchorOrg};
+  $CGI::LIST_CONTEXT_WARN = 0; # no warnings for lixt context use
   my @anchorLoci = param('anchorLoci');
   die "Must specify anchorLoci" unless @anchorLoci > 0;
   my @anchorGenes = map GetGene($dbh, $anchorOrg, $_), @anchorLoci;
@@ -92,7 +92,7 @@ my $padding = 30; # at left only
       my $geneBeg = GetGene($dbh, $orgId, $locusIdBeg[$i]);
       my $geneEnd = GetGene($dbh, $orgId, $locusIdEnd[$i]);
       die "Mismatched scaffolds for $geneBeg $geneEnd"
-        unless $geneBeg->{scaffold} == $geneEnd->{scaffold};
+        unless $geneBeg->{scaffoldId} eq $geneEnd->{scaffoldId};
       push @tracks, { orgId => $orgId,
                       geneBeg => $geneBeg,
                       geneEnd => $geneEnd,
@@ -218,6 +218,26 @@ my $padding = 30; # at left only
         $track->{ $modBeg ? "geneBeg" : "geneEnd" } = $scGenes->[$iGene];
       }
     }
+  } elsif (defined param('upTrack')) {
+    my $iTrack = param('upTrack');
+    die "Invalid move track $iTrack" unless $iTrack >= 0 && $iTrack < @tracks;
+    if ($iTrack > 0) {
+      my @tracksNew = ();
+      push @tracksNew, @tracks[0..($iTrack-2)] if $iTrack >= 2;
+      push @tracksNew, $tracks[$iTrack], $tracks[$iTrack-1];
+      push @tracksNew, @tracks[($iTrack+1)..(scalar(@tracks)-1)] if $iTrack+1 < scalar(@tracks);
+      @tracks = @tracksNew;
+    }
+  } elsif (defined param('downTrack')) {
+    my $iTrack = param('downTrack');
+    die "Invalid move track $iTrack" unless $iTrack >= 0 && $iTrack < @tracks;
+    if ($iTrack < scalar(@tracks)-1) {
+      my @tracksNew = ();
+      push @tracksNew, @tracks[0..($iTrack-1)] if $iTrack >= 1;
+      push @tracksNew, $tracks[$iTrack+1], $tracks[$iTrack];
+      push @tracksNew, @tracks[($iTrack+2)..(scalar(@tracks)-1)] if $iTrack+2 < scalar(@tracks);
+      @tracks = @tracksNew;
+    }
   }
 
   # Fetch all the genes for each track
@@ -286,11 +306,19 @@ my $padding = 30; # at left only
     my $flipLink = a({ -href => "$tracksURL&flipTrack=$iTrack", -style => $arrowStyle,
                        -title => "Flip strand for this track" },
                      "&harr;"); # left-right arrow
+    my $linkUp = a({ -href => "$tracksURL&upTrack=$iTrack", -style => $arrowStyle,
+                     -title => "Move this track up" },
+                   "&uarr;");
+    $linkUp = "" if $iTrack == 0;
+    my $linkDn = a({ -href => "$tracksURL&downTrack=$iTrack", -style => $arrowStyle,
+                     -title => "Move this track down" },
+                   "&darr;");
+    $linkDn = "" if $iTrack == scalar(@tracks)-1;
     my $nGenes = scalar(@$genes);
     print p(a({-href => $URL, -title => "see all fitness data for $nGenes genes", style => $linkColorStyle },
               i($g->{genus}, $g->{species}), $g->{strain}),
             "&nbsp;",
-            $flipLink . $removeLink);
+            $flipLink . $removeLink . $linkUp . $linkDn);
 
     # svg shows the genes in order
     my $xmin = min(map $_->{begin}, @$genes);
@@ -298,7 +326,7 @@ my $padding = 30; # at left only
     my $xdiff = $xmax - $xmin;
     # min. 1 kb for scale bar
     my $xdiffUse = $xdiff;
-    $xdiffUse = 1000 if $xdiffUse < 1000 & $bAddScale;
+    $xdiffUse = 1000 if $xdiffUse < 1000 && $bAddScale;
     my $svg_width = $padding + $xdiffUse * $kbWidth / 1000.0;
 
     # SVG has +y axis going down, not up
@@ -372,8 +400,8 @@ my $padding = 30; # at left only
         print qq{<line x1="$x" y1="$bary[0]" x2="$x" y2="$bary[1]" style="stroke:black; stroke-width:1"/>\n};
       }
       my $barcenter = ($padding + $barright)/2;
-      my $barAt = $barAt - $barHeight/10;
-      print qq{<text x="$barcenter" y="$barAt">1 kb</text>\n};
+      my $barLabelY = $barAt - $barHeight/10;
+      print qq{<text x="$barcenter" y="$barLabelY">1 kb</text>\n};
     }
     print qq{</svg>\n},
       qq{<span style="display: inline-block; position: relative; left: 2em; top: 0em; vertical-align: top;">},
