@@ -133,7 +133,7 @@ my $padding = 20; # at left and right
     }
   } elsif (param('addRange')) {
     my $addSpec = param('addRange');
-    if ($addSpec !~ m/^[0-9a-zA-Z.:-]+/) {
+    if ($addSpec !~ m/^[0-9a-zA-Z_.:-]+/) {
       push @warnings, "Invalid add. Must be a locus tag or locus1:locus2";
     }
     my @sysNames = ( $addSpec );
