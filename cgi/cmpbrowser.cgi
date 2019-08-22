@@ -26,13 +26,13 @@ use strict;
 # Arguments for modifying the view:
 # addOrg -- (select orthologous genes of the anchor(s) from this organism
 # addRange -- a locusId or sysName, or left:right
-# TODO implement:
 # flipTrack (0-based) -- changes which strand is used for that track
 # removeTrack -- a track to remove
+# changeTrack and changeLeft  (+1 for another gene, -1 for fewer genes)
+# changeTrack and changeRight (+1 for another gene, -1 for fewer genes)
+# TODO
 # upTrack -- a track to move up
 # downTrack -- a track to move down
-# changeOrg and changeLeft  (+1 for another gene, -1 for fewer genes)
-# changeOrg and changeRight (+1 for another gene, -1 for fewer genes)
 
 use strict;
 use CGI qw(-nosticky :standard Vars);
@@ -52,13 +52,14 @@ my $kbWidth = 150; # svg units/kb
 my $trackHeight = 50; # units per track
 my $barHeight = $trackHeight * 0.7; # height of scale bar region
 my $arrowSize = 30; # size of the arrow part of a gene
-my $padding = 20; # at left and right
+my $padding = 30; # at left only
 
 {
   my $cgi=CGI->new;
   my $dbh = Utils::get_dbh();
   my $orginfo = Utils::orginfo($dbh);
 
+  # Parse anchor parameters
   my $anchorOrg = param('anchorOrg') || die "Must specify anchorOrg";
   die "Invalid organism $anchorOrg" unless exists $orginfo->{$anchorOrg};
   my @anchorLoci = param('anchorLoci');
@@ -75,6 +76,7 @@ my $padding = 20; # at left and right
       && scalar(@orgId) == scalar(@locusIdEnd)
       && scalar(@orgId) == scalar(@trackStrand);
 
+  # Build tracks from anchor parameters or track parameters
   my @tracks = (); # each is a hash including orgId, geneBeg, geneEnd, strand
   # and additional fields defined later:
   # genes -- the list of genes, from left to right
@@ -98,9 +100,10 @@ my $padding = 20; # at left and right
     }
   }
 
+  # Handle view-modification parameters
   my @warnings = ();
-  # Add new tracks?
   if (param('addOrg')) {
+    # Add tracks by organism & orthology
     my $orgA = param('addOrg');
     die "Cannot add anchor" if $orgA eq $anchorOrg;
     die "Invalid addOrg $orgA" unless exists $orginfo->{$orgA};
@@ -132,7 +135,13 @@ my $padding = 20; # at left and right
       }
     }
   } elsif (param('addRange')) {
+    # Add tracks by organism & genes
     my $addSpec = param('addRange');
+    # Removing leading white space
+    $addSpec =~ s/^ +//;
+    $addSpec =~ s/ +$//;
+    # turn whitespace comma or : into :
+    $addSpec =~ s/[, \t:]+/:/g;
     if ($addSpec !~ m/^[0-9a-zA-Z_.:-]+/) {
       push @warnings, "Invalid add. Must be a locus tag or locus1:locus2";
     }
@@ -151,6 +160,62 @@ my $padding = 20; # at left and right
       } else {
         my $change = AddGeneToTracks(\@tracks, $genes->[0]);
         push @warnings, "Locus $sysName was already shown." unless $change;
+      }
+    }
+  } elsif (defined param('flipTrack')) {
+    my $iTrack = param('flipTrack');
+    die "Invalid flip $iTrack" unless $iTrack >= 0 && $iTrack < @tracks;
+    my $track = $tracks[$iTrack];
+    $track->{strand} = $track->{strand} eq "+" ? "-" : "+";
+  } elsif (defined param('removeTrack')) {
+    my $iTrack = param('removeTrack');
+    die "Invalid remove $iTrack" unless $iTrack >= 0 && $iTrack < @tracks;
+    my @tracksNew = ();
+    for (my $i = 0; $i < scalar(@tracks); $i++) {
+      push @tracksNew, $tracks[$i] unless $i == $iTrack;
+    }
+    @tracks = @tracksNew;
+  } elsif (defined param('changeTrack') &&
+           (defined param('changeLeft') || defined param('changeRight'))) {
+    my $iTrack = param('changeTrack');
+    die "Invalid change $iTrack" unless $iTrack >= 0 && $iTrack < @tracks;
+    my $track = $tracks[$iTrack];
+    my $orgId = $track->{orgId};
+
+    my ($side, $nAdd);
+    if (defined param('changeLeft')) {
+      $side = "left";
+      $nAdd = param('changeLeft');
+    } else {
+      $side = "right";
+      $nAdd = param('changeRight');
+    }
+    die "Invalid changeLeft or changeRight $nAdd" unless $nAdd == 1 || $nAdd == -1;
+    my $modBeg = $side eq ($track->{strand} eq "+" ? "left" : "right");
+    my $geneToChange = $modBeg ? "geneBeg" : "geneEnd";
+    if ($nAdd == -1 && $track->{geneBeg}{locusId} eq $track->{geneEnd}{locusId}) {
+      # No genes left!
+      $track->{geneBeg} = undef;
+      @tracks = grep defined $_->{geneBeg}, @tracks;
+      push @warnings, "Removed track for $orginfo->{$orgId}{genome} with no genes left.";
+    } else {
+      my $scGenes = $dbh->selectall_arrayref(qq{ SELECT * FROM Gene
+                                                 WHERE orgId = ? AND scaffoldId = ?
+                                                 ORDER BY begin },
+                                             { Slice => {} }, $orgId, $track->{geneBeg}{scaffoldId} );
+      die "No genes on scaffold" unless @$scGenes > 0;
+      my $iGene;
+      ($iGene) = grep { $scGenes->[$_]{locusId} eq $track->{ $geneToChange }{locusId} } (0..(@$scGenes)-1);
+      die unless defined $iGene;
+      if ($modBeg) {
+        $iGene -= $nAdd;
+      } else {
+        $iGene += $nAdd;
+      }
+      if ($iGene < 0 || $iGene > scalar(@$scGenes)) {
+        push @warnings, "Sorry, no additional genes are available for this track\n";
+      } else {
+        $track->{ $modBeg ? "geneBeg" : "geneEnd" } = $scGenes->[$iGene];
       }
     }
   }
@@ -195,10 +260,11 @@ my $padding = 20; # at left and right
       ['e', $track->{geneEnd}{locusId}],
       ['s', $track->{strand} eq "+" ? 1 : 0];
   }
-  my $trackURL = "cmpbrowser.cgi?" . join("&", map $_->[0] . "=" . $_->[1], @hidden);
-  my $trackHidden = join("\n",
-                         map qq{<input type="hidden" name="$_->[0]" value="$_->[1]">}, @hidden);
+  my $tracksURL = "cmpbrowser.cgi?" . join("&", map $_->[0] . "=" . $_->[1], @hidden);
+  my $tracksHidden = join("\n",
+                          map qq{<input type="hidden" name="$_->[0]" value="$_->[1]">}, @hidden);
 
+  # Output the tracks
   for (my $iTrack = 0; $iTrack < @tracks; $iTrack++) {
     my $track = $tracks[$iTrack];
     my $orgId = $track->{orgId};
@@ -212,15 +278,28 @@ my $padding = 20; # at left and right
     my $baseCGI = @loci > 1 ? "genesFit.cgi" : "singleFit.cgi";
     my $URL = join("&", "${baseCGI}?orgId=${orgId}", map "locusId=$_", @loci);
     my $g = $orginfo->{$orgId};
-    print p(a({-href => $URL, -title => "see fitness data", style => "color: black;" },
-              i($g->{genus}, $g->{species}), $g->{strain}));
+    my $linkColorStyle = "color: darkblue;";
+    my $removeLink = a({-href => "$tracksURL&removeTrack=$iTrack", -style => $linkColorStyle,
+                       -title => "Remove this track"},
+                       "&#10799;"); # looks like an x
+    my $arrowStyle = "$linkColorStyle font-weight: bold; font-size: 150%;";
+    my $flipLink = a({ -href => "$tracksURL&flipTrack=$iTrack", -style => $arrowStyle,
+                       -title => "Flip strand for this track" },
+                     "&harr;"); # left-right arrow
+    my $nGenes = scalar(@$genes);
+    print p(a({-href => $URL, -title => "see all fitness data for $nGenes genes", style => $linkColorStyle },
+              i($g->{genus}, $g->{species}), $g->{strain}),
+            "&nbsp;",
+            $flipLink . $removeLink);
 
     # svg shows the genes in order
     my $xmin = min(map $_->{begin}, @$genes);
     my $xmax = max(map $_->{end}, @$genes);
     my $xdiff = $xmax - $xmin;
     # min. 1 kb for scale bar
-    my $svg_width = 2 * $padding + max($xdiff, 1000) * $kbWidth / 1000.0;
+    my $xdiffUse = $xdiff;
+    $xdiffUse = 1000 if $xdiffUse < 1000 & $bAddScale;
+    my $svg_width = $padding + $xdiffUse * $kbWidth / 1000.0;
 
     # SVG has +y axis going down, not up
     my $top = 0;
@@ -231,8 +310,25 @@ my $padding = 20; # at left and right
     my $svgHeight = $trackHeight;
     $svgHeight += $barHeight if $bAddScale;
 
-    print qq{<svg width="${svg_width}" height="${svgHeight}">\n};
-    print qq{<line x1="$padding" y1="$geneymid" x2="$right" y2="$geneymid" style="stroke:black; stroke-width:1;"/>\n};
+    # the track (svg object) has controls to the left and right, so use a div container
+    # Use position relative for the div so that position "absolute" for the pieces
+    # will be relative to it
+    my @arrowsLeft = ( a({ -href => "$tracksURL&changeTrack=${iTrack}&changeLeft=1",
+                           -title => "Add the next gene on the left",
+                           -style => "position: absolute; top: -0.250em; $arrowStyle" }, "&larr;"),
+                       a({ -href => "$tracksURL&changeTrack=${iTrack}&changeLeft=-1",
+                           -title => "Remove the left-most gene",
+                           -style => "position: absolute; top: 0.75em; $arrowStyle" }, "&rarr;") );
+    my @arrowsRight = ( a({ -href => "$tracksURL&changeTrack=${iTrack}&changeRight=1",
+                           -title => "Add the next gene on the right",
+                           -style => "position: absolute; top: -0.25em; $arrowStyle" }, "&rarr;"),
+                       a({ -href => "$tracksURL&changeTrack=${iTrack}&changeRight=-1",
+                           -title => "Remove the right-most gene",
+                           -style => "position: absolute; top: 0.75em; $arrowStyle" }, "&larr;") );
+    print qq{<div style="width:100%; position: relative;">},
+      join("\n", @arrowsLeft),
+      qq{<svg width="${svg_width}" height="${svgHeight}" style="position: relative; left: 1em;">\n},
+      qq{<line x1="$padding" y1="$geneymid" x2="$right" y2="$geneymid" style="stroke:black; stroke-width:1;"/>\n};
     foreach my $gene (@$genes) {
       my $start = $gene->{strand} eq "+" ? $gene->{begin} : $gene->{end};
       my $stop = $gene->{strand} eq "+" ? $gene->{end} : $gene->{begin};
@@ -260,7 +356,8 @@ my $padding = 20; # at left and right
       $showId =~ s/^.*_/_/ if defined $showId;
       my $xlabel = ($xstart+$xstop)/2;
       my $label = qq{<text x="$xlabel" y="$geneymid" fill="black" alignment-baseline="middle" text-anchor="middle">$showId</text>};
-      my $URL = encode_entities( "myFitShow.cgi?orgId=$orgId&gene=$gene->{locusId}" );
+      $baseCGI = $gene->{type} eq 1 ? "domains.cgi" : "geneOverview.cgi";
+      my $URL = encode_entities( "${baseCGI}?orgId=$orgId&gene=$gene->{locusId}" );
       print qq{<a xlink:href="$URL">};
       print "<title>" . encode_entities( Utils::gene_link($dbh, $gene, "text") ) . "</title>\n";
       print $poly, $label;
@@ -278,9 +375,14 @@ my $padding = 20; # at left and right
       my $barAt = $barAt - $barHeight/10;
       print qq{<text x="$barcenter" y="$barAt">1 kb</text>\n};
     }
-    print qq{</svg>\n};
-  } # end loop over tracks
-  #print p(a({-href => $trackURL }, "self"));
+    print qq{</svg>\n},
+      qq{<span style="display: inline-block; position: relative; left: 2em; top: 0em; vertical-align: top;">},
+        join("\n", @arrowsRight) . "\n",
+      qq{</span>\n},
+      qq{</div>\n};
+  } # end loop to show tracks
+
+  #print p(a({-href => $tracksURL }, "self"));
   # Form for adding more tracks
   my @orgOptions = ("");
   my %orgLabels = ("" => "Choose an organism:");
@@ -293,16 +395,16 @@ my $padding = 20; # at left and right
     }
   }
   print start_form(-name => 'input', -method => 'GET', -action => 'cmpbrowser.cgi'),
-    $trackHidden,
-    p("Add genes by locus tag",
+    $tracksHidden,
+    p("Add genes by locus tags",
       textfield(-name => 'addRange', -size => 15, -maxlength => 50, -default => '', -override => 1),
       "or find orthologs in",
-      popup_menu(-style => 'width: 15em',
+      popup_menu(-style => 'width: 13em',
                  -name => 'addOrg',
                  -values => \@orgOptions, -labels => \%orgLabels,
                  -default => $orgOptions[0], -override => 1),
       submit(-style => 'text-align: left; float: none; display:inline;',
-              -value => "Go", -name => "Go")),
+              -value => "Add", -name => "")),
     end_form;
   print q{</div>};
   $dbh->disconnect();
