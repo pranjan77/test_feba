@@ -38,6 +38,9 @@ use strict;
 #
 # Arguments for coloring:
 # colorOff -- offset to the color rotation
+#
+# Argument for modifying anchors:
+# resetAnchor -- reset anchor to the first (top) track
 
 use strict;
 use CGI qw(-nosticky :standard Vars);
@@ -372,6 +375,12 @@ my $padding = 30; # at left only
     }
   }
 
+  if (param('resetAnchor') && @tracks > 0) {
+    $anchorOrg = $tracks[0]{orgId};
+    @anchorGenes = @{ $tracks[0]{genes} };
+    @anchorLoci = map $_->{locusId}, @anchorGenes;
+  }
+
   my @colors = qw{Red Green Yellow Blue Orange Purple Cyan Magenta Lime Pink Teal Lavender Brown Beige Maroon MediumSpringGreen Olive Coral};
   my $colorOff = param('colorOff') || 0;
 
@@ -624,7 +633,13 @@ my $padding = 30; # at left only
       submit(-style => 'text-align: left; float: none; display:inline; padding: 2px 2px;',
               -value => "Add genes", -name => "")),
     end_form;
-  print q{</div>};
+  print p("Orthologs are searched against", scalar(@anchorGenes), "anchor genes from",
+           a({-href => "org.cgi?orgId=$anchorOrg"}, $orginfo->{$anchorOrg}{genome}) . ".",
+          "Or", a({-href => "$tracksURL&resetAnchor=1" }, "reset anchor genes"),
+          "to the top track."
+         )
+    if @tracks > 0;
+  print q{</div>}; # end of content
   $dbh->disconnect();
   Utils::endHtml($cgi);
 }
