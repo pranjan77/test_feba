@@ -154,7 +154,7 @@ my $padding = 30; # at left only
       push @warnings, "Sorry, no orthologs of " . scalar(@anchorGenes). " genes from $orginfo->{$anchorOrg}{genome}"
         . " were found in $orginfo->{$orgA}{genome}.";
     } else {
-      push @warnings, "Only " . scalar(@orthIds). " of " . scalar(@anchorGenes) . "genes from $orginfo->{$anchorOrg}{genome}"
+      push @warnings, "Only " . scalar(@orthIds). " of " . scalar(@anchorGenes) . " genes from $orginfo->{$anchorOrg}{genome}"
         . " were found in $orginfo->{$orgA}{genome}."
           unless scalar(@orthIds) == scalar(@anchorGenes);
       my $nOldTracks = scalar(@tracks);
