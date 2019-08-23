@@ -22,6 +22,7 @@ use strict;
 #   These may have multiple values (1 per track)
 #   They define the loci shown on each track
 #   For shorter encoding, strand may be "1" or "+" for + strand; otherwise means - strand
+# e.orgId -- experiments for that orgId (multiply valued)
 #
 # Arguments for modifying the view:
 # addOrg -- (select orthologous genes of the anchor(s) from this organism
@@ -32,6 +33,8 @@ use strict;
 # changeTrack and changeRight (+1 for another gene, -1 for fewer genes)
 # upTrack -- a track to move up
 # downTrack -- a track to move down
+# expTrack (0-based) -- a track to add experiments to. All tracks for this organism are modified.
+# addExp -- a search term for experiments
 #
 # Arguments for coloring:
 # colorOff -- offset to the color rotation
@@ -42,7 +45,7 @@ use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
 use lib "../lib";
 use Utils;
-use List::Util qw{min max};
+use List::Util qw{min max sum};
 use HTML::Entities;
 
 sub GetGene($$$);
@@ -100,6 +103,22 @@ my $padding = 30; # at left only
                       geneBeg => $geneBeg,
                       geneEnd => $geneEnd,
                       strand => $trackStrand[$i] eq "+" || $trackStrand[$i] eq "1" ? "+" : "-" };
+    }
+  }
+
+  # Load experiment parameters
+  # orgId => list of experiment objects
+  my %orgExps = map { $_->{orgId} => [] } @tracks;
+  foreach my $orgId (keys %orgExps) {
+    my @expNames = param("e.$orgId");
+    my %seen = ();
+    foreach my $expName (@expNames) {
+      next if exists $seen{$expName};
+      $seen{$expName} = 1;
+      my $exp = $dbh->selectrow_hashref("SELECT * FROM Experiment WHERE orgId = ? AND expName = ?",
+                                        {}, $orgId, $expName);
+      die "Unknown experiment $expName for $orgId" unless defined $exp;
+      push @{ $orgExps{$orgId} }, $exp;
     }
   }
 
@@ -241,6 +260,41 @@ my $padding = 30; # at left only
       push @tracksNew, @tracks[($iTrack+2)..(scalar(@tracks)-1)] if $iTrack+2 < scalar(@tracks);
       @tracks = @tracksNew;
     }
+  } elsif (defined param('expTrack') && defined param('addExp')) {
+    my $iTrack = param('expTrack');
+    die "Invalid add-exp track $iTrack" unless $iTrack >= 0 && $iTrack < @tracks;
+    my $expSpec = param('addExp');
+    $expSpec =~ s/^ +//;
+    $expSpec =~ s/ +$//;
+    if ($expSpec ne "") {
+      my $orgId = $tracks[$iTrack]{orgId};
+      my $exps = Utils::matching_exps($dbh, $orgId, $expSpec);
+      if (@$exps == 0) {
+        push @warnings, "No experiments matching '" . encode_entities($expSpec) . "' were found"
+          . " in $orginfo->{$orgId}{genome}";
+      } else {
+        my %known = ();
+        foreach my $exp (@{ $orgExps{$orgId} }) {
+          $known{$exp->{expName}} = 1;
+        }
+        my @add = grep !exists $known{$_->{expName}}, @$exps;
+        if (@add == 0) {
+          push @warnings, "All experiments matching '" . encode_entities($expSpec)
+            . " for $orginfo->{$orgId}{genome} are already shown";
+        } else {
+          my $maxAdd = 5;
+          if (@add > $maxAdd) {
+            push @warnings, "Too many experiments match '" . encode_entities($expSpec) . "', only adding $maxAdd";
+            @add = splice(@add, 0, $maxAdd);
+          } else {
+            push @warnings, "Adding " . scalar(@add) . " experiments for $orginfo->{$orgId}{genome}";
+          }
+          foreach my $exp (@add) {
+            push @{ $orgExps{$orgId} }, $exp;
+          }
+        }
+      }
+    }
   }
 
   # Fetch all the genes for each track
@@ -330,6 +384,11 @@ my $padding = 30; # at left only
       ['e', $track->{geneEnd}{locusId}],
       ['s', $track->{strand} eq "+" ? 1 : 0];
   }
+  while (my ($orgId, $exps) = each %orgExps) {
+    foreach my $exp (@$exps) {
+      push @hidden, [ "e.$orgId", $exp->{expName} ];
+    }
+  }
   push @hidden, [ 'colorOff', $colorOff ];
   my $tracksURL = "cmpbrowser.cgi?" . join("&", map $_->[0] . "=" . $_->[1], @hidden);
   my $tracksHidden = join("\n",
@@ -350,9 +409,11 @@ my $padding = 30; # at left only
     my $URL = join("&", "${baseCGI}?orgId=${orgId}", map "locusId=$_", @loci);
     my $g = $orginfo->{$orgId};
     my $linkColorStyle = "color: darkblue;";
-    my $removeLink = a({-href => "$tracksURL&removeTrack=$iTrack", -style => $linkColorStyle,
+    my $removeGlyph = "&#10799;"; # looks like an x
+    my $removeLink = a({-href => "$tracksURL&removeTrack=$iTrack",
+                        -style => $linkColorStyle,
                        -title => "Remove this track"},
-                       "&#10799;"); # looks like an x
+                       $removeGlyph);
     my $arrowStyle = "$linkColorStyle font-weight: bold; font-size: 150%;";
     my $flipLink = a({ -href => "$tracksURL&flipTrack=$iTrack", -style => $arrowStyle,
                        -title => "Flip strand for this track" },
@@ -366,10 +427,27 @@ my $padding = 30; # at left only
                    "&darr;");
     $linkDn = "" if $iTrack == scalar(@tracks)-1;
     my $nGenes = scalar(@$genes);
-    print p(a({-href => $URL, -title => "see all fitness data for $nGenes genes", style => $linkColorStyle },
-              i($g->{genus}, $g->{species}), $g->{strain}),
-            "&nbsp;",
-            $flipLink . $removeLink . $linkUp . $linkDn);
+
+    # For each organism, there's a div with the top line containing
+    # the organism name, controls for adding experiments, and the "arrow" controls
+    # (And then there's the svg, the (optional) heatmap, and the spacer div)
+    print
+      div({-style => "width: 100%; padding-top: 0.5em; padding-bottom: 1em; position: relative;"},
+          start_form(-name => 'input', -method => 'GET', -action => 'cmpbrowser.cgi'),
+          $tracksHidden,
+          qq{<input type="hidden" name="expTrack" value="$iTrack">},
+          a({-href => $URL, -title => "see all fitness data for $nGenes genes",
+             style => "$linkColorStyle; font-size: 110%;" },
+            i($g->{genus}, $g->{species}), $g->{strain}),
+          span({-style => "text-align: right; padding-left: 10%; position: absolute; left: 40%; top: 0px;"},
+             "Experiments:",
+             textfield(-name => 'addExp', -size => 15, -maxlength => 50, -default => '', -override => 1),
+             submit(-style => 'text-align: left; float: none; display:inline; padding: 2px 2px; ',
+                    -value => "Add", -name => ""),
+             "&nbsp;",
+             $linkUp . $linkDn . $flipLink . $removeLink),
+          end_form),
+      "\n";
 
     # svg shows the genes in order
     my $xmin = min(map $_->{begin}, @$genes);
@@ -389,25 +467,11 @@ my $padding = 30; # at left only
     my $svgHeight = $trackHeight;
     $svgHeight += $barHeight if $bAddScale;
 
-    # the track (svg object) has controls to the left and right, so use a div container
-    # Use position relative for the div so that position "absolute" for the pieces
-    # will be relative to it
-    my @arrowsLeft = ( a({ -href => "$tracksURL&changeTrack=${iTrack}&changeLeft=1",
-                           -title => "Add the next gene on the left",
-                           -style => "position: absolute; top: -0.250em; $arrowStyle" }, "&larr;"),
-                       a({ -href => "$tracksURL&changeTrack=${iTrack}&changeLeft=-1",
-                           -title => "Remove the left-most gene",
-                           -style => "position: absolute; top: 0.75em; $arrowStyle" }, "&rarr;") );
-    my @arrowsRight = ( a({ -href => "$tracksURL&changeTrack=${iTrack}&changeRight=1",
-                           -title => "Add the next gene on the right",
-                           -style => "position: absolute; top: -0.25em; $arrowStyle" }, "&rarr;"),
-                       a({ -href => "$tracksURL&changeTrack=${iTrack}&changeRight=-1",
-                           -title => "Remove the right-most gene",
-                           -style => "position: absolute; top: 0.75em; $arrowStyle" }, "&larr;") );
-    print qq{<div style="width:100%; position: relative;">},
-      join("\n", @arrowsLeft),
-      qq{<svg width="${svg_width}" height="${svgHeight}" style="position: relative; left: 1em;">\n},
-      qq{<line x1="$padding" y1="$geneymid" x2="$right" y2="$geneymid" style="stroke:black; stroke-width:1;"/>\n};
+    # Build the svg (but do not output it)
+    my $svg = qq{<svg width="${svg_width}" height="${svgHeight}" style="position: relative; left: 1em;">\n};
+    # center line
+    $svg .= qq{<line x1="$padding" y1="$geneymid" x2="$right" y2="$geneymid" style="stroke:black; stroke-width:1;"/>\n};
+
     foreach my $gene (@$genes) {
       my $start = $gene->{strand} eq "+" ? $gene->{begin} : $gene->{end};
       my $stop = $gene->{strand} eq "+" ? $gene->{end} : $gene->{begin};
@@ -428,12 +492,12 @@ my $padding = 30; # at left only
         @points = ([$xstart,$bottom], [$xstart,$genetop], [$xstop,$geneymid]);
       }
       my $pointstr = join(" ", map { $_->[0].",".$_->[1] } @points);
-      my $color = "lightgrey"; # default color
+      $gene->{color} = "white"; # default color
       if (exists $geneGroup{$orgId}{$gene->{locusId}}) {
         my $iColor = ($colorOff + $geneGroup{$orgId}{$gene->{locusId}}) % scalar(@colors);
-        $color = $colors[$iColor];
+        $gene->{color} = $colors[$iColor];
       }
-      my $poly = qq{<polygon points="$pointstr" style="fill:$color; stroke:black; stroke-width:1;" />};
+      my $poly = qq{<polygon points="$pointstr" style="fill:$gene->{color}; stroke:black; stroke-width:1;" />};
 
       my $showId = $gene->{gene} || $gene->{sysName} || $gene->{locusId};
       $showId =~ s/^.*_/_/ if defined $showId;
@@ -441,28 +505,99 @@ my $padding = 30; # at left only
       my $label = qq{<text x="$xlabel" y="$geneymid" fill="black" alignment-baseline="middle" text-anchor="middle">$showId</text>};
       $baseCGI = $gene->{type} eq 1 ? "domains.cgi" : "geneOverview.cgi";
       my $URL = encode_entities( "${baseCGI}?orgId=$orgId&gene=$gene->{locusId}" );
-      print qq{<a xlink:href="$URL">};
-      print "<title>" . encode_entities( Utils::gene_link($dbh, $gene, "text") ) . "</title>\n";
-      print $poly, $label;
-      print qq{</a>\n};
+      $svg .= qq{<a xlink:href="$URL">};
+      $svg .= "<title>" . encode_entities( Utils::gene_link($dbh, $gene, "text") ) . "</title>\n";
+      $svg .= $poly. $label . qq{</a>\n};
     }
     if ($iTrack == scalar(@tracks) - 1) { # add scale bar for 1 kb at bottom
       my @bary = ($trackHeight + $barHeight * 0.7, $trackHeight + $barHeight * 0.95);
       my $barAt = ($bary[0] + $bary[1])/2;
       my $barright = $padding + $kbWidth;
-      print qq{<line x1="$padding" y1="$barAt" x2="$barright" y2="$barAt" style="stroke:black; stroke-width:1"/>\n};
+      $svg .= qq{<line x1="$padding" y1="$barAt" x2="$barright" y2="$barAt" style="stroke:black; stroke-width:1"/>\n};
       foreach my $x ($padding, $barright) {
-        print qq{<line x1="$x" y1="$bary[0]" x2="$x" y2="$bary[1]" style="stroke:black; stroke-width:1"/>\n};
+        $svg .= qq{<line x1="$x" y1="$bary[0]" x2="$x" y2="$bary[1]" style="stroke:black; stroke-width:1"/>\n};
       }
       my $barcenter = ($padding + $barright)/2;
       my $barLabelY = $barAt - $barHeight/10;
-      print qq{<text x="$barcenter" y="$barLabelY">1 kb</text>\n};
+      $svg .= qq{<text x="$barcenter" y="$barLabelY">1 kb</text>\n};
     }
-    print qq{</svg>\n},
-      qq{<span style="display: inline-block; position: relative; left: 2em; top: 0em; vertical-align: top;">},
-        join("\n", @arrowsRight) . "\n",
-      qq{</span>\n},
-      qq{</div>\n};
+    $svg .= qq{</svg>\n};
+
+    # the track (svg object) has controls to the left and right, so use a div container
+    # Use position relative for the div so that position "absolute" for the pieces
+    # will be relative to it
+    my @arrowsLeft = ( a({ -href => "$tracksURL&changeTrack=${iTrack}&changeLeft=1",
+                           -title => "Add the next gene on the left",
+                           -style => "position: absolute; top: -0.250em; $arrowStyle" }, "&larr;"),
+                       a({ -href => "$tracksURL&changeTrack=${iTrack}&changeLeft=-1",
+                           -title => "Remove the left-most gene",
+                           -style => "position: absolute; top: 0.75em; $arrowStyle" }, "&rarr;") );
+    my @arrowsRight = ( a({ -href => "$tracksURL&changeTrack=${iTrack}&changeRight=1",
+                           -title => "Add the next gene on the right",
+                           -style => "position: absolute; top: -0.25em; $arrowStyle" }, "&rarr;"),
+                       a({ -href => "$tracksURL&changeTrack=${iTrack}&changeRight=-1",
+                           -title => "Remove the right-most gene",
+                           -style => "position: absolute; top: 0.75em; $arrowStyle" }, "&larr;") );
+    print div({-style => "width:100%; position: relative;"},
+              join("\n", @arrowsLeft, ""),
+              $svg,
+              span({-style => "display: inline-block; position: relative; left: 2em; top: 0em; vertical-align: top;"},
+                   join("\n", @arrowsRight, "")));
+
+    # Add fitness data heatmap, if any
+    my $exps = $orgExps{$orgId};
+    if (@$exps > 0) {
+      # Fetch data
+      foreach my $gene (@$genes) {
+        $gene->{fit} = $dbh->selectall_hashref(qq{SELECT expName,fit,t FROM GeneFitness
+                                                  WHERE orgId = ? AND locusId = ?},
+                                               "expName", {}, $orgId, $gene->{locusId} );
+      }
+
+      # Build table -- Group, Condition, 1 column per gene, and the remove control
+      my @trows = ();
+      my @headings = map th($_), qw{Group Condition};
+      my @genesInOrder = @$genes;
+      @genesInOrder = reverse @genesInOrder if $invert;
+      foreach my $gene (@genesInOrder) {
+        # Gene headings have background color as in svg and black foreground color
+        my $link = Utils::gene_link($dbh, $gene, "name", "myFitShow.cgi");
+        $link =~ s/<A /<A style="color:black;" /i;
+        push @headings, th({-style => "background-color: $gene->{color};"}, $link);
+      }
+      push @headings, "";
+      push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'}, @headings);
+      foreach my $exp (@$exps) {
+        my $expName = $exp->{expName};
+        my @td = ( td( $exp->{expGroup} ),
+                   td( a({ -href => "exp.cgi?orgId=$orgId&expName=$expName",
+                           -title => $expName }, $exp->{expDesc}) )
+                 );
+        foreach my $gene (@genesInOrder) {
+          my $showId = $gene->{sysName} || $gene->{locusId};
+          my $fit = $gene->{fit}{$exp->{expName} }{fit};
+          my $strainUrl = "strainTable.cgi?orgId=$orgId&locusId=$gene->{locusId}&expName=$expName";
+          my $t = $gene->{fit}{$expName}{t};
+          my $show = "&nbsp;";
+          if (defined $fit) {
+            $show = a({ -href => $strainUrl,
+                        -title => "$showId: t = " . sprintf("%.1f",$t),
+                        -style => "color:rgb(0,0,0)" },
+                      sprintf("%.1f", $fit));
+          }
+          push @td, td({ -bgcolor => Utils::fitcolor($fit) }, $show);
+        }
+        my @hidden2 = grep { $_->[0] ne "e.$orgId" || $_->[1] ne $expName } @hidden;
+        push @td, td(a({-href => "cmpbrowser.cgi?" . join("&", map $_->[0] . "=" . $_->[1], @hidden2),
+                        -title => "Remove this experiment",
+                        -style => $linkColorStyle }, $removeGlyph));
+        push @trows, Tr(@td);
+      }
+      print br(), table( { cellspacing => 0, cellpadding => 3 }, @trows) . "\n";
+    }
+
+    # Add space at the bottom of each track
+    print qq{<div style="width:100%; position: relative; height: 2.5em;"></div>},
   } # end loop to show tracks
 
   #print p(a({-href => $tracksURL }, "self"));
@@ -486,8 +621,8 @@ my $padding = 30; # at left only
                  -name => 'addOrg',
                  -values => \@orgOptions, -labels => \%orgLabels,
                  -default => $orgOptions[0], -override => 1),
-      submit(-style => 'text-align: left; float: none; display:inline;',
-              -value => "Add", -name => "")),
+      submit(-style => 'text-align: left; float: none; display:inline; padding: 2px 2px;',
+              -value => "Add genes", -name => "")),
     end_form;
   print q{</div>};
   $dbh->disconnect();
