@@ -17,7 +17,7 @@
 #	the usual gene annotation. (The original annotation will be in the popup text.)
 #	This is also how the text for labels is set.
 # c -- list of column specifiers (experiments), from left to right
-# view -- set to 1 if in view-only mode # not implemented
+# view -- set to 1 if in view-only mode
 # edit -- set to a row (0-indexed) if editing the text for this row
 #
 # CGI parameters used to update the view:
