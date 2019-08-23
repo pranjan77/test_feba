@@ -35,6 +35,7 @@ use strict;
 # downTrack -- a track to move down
 # expTrack (0-based) -- a track to add experiments to. All tracks for this organism are modified.
 # addExp -- a search term for experiments
+# view -- view-only mode, hide most of the controls
 #
 # Arguments for coloring:
 # colorBy -- ortholog or blast or none
@@ -52,12 +53,14 @@ use lib "../lib";
 use Utils;
 use List::Util qw{min max sum};
 use HTML::Entities;
+use URI::Escape;
 
 sub GetGene($$$);
 sub AddGeneToTracks($$);
+sub MyHiddenField; # ignores current parameters
 
-my $maxNGenes = 50; # on one track
-my $maxNTracks = 20;
+my $maxNGenes = 100; # on one track
+my $maxNTracks = 50;
 my $newTrackDistance = 10*1000; # how far a gene is before we put it on a new track
 my $kbWidth = 150; # svg units/kb
 my $trackHeight = 50; # units per track
@@ -69,6 +72,8 @@ my $padding = 30; # at left only
   my $cgi=CGI->new;
   my $dbh = Utils::get_dbh();
   my $orginfo = Utils::orginfo($dbh);
+  my $view = $cgi->param('view') || 0;
+  my @warnings = ();
 
   # Parse anchor parameters
   my $anchorOrg = param('anchorOrg') || die "Must specify anchorOrg";
@@ -123,13 +128,15 @@ my $padding = 30; # at left only
       $seen{$expName} = 1;
       my $exp = $dbh->selectrow_hashref("SELECT * FROM Experiment WHERE orgId = ? AND expName = ?",
                                         {}, $orgId, $expName);
-      die "Unknown experiment $expName for $orgId" unless defined $exp;
-      push @{ $orgExps{$orgId} }, $exp;
+      if (defined $exp) {
+        push @{ $orgExps{$orgId} }, $exp;
+      } else {
+        push @warnings, "Unknown experiment $expName for $orgId";
+      }
     }
   }
 
   # Handle view-modification parameters
-  my @warnings = ();
   if (param('addOrg')) {
     # Add tracks by organism & orthology
     my $orgA = param('addOrg');
@@ -334,9 +341,9 @@ my $padding = 30; # at left only
   my $nTracks = scalar(@tracks);
   my $anchorShow = $anchorGenes[0]{sysName} || $anchorGenes[0]{locusId};
   print header,
-    Utils::start_page("Comparative Browser for $anchorShow ($nTracks tracks)"),
+    Utils::start_page("Comparative Fitness Browser for $anchorShow ($nTracks tracks)"),
     q{<div id="ntcontent">};
-  print p({-style => "color: red;" }, join(br(), @warnings))
+  print p({-style => "color: red;" }, join(br(), map encode_entities($_), @warnings))
     if @warnings > 0;
 
   # Compute colors -- first, compute groups
@@ -418,10 +425,8 @@ my $padding = 30; # at left only
                   "-e", 0.001, "-F", "m S", "-a", 6,
                   "-m", 8, "-o", $hitsFile,] );
     foreach my $cmd (@cmds) {
-      print STDERR "Running @$cmd\n";
       system(@$cmd) == 0 || die "@$cmd failed: $!";
     }
-    print STDERR "Wrote $faaFile $hitsFile\n";
     my %sim = (); # orgId1 => locusId1 => list of similar [orgId2, locusId2] (self hits ignored)
     open(my $fhHits, "<", $hitsFile) || die "Cannot read $hitsFile";
     my $nHits = 0;
@@ -441,7 +446,6 @@ my $padding = 30; # at left only
       $nHits++;
     }
     close($fhHits) || die "Error reading $hitsFile";
-    print STDERR "Parsed $nHits blast hits\n";
     unlink($listFile);
     unlink($faaFile);
     foreach my $suffix (qw{phr pin psq}) {
@@ -504,7 +508,7 @@ my $padding = 30; # at left only
     [ 'colorById', $colorByIdentity ];
   my $tracksURL = "cmpbrowser.cgi?" . join("&", map $_->[0] . "=" . $_->[1], @hidden);
   my $tracksHidden = join("\n",
-                          map qq{<input type="hidden" name="$_->[0]" value="$_->[1]">}, @hidden);
+                          map MyHiddenField(@$_), @hidden);
 
   # Output the tracks
   for (my $iTrack = 0; $iTrack < @tracks; $iTrack++) {
@@ -543,23 +547,29 @@ my $padding = 30; # at left only
     # For each organism, there's a div with the top line containing
     # the organism name, controls for adding experiments, and the "arrow" controls
     # (And then there's the svg, the (optional) heatmap, and the spacer div)
-    print
-      div({-style => "width: 100%; padding-top: 0.5em; padding-bottom: 1em; position: relative;"},
-          start_form(-name => 'input', -method => 'GET', -action => 'cmpbrowser.cgi'),
-          $tracksHidden,
-          qq{<input type="hidden" name="expTrack" value="$iTrack">},
-          a({-href => $URL, -title => "see all fitness data for $nGenes genes",
-             style => "$linkColorStyle; font-size: 110%;" },
-            i($g->{genus}, $g->{species}), $g->{strain}),
-          span({-style => "text-align: right; padding-left: 10%; position: absolute; left: 40%; top: 0px;"},
-             "Experiments:",
-             textfield(-name => 'addExp', -size => 15, -maxlength => 50, -default => '', -override => 1),
-             submit(-style => 'text-align: left; float: none; display:inline; padding: 2px 2px; ',
-                    -value => "Add", -name => ""),
-             "&nbsp;",
-             $linkUp . $linkDn . $flipLink . $removeLink),
-          end_form),
-      "\n";
+    my $orgLink = a({-href => $URL, -title => "see all fitness data for $nGenes genes",
+                     style => "$linkColorStyle; font-size: 110%;" },
+                    i($g->{genus}, $g->{species}), $g->{strain});
+    my $orgDivStyle = "width: 100%; padding-top: 0.5em; padding-bottom: 1em; position: relative;";
+    if ($view) {
+      print div({-style => $orgDivStyle}, $orgLink);
+    } else {
+      print
+        div({-style => $orgDivStyle},
+            start_form(-name => 'input', -method => 'GET', -action => 'cmpbrowser.cgi'),
+            $tracksHidden,
+            MyHiddenField("expTrack", $iTrack),
+            $orgLink,
+            span({-style => "text-align: right; padding-left: 10%; position: absolute; left: 40%; top: 0px;"},
+                 "Experiments:",
+                 textfield(-name => 'addExp', -size => 15, -maxlength => 50, -default => '', -override => 1),
+                 submit(-style => 'text-align: left; float: none; display:inline; padding: 2px 2px; ',
+                        -value => "Add", -name => ""),
+                 "&nbsp;",
+                 $linkUp . $linkDn . $flipLink . $removeLink),
+            end_form),
+              "\n";
+    }
 
     # svg shows the genes in order
     my $xmin = min(map $_->{begin}, @$genes);
@@ -650,11 +660,15 @@ my $padding = 30; # at left only
                        a({ -href => "$tracksURL&changeTrack=${iTrack}&changeRight=-1",
                            -title => "Remove the right-most gene",
                            -style => "position: absolute; top: 0.75em; $arrowStyle" }, "&larr;") );
-    print div({-style => "width:100%; position: relative;"},
-              join("\n", @arrowsLeft, ""),
-              $svg,
-              span({-style => "display: inline-block; position: relative; left: 2em; top: 0em; vertical-align: top;"},
-                   join("\n", @arrowsRight, "")));
+    if ($view) {
+      print div($svg);
+    } else {
+      print div({-style => "width:100%; position: relative;"},
+                join("\n", @arrowsLeft, ""),
+                $svg,
+                span({-style => "display: inline-block; position: relative; left: 2em; top: 0em; vertical-align: top;"},
+                     join("\n", @arrowsRight, "")));
+    }
 
     # Add fitness data heatmap, if any
     my $exps = $orgExps{$orgId};
@@ -677,7 +691,7 @@ my $padding = 30; # at left only
         $link =~ s/<A /<A style="color:black;" /i;
         push @headings, th({-style => "background-color: $gene->{color};"}, $link);
       }
-      push @headings, "";
+      push @headings, "" unless $view;
       push @trows, $cgi->Tr({-align=>'CENTER',-valign=>'TOP'}, @headings);
       foreach my $exp (@$exps) {
         my $expName = $exp->{expName};
@@ -702,7 +716,8 @@ my $padding = 30; # at left only
         my @hidden2 = grep { $_->[0] ne "e.$orgId" || $_->[1] ne $expName } @hidden;
         push @td, td(a({-href => "cmpbrowser.cgi?" . join("&", map $_->[0] . "=" . $_->[1], @hidden2),
                         -title => "Remove this experiment",
-                        -style => $linkColorStyle }, $removeGlyph));
+                        -style => $linkColorStyle }, $removeGlyph))
+          unless $view;
         push @trows, Tr(@td);
       }
       print br(), table( { cellspacing => 0, cellpadding => 3 }, @trows) . "\n";
@@ -735,9 +750,10 @@ my $padding = 30; # at left only
                       -default => $orgOptions[0], -override => 1),
            submit(-style => 'text-align: left; float: none; display:inline; padding: 2px 2px;',
                   -value => "Add genes", -name => ""),
-           end_form );
+           end_form )
+    unless $view;
   my @hiddenNoColor = grep $_->[0] !~ m/^color/, @hidden;
-  if (@tracks > 0) {
+  if (@tracks > 0 && ! $view) {
     my $nTopGenes = scalar(@{ $tracks[0]{genes} });
     print p({-style => "padding-left: 4em; font-size: smaller;"},
             "Orthologs are searched against", scalar(@anchorGenes),
@@ -748,14 +764,14 @@ my $padding = 30; # at left only
            );
 
     print p( start_form(-name => 'input', -method => 'GET', -action => 'cmpbrowser.cgi'),
-             join("\n", map qq{<input type="hidden" name="$_->[0]" value="$_->[1]">}, @hiddenNoColor),
+             join("\n", map MyHiddenField(@$_), @hiddenNoColor),
              "Color by:",
              radio_group(-name => 'colorBy',
                          -values => ['ortholog','blast', 'none'],
                          -default => 'ortholog'),
              "&nbsp;",
              "\%Identity (for blast):",
-             textfield(-name => 'colorById', -size => 4, -maxLength >= 8, -default => ''),
+             textfield(-name => 'colorById', -size => 4, -maxLength => 8, -default => ''),
              "&nbsp;",
              "Rotate colors:",
              popup_menu(-name => "colorOff", -values => [0..(scalar(@colors)-1)]),
@@ -764,6 +780,28 @@ my $padding = 30; # at left only
                     -value => "Go", -name => ""),
              end_form );
   }
+
+  # No tinyURL if testing from command line
+  if (@tracks > 0 && $ENV{SERVER_NAME}) {
+    my $page_URL = "http://" . $ENV{SERVER_NAME} . $ENV{REQUEST_URI};
+    my $newMode = $view ? "Edit" : "View";
+    my $extraHidden = $view ? "" : MyHiddenField("view", 1);
+
+    print p( start_form(-style => "display: inline;",
+                        -name => 'input', -method => 'GET', -action => 'cmpbrowser.cgi'),
+             $tracksHidden,
+             $extraHidden,
+             " <BUTTON type='submit'>$newMode</BUTTON> ",
+             end_form,
+             "&nbsp;",
+             start_form(-style => "display: inline;",
+                        -name => 'tiny', -method => 'POST', target => "blank",
+                        -action => 'https://tinyurl.com/create.php'),
+             MyHiddenField('url', $page_URL),
+             " <BUTTON type='submit' name='submit'>TinyURL</BUTTON> ",
+             end_form);
+  }
+
   print q{</div>}; # end of content
   $dbh->disconnect();
   Utils::endHtml($cgi);
@@ -810,3 +848,9 @@ sub AddGeneToTracks($$) {
   return 1;
 }
 
+sub MyHiddenField {
+  my ($name, $value) = @_;
+  $value = "" if !defined $value;
+#  $value = uri_escape($value);
+  return qq{<input type="hidden" name="$name" value="$value">};
+}
