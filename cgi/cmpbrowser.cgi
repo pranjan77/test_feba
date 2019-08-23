@@ -37,6 +37,8 @@ use strict;
 # addExp -- a search term for experiments
 #
 # Arguments for coloring:
+# colorBy -- ortholog or blast or none
+# colorById -- the minimum percent identity for blast (default: 0%)
 # colorOff -- offset to the color rotation
 #
 # Argument for modifying anchors:
@@ -55,6 +57,7 @@ sub GetGene($$$);
 sub AddGeneToTracks($$);
 
 my $maxNGenes = 50; # on one track
+my $maxNTracks = 20;
 my $newTrackDistance = 10*1000; # how far a gene is before we put it on a new track
 my $kbWidth = 150; # svg units/kb
 my $trackHeight = 50; # units per track
@@ -89,7 +92,7 @@ my $padding = 30; # at left only
   my @tracks = (); # each is a hash including orgId, geneBeg, geneEnd, strand
   # and additional fields defined later:
   # genes -- the list of genes, from left to right
-  if (@orgId == 0) {
+  if (@orgId == 0 && ! param('addOrg') && ! param('addRange') ) {
     # Design a layout from the anchor genes
     foreach my $gene (@anchorGenes) {
       AddGeneToTracks(\@tracks, $gene);
@@ -300,6 +303,11 @@ my $padding = 30; # at left only
     }
   }
 
+  if (@tracks > $maxNTracks) {
+    push @warnings, "Sorry, too many tracks; reduced to $maxNTracks";
+    $#tracks = $maxNTracks-1;
+  }
+
   # Fetch all the genes for each track
   # Note that genes overlapping the 1st or last gene could be excluded from the view
   foreach my $track (@tracks) {
@@ -332,48 +340,140 @@ my $padding = 30; # at left only
     if @warnings > 0;
 
   # Compute colors -- first, compute groups
+  my $colorBy = param('colorBy') || 'ortholog';
+  die "Invalid colorBy" unless $colorBy =~ m/^[a-zA-Z]*$/;
+  my $colorByIdentity = param('colorById') || 0;
+  $colorByIdentity = 0 unless $colorByIdentity > 0;
+  $colorByIdentity = 100 if $colorByIdentity > 100;
+
   my %geneGroup = (); # orgId => locusId => iGroup
   my $nGeneGroups = 0;
-  my %orth = (); # orgId => locusId => orgId => orthId
-  foreach my $track (@tracks) {
-    my $orgId = $track->{orgId};
-    foreach my $gene (@{ $track->{genes} }) {
-      $orth{$orgId}{ $gene->{locusId} } = {};
+  if ($colorBy eq "ortholog") {
+    my %orth = (); # orgId => locusId => orgId => orthId
+    foreach my $track (@tracks) {
+      my $orgId = $track->{orgId};
+      foreach my $gene (@{ $track->{genes} }) {
+        $orth{$orgId}{ $gene->{locusId} } = {};
+      }
     }
-  }
-  while (my ($orgId, $hash) = each %orth) {
-    while(my ($locusId, $ohash) = each %$hash) {
-      my $rows = $dbh->selectall_arrayref(qq{ SELECT orgId2,locusId2 FROM Ortholog
+    while (my ($orgId, $hash) = each %orth) {
+      while(my ($locusId, $ohash) = each %$hash) {
+        my $rows = $dbh->selectall_arrayref(qq{ SELECT orgId2,locusId2 FROM Ortholog
                                               WHERE orgId1 = ? AND locusId1 = ? },
-                                          {}, $orgId, $locusId);
-      foreach my $row (@$rows) {
-        my ($orgId2,$locusId2) = @$row;
-        # Ignore orthologs that are not shown
-        $ohash->{$orgId2} = $locusId2 if exists $orth{$orgId2}{$locusId2};
-      }
-    }
-  }
-  foreach my $track (@tracks) {
-    my $orgId = $track->{orgId};
-    foreach my $gene (@{ $track->{genes} }) {
-      my $locusId = $gene->{locusId};
-      my $ohash = $orth{$orgId}{$locusId};
-      if (keys(%$ohash) > 0) {
-        while (my ($orgId2, $locusId2) = each %$ohash) {
-          if (exists $geneGroup{$orgId2}{$locusId2}) {
-            $geneGroup{$orgId}{$locusId} = $geneGroup{$orgId2}{$locusId2};
-            last;
-          }
-        }
-        if (!exists $geneGroup{$orgId}{$locusId}) {
-          $geneGroup{$orgId}{$locusId} = $nGeneGroups++;
-          while (my ($orgId2,$locusId2) = each %$ohash) {
-            $geneGroup{$orgId2}{$locusId2} = $geneGroup{$orgId}{$locusId};
-          }
+                                            {}, $orgId, $locusId);
+        foreach my $row (@$rows) {
+          my ($orgId2,$locusId2) = @$row;
+          # Ignore orthologs that are not shown
+          $ohash->{$orgId2} = $locusId2 if exists $orth{$orgId2}{$locusId2};
         }
       }
     }
-  }
+    foreach my $track (@tracks) {
+      my $orgId = $track->{orgId};
+      foreach my $gene (@{ $track->{genes} }) {
+        my $locusId = $gene->{locusId};
+        my $ohash = $orth{$orgId}{$locusId};
+        if (keys(%$ohash) > 0) {
+          while (my ($orgId2, $locusId2) = each %$ohash) {
+            if (exists $geneGroup{$orgId2}{$locusId2}) {
+              $geneGroup{$orgId}{$locusId} = $geneGroup{$orgId2}{$locusId2};
+              last;
+            }
+          }
+          if (!exists $geneGroup{$orgId}{$locusId}) {
+            $geneGroup{$orgId}{$locusId} = $nGeneGroups++;
+            while (my ($orgId2,$locusId2) = each %$ohash) {
+              $geneGroup{$orgId2}{$locusId2} = $geneGroup{$orgId}{$locusId};
+            }
+          }
+        }
+      }
+    }
+  } elsif ($colorBy eq "blast" && @tracks > 0) {
+    # Fetch the sequences of all the protein-coding genes and run blastp
+    my $tmpPre = "/tmp/cmpbrowser_${anchorOrg}.$$";
+    my $listFile = "$tmpPre.list";
+    my $blastdb = Utils::blast_db();
+    die "No such database: $blastdb\n" unless -e $blastdb;
+    my %seen = (); # orgId => locusId > 1
+    open(my $fhList, ">", $listFile) || die "Cannot write to $listFile";
+    foreach my $track (@tracks) {
+      foreach my $gene (@{ $track->{genes} }) {
+        next unless $gene->{type} == 1;
+        my $orgId = $gene->{orgId};
+        my $locusId = $gene->{locusId};
+        print $fhList "$orgId:$locusId\n"
+          if !exists $seen{$orgId}{$locusId};
+        $seen{$orgId}{$locusId} = 1;
+      }
+    }
+    close($fhList) || die "Error writing to $listFile";
+    my $faaFile = "$tmpPre.faa";
+    my $hitsFile = "$tmpPre.hits";
+    my $blastdir = "../bin/blast";
+    my @cmds = ( ["$blastdir/fastacmd", "-i", $listFile, "-d", "$blastdb", "-o", $faaFile],
+                 ["$blastdir/formatdb", "-p", "T", "-i", $faaFile],
+                 ["$blastdir/blastall", "-p", "blastp",
+                  "-i", $faaFile, "-d", $faaFile,
+                  "-e", 0.001, "-F", "m S", "-a", 6,
+                  "-m", 8, "-o", $hitsFile,] );
+    foreach my $cmd (@cmds) {
+      print STDERR "Running @$cmd\n";
+      system(@$cmd) == 0 || die "@$cmd failed: $!";
+    }
+    print STDERR "Wrote $faaFile $hitsFile\n";
+    my %sim = (); # orgId1 => locusId1 => list of similar [orgId2, locusId2] (self hits ignored)
+    open(my $fhHits, "<", $hitsFile) || die "Cannot read $hitsFile";
+    my $nHits = 0;
+    foreach my $line (<$fhHits>) {
+      chomp $line;
+      my ($id1, $id2, $identity) = split /\t/, $line;
+      die "Invalid line $line from blastall" unless defined $identity && $identity =~ m/^[0-9.]+$/;
+      next unless $identity >= $colorByIdentity;
+      $id1 =~ s/^lcl[|]//;
+      $id2 =~ s/^lcl[|]//;
+      next if $id1 eq $id2;
+      my ($org1,$locus1) = split /:/, $id1;
+      my ($org2,$locus2) = split /:/, $id2;
+      die "Unexpected locus $id1 in $hitsFile" unless exists $seen{$org1}{$locus1};
+      die "Unexpected locus $id2 in $hitsFile" unless exists $seen{$org2}{$locus2};
+      push @{ $sim{$org1}{$locus1} }, [$org2,$locus2];
+      $nHits++;
+    }
+    close($fhHits) || die "Error reading $hitsFile";
+    print STDERR "Parsed $nHits blast hits\n";
+    unlink($listFile);
+    unlink($faaFile);
+    foreach my $suffix (qw{phr pin psq}) {
+      unlink("$faaFile.$suffix");
+    }
+    unlink($hitsFile);
+
+    # and greedy assignment of groups
+    foreach my $track (@tracks) {
+      foreach my $gene (@{ $track->{genes} }) {
+        my $orgId = $gene->{orgId};
+        my $locusId = $gene->{locusId};
+        my $list = $sim{$orgId}{$locusId};
+        if (defined $list && @$list > 0) {
+          foreach my $row (@$list) {
+            my ($orgId2, $locusId2) = @$row;
+            if (exists $geneGroup{$orgId2}{$locusId2}) {
+              $geneGroup{$orgId}{$locusId} = $geneGroup{$orgId2}{$locusId2};
+              last;
+            }
+          }
+          if (!exists $geneGroup{$orgId}{$locusId}) {
+            $geneGroup{$orgId}{$locusId} = $nGeneGroups++;
+            foreach my $row (@$list) {
+              my ($orgId2, $locusId2) = @$row;
+              $geneGroup{$orgId2}{$locusId2} = $geneGroup{$orgId}{$locusId};
+            }
+          }
+        }
+      }
+    }
+  } # end blast coloring
 
   if (param('resetAnchor') && @tracks > 0) {
     $anchorOrg = $tracks[0]{orgId};
@@ -383,6 +483,7 @@ my $padding = 30; # at left only
 
   my @colors = qw{Red Green Yellow Blue Orange Purple Cyan Magenta Lime Pink Teal Lavender Brown Beige Maroon MediumSpringGreen Olive Coral};
   my $colorOff = param('colorOff') || 0;
+  die "Invalid colorOff" unless $colorOff eq "" || $colorOff =~ m/^\d+$/;
 
   # Save the values to use for a URL or hidden form elements
   my @hidden = (['anchorOrg', $anchorOrg]);
@@ -398,7 +499,9 @@ my $padding = 30; # at left only
       push @hidden, [ "e.$orgId", $exp->{expName} ];
     }
   }
-  push @hidden, [ 'colorOff', $colorOff ];
+  push @hidden, [ 'colorOff', $colorOff ],
+    [ 'colorBy', $colorBy ],
+    [ 'colorById', $colorByIdentity ];
   my $tracksURL = "cmpbrowser.cgi?" . join("&", map $_->[0] . "=" . $_->[1], @hidden);
   my $tracksHidden = join("\n",
                           map qq{<input type="hidden" name="$_->[0]" value="$_->[1]">}, @hidden);
@@ -555,7 +658,7 @@ my $padding = 30; # at left only
 
     # Add fitness data heatmap, if any
     my $exps = $orgExps{$orgId};
-    if (@$exps > 0) {
+    if (defined $exps && @$exps > 0) {
       # Fetch data
       foreach my $gene (@$genes) {
         $gene->{fit} = $dbh->selectall_hashref(qq{SELECT expName,fit,t FROM GeneFitness
@@ -621,24 +724,46 @@ my $padding = 30; # at left only
       $orgLabels{$orgId} = $hash->{genome};
     }
   }
-  print start_form(-name => 'input', -method => 'GET', -action => 'cmpbrowser.cgi'),
-    $tracksHidden,
-    p("Add genes by locus tags",
-      textfield(-name => 'addRange', -size => 15, -maxlength => 50, -default => '', -override => 1),
-      "or find orthologs in",
-      popup_menu(-style => 'width: 12em',
-                 -name => 'addOrg',
-                 -values => \@orgOptions, -labels => \%orgLabels,
-                 -default => $orgOptions[0], -override => 1),
-      submit(-style => 'text-align: left; float: none; display:inline; padding: 2px 2px;',
-              -value => "Add genes", -name => "")),
-    end_form;
-  print p("Orthologs are searched against", scalar(@anchorGenes), "anchor genes from",
-           a({-href => "org.cgi?orgId=$anchorOrg"}, $orginfo->{$anchorOrg}{genome}) . ".",
-          "Or", a({-href => "$tracksURL&resetAnchor=1" }, "reset anchor genes"),
-          "to the top track."
-         )
-    if @tracks > 0;
+  print p( start_form(-name => 'input', -method => 'GET', -action => 'cmpbrowser.cgi'),
+           $tracksHidden,
+           "Add genes by locus tags",
+           textfield(-name => 'addRange', -size => 15, -maxlength => 50, -default => '', -override => 1),
+           "or find orthologs in",
+           popup_menu(-style => 'width: 12em',
+                      -name => 'addOrg',
+                      -values => \@orgOptions, -labels => \%orgLabels,
+                      -default => $orgOptions[0], -override => 1),
+           submit(-style => 'text-align: left; float: none; display:inline; padding: 2px 2px;',
+                  -value => "Add genes", -name => ""),
+           end_form );
+  my @hiddenNoColor = grep $_->[0] !~ m/^color/, @hidden;
+  if (@tracks > 0) {
+    my $nTopGenes = scalar(@{ $tracks[0]{genes} });
+    print p({-style => "padding-left: 4em; font-size: smaller;"},
+            "Orthologs are searched against", scalar(@anchorGenes),
+            "anchor genes from",
+            a({-href => "org.cgi?orgId=$anchorOrg"}, $orginfo->{$anchorOrg}{genome}) . ".",
+            "Or", a({-href => "$tracksURL&resetAnchor=1" }, "reset anchor genes"),
+            "to the $nTopGenes genes in the top track."
+           );
+
+    print p( start_form(-name => 'input', -method => 'GET', -action => 'cmpbrowser.cgi'),
+             join("\n", map qq{<input type="hidden" name="$_->[0]" value="$_->[1]">}, @hiddenNoColor),
+             "Color by:",
+             radio_group(-name => 'colorBy',
+                         -values => ['ortholog','blast', 'none'],
+                         -default => 'ortholog'),
+             "&nbsp;",
+             "\%Identity (for blast):",
+             textfield(-name => 'colorById', -size => 4, -maxLength >= 8, -default => ''),
+             "&nbsp;",
+             "Rotate colors:",
+             popup_menu(-name => "colorOff", -values => [0..(scalar(@colors)-1)]),
+             "&nbsp;",
+             submit(-style => 'text-align: left; float: none; display:inline; padding: 2px 2px;',
+                    -value => "Go", -name => ""),
+             end_form );
+  }
   print q{</div>}; # end of content
   $dbh->disconnect();
   Utils::endHtml($cgi);
