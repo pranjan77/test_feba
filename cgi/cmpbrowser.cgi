@@ -510,6 +510,18 @@ my $padding = 30; # at left only
   my $tracksHidden = join("\n",
                           map MyHiddenField(@$_), @hidden);
 
+  # Choose a scale for the svgs
+  # If the largest region is above 10 kb, then shrink by up to 2x
+  my $svgScale = 0.9; # by default, downscale a little bit
+  my $maxUnscaledNt = 8*1000;
+  foreach my $track (@tracks) {
+    my $nt = $track->{geneEnd}{end} - $track->{geneBeg}{begin} + 1;
+    if ($nt > $maxUnscaledNt) {
+      my $rescale = max(0.5, $maxUnscaledNt / $nt);
+      $svgScale = $rescale if $rescale < $svgScale;
+    }
+  }
+
   # Output the tracks
   for (my $iTrack = 0; $iTrack < @tracks; $iTrack++) {
     my $track = $tracks[$iTrack];
@@ -530,7 +542,7 @@ my $padding = 30; # at left only
                         -style => $linkColorStyle,
                        -title => "Remove this track"},
                        $removeGlyph);
-    my $arrowStyle = "$linkColorStyle font-weight: bold; font-size: 150%;";
+    my $arrowStyle = "$linkColorStyle font-weight: bold; font-size: 125%;";
     my $flipLink = a({ -href => "$tracksURL&flipTrack=$iTrack", -style => $arrowStyle,
                        -title => "Flip strand for this track" },
                      "&harr;"); # left-right arrow
@@ -571,14 +583,13 @@ my $padding = 30; # at left only
               "\n";
     }
 
-    # svg shows the genes in order
     my $xmin = min(map $_->{begin}, @$genes);
     my $xmax = max(map $_->{end}, @$genes);
     my $xdiff = $xmax - $xmin;
     # min. 1 kb for scale bar
     my $xdiffUse = $xdiff;
     $xdiffUse = 1000 if $xdiffUse < 1000 && $bAddScale;
-    my $svg_width = $padding + $xdiffUse * $kbWidth / 1000.0;
+    my $svgWidth = $svgScale * ($padding + $xdiffUse * $kbWidth / 1000.0);
 
     # SVG has +y axis going down, not up
     my $top = 0;
@@ -590,9 +601,9 @@ my $padding = 30; # at left only
     $svgHeight += $barHeight if $bAddScale;
 
     # Build the svg (but do not output it)
-    my $svg = qq{<svg width="${svg_width}" height="${svgHeight}" style="position: relative; left: 1em;">\n};
+    my @svg = (); # the components within the svg
     # center line
-    $svg .= qq{<line x1="$padding" y1="$geneymid" x2="$right" y2="$geneymid" style="stroke:black; stroke-width:1;"/>\n};
+    push @svg, qq{<line x1="$padding" y1="$geneymid" x2="$right" y2="$geneymid" style="stroke:black; stroke-width:1;"/>};
 
     foreach my $gene (@$genes) {
       my $start = $gene->{strand} eq "+" ? $gene->{begin} : $gene->{end};
@@ -627,23 +638,23 @@ my $padding = 30; # at left only
       my $label = qq{<text x="$xlabel" y="$geneymid" fill="black" alignment-baseline="middle" text-anchor="middle">$showId</text>};
       $baseCGI = $gene->{type} eq 1 ? "domains.cgi" : "geneOverview.cgi";
       my $URL = encode_entities( "${baseCGI}?orgId=$orgId&gene=$gene->{locusId}" );
-      $svg .= qq{<a xlink:href="$URL">};
-      $svg .= "<title>" . encode_entities( Utils::gene_link($dbh, $gene, "text") ) . "</title>\n";
-      $svg .= $poly. $label . qq{</a>\n};
+      push @svg, qq{<a xlink:href="$URL">},
+        "<title>" . encode_entities( Utils::gene_link($dbh, $gene, "text") ) . "</title>",
+        $poly, $label,
+        "</a>";
     }
     if ($iTrack == scalar(@tracks) - 1) { # add scale bar for 1 kb at bottom
       my @bary = ($trackHeight + $barHeight * 0.7, $trackHeight + $barHeight * 0.95);
       my $barAt = ($bary[0] + $bary[1])/2;
       my $barright = $padding + $kbWidth;
-      $svg .= qq{<line x1="$padding" y1="$barAt" x2="$barright" y2="$barAt" style="stroke:black; stroke-width:1"/>\n};
+      push @svg, qq{<line x1="$padding" y1="$barAt" x2="$barright" y2="$barAt" style="stroke:black; stroke-width:1"/>};
       foreach my $x ($padding, $barright) {
-        $svg .= qq{<line x1="$x" y1="$bary[0]" x2="$x" y2="$bary[1]" style="stroke:black; stroke-width:1"/>\n};
+        push @svg, qq{<line x1="$x" y1="$bary[0]" x2="$x" y2="$bary[1]" style="stroke:black; stroke-width:1"/>};
       }
       my $barcenter = ($padding + $barright)/2;
       my $barLabelY = $barAt - $barHeight/10;
-      $svg .= qq{<text x="$barcenter" y="$barLabelY">1 kb</text>\n};
+      push @svg, qq{<text x="$barcenter" y="$barLabelY">1 kb</text>};
     }
-    $svg .= qq{</svg>\n};
 
     # the track (svg object) has controls to the left and right, so use a div container
     # Use position relative for the div so that position "absolute" for the pieces
@@ -660,6 +671,12 @@ my $padding = 30; # at left only
                        a({ -href => "$tracksURL&changeTrack=${iTrack}&changeRight=-1",
                            -title => "Remove the right-most gene",
                            -style => "position: absolute; top: 0.75em; $arrowStyle" }, "&larr;") );
+    my $svg = join("\n",
+                   qq{<svg width="${svgWidth}" height="${svgHeight}" style="position: relative; left: 1em;">},
+                   qq{<g transform="scale($svgScale)">},
+                   @svg,
+                   "</g>",
+                   "</svg>");
     if ($view) {
       print div($svg);
     } else {
