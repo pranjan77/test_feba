@@ -129,7 +129,8 @@ print
   $nSkipOrth ? p("$nSkipOrth orthologs are not shown because they lack fitness data for this condition (or they lack data entirely)") : "",
   p(a({href => "orthCond.cgi?expGroup=" . uri_escape($expGroup) . "&condition1=" . uri_escape($condition1) },
       "Specific phenotypes for $expGroup $condition1 across organisms")),
-  p(a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Show all homologs"));
+  p(a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Show all homologs")),
+  p(a({-href => "cmpbrowser.cgi?anchorOrg=$orgId&anchorLoci=$locusId"}, "Comparative fitness browser"));
 
 $dbh->disconnect();
 Utils::endHtml($cgi);

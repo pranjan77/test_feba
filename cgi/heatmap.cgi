@@ -445,6 +445,10 @@ if ($view) {
             "fitness data"),
           "for these", scalar(@c), "experiments and all genes")
     if @c  > 0;
+  print p("Or try the",
+          a({ -href => "cmpbrowser.cgi?anchorOrg=$orgId&" . join("&", map {"anchorLoci=$_"} @locusIds) },
+            "comparative fitness browser"))
+    if $nloci > 0;
 }
 
 $dbh->disconnect();

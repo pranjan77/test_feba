@@ -236,6 +236,9 @@ if ($showAll) {
 print " or ",
   a({ -href => "heatmap.cgi?orgId=$orgId&" . join("&", map {"r=$_"} @locusIds) },
     "choose conditions");
+print " or try the ",
+  a({ -href => "cmpbrowser.cgi?anchorOrg=$orgId&" . join("&", map {"anchorLoci=$_"} @locusIds) },
+    "comparative fitness browser") if $around;
 
 print "<br><br>";
 
