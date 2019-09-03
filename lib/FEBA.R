@@ -1128,7 +1128,7 @@ SpecificPhenotypes = function(g, exps, lrn, tval,
 	   	    minT = 5, minFit = 1.0,
 		    percentile = 0.95, percentileFit = 1.0, minDelta = 0.5,
 		    expsFields = intersect(names(exps),
-		         words("name short Group Condition_1 Concentration_1 Units_1 Condition_2 Concentration_2 Units_2")))
+		         words("name short Group Condition_1 Concentration_1 Units_1 Condition_2 Concentration_2 Units_2 Condition_3 Concentration_3 Units_3 Condition_4 Concentration_4 Units_4")))
 {
 	rowHi = apply(abs(lrn), 1, quantile, percentile);
 	bool = abs(lrn) > minFit & abs(lrn) > rowHi+minDelta & rowHi < percentileFit & abs(tval) > minT;

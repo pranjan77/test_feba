@@ -189,7 +189,7 @@ END
 
         # Clean up condition_1,2,3 and warn if not a known compound -- but skip this for Time0 samples
         # as sometimes they have condition set to Time0
-        foreach my $field (qw{Condition_1 Condition_2 Condition_3}) {
+        foreach my $field (qw{Condition_1 Condition_2 Condition_3 Condition_4}) {
           if (exists $exp->{$field} && $exp->{Group} ne "Time0") {
             $exp->{$field} =~ s/$alpha/a/g;
             $exp->{$field} =~ s/^ +//;
