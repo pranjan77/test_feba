@@ -393,12 +393,15 @@ sub ExpToPubId($$$);
                           "nGenerations" => "Total.Generations"
                 );
             # and lower case these fields
-            foreach my $field (qw{Person Media Condition_1 Units_1 Concentration_1
-                                 Condition_2 Units_2 Concentration_2}) {
+            foreach my $field (qw{Person Media
+                                 Condition_1 Units_1 Concentration_1
+                                 Condition_2 Units_2 Concentration_2
+                                 Condition_3 Units_3 Concentration_3
+                                 Condition_4 Units_4 Concentration_4}) {
                 $remap{lc($field)} = $field;
             }
             while (my ($new,$old) = each %remap) {
-                $row->{$new} = $exp->{$old} eq "NA" ? "" : $exp->{$old};
+                $row->{$new} = !defined $exp->{$old} || $exp->{$old} eq "NA" ? "" : $exp->{$old};
             }
             # and compute nGenerations from StartOD and EndOD
             if ($row->{nGenerations} eq ""
@@ -408,11 +411,13 @@ sub ExpToPubId($$$);
               $row->{nGenerations} = $lr if $lr > 0;
             }
             # ad-hoc fixes for issues in the spreadsheets that the metadata was entered in:
-            # hidden spaces at end, expGroup not lowercase, or condition_1 = "None" instead of empty
-            $row->{condition_1} =~ s/ +$//;
-            $row->{condition_2} =~ s/ +$//;
+            # hidden spaces at end, condition_ = "None" instead of empty, or expGroup not lowercase
+            foreach my $i (1..4) {
+              my $field = "condition_" . $i;
+              $row->{$field} =~ s/ +$//;
+              $row->{$field} = "" if $row->{$field} eq "None";
+            }
             $row->{expGroup} = lc($row->{expGroup}) unless $row->{expGroup} eq "pH";
-            $row->{condition_1} = "" if $row->{condition_1} eq "None";
 
             $row->{pubId} = "" if !defined $row->{pubId};
 
@@ -437,6 +442,8 @@ sub ExpToPubId($$$);
                                  temperature pH vessel aerobic liquid shaking
                                  condition_1 units_1 concentration_1
                                  condition_2 units_2 concentration_2
+                                 condition_3 units_3 concentration_3
+                                 condition_4 units_4 concentration_4
                                  growthPlate growthWells nGenerations pubId});
         }
         EndWork();

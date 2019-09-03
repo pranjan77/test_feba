@@ -86,6 +86,12 @@ CREATE TABLE Experiment(
    condition_2   TEXT       NOT NULL,
    units_2       TEXT       NOT NULL,
    concentration_2 TEXT     NOT NULL,
+   condition_3   TEXT       NOT NULL,
+   units_3       TEXT       NOT NULL,
+   concentration_3 TEXT     NOT NULL,
+   condition_4   TEXT       NOT NULL,
+   units_4       TEXT       NOT NULL,
+   concentration_4 TEXT     NOT NULL,
    growthPlate TEXT NOT NULL,
    growthWells TEXT NOT NULL,
    nGenerations REAL NOT NULL,  /* Total.Generations in R tables */

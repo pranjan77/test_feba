@@ -47,7 +47,15 @@ print "Content-Disposition: attachment; filename=exp_organism_$orgId.txt\n\n";
 # open my $logFile, '>', "organism_$orgId.txt" or die "error trying to (over)write: $!";
 
 # print the header row
-my @fields = qw{orgId expName expDesc timeZeroSet num nMapped nPastEnd nGenic nUsed gMed gMedt0 gMean cor12 mad12 mad12c mad12c_t0 opcor adjcor gccor maxFit expGroup expDescLong mutantLibrary person dateStarted setName seqindex media temperature pH vessel aerobic liquid shaking condition_1 units_1 concentration_1 condition_2 units_2 concentration_2 growthPlate growthWells};
+my @fields = qw{orgId expName expDesc timeZeroSet
+                num nMapped nPastEnd nGenic nUsed gMed gMedt0 gMean cor12 mad12 mad12c mad12c_t0 opcor adjcor gccor maxFit
+                expGroup expDescLong mutantLibrary person dateStarted setName seqindex
+                media temperature pH vessel aerobic liquid shaking
+                condition_1 units_1 concentration_1
+                condition_2 units_2 concentration_2
+                condition_3 units_3 concentration_3
+                condition_4 units_4 concentration_4
+                growthPlate growthWells};
 print join("\t", @fields)."\n";
 
 # print the data row by row
