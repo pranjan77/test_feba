@@ -100,18 +100,15 @@ my $header = undef;
 if ($show eq "") {
     my $mediaList = $dbh->selectall_arrayref("SELECT DISTINCT media FROM MediaComponents");
     my %mediaOrMix = map { $_->[0] => 1 } @$mediaList;
-    my $cond1 = CompoundToHTML( $exp->{condition_1}, $exp->{concentration_1}, $exp->{units_1},
+    my @cond = ();
+    foreach my $i (1..4) {
+      push @cond, CompoundToHTML( $exp->{"condition_".$i}, $exp->{"concentration_".$i}, $exp->{"units_".$i},
                                 \%mediaOrMix );
-    my $cond2 = CompoundToHTML( $exp->{condition_2}, $exp->{concentration_2}, $exp->{units_2},
-                             \%mediaOrMix );
-
+    }
+    @cond = grep { $_ ne "" } @cond;
     my $media = $exp->{media};
     $media .= " ($exp->{mediaStrength}x)" if $exp->{mediaStrength} != 1;
-    if ($cond2) {
-        $media = join(" + ", $media, $cond1, $cond2);
-    } elsif ($cond1) {
-        $media = join(" + ", $media, $cond1);
-    }
+    $media .= " + " . join(" + ", @cond) if @cond > 0;
     $media .= ", pH=$exp->{pH}" if $exp->{pH} ne "";
     my @culture = ("Culturing: ". $exp->{mutantLibrary});
     push @culture, $exp->{vessel} if $exp->{vessel} ne "";
@@ -143,30 +140,21 @@ if ($show eq "") {
       $html .= " " . small("(final concentrations)") if $exp->{mediaStrength} != 1;
       push @pieces, "Media components: $html";
     }
-    if (exists $mediaOrMix{$exp->{condition_1}}
-        && lc( $exp->{units_1} ) eq "x"
-        && $exp->{concentration_1} =~ m/^\d+[.]?\d*$/) {
-      my $comp = $dbh->selectall_arrayref(qq{SELECT * FROM MediaComponents LEFT JOIN Compounds USING (compound)
+    foreach my $i (1..4) {
+      if (exists $mediaOrMix{$exp->{"condition_".$i}}
+          && lc( $exp->{"units_".$i} ) eq "x"
+          && $exp->{"concentration_".$i} =~ m/^\d+[.]?\d*$/) {
+        my $comp = $dbh->selectall_arrayref(qq{SELECT * FROM MediaComponents LEFT JOIN Compounds USING (compound)
                                               WHERE media = ? },
-                                           { Slice => {} },
-                                           $exp->{condition_1});
-      my $html = MediaComponentHTML($comp, $exp->{concentration_1});
-      $html .= " " . small("(final concentrations)") if $exp->{concentration_1} != 1;
-      push @pieces, "$exp->{condition_1} $exp->{concentration_1}x includes: $html";
-    }
-    if (exists $mediaOrMix{$exp->{condition_2}}
-        && lc( $exp->{units_2} ) eq "x"
-        && $exp->{concentration_2} =~ m/^\d+[.]?\d*$/) {
-      my $comp = $dbh->selectall_arrayref(qq{SELECT * FROM MediaComponents LEFT JOIN Compounds USING (compound)
-                                              WHERE media = ? },
-                                           { Slice => {} },
-                                           $exp->{condition_2});
-      my $html = MediaComponentHTML($comp, $exp->{concentration_2});
-      $html .= " " . small("(final concentrations)") if $exp->{concentration_2} != 1;
-      push @pieces, "$exp->{condition_2} $exp->{concentration_2}x includes: $html";
+                                            { Slice => {} },
+                                            $exp->{condition_1});
+        my $html = MediaComponentHTML($comp, $exp->{concentration_1});
+        $html .= " " . small("(final concentrations)") if $exp->{"concentration_".$i} != 1;
+        push @pieces, $exp->{"condition_".$i} . " " . $exp->{"concentration_".$i} . "x includes: $html";
+      }
     }
     if ($exp->{growthPlate} ne "" && $exp->{growthWells} ne "") {
-        push @pieces, "Growth plate: $exp->{growthPlate} $exp->{growthWells}";
+      push @pieces, "Growth plate: $exp->{growthPlate} $exp->{growthWells}";
     }
     print join("<BR>\n", @pieces)."\n";
 } elsif ($show eq "specific") {
@@ -308,7 +296,7 @@ if ($exp->{condition_1} ne "") {
 }
 print "\n";
 
-if ($show ne "specific") {
+if ($show eq "") {
 
   if (@$spec > 0) {
     # Show the relevant SEED subsystems
@@ -443,7 +431,8 @@ sub CompoundToHTML($$$$) {
     $compound =~ s/^supernat[ea]nt; /supernatant from /i;
     my $html = $cas ? a({-href => "http://commonchemistry.org/ChemicalDetail.aspx?ref=$cas"}, $compound)
       : $compound;
-    return join(" ", $html, $concentration, $units);
+    return $html if $concentration eq "" && $units eq "";
+    return "$html ($concentration $units)";
 }
 
 sub MediaComponentHTML($$) {
