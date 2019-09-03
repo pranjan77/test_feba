@@ -39,9 +39,13 @@ Utils::fail($cgi, "Unknown organism: $orgId") unless $orgId eq "" || exists $org
 
 # main table
 # gather data and slice it into an array of hashes
-my $cond = $dbh->selectall_arrayref(qq{SELECT orgId, expGroup, COUNT(DISTINCT condition_1) AS nCond, COUNT(*) as nExp FROM Experiment WHERE orgId=? GROUP BY expGroup ORDER BY expGroup; },
-    { Slice => {} },
-    $orgId);
+my $cond = $dbh->selectall_arrayref(qq{SELECT orgId, expGroup,
+                                       COUNT(DISTINCT media || ":" || condition_1 || condition_2 || condition_3 || condition_4) AS nCond,
+                                       COUNT(*) as nExp
+                                       FROM Experiment WHERE orgId=?
+                                       GROUP BY expGroup ORDER BY expGroup; },
+                                    { Slice => {} },
+                                    $orgId);
 
 
 # write the title
