@@ -255,7 +255,7 @@ sub CompareExperiments($$) {
 }
 
 # Should check that orgId is valid (if it is not empty) before calling.
-# Allows exact match to Group, or word matches in expDesc or expDescLong, or partial word matches in Condition_*
+# Allows exact match to Group or Media, or word matches in expDesc or expDescLong, or partial word matches in Condition_*
 # Note is not case sensitive
 sub matching_exps($$$) {
     my ($dbh,$orgId,$expSpec) = @_;
@@ -274,6 +274,7 @@ sub matching_exps($$$) {
 		    OR condition_3 LIKE "%$expSpec%"
 		    OR condition_4 LIKE "%$expSpec%"
 	     	    OR expGroup LIKE "$expSpec"
+                    OR media LIKE "$expSpec"
 	            OR expDesc LIKE "%$expSpec%"
 	            OR expDescLong LIKE "%$expSpec%")
 	     $orgClause
@@ -286,7 +287,9 @@ sub matching_exps($$$) {
     my $expSpecRePartial = "\\b" . $expSpecRe;
     foreach my $exp (@$hits) {
       my $keep = 0;
-      $keep = 1 if lc( $exp->{expGroup}) eq lc($expSpec) || $exp->{expName} eq $expSpec;
+      foreach my $field (qw{expName expGroup media}) {
+        $keep = 1 if lc( $exp->{$field}) eq lc($expSpec);
+      }
       foreach my $field (qw{condition_1 condition_2 condition_3 condition_4}) {
         $keep = 1 if $exp->{$field} =~ m/$expSpecRePartial/i;
       }
