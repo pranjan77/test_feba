@@ -255,7 +255,7 @@ sub CompareExperiments($$) {
 }
 
 # Should check that orgId is valid (if it is not empty) before calling.
-# Allows partial-word matches in Condition_1 or Condition_2, or full word matches to expDesc or expDescLong, or exact match to Group.
+# Allows exact match to Group, or word matches in expDesc or expDescLong, or partial word matches in Condition_*
 # Note is not case sensitive
 sub matching_exps($$$) {
     my ($dbh,$orgId,$expSpec) = @_;
@@ -266,17 +266,36 @@ sub matching_exps($$$) {
     $expSpec =~ s/[\"\n\r]//g;
 
     my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
+    # Use LIKE to make sure everything is case insensitive
     my $sql = qq{SELECT * from Organism JOIN Experiment USING (orgId)
              WHERE (expName = "$expSpec"
-	            OR Condition_1 LIKE "$expSpec%" OR Condition_1 LIKE "% $expSpec%"  OR Condition_1 LIKE "%-$expSpec%"
-		    OR Condition_2 LIKE "$expSpec%" OR Condition_2 LIKE "% $expSpec%"  OR Condition_2 LIKE "%-$expSpec%"
-	     	    OR expGroup = "$expSpec"
-	            OR expDesc = "$expSpec" OR expDesc LIKE "$expSpec %" OR expDesc LIKE "% $expSpec" OR expDesc LIKE "% $expSpec %"
-	            OR expDescLong = "$expSpec" OR expDescLong LIKE "$expSpec %" OR expDescLong LIKE "% $expSpec" OR expDescLong LIKE "% $expSpec %")
+	            OR condition_1 LIKE "%$expSpec%"
+		    OR condition_2 LIKE "%$expSpec%"
+		    OR condition_3 LIKE "%$expSpec%"
+		    OR condition_4 LIKE "%$expSpec%"
+	     	    OR expGroup LIKE "$expSpec"
+	            OR expDesc LIKE "%$expSpec%"
+	            OR expDescLong LIKE "%$expSpec%")
 	     $orgClause
 	     ORDER BY genus, species, strain, expGroup, condition_1, concentration_1, expDesc;};
-         # die $sql;
-    return $dbh->selectall_arrayref($sql, { Slice => {} });
+    my $hits = $dbh->selectall_arrayref($sql, { Slice => {} });
+    my @out = ();
+    # filter for word-level matches
+    my $expSpecRe = $expSpec; $expSpecRe =~ s/%/.*/g;
+    my $expSpecReWord = "\\b" . $expSpecRe . "\\b" ;
+    my $expSpecRePartial = "\\b" . $expSpecRe;
+    foreach my $exp (@$hits) {
+      my $keep = 0;
+      $keep = 1 if lc( $exp->{expGroup}) eq lc($expSpec) || $exp->{expName} eq $expSpec;
+      foreach my $field (qw{condition_1 condition_2 condition_3 condition_4}) {
+        $keep = 1 if $exp->{$field} =~ m/$expSpecRePartial/i;
+      }
+      foreach my $field (qw{expDesc expDescLong}) {
+        $keep = 1 if $exp->{$field} =~ m/$expSpecReWord/i;
+      }
+      push @out, $exp if $keep;
+    }
+    return \@out;
 }
 
 sub matching_genes($$$) {
