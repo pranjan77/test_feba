@@ -304,15 +304,7 @@ Magnesium chloride hexahydrate	8	mM
 Calcium chloride	0.6	mM
 Potassium phosphate dibasic	2	mM
 Iron (II) chloride tetrahydrate	60	uM
-Manganese (II) chloride tetrahydrate	15	uM
-Cobalt chloride hexahydrate	7.8	uM
-Zinc chloride	9	uM
-Sodium molybdate	1.26	uM
-Boric Acid	1.92	uM
-Nickel (II) sulfate hexahydrate	2.28	uM
-copper (II) chloride dihydrate	0.06	uM
-Sodium selenite pentahydrate	0.21	uM
-Sodium tungstate dihydrate	0.144	uM
+Desulfovibrio trace elements	1	X
 Thauer's vitamin mix	1	X
 		
 Media	MoLS4_no_ammonia	
@@ -778,6 +770,19 @@ Sodium bicarbonate	2.5	g/L
 D-Glucose	20	mM
 Wolfe's mineral mix	1	X
 Wolfe's vitamin mix	1	X
+		
+Media	DefinedMedia_AdamsLab_Glucose_YeastExtract	
+Description	Defined minimal media for soil and groundwater bacteria with glucose and yeast extract; from Mike Adams lab	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	5	mM
+Sodium bicarbonate	2.5	g/L
+D-Glucose	20	mM
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+Yeast Extract	1	g/L
 		
 Media	LB_10mMNitrate	
 Description	Luria-Bertani broth	
@@ -1643,3 +1648,245 @@ L-glutathione reduced	0.015	g/L
 Ammonium Sulfate	1	g/L
 Sodium Chloride	3	g/L
 MOPS	15	g/L
+		
+Media	LS4D	
+Description	Defined lactate-sulfate media for cultivating Desulfovibrio	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Sodium sulfate	50	mM
+Sodium D,L-Lactate	60	mM
+Ammonium chloride	20	mM
+PIPES	30	mM
+Magnesium chloride hexahydrate	8	mM
+Calcium chloride	0.6	mM
+Potassium phosphate dibasic	2.2	mM
+Nitrilotriacetic acid	312.5	uM
+Iron (II) chloride tetrahydrate	83	uM
+Manganese (II) chloride tetrahydrate	15	uM
+Cobalt chloride hexahydrate	8	uM
+Zinc chloride	9	uM
+Sodium molybdate	1.3	uM
+Boric Acid	2	uM
+Nickel (II) sulfate hexahydrate	2.38	uM
+copper (II) chloride dihydrate	0.06	uM
+Sodium selenite pentahydrate	0.19	uM
+Sodium tungstate dihydrate	0.125	uM
+Thauer's vitamin mix	1	X
+		
+Media	Dv_base_medium	
+Description	Base medium for cultivating Desulfovibrio (with no carbon source, electron donor, or electron acceptor)	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium chloride	20	mM
+Tris hydrochloride	30	mM
+EDTA	0.12	mM
+Sodium sulfide nonahydrate	1	mM
+Magnesium chloride hexahydrate	8	mM
+Calcium chloride	0.6	mM
+Potassium phosphate dibasic	2	mM
+Iron (II) chloride tetrahydrate	60	uM
+Desulfovibrio trace elements	1	X
+Thauer's vitamin mix	1	X
+		
+Media	Dv_base_Y_medium	
+Description	Rich base medium for cultivating Desulfovibrio (with no carbon source, electron donor, or electron acceptor)	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Dv_base_medium	1	X
+Yeast extract	1	g/L
+		
+		
+Media	Dv_base_medium_no_Mo	
+Description	Base medium for cultivating Desulfovibrio with no Mo	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Dv_base_medium	1	X
+Sodium molybdate	-	-
+		
+		
+Media	Dv_base_medium_no_W	
+Description	Base medium for cultivating Desulfovibrio with no W	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Dv_base_medium	1	X
+Sodium tungstate dihydrate	-	-
+		
+		
+Media	Dv_base_medium_no_Mo_no_W	
+Description	Base medium for cultivating Desulfovibrio with no Mo or W	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Dv_base_medium	1	X
+Sodium molybdate	-	-
+Sodium tungstate dihydrate	-	-
+		
+		
+Media	MoLS4_no_Mo	
+Description	Lactate-sulfate media for sulfate-reducing bacteria with no Mo	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+MoLS4	1	X
+Sodium molybdate	-	-
+		
+		
+Media	MoLS4_no_W	
+Description	Lactate-sulfate media for sulfate-reducing bacteria with no W	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+MoLS4	1	X
+Sodium tungstate dihydrate	-	-
+		
+		
+Media	MoLS4_no_Mo_no_W	
+Description	Lactate-sulfate media for sulfate-reducing bacteria with no Mo or W	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+MoLS4	1	X
+Sodium molybdate	-	-
+Sodium tungstate dihydrate	-	-
+		
+		
+Media	MoLS4_no_vitamins	
+Description	Lactate-sulfate media for sulfate-reducing bacteria with no vitamins	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Sodium sulfate	30	mM
+Sodium D,L-Lactate	60	mM
+Ammonium chloride	20	mM
+Tris hydrochloride	30	mM
+EDTA	0.12	mM
+Sodium sulfide nonahydrate	1	mM
+Magnesium chloride hexahydrate	8	mM
+Calcium chloride	0.6	mM
+Potassium phosphate dibasic	2	mM
+Iron (II) chloride tetrahydrate	60	uM
+Desulfovibrio trace elements	1	X
+		
+		
+Media	MoLS4_no_ammonium	
+Description	Lactate-sulfate media for sulfate-reducing bacteria with no ammonia	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+MoLS4	1	X
+Ammonium chloride	-	-
+		
+		
+Media	MoLS4_no_ammonium_no_Mo	
+Description	Lactate-sulfate media for sulfate-reducing bacteria with no ammonia or Mo	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+MoLS4	1	X
+Ammonium chloride	-	-
+Sodium molybdate	-	-
+		
+		
+Media	MoLS4_no_ammonium_no_W	
+Description	Lactate-sulfate media for sulfate-reducing bacteria with no ammonia or W	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+MoLS4	1	X
+Ammonium chloride	-	-
+Sodium tungstate dihydrate	-	-
+		
+		
+Media	MoLS4_no_ammonium_no_Mo_no_W	
+Description	Lactate-sulfate media for sulfate-reducing bacteria with no ammonia or Mo or W	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+MoLS4	1	X
+Ammonium chloride	-	-
+Sodium molybdate	-	-
+Sodium tungstate dihydrate	-	-
+		
+Media	MoYLS4_no_iron	
+Description	Rich lactate-sulfate media for sulfate-reducing bacteria with no Fe	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+MoYLS4	1	X
+Iron (II) chloride tetrahydrate	-	-
+		
+		
+Media	Dv_base_Y_medium_no_Fe	
+Description	Rich base medium for cultivating Desulfovibrio with no Fe	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Dv_base_Y_medium	1	X
+Iron (II) chloride tetrahydrate	-	-
+		
+		
+Media	MoLS4_no_Biotin	
+Description	Lactate-sulfate media for sulfate-reducing bacteria with no biotin	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+MoLS4	1	X
+biotin	-	-
+		
+		
+Media	MoLS4_no_thiamine	
+Description	Lactate-sulfate media for sulfate-reducing bacteria with no thiamine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+MoLS4	1	X
+thiamine HCl	-	-
+		
+Media	MoLS4_no_nicotinic_acid	
+Description	Lactate-sulfate media for sulfate-reducing bacteria with no nicotinic acid	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+MoLS4	1	X
+Nicotinic Acid	-	-
+		
+		
+Media	MoLS4_no_lipoic_acid	
+Description	Lactate-sulfate media for sulfate-reducing bacteria with no lipoic acid	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+MoLS4	1	X
+Lipoic acid	-	-
+		
+		
+Media	MoLS4_no_sulfide	
+Description	Lactate-sulfate media for sulfate-reducing bacteria with no sulfide	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+MoLS4	1	X
+Sodium sulfide nonahydrate	-	-
+		
+		
+Media	MoLS4_no_Pyridoxine	
+Description	Lactate-sulfate media for sulfate-reducing bacteria with no pyridoxine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+MoLS4	1	X
+pyridoxine HCl	-	-
+		
+		
+Media	MoLS4_no_Pantothenic_acid	
+Description	Lactate-sulfate media for sulfate-reducing bacteria with no pantothenate	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+MoLS4	1	X
+calcium pantothenate	-	-
+		
+Media	MoLS4_no_B12	
+Description	Lactate-sulfate media for sulfate-reducing bacteria with no vitamin B12	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+MoLS4	1	X
+Cyanocobalamin	-	-
+		
+		
+Media	MoLS4_no_Folic_acid	
+Description	Lactate-sulfate media for sulfate-reducing bacteria with no folic acid	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+MoLS4	1	X
+Folic Acid	-	-
+		
+		
+Media	MoLS4_no_Choline_chloride	
+Description	Lactate-sulfate media for sulfate-reducing bacteria with no choline	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+MoLS4	1	X
+Choline chloride	-	-

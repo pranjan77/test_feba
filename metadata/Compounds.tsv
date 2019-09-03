@@ -346,7 +346,7 @@ Propidium iodide	25535-16-4	Sigma	P4170-10MG	668.39
 Protocatechualdehyde	139-85-5	Sigma	D108405	138.12							
 Protocatechuic Acid	99-50-3	Sigma	37580	154.12	3,4-dihydroxybenzoic acid						
 Puromycin dihydrochloride	58-58-2	Sigma	P7255-25MG	544.43							
-Putrescine Dihydrochloride	333-93-7	Sigma	P7505	161.07				yes	yes		
+Putrescine Dihydrochloride	333-93-7	Sigma	P7505	161.07	Putrescine			yes	yes		
 Pyocyanin	85-66-5	Sigma	P0046-5MG	210.23							
 Pyridoxine HCl	58-56-0	Sigma	P9755	205.64	Pyridoxine-HCl, pyridoxine hydrochloride, pyridoxine HCl						
 Pyrocatechol	120-80-9	Sigma	C9510	110.11							
@@ -683,3 +683,24 @@ Tween 80	9005-65-6			1310
 Triammonium citrate	3458-72-8			243.216							
 Pyridoxamine dihydrochloride	524-36-7			241.112							
 Xanthine	69-89-6			152.11							
+PBS					Phosphate-buffered saline						
+N,N,N′,N′-Tetramethylethylenediamine	110-18-9	Sigma	T9281	116.2	TEMED						
+2-oxobutyric acid sodium salt	2013-26-5	Sigma	K0875	124.07	Sodium 2-oxobutyrate						
+Casamio acids n(vitamin assay)		Difco	228820		Casamino acids (vit. assay)						
+DL-Isocitric acid trisodium salt hydrate	1637-73-6	Sigma	I1252	258.07	DL isocitric acid						
+Oxaloacetic acid	328-42-7	Sigma	O4126	132.07	oxaloacetate						
+spermidine	124-20-9	Sigma	S2626	145.25							
+3-Methyl-2-oxobutanoic acid sodium salt	3715-29-5	Sigma	198994	138.1	alpha keto isovalerate						
+ammonium persulfate	7727-54-0	Sigma	A3678	228.2							
+Bathophenanthrolinedisulfonic acid disodium salt hydrate	52746-49-3	Sigma	146617	590.53	BPS						
+DETA/NO	146724-94-9	Sigma	D185	163.18	Diethylenetriamine/nitric oxide adduct						
+2-n-Heptyl-4-hydroxyquinoline N-oxide	341-88-8	Enzo	VWR 89151-176	259.3	HQNO						
+peroxynitrite	14042-01-4	Calbiochem	VWR 80055-374								
+Polyethylene glycol	25322-68-3	Sigma	84797	2000							
+S-adenosyl Homocysteine	9789-92-0	Sigma	A9384	384.41	S-(5′-Adenosyl)-L-homocysteine						
+L-Homoserine	672-15-1	Sigma	H6515	119.12							
+4-Methyl-2-oxovaleric acid	816-66-0	Sigma	68255	130.14	2 keto isocaproate						
+L-Valine (HPLC purified)	72-18-4	Sigma	50848	117.15	L-Valine HPLC						
+H2	1333-74-0			2.02	hydrogen						
+Sodium Chromate	7775-11-3			161.97							
+Sodium Persulfate	7775-27-1			238.1							

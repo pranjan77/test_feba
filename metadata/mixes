@@ -680,3 +680,17 @@ L-Leucine	0.5	mM
 L-Methionine	0.5	mM
 L-Phenylalanine	0.5	mM
 L-tyrosine disodium salt	0.5	mM
+		
+Media	Desulfovibrio trace elements	
+Description	Trace elements for cultivation of Desulfovibrio	
+X	1	
+Controlled vocabulary	Concentration	Units
+Manganese (II) chloride tetrahydrate	15	uM
+Cobalt chloride hexahydrate	7.8	uM
+Zinc chloride	9	uM
+Sodium molybdate	1.26	uM
+Boric Acid	1.92	uM
+Nickel (II) sulfate hexahydrate	2.28	uM
+copper (II) chloride dihydrate	0.06	uM
+Sodium selenite pentahydrate	0.21	uM
+Sodium tungstate dihydrate	0.144	uM
