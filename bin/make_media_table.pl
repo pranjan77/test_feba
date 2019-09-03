@@ -6,27 +6,18 @@ use lib "$Bin/../lib";
 use FEBA_Utils;
 use Compounds;
 
-my $unitString = join(", ", ListValidUnits);
 my $metadir = "$Bin/../metadata";
+my $formatDoc = Compounds::GetCompoundFormatDoc();
 
 my $usage = <<END
 make_media_table.pl [ -out . ] [ -db feba.db ]
              [ -metadir $metadir ]
         The metadata driectory should include a media file, a mixes
 	file, and a Compounds.tsv file.
-
-	Compounds.tsv file is tab-delimited with the first five fields
-	being a unique id, CAS no, source, catalog no, molecular
-	weight, and also contains a field named Synonyms.
-
-	media has a single field with the media named followed by
-	lines of the form compound name, concentration, concentration
-	units, where valid units are $unitString.
-
-	mixes is in the same format.
-
         writes db.Compounds and db.MediaComponents to output directory.
         If -db is specified, also loads these into the sqlite3 database.
+
+$formatDoc
 END
     ;
 
