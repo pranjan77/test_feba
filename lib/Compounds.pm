@@ -160,6 +160,18 @@ sub LoadMedia($) {
         die "Invalid X for mix $mix" unless exists $attr->{X} && $attr->{X} =~ m/^[0-9]+[.]?[0-9]*$/;
         die "Mix $mix is also a media" if exists $media{$mix};
     }
+
+    # Expand media in terms of other media
+    my $nMaxCycles = 100; # not sure if complex cycles will always be detected via substitution
+    for (my $nCycle = 0; ; $nCycle++) {
+      die "Too many cycles of media expansion -- is there a cycle?\n" if $nCycle >= $nMaxCycles;
+      my $nChanges = 0;
+      foreach my $media (keys %media) {
+        $nChanges += ExpandMedia($media);
+      }
+      last if $nChanges == 0;
+    }
+
     # Replace compound synonyms with compounds, and record any that are not known or are duplicates
     while (my ($media, $list) = each %media) {
         SetupComponentList($media, $list);
@@ -287,7 +299,7 @@ sub ParseMediaFile($) {
         $line =~ s/[\r\n]+$//; # handle DOS mode files
         $line =~ s/\t+$//; # strip trailing fields that are empty (note this means units *must* be present)
         my @F = split /\t/, $line;
-        
+
         if (scalar(@F) == 0) {
             $curMedia = undef; # blank lines end media descriptions
         } elsif ($F[0] =~ m/^#/) {
@@ -370,6 +382,33 @@ sub GetMediaComponents($) {
     return $out;
 }
 
+# return number of changes made
+sub ExpandMedia($$) {
+  my ($media) = @_;
+  my @components = ();
+  my $nExpand = 0;
+  foreach my $row (@{ $media{$media} }) {
+    my ($comp,$conc,$units) = @$row;
+    die "Invalid definition of medium $media -- it includes itself\n" if $comp eq $media;
+    if (exists $media{$comp}) { # $comp is another media
+      die "Invalid definition of medium $media -- it includes medium $comp with an excluded compound\n"
+        if exists $mediaExclude{$comp};
+      die "Invalid definition of medium $media -- it includes medium $comp but units are not X\n"
+        unless $units eq "X";
+      foreach my $subComponent (@{ $media{$comp} }) {
+        my ($comp2,$conc2,$units2) = @$subComponent;
+        $conc2 *= $conc; # multiply by X
+        push @components, [ $comp2, $conc2, $units2 ];
+      }
+      $nExpand++;
+    } else {
+      push @components, $row;
+    }
+  }
+  $media{$media} =  \@components;
+  return $nExpand;
+}
+
 sub GetMixes() {
     return sort keys %mix;
 }
@@ -432,7 +471,7 @@ Controlled vocabulary	Concentration	Units
 where X=100 means that the concentration is 100X higher than it would
 usually appear in the final media (where mixes are usually used at 1X).
 
-Media can incorporate mixes with the concentration
+Media can incorporate mixes or other media with the concentration
 given as X. (Media are always assumed to be defined as X=1.) Mixes may
 not incorporate other media or mixes.
 
@@ -441,6 +480,9 @@ to exclude that compound from the media, including from any media or
 mixes that the media is built out of. When listing the components of a
 media whose mix was modified by exclusion, the mix's name is modified
 to "mix minus compound1 minus compound2".
+
+A media with the exclusion feature may not be incorporated into other
+media.
 END
     ;
 }
