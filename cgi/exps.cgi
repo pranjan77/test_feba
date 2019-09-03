@@ -118,9 +118,13 @@ if (@$exps == 0) {
 if (defined $expGroup && defined $orgId && !defined $condition1){
    push @trows, $cgi->Tr({-valign => "top"}, $cgi->th(['Name', 'Group', 'Condition', 'Description' ]));
   foreach my $row (@$exps) {
-      push @trows, $cgi->Tr({-valign => "top"},
-                 $cgi->td([$cgi->a({href => "exp.cgi?orgId=$row->{orgId}&expName=$row->{expName}"}, $row->{expName}),
-          $row->{expGroup}, $row->{condition_1}, $row->{expDesc} ]));
+    my @cond = map $row->{"condition_".$_}, (1..4);
+    @cond = grep $_ ne "", @cond;
+    push @trows, $cgi->Tr({-valign => "top"},
+                          $cgi->td([$cgi->a({href => "exp.cgi?orgId=$row->{orgId}&expName=$row->{expName}"}, $row->{expName}),
+                          $row->{expGroup},
+                          join("; ", @cond),
+                          $row->{expDesc} ]));
     }
 } else {
   push @trows, $cgi->Tr({-valign => "top"}, $cgi->th([ 'Organism', 'Name', 'Group', 'Condition', 'Description' ]));
