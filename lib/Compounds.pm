@@ -17,7 +17,7 @@ our (@ISA,@EXPORT);
              LoadMedia
              GetMedias GetMediaComponents GetUndefMedia GetUnknownComponents WarnReusedComponents
              GetMixes GetMixComponents
-             SynToKey GetSynonymMap);
+             SynToKey GetSynonymMap GetCompoundFormatDoc);
 
 sub LoadCompounds($); # metadata directory; no return value
 sub FindCompound($); # compound or synonym => compound or undef
@@ -35,6 +35,7 @@ sub WarnReusedComponents(); # report to STDOUT on components that are in a mediu
 
 sub GetMixComponents($); # for a given mix, a list of [ compounds, concentration, units ]
 
+
 # From a compound name or synonym to a key to look up.
 # Only alphanumeric characters, +, or - are considered -- everything else is removed. Also, case is ignored.
 # Ignoring whitespace and case means that many variant names for compounds can be handled without introducing more synonyms
@@ -49,6 +50,7 @@ sub GetSynonymMap() { return \%synonyms; }
 # Local variables for media information
 my %media = (); # media => list of [ compound_id, number, units ]
 my %mediaAttr = (); # media => Description or Minimal => value
+my %mediaExclude = (); # media => excluded compound => 1
 my %mix = (); # mix => list of [ compound_id, number, units ]
 my %mixAttr = (); # mix => Description or X => value
 my %unknownComponents = (); # media components with no match in the compounds table
@@ -165,6 +167,12 @@ sub LoadMedia($) {
     while (my ($mix, $list) = each %mix) {
         SetupComponentList($mix, $list);
     }
+    # Replace compound synonyms with compounds
+    # Warn if excluded compound is in the media (and remove it)
+    # Define "minus" mixes as needed
+    while (my ($media, $hash) = each %mediaExclude) {
+      SetupExclude($media, $hash);
+    }
 }
 
 sub SetupComponentList($$) {
@@ -196,6 +204,71 @@ sub SetupComponentList($$) {
         $reuseComponents{$compound}{$media} = 1 if exists $seen{$compound};
         $seen{$compound} = 1;
     }
+}
+
+sub SetupExclude($$) {
+  my ($media, $excludeHash) = @_;
+  my @excluded = ();
+  foreach my $orig (keys %$excludeHash) {
+    my $compound = FindCompound($orig);
+    if (defined $compound) {
+      push @excluded, $compound;
+    } else {
+      $unknownComponents{$orig} = 1;
+    }
+  }
+  # hash of excluded compound => number of alterations
+  my %excluded = map { $_ => 0 } @excluded;
+
+  # And update the media and any incorporated mixes to actually exclude
+  my @updatedComponents = ();
+  foreach my $component (@{ $media{$media} }) {
+    my ($compound, $number, $units) = @$component;
+    if (exists $excluded{$compound}) {
+      $excluded{$compound}++; # exclude it
+    } elsif (exists $mix{$compound}) {
+      # $compound is a mix -- check if it needs to be altered
+      my %mixExcluded = ();
+      my @mixKeep = ();
+      foreach my $mixComponent (@{ $mix{$compound} }) {
+        my ($mixCompound, undef, undef) = @$mixComponent;
+        if (exists $excluded{$mixCompound}) {
+          $mixExcluded{$mixCompound} = 1;
+        } else {
+          push @mixKeep, $mixComponent;
+        }
+      }
+      if (scalar(keys %mixExcluded) > 0) {
+        # Define the new mix and use it instead
+        my $minusString = join(" ", map { "minus $_" } sort keys %mixExcluded);
+        my $mixNew = "$compound $minusString";
+        if (exists $mix{$mixNew}) {
+          die "Wrong number of components for mix $mixNew which can also be built via exclude from $compound"
+            unless scalar(@{ $mix{$mixNew} }) == scalar(@mixKeep);
+        } else {
+          $mix{$mixNew} = \@mixKeep;
+          $mixAttr{$mixNew} = $mixAttr{$compound};
+          $mixAttr{$mixNew}{Description} .= " $minusString";
+        }
+        push @updatedComponents, [ $mixNew, $number, $units ];
+        foreach my $mixCompound (keys %mixExcluded) {
+          $excluded{$mixCompound}++;
+        }
+      } else {
+        # Keep the mix as is
+        push @updatedComponents, $component;
+      }
+    } else {
+      # not excluded or a mix, keep it
+      push @updatedComponents, $component;
+    }
+  }
+  $media{$media} = \@updatedComponents;
+  while (my ($compound, $count) = each %excluded) {
+    die "$media $compound" unless defined $count;
+    print STDERR "Warning: excluding $compound from media $media had no effect\n"
+      unless $count > 0;
+  }
 }
 
 sub ParseMediaFile($) {
@@ -246,16 +319,20 @@ sub ParseMediaFile($) {
                 $compound =~ s/ +$//; # remove trailing spaces
                 $concentration =~ s/^ +//;
                 $concentration =~ s/ +$//;
-                $concentration eq "" || $concentration =~ m/^\d+$/
+                if ($concentration eq "-" && $units eq "-") {
+                  $mediaExclude{$curMedia}{ $compound } = 1;
+                } else {
+                  $concentration eq "" || $concentration =~ m/^\d+$/
                     || $concentration =~ m/^\d+[.]\d*$/
                     || $concentration =~ m/^\d+[.]?\d*[eE][+-]\d+$/
                     || die "Invalid concentration $concentration in line\n$line\nfor $curMedia\nin $mediaFile";
-                $units =~ s/^ +//;
-                $units =~ s/ +$//;
-                die $line if $units eq "";
-                die "Invalid unit $units for\n$line\nin $curMedia, $mediaFile"
+                  $units =~ s/^ +//;
+                  $units =~ s/ +$//;
+                  die $line if $units eq "";
+                  die "Invalid unit $units for\n$line\nin $curMedia, $mediaFile"
                     unless exists $validUnits{$units};
-                push @{ $comp{$curMedia} }, [ $compound, $concentration, $units ];
+                  push @{ $comp{$curMedia} }, [ $compound, $concentration, $units ];
+                }
             }
         } else {
             die "Wrong number of fields in\n$line\n";
@@ -325,6 +402,47 @@ sub WarnReusedComponents() {
 
 sub ListValidUnits() {
     return qw{g/L mg/L ug/L M mM uM vol% ml/L X};
+}
+
+sub GetCompoundFormatDoc() {
+  my $unitString = join(", ", ListValidUnits);
+  return <<END
+Compounds.tsv file should be tab-delimited with the first five fields
+being a unique id, CAS no, source, catalog no, molecular
+weight. It should also  contain a field named Synonyms.
+
+Each medium's definition begins like this:
+--
+Media	media identifier
+Description	description for this media
+Minimal	TRUE
+Controlled vocabulary	Concentration	Units
+--
+and will then have lines of the form
+compound	concentration	units
+where valid units are $unitString.
+
+The mixes file is in a similar format  but should begin like this:
+--
+Media	mix identifier
+Description	description for this mix
+X	100
+Controlled vocabulary	Concentration	Units
+--
+where X=100 means that the concentration is 100X higher than it would
+usually appear in the final media (where mixes are usually used at 1X).
+
+Media can incorporate mixes with the concentration
+given as X. (Media are always assumed to be defined as X=1.) Mixes may
+not incorporate other media or mixes.
+
+In the list of media components, concentration="-" and units="-" means
+to exclude that compound from the media, including from any media or
+mixes that the media is built out of. When listing the components of a
+media whose mix was modified by exclusion, the mix's name is modified
+to "mix minus compound1 minus compound2".
+END
+    ;
 }
 
 1;
