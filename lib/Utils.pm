@@ -18,6 +18,7 @@ use DBI;
 use Time::HiRes;
 use Carp;
 use List::Util qw(sum);
+use HTML::Entities qw{encode_entities};
 
 sub start_page($);
 sub get_style();
@@ -133,9 +134,9 @@ sub fail($$) {
     my ($cgi, $notice) = @_;
     print Utils::start_page("Sorry!");
     print '<div id="ntcontent">',
-    $cgi->h3(qq(Sorry: $notice)),
-    $cgi->h4(qq(<a href="javascript:history.back()">Go Back</a>)),
-    $cgi->h4(qq(<a href="myFrontPage.cgi">Go to Front Page</a>));
+      $cgi->h3("Sorry:", HTML::Entities::encode_entities($notice)),
+      $cgi->h4(qq(<a href="javascript:history.back()">Go Back</a>)),
+      $cgi->h4(qq(<a href="myFrontPage.cgi">Go to Front Page</a>));
     print $cgi->end_html;
     exit;
 }
