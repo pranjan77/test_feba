@@ -169,6 +169,7 @@ print h3("Downloads"),
      li(a({href => "spec.cgi?orgId=$orgId&download=1"}, "Specific phenotypes"), "(tab-delimited)"),
      li(a({href => "createExpData.cgi?orgId=$orgId"}, "Experiment meta-data"), "(tab-delimited)"),
      li(a({href => "downloadReanno.cgi?orgId=$orgId"}, "Reannotations"), "(tab-delimited; includes protein sequences)"),
+     li(a({href => "orgSeqs.cgi?orgId=$orgId&type=nt"}, "Genome sequence"), "(fasta)"),
      li(a({href => "orgSeqs.cgi?orgId=$orgId"}, "Protein sequences"), "(fasta)"),
      li(a({href => "orgGenes.cgi?orgId=$orgId"}, "List of genes"), "(tab-delimited)")
     );
