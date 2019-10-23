@@ -415,24 +415,23 @@ $seq =~ s/(.{60})/$1\n/gs;
 my $desc = $gene->{desc};
 $desc =~ s/"//g;
 my $orgtype = "bacteria";
-my $gram = "negative";
+my %positiveDivisions = map { $_ => 1 } qw{Actinobacteria Firmicutes};
+my $gram = exists $positiveDivisions{ $orginfo->{$orgId}{division} } ? "positive" : "negative";
 my $newline = "%0A";
 
 print
-    h3("Sequence Analysis Tools"),
-    p(a({-href => "http://papers.genomics.lbl.gov/cgi-bin/litSearch.cgi?query=>${sys}$newline$seq"},
-        "PaperBLAST"),
-      "(search for papers about homologs of this protein)"),
-    p(a({-href => "http://www.ncbi.nlm.nih.gov/Structure/cdd/wrpsb.cgi?seqinput=>${sys}$newline$seq"},
-        "Search CDD"),
-      "(the Conserved Domains Database, which includes COG and superfam)"),
-
-    p(a({-href => "http://pfam.xfam.org/search/sequence?seqOpts=&ga=0&evalue=1.0&seq=$seq"},
-        "Search PFam"),
-      "(including for weak hits, up to E = 1)"),
-
-    p("Predict protein localization: ",
-      a({-href => "http://www.psort.org/psortb/results.pl?"
+  h3("Sequence Analysis Tools"),
+  p(a({-href => "http://papers.genomics.lbl.gov/cgi-bin/litSearch.cgi?query=>${sys}$newline$seq"},
+      "PaperBLAST"),
+    "(search for papers about homologs of this protein)"),
+  p(a({-href => "http://www.ncbi.nlm.nih.gov/Structure/cdd/wrpsb.cgi?seqinput=>${sys}$newline$seq"},
+      "Search CDD"),
+    "(the Conserved Domains Database, which includes COG and superfam)"),
+  p(a({-href => "http://pfam.xfam.org/search/sequence?seqOpts=&ga=0&evalue=1.0&seq=$seq"},
+      "Search PFam"),
+    "(including for weak hits, up to E = 1)"),
+  p("Predict protein localization: ",
+    a({-href => "http://www.psort.org/psortb/results.pl?"
              . join("&",
                     "organism=$orgtype",
                     "gram=$gram",
@@ -440,27 +439,23 @@ print
                     "sendresults=display",
                     "email=",
                     "seqs=>${sys}$newline$seq")},
-        "PSORTb"),
-      "(Gram $gram $orgtype)"),
-
-    p("Predict transmembrane helices:",
-      a({-href => "http://www.cbs.dtu.dk/cgi-bin/webface2.fcgi?"
+      "PSORTb"),
+    "(Gram $gram $orgtype)"),
+  p("Predict transmembrane helices:",
+    a({-href => "http://www.cbs.dtu.dk/cgi-bin/webface2.fcgi?"
              . join("&",
                     "configfile=/usr/opt/www/pub/CBS/services/TMHMM-2.0/TMHMM2.cf",
                     "outform=-noshort",
                     "SEQ=>${sys}$newline$seq")},
         "TMHMM")),
 
-    p("Check the current SEED with",
-      # %0A encodes "\n" so that it looks like fasta input.
-      a({-href => "http://pubseed.theseed.org/FIG/seedviewer.cgi?page=FigFamViewer&fasta_seq=>${sys}%0A$seq"},
-        "FIGfam search")),
-
-
-    h3("Protein Sequence ($seqLen amino acids)"),
-    pre(">$sys $gene->{desc} ($orginfo->{$orgId}{genome})\n$seq"),
-
-    '</div>';
+  p("Check the current SEED with",
+    # %0A encodes "\n" so that it looks like fasta input.
+    a({-href => "http://pubseed.theseed.org/FIG/seedviewer.cgi?page=FigFamViewer&fasta_seq=>${sys}%0A$seq"},
+      "FIGfam search")),
+  h3("Protein Sequence ($seqLen amino acids)"),
+  pre(">$sys $gene->{desc} ($orginfo->{$orgId}{genome})\n$seq"),
+  '</div>';
 
 $dbh->disconnect();
 Utils::endHtml($cgi);
