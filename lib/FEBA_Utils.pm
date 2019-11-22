@@ -27,7 +27,7 @@ sub ReadTable($*) {
     die "Tab-delimited input file $filename is a Mac-style text file, which is not supported\n"
         . "Use\ndos2unix -c mac $filename\nto convert it to a Unix text file.\n"
         if $headerLine =~ m/\t/ && $headerLine =~ m/\r/;
-    my @cols = split /\t/, $headerLine;
+    my @cols = split /\t/, $headerLine, -1;
     my %cols = map { $cols[$_] => $_ } (0..(scalar(@cols)-1));
     foreach my $field (@required) {
 	die "No field $field in $filename" unless exists $cols{$field};
