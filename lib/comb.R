@@ -137,9 +137,17 @@ LoadOrgs = function(orgnames,
 	    } else {
 	        d[[i]] = NULL; # remove it;
 	    }
+            # add Condition/Units/Concentration/_3,4 if not present already
+            for (n in c("Condition_3","Units_3","Concentration_3","Condition_4","Units_4","Concentration_4")) {
+              if (is.null(d[[i]][[n]])) {
+                d[[i]][[n]] = "";
+              }
+            }
 	  }
 	  if (!is.null(d) && length(d) > 0) {
+          if(debug) cat("Combining specsicks\n");
 	   specsicks <<- do.call(rbind,d);
+           if(debug) cat("specsicks:", nrow(specsicks), " rows\n");
 	  } else {
 	   cat("Warning: all specific_phenotypes files were empty\n");
 	   specsicks <<- NULL;
