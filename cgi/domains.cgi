@@ -427,9 +427,22 @@ print
   p(a({-href => "http://www.ncbi.nlm.nih.gov/Structure/cdd/wrpsb.cgi?seqinput=>${sys}$newline$seq"},
       "Search CDD"),
     "(the Conserved Domains Database, which includes COG and superfam)"),
-  p(a({-href => "http://pfam.xfam.org/search/sequence?seqOpts=&ga=0&evalue=1.0&seq=$seq"},
-      "Search PFam"),
+
+  # See documentation of HMMer web server (version 1.0) at
+  # https://hmmer-web-docs.readthedocs.io/en/latest/searches.html
+  # Set E= and domE= to cause weak hits to appear (they are still labeled insignificant)
+  p(start_form(-name => "PfamForm", -id => "PfamForm",
+               -method => "POST", -action => "https://www.ebi.ac.uk/Tools/hmmer/search/hmmscan"),
+    hidden('seq', ">$sys\n$seq"),
+    hidden('hmmdb', 'pfam'),
+    hidden('E', '1'),
+    hidden('domE', '1'),
+    submit(-style => "display: none;", -id => 'PfamButton'),
+    end_form,
+    a({-href => "javascript:document.getElementById('PfamForm').submit()"},
+       "Search PFam"),
     "(including for weak hits, up to E = 1)"),
+
   p(a({ -href => "https://www.rcsb.org/pdb/search/smart.do?"
         . join("&",
                "smartSearchSubtype_0=SequenceQuery",
