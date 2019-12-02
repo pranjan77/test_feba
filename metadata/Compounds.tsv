@@ -18,10 +18,10 @@ Compound	CAS	Company	CatalogNumber	FW	Synonyms	Hans80Anti	Hans80metals	FEBA_carb
 2,2'-Dipyridyl	366-18-7	Sigma	36759-1G	156.18							
 2,3-dihydroxybenzoic acid	303-38-8			154.12							
 2,4-Dinitrophenol	51-28-5	Sigma	D198501-5G	184.11		yes					
-2,5-dihydroxybenzoic acid	490-79-9	Sigma	149357	154.12							
+2,5-dihydroxybenzoic acid	490-79-9	Sigma	149357	154.12	Gentisic acid						
 3-(N-morpholino)propanesulfonic acid	1132-61-2			209.2633	MOPS						
 3-hydroxybenzoic acid	99-06-9	Sigma	H20008	138.12							
-3-methyl-1-butanol	123-51-3			88.15							
+3-methyl-1-butanol	123-51-3			88.15	Isopentanol						
 3-methyl-2-butenol	556-82-1			86.132							
 3-methyl-3-butenol	763-32-6			86.13	3-methyl-3-buten-1-ol						
 3-Methylcatechol	488-17-5	Sigma	M34006	124.14							
@@ -636,7 +636,7 @@ L-(+)-tartaric acid	87-69-4			150.09	L-tartaric acid
 L-ascorbic acid	50-81-7			176.12							
 Heptanoic acid	111-14-8			130.18							
 Octanoic acid	124-07-2			144.21							
-Nonanoic acid	112-05-0			158.24							
+Nonanoic acid	112-05-0			158.24	Pelargonic acid						
 1,3-Butandiol	107-88-0			90.12							
 Lauric acid	143-07-7			200.32							
 Myristic acid	544-63-8			228.37							
@@ -686,7 +686,7 @@ Xanthine	69-89-6			152.11
 PBS					Phosphate-buffered saline						
 N,N,N′,N′-Tetramethylethylenediamine	110-18-9	Sigma	T9281	116.2	TEMED						
 2-oxobutyric acid sodium salt	2013-26-5	Sigma	K0875	124.07	Sodium 2-oxobutyrate						
-Casamio acids (vitamin assay)		Difco	228820		Casamino acids (vit. assay)						
+Casamino acids (vitamin assay)		Difco	228820		Casamino acids (vit. assay)						
 DL-Isocitric acid trisodium salt hydrate	1637-73-6	Sigma	I1252	258.07	DL isocitric acid						
 Oxaloacetic acid	328-42-7	Sigma	O4126	132.07	oxaloacetate						
 spermidine	124-20-9	Sigma	S2626	145.25							
@@ -704,3 +704,244 @@ L-Valine (HPLC purified)	72-18-4	Sigma	50848	117.15	L-Valine HPLC
 H2	1333-74-0			2.02	hydrogen						
 Sodium Chromate	7775-11-3			161.97							
 Sodium Persulfate	7775-27-1			238.1							
+sn-Glycerol 3-phosphate lithium salt	17989-41-2	Sigma	94124	172.07							
+Sodium adipate	7486-38-6			190.1							
+Suberic acid	505-48-6			174.196							
+Azelaic acid	123-99-9			188.22							
+Sebacic acid	111-20-6			202.25							
+Dodecandioic acid	693-23-2			230.304							
+CHIR-090	728865-23-4			437.49							
+Ferric EDTA	15275-07-7			344.057							
+Arabitol	7643-75-6			152.146							
+4-Guanidinobutyric acid	463-00-3			145.16							
+Orotic acid	65-86-1			156.1							
+2'-Deoxyuridine	951-78-0			228.2							
+Auraptene	495-02-3										
+Harmol	487-03-6										
+Veratrine hydrochloride	17666-25-0										
+Anethole	4180-23-8										
+Curcumin	458-37-7										
+4-hydroxychalcone	20426-12-4										
+Benzyl isothiocyanate	622-78-6										
+Prenyletin	15870-91-4										
+Resveratrol	501-36-0										
+Avocatin B											
+Plumbagin	481-42-5										
+Lupeol	545-47-1										
+Isoliquiritigenin	961-29-5										
+d-limonene	138-86-7										
+Physcion	521-61-9										
+Helenine	546-43-0										
+Vulpinic acid	521-52-8										
+7-hydroxyflavone	6665-86-7										
+Avocatin A											
+4-acetoxyphenol	3233-32-7										
+Sclareolide	564-20-5										
+Chaulmoogric acid	502-30-7										
+Diallyl sulfide	592-88-1										
+Lawsone	83-72-7										
+Avocadyne	34524-38-4										
+Totarol	511-15-9										
+Emodin	518-82-1										
+Hydrastine (1R, 9S)	118-08-1										
+Biochanin a diacetate	54443-59-3										
+dihydrojasmonic acid, methyl ester	24851-98-7										
+Solanesol	13190-97-1										
+Gossypetin	489-35-0										
+Chrysophanol	481-74-3										
+Palmatine chloride	10605-02-4										
+Piperic acid	5285-18-7										
+Levodopa	59-92-7										
+Paeonol	552-41-0										
+Palmatine	3486-67-7										
+Piperine	94-62-2										
+Terpene hydrate	2451-01-6										
+L-alliin	556-27-4										
+Conessine	546-06-5										
+Ginkgolide A	15291-75-5										
+Paclitaxel	33069-62-4										
+Norharman	244-63-3										
+Picropodophyllin	477-47-4										
+Epigallocatechin	970-74-1										
+Pimpinellin	131-12-4										
+Boldine	476-70-0										
+Benzylhydrazine Hydrochloride	3287-99-8										
+Naringenin	480-41-1										
+Abietic Acid	514-10-3										
+Levomenthol	2216-51-5										
+4'-Methoxyflavone	4143-74-2										
+Aristolochic Acid	313-67-7										
+Quebrachitol	642-38-6										
+Dimethylfraxetin	6035-49-0										
+Isovanillin	621-59-0										
+Synephrine Tartrate	16589-24-5										
+Oxedrine	94-07-5										
+L-Deoxyalliin	21593-77-1										
+Tryptamine	61-54-1										
+3,4'-Dimethoxyflavone	4143-62-8										
+Cytisine	485-35-8										
+3',6-Dihydroxyflavone	71592-46-6										
+Andirobin	6488-63-7										
+2-Acetylpyrrole	1072-83-9										
+Beta-Amyrin	559-70-6										
+Pterostilbene	537-42-8										
+Artepaulin	13902-54-0										
+Rhodinyl Acetate	141-11-7										
+Izalpinin	480-14-4										
+Carnitine (Dl) Hydrochloride	461-06-3										
+Picrotoxinin	17617-45-7										
+Gramine	87-52-5										
+4-Anisaldehyde	123-11-5										
+Thymoquinone	490-91-5										
+Diosgenin	512-04-9										
+Lapachol	84-79-7										
+Docosanol	661-19-8										
+3-Aminopropionitrile Fumarate	2079-89-2										
+Parthenolide	20554-84-1										
+Andrographolide	5508-58-7										
+Silibinin	22888-70-6										
+Anisodamine Hydrobromide ()	17659-49-3										
+Escin	6805-41-0										
+Epitheaflavic Acid											
+3,4'-Dihydroxyflavone	14919-49-4										
+7,4'-Dimethoxyisoflavone											
+Aloin	5133-19-7										
+Pterin-6-Carboxylic Acid	948-60-7										
+Brucine	357-57-3										
+Avocadene	24607-08-7										
+Veratric Acid	93-07-2										
+Bergenin	108032-11-7										
+Acacetin	480-44-4										
+Sinomenine	115-53-7										
+Asiaticoside	16830-15-2										
+Leucodin	17946-87-1										
+Cimicifugoside H1	163046-73-9										
+Oxymatrine	16837-52-8										
+Cyclopamine	4449-51-8										
+Gamma-Aminobutyric Acid Hydrochloride	56-12-2										
+2',2'-Bisepigallocatechin Digallate											
+Myricetin	529-44-2										
+Strychnine Sulfate	60-41-3										
+Arecoline Hydrobromide	300-08-3										
+2,5-Dihydroxybenzoic Acid	490-79-9										
+Theobromine	83-67-0										
+Methyl-2-Hydroxy-Phenylproprionate	89471-28-0										
+Esculin Monohydrate	531-75-9										
+Khayasin C											
+Sparassol	520-43-4										
+Quinine Hdrochloride	6119-47-7										
+Dihydrodehydroerosone											
+Gossypol-Acetic Acid Complex											
+Usnic Acid	125-46-2										
+Irigenin	548-76-5										
+Karanjin	521-88-0										
+Harmol Hydrochloride	40580-83-4										
+Estragole	140-67-0										
+Isosafrole	120-58-1										
+2',5'-Dihydroxy-4-Methoxychalcone	6342-92-3										
+Mexicanolide	1915-67-9										
+Anabasine Hydrochloride	53912-89-3										
+Huperzine A	102518-79-6										
+Cantharidin	56-25-7										
+Peucenin	578-72-3										
+Oxonitine											
+Cotarnine Chloride	10018-19-6										
+Xanthyletin	553-19-5										
+Matrine	519-02-8										
+Fumarprotocetraric Acid	489-50-9										
+Theaflavin											
+Chrysin	480-40-0										
+Methyl 6-Hydroxyangolensate											
+Gambogic Acid	2752-65-0										
+Hecogenin	467-55-0										
+Cryptotanshinone	35825-57-1										
+Morin	480-16-0										
+Ursololactone Acetate	28290-51-9										
+5,7,4'-Trimethoxyisoflavone	1162-82-9										
+Piplartine	20069-09-4										
+Nobiletin	478-01-3										
+Perillyl Alcohol	536-59-4										
+Apigenin Dimethyl Ether	5728-44-9										
+4,4'-Dimethoxydalbergione											
+Caffeine Hydrobromide	5743-18-0										
+Canavanine	543-38-4										
+Trans,Trans-Farnesol	4602-84-0										
+Camptothecin	7689-03-04										
+Daidzein	486-66-8										
+Perillic Acid (-)	7694-45-3										
+Glycyrrhizic Acid, Ammonium Salt	1405-86-3										
+Nerol	106-25-2										
+Digoxigenin	1672-46-4										
+Methylxanthoxylin	23121-32-6										
+Duartin (-)	52305-04-1										
+Nordihydroguaretic Acid	500-38-9										
+Harmaline	304-21-2										
+7,2'-Dihydroxyflavone	77298-66-9										
+Brazilein	600-76-0										
+Harmane	486-84-0										
+Guaiazulene	489-84-9										
+Tangeritin	481-53-8										
+Linalool ()	78-70-6										
+Beta-Lapachone	4707-32-8										
+3Beta-Hydroxydeoxodihydrodeoxygedunin											
+Salsoline	89-31-6										
+Rutin	153-18-4										
+Rutilantinone	21288-61-9										
+Gossypol	303-45-7										
+2-Carene-3-One											
+Bergapten	484-20-8										
+Euphol	514-47-6										
+Tetrandrine	518-34-3										
+Safrole	94-59-7										
+Alpha-Toxicarol (Dl)	82-09-7										
+Quercetin	117-39-5										
+Apiole	523-80-8										
+Acetyl-Dihydro-7-Epikhivorin											
+Kawain	3155-48-4										
+Salvinorin A	83729-01-5										
+Sphondin	483-66-9										
+Azadirachtin	11141-17-6										
+Agelasine											
+Juglone	481-39-0										
+Phloridzin	60-81-1										
+2-Hydroxy-3,4-Dimethoxybenzoic Acid	5653-46-3										
+Salidroside	10338-51-9										
+Chrysarobin	491-58-7										
+Limonin	1180-71-8										
+Harmalol	525-57-5										
+Quassin	76-78-8										
+Hesperidin	520-26-3										
+Quinic Acid	77-95-2										
+Harmine	442-51-3										
+Triptolide	38748-32-2										
+Actein	18642-44-9										
+6-Hydroxyflavone	6665-83-4										
+Crinamine	639-41-8										
+Colchiceine	477-27-0										
+Phenethylamine Hydrochloride	64-04-0										
+Eudesmic Acid	118-41-2										
+Borneol	507-70-0										
+Carnosic Acid	3650-09-07										
+Theaflavin Digallate	30462-35-2										
+4-Methylimidazole	822-36-6										
+7,2'-Dimethoxyflavone											
+Dipicolinic Acid	499-83-2										
+S-Isocorydine ()	475-67-2										
+Tomatidine Hydrochloride	69004-03-1										
+Deoxysappanone B 7,3'-Dimethyl Ether											
+Robustic Acid	5307-59-5										
+Cedrelone	1254-85-9										
+Dihydrocelastrol											
+Visnagin	82-57-5										
+Mangiferin	4773-96-0										
+Chrysanthemic Acid, Ethyl Ester	97-41-6										
+Shikimic Acid	138-59-0										
+Rhodocladonic Acid	26984-15-6										
+Roccellic Acid	22139-54-4										
+Hymecromone Methyl Ether	2555-28-4										
+Caryophyllene [T(-)]	87-44-5										
+3-methyl-2-oxopentanoic acid	1460-34-0			130.1418							
+6-hydroxypyridine-3-carboxylic acid	5006-66-6			139.11							
+L-Pipecolic Acid	3105-95-1			129.16							
+Trimethylamine	75-50-3			59.11							
+Cadaverine	462-94-2			102.181							
