@@ -64,7 +64,7 @@ if ($addgene) {
 		push @locusIds, $locusId;
 	    }
 	} else {
-	    $addgene_error = qq{Cannot find gene "$addgene"};
+	    $addgene_error = qq{Cannot find gene "$addgene" in $orginfo->{$orgId}{genome}};
 	}
     }
 }
