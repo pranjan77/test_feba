@@ -37,11 +37,11 @@ my $help = $cgi->param('help') || "";
 my $outlier = $cgi->param('outlier');
 die "Must specify orgId" unless defined $orgId && $orgId ne "";
 die "Must specify locus1 or query1"
-    unless (defined $locus1 || defined $query1)
-    && !($locus1 eq "" && $query1 eq "");
+  unless (defined $locus1 && $locus1 ne "")
+  || (defined $query1 && $query1 ne "");
 die "Must specify locus2 or query2"
-    unless (defined $locus2 || defined $query2)
-    && !($locus2 eq "" && $query2 eq "");
+  unless (defined $locus2 && $locus2 ne "")
+  || (defined $query2 && $query2 ne "");
 die "Cannot query both 1 and 2" if defined $query1 && defined $query2 && $query1 ne "" && $query2 ne "";
 
 my $dbh = Utils::get_dbh();
