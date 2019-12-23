@@ -65,11 +65,14 @@ in the out directory
             # and parse out EC and TC number(s)
             # These will be in the description, of the form (EC 2.4.1.129)
             # or (EC 3.4.-.-) or (TC 3.A.1.4.1)
-            my @parts = $seed_desc =~ m/[(][ET]C [0-9A-Za-z.-]+[)]/g;
+            my @parts = $seed_desc =~ m/[(] *[ET]C[ :][0-9A-Za-z.-]+[)]/g;
             foreach my $part (@parts) {
                 $part =~ m/^[(](.*)[)]$/ || die;
                 $part = $1; # remove parentheses
-                my ($type,$num) = split / /, $part;
+                $part =~ s/^ *//;
+                my @parts2 = split /[: ]/, $part;
+                die "Error handling SEED description part $part" unless @parts2 == 2;
+                my ($type,$num) = @parts2;
                 if ($type eq "EC") {
                     $badclass{$part} = 1
                         unless $num =~ m/^[0-9][.][0-9-]+[.][0-9-]+[.][0-9a-zA-Z-]+/;
