@@ -462,7 +462,7 @@ sub ExpToPubId($$$);
         my $fit_file = defined $bad ? "$indir/$org/fit_logratios.tab"
           : "$indir/$org/fit_logratios_good.tab";
         my @fitNames = &ReadColumnNames($fit_file);
-        my @colNamesFull = grep m/^set/, @fitNames;
+        my @colNamesFull = grep m/^set/i, @fitNames;
         my @colNames = @colNamesFull;
         map { s/ .*$//; } @colNames; # skip annotations after the name
         my @fit = &ReadTable($fit_file, "locusId");
