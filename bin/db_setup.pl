@@ -14,13 +14,12 @@ my $subsysfile = "subsys.txt";
 my $publicationsFile = 'Publications.tab';
 
 my $usage = <<END
-Usage: db_setup.pl [ -db db_file_name ]
+Usage: db_setup.pl -db cgi_data/feba.db
         -orth orth_table -orginfo orginfo
         -indir htmldir nickname1 ... nicknameN
 Other optional arguments:
     -reanno reannotation_file
     -public public_file
-    -outdir out_directory
     -metadir $metadir
     -gdir $gdir
     -xrefs $xrefs (from IMGXRefs.pl, or use an empty argument to skip it)
@@ -32,11 +31,18 @@ Other optional arguments:
     -test -- skip cofitness and strain fitness
     -bad -- include experiments with poor quality metrics in the database
 
-    Sets up the cgi_data/ directory, especially the sqlite database, by reading from
+    Sets up the cgi_data/ directory by reading from
     the html directories indir/nickname1 ... indir/nicknameN
     (created by BarSeqR.pl)
     and the g directories gdir/nickname1 ... gdir/nicknameN
-    Also sets up the BLAST database (cgi_data/aaseqs).
+    Specifically, creates:
+      . the sqlite database (usually cgi_data/feba.db)
+      . a BLAST database (usually cgi_data/aaseqs)
+      . a usearch database (usually cgi_data/aaseqs.udb)
+      . per-strain data files (unless -test is used)
+    All of these are put in the same directory as the sqlite database.
+
+    Creates intermediate files db.tablename.org in the working directory.
 
     The orginfo file should include all of the columns for the Orginfo
     table, but may contain organisms that are not included in the
@@ -44,17 +50,6 @@ Other optional arguments:
 
     The orth table should include the fields tax1, locus1, tax2, locus2,
     ratio. The loci may be in taxId:locusId format.
-
-    Creates intermediate files db.tablename.org in the working directory.
-    If no db is specified, it just creates these and writes to stdout the
-    commands to be used to import them into a database (that already has
-    the tables set up by using lib/db_setup_tables.sql; otherwise,
-    it uses them to load the database and deletes the files.
-
-    If either -db or -outdir is specified, then the per-strain data
-    files (which are not loaded into the database) are moved into the
-    directory that contains the database file or into outdir. And, a
-    BLAST database of protein sequences is built in that directory.
 
     public_file (which is optional) should contain lines of the form
 	orgId SetName pubId key1=value1 ... keyN=valueN
@@ -90,7 +85,7 @@ sub WorkPutHash($@); # hash and list of fields to use
 sub ExpToPubId($$$);
 
 {
-    my ($dbfile,$indir,$outdir,$orgfile,$orthfile,$pubfile,$reannofile,$test,$bad);
+    my ($dbfile,$indir,$orgfile,$orthfile,$pubfile,$reannofile,$test,$bad);
     (GetOptions('db=s' => \$dbfile,
                 'orginfo=s' => \$orgfile,
                 'orth=s' => \$orthfile,
@@ -98,14 +93,13 @@ sub ExpToPubId($$$);
                 'indir=s' => \$indir,
                 'metadir=s' => \$metadir,
                 'gdir=s' => \$gdir,
-                'outdir=s' => \$outdir,
                 'xrefs=s' => \$xrefs,
                 'reanno=s' => \$reannofile,
                 'subsys=s' => \$subsysfile,
                 'publications=s' => \$publicationsFile,
                 'test' => \$test,
                 'bad' => \$bad)
-     && defined $indir && defined $orgfile && defined $orthfile)
+     && defined $indir && defined $orgfile && defined $orthfile && defined $dbfile)
         || die $usage;
     my @orgs = @ARGV;
     die "No such directory: $indir" unless -d $indir;
@@ -121,17 +115,15 @@ sub ExpToPubId($$$);
       die "No such file: $subsysfile" unless -e $subsysfile;
     }
     die "No such file: $publicationsFile" unless -e $publicationsFile;
-    
-    if (!defined $outdir && defined $dbfile) {
-        if ($dbfile =~ m|/|) {
-            $outdir = $dbfile;
-            $outdir =~ s|/[^/]+$||;
-        } else {
-            $outdir = ".";
-        }
-        die "Not a directory: $outdir\n" if !-d $outdir;
+
+    # Where to put the db.* files and the BLAST database
+    my $outdir = ".";
+    if ($dbfile =~ m|/|) {
+      $outdir = $dbfile;
+      $outdir =~ s!/[^/]+$!!;
     }
-    
+    die "Not a directory: $outdir\n" if !-d $outdir;
+
     # check that all @orgs are unique
     my %orgUniq = map { $_ => 1 } @orgs;
     die "Not all organisms are unique!\n" unless scalar(keys %orgUniq) == scalar(@orgs);
@@ -178,23 +170,18 @@ sub ExpToPubId($$$);
 
     my $tmpdir = $ENV{TMPDIR} || "/tmp";
     my $tmpdbfile = "$tmpdir/db.$$.sqlite3";
-    if (defined $dbfile) {
-        # make sure we can write to it
-        open(DB, ">", $dbfile) || die "Cannot write to $dbfile";
-        close(DB) || die "Error writing to $dbfile";
-        unlink($dbfile);
+    # make sure we can write to the dbfile
+    open(DB, ">", $dbfile) || die "Cannot write to $dbfile";
+    close(DB) || die "Error writing to $dbfile";
+    unlink($dbfile);
 
-        # create the temporary database
-        my $sqlfile = "$Bin/../lib/db_setup_tables.sql";
-        die "No such file: $sqlfile" unless -e $sqlfile;
-        print STDERR "Creating sqlite3 database $tmpdbfile\n";
-        unlink($tmpdbfile); # in case it somehow exists
-        system("sqlite3 $tmpdbfile < $sqlfile") == 0 || die $!;
-        die "Could not create temporary database $tmpdbfile" unless -e $tmpdbfile;
-    }
-    else {
-        print STDERR "Writing test files\n";
-    }
+    # create the temporary database
+    my $sqlfile = "$Bin/../lib/db_setup_tables.sql";
+    die "No such file: $sqlfile" unless -e $sqlfile;
+    print STDERR "Creating sqlite3 database $tmpdbfile\n";
+    unlink($tmpdbfile); # in case it somehow exists
+    system("sqlite3 $tmpdbfile < $sqlfile") == 0 || die $!;
+    die "Could not create temporary database $tmpdbfile" unless -e $tmpdbfile;
 
     # Load orginfo
     my @orgfields = qw{name division genus species strain taxonomyId};
@@ -462,7 +449,9 @@ sub ExpToPubId($$$);
         my $fit_file = defined $bad ? "$indir/$org/fit_logratios.tab"
           : "$indir/$org/fit_logratios_good.tab";
         my @fitNames = &ReadColumnNames($fit_file);
-        my @colNamesFull = grep m/^set/i, @fitNames;
+        my @colNamesFull = grep m/^set/i, @fitNames; # must start with set or Set
+        print STDERR "Warning, no successful experiments for $org\n"
+          if @colNamesFull == 0;
         my @colNames = @colNamesFull;
         map { s/ .*$//; } @colNames; # skip annotations after the name
         my @fit = &ReadTable($fit_file, "locusId");
@@ -729,124 +718,118 @@ sub ExpToPubId($$$);
     }
 
     # load the other data into sqlite3
-    if (defined $dbfile) {
+    # Run the commands
+    open(SQLITE, "|-", "sqlite3", "$tmpdbfile") || die "Cannot run sqlite3 on $tmpdbfile";
+    print SQLITE ".bail on\n";
+    print SQLITE ".mode tabs\n";
+    print STDERR "Loading tables\n";
+    foreach my $workCommand (@workCommands) {
+      print SQLITE "$workCommand\n";
+    }
+    close(SQLITE) || die "Error running sqlite3 commands\n";
 
-        # Run the commands
-        open(SQLITE, "|-", "sqlite3", "$tmpdbfile") || die "Cannot run sqlite3 on $tmpdbfile";
-        print SQLITE ".bail on\n";
-        print SQLITE ".mode tabs\n";
-        print STDERR "Loading tables\n";
-        foreach my $workCommand (@workCommands) {
-            print SQLITE "$workCommand\n";
-        }
-        close(SQLITE) || die "Error running sqlite3 commands\n";
+    # Check #rows in each table
+    my $dbh = DBI->connect("dbi:SQLite:dbname=$tmpdbfile", "", "", { RaiseError => 1 }) || die $DBI::errstr;
+    while (my ($table, $nRowsExpect) = each %workRows) {
+      my ($nRowsActual) = $dbh->selectrow_array("SELECT COUNT(*) FROM $table");
+      die "counting rows in $table failed" unless defined $nRowsActual;
+      die "Failed to load $table: expect $nRowsExpect rows but see $nRowsActual rows instead\n"
+        unless $nRowsActual == $nRowsExpect;
+    }
 
-        # Check #rows in each table
-        my $dbh = DBI->connect("dbi:SQLite:dbname=$tmpdbfile", "", "", { RaiseError => 1 }) || die $DBI::errstr;
-        while (my ($table, $nRowsExpect) = each %workRows) {
-            my ($nRowsActual) = $dbh->selectrow_array("SELECT COUNT(*) FROM $table");
-            die "counting rows in $table failed" unless defined $nRowsActual;
-            die "Failed to load $table: expect $nRowsExpect rows but see $nRowsActual rows instead\n"
-                unless $nRowsActual == $nRowsExpect;
-        }
+    # Sanity check orthologs:
+    my ($nOrthRows) = $dbh->selectrow_array("SELECT COUNT(*) FROM Ortholog");
+    my ($nOrthRows1) = $dbh->selectrow_array("SELECT COUNT(*) FROM Ortholog JOIN Gene ON orgId1=orgId AND locusId1=locusId");
+    my ($nOrthRows2) = $dbh->selectrow_array("SELECT COUNT(*) FROM Ortholog JOIN Gene ON orgId2=orgId AND locusId2=locusId");
+    die "Cannot count orths" unless defined $nOrthRows && defined $nOrthRows1 && defined $nOrthRows2;
+    die "Invalid values of locusId1 in Ortholog table: $nOrthRows != $nOrthRows1" unless $nOrthRows == $nOrthRows1;
+    die "Invalid values of locusId2 in Ortholog table: $nOrthRows != $nOrthRows1" unless $nOrthRows == $nOrthRows2;
 
-        # Sanity check orthologs:
-        my ($nOrthRows) = $dbh->selectrow_array("SELECT COUNT(*) FROM Ortholog");
-        my ($nOrthRows1) = $dbh->selectrow_array("SELECT COUNT(*) FROM Ortholog JOIN Gene ON orgId1=orgId AND locusId1=locusId");
-        my ($nOrthRows2) = $dbh->selectrow_array("SELECT COUNT(*) FROM Ortholog JOIN Gene ON orgId2=orgId AND locusId2=locusId");
-        die "Cannot count orths" unless defined $nOrthRows && defined $nOrthRows1 && defined $nOrthRows2;
-        die "Invalid values of locusId1 in Ortholog table: $nOrthRows != $nOrthRows1" unless $nOrthRows == $nOrthRows1;
-        die "Invalid values of locusId2 in Ortholog table: $nOrthRows != $nOrthRows1" unless $nOrthRows == $nOrthRows2;
-
-        # Create the FitByExp_org table for each organism
-        foreach my $org (@orgs) {
-            my $tab = "'" . "FitByExp_" . $org . "'";
-            my $create_statement = $dbh->prepare(qq{CREATE TABLE $tab
+    # Create the FitByExp_org table for each organism
+    foreach my $org (@orgs) {
+      my $tab = "'" . "FitByExp_" . $org . "'";
+      my $create_statement = $dbh->prepare(qq{CREATE TABLE $tab
                                                 (expName TEXT NOT NULL,
                                                  locusId TEXT NOT NULL,
                                                  fit REAL NOT NULL,
                                                  t REAL NOT NULL,
                                                  PRIMARY KEY (expName,locusId)); });
-            $create_statement->execute() || die "Cannot create $tab";
-            my $insert_statement = $dbh->prepare(qq{INSERT INTO $tab SELECT expName,locusId,fit,t
+      $create_statement->execute() || die "Cannot create $tab";
+      my $insert_statement = $dbh->prepare(qq{INSERT INTO $tab SELECT expName,locusId,fit,t
                                                 FROM GeneFitness where orgId = ? ORDER BY expName; });
-            $insert_statement->execute($org) || die "Cannot fill data into $tab";
-            print STDERR "Filled $tab\n";
-        }
+      $insert_statement->execute($org) || die "Cannot fill data into $tab";
+      print STDERR "Filled $tab\n";
+    }
 
-        $dbh->disconnect();
+    $dbh->disconnect();
 
-        # Build the SpecOG table
-        system("$Bin/db_setup_specOG.pl", "-db", $tmpdbfile, "-dir", $outdir) == 0
-            || die "db_setup_specOG.pl failed";
+    # Build the SpecOG table
+    system("$Bin/db_setup_specOG.pl", "-db", $tmpdbfile, "-dir", $outdir) == 0
+      || die "db_setup_specOG.pl failed";
 
-        system("mv",$tmpdbfile,$dbfile) == 0 || die "mv $tmpdbfile $dbfile failed: $!";
-        die "mv $tmpdbfile $dbfile failed" unless -e $dbfile;
-        print STDERR "Successfully created $dbfile\n";
-        print STDERR "Cleaning up\n";
-        # Delete the files
-        foreach my $file (@workFiles) {
-            unlink($file);
-        }
+    system("mv",$tmpdbfile,$dbfile) == 0 || die "mv $tmpdbfile $dbfile failed: $!";
+    die "mv $tmpdbfile $dbfile failed" unless -e $dbfile;
+    print STDERR "Successfully created $dbfile\n";
+    print STDERR "Cleaning up\n";
+    # Delete the files
+    foreach my $file (@workFiles) {
+      unlink($file);
+    }
 
-        if ($load_kegg) {
-            my @inputs = map "$gdir/$_/besthit.kegg", @orgs;
-            system("$Bin/db_setup_kegg.pl", "-db", $dbfile, "-dir", $outdir, @inputs) == 0
-                || die "db_setup_kegg.pl failed";
-        } else {
-            print STDERR "Skipping kegg hits\n";
-        }
+    if ($load_kegg) {
+      my @inputs = map "$gdir/$_/besthit.kegg", @orgs;
+      system("$Bin/db_setup_kegg.pl", "-db", $dbfile, "-dir", $outdir, @inputs) == 0
+        || die "db_setup_kegg.pl failed";
+    } else {
+      print STDERR "Skipping kegg hits\n";
+    }
 
-        if ($load_metacyc) {
-            system("$Bin/db_setup_metacyc.pl", "-db", $dbfile, "-dir", $outdir, @orgs) == 0
-                || die "db_setup_metacyc.pl failed";
-        }
+    if ($load_metacyc) {
+      system("$Bin/db_setup_metacyc.pl", "-db", $dbfile, "-dir", $outdir, @orgs) == 0
+        || die "db_setup_metacyc.pl failed";
     }
 
     # Load the media information
     my @mediacmd = ("$Bin/make_media_table.pl", "-metadir", $metadir, "-out", $outdir);
     if (defined $dbfile) {
-        push @mediacmd, ("-db", $dbfile);
+      push @mediacmd, ("-db", $dbfile);
     } elsif (defined $outdir) {
-        push @mediacmd, ("-out", $outdir);
+      push @mediacmd, ("-out", $outdir);
     }
     system(@mediacmd) == 0 || die "Error running\n" . join(" ",@mediacmd) . "\n: $!";
 
     # Load the reannotation information
     if (defined $reannofile) {
-        if (defined $dbfile) {
-            my @reannocmd = ("$Bin/db_update_reanno.pl", "-nometacyc", "-reanno", $reannofile, "-db", $dbfile);
-            system(@reannocmd) == 0 || die "Error running\n" . join(" ", @reannocmd) . "\n: $!";
-        } else {
-            print STDERR "Ignoring -reanno $reannofile because no database specified.\n";
-        }
+      if (defined $dbfile) {
+        my @reannocmd = ("$Bin/db_update_reanno.pl", "-nometacyc", "-reanno", $reannofile, "-db", $dbfile);
+        system(@reannocmd) == 0 || die "Error running\n" . join(" ", @reannocmd) . "\n: $!";
+      } else {
+        print STDERR "Ignoring -reanno $reannofile because no database specified.\n";
+      }
     }
 
     # Compute MetaCyc pathway coverage
     my @covercmd = ("$Bin/db_update_metacyc_coverage.pl", "-db", $dbfile);
     system(@covercmd) == 0 || die "Error running " . join(" ", @covercmd) . "\n: $!";
 
-    if (defined $outdir) {
-        # Make the BLAST database
-        my @files = map "$gdir/$_/aaseq2", @orgs;
-        my $blastdb = "$outdir/aaseqs";
-        my $catcmd = "cat " . join(" ",@files) . " > $blastdb";
-        system($catcmd) == 0 || die "Error running\n$catcmd\n: $!";
-        print STDERR "Formatting $blastdb\n";
-        my @formatcmd = ($formatexe, "-p", "T", "-o", "T", "-i", $blastdb);
-        system(@formatcmd) == 0 || die "Error running\n".join(" ",@formatcmd)."\n: $!";
+    # Make the BLAST database
+    my @files = map "$gdir/$_/aaseq2", @orgs;
+    my $blastdb = "$outdir/aaseqs";
+    my $catcmd = "cat " . join(" ",@files) . " > $blastdb";
+    system($catcmd) == 0 || die "Error running\n$catcmd\n: $!";
+    print STDERR "Formatting $blastdb\n";
+    my @formatcmd = ($formatexe, "-p", "T", "-o", "T", "-i", $blastdb);
+    system(@formatcmd) == 0 || die "Error running\n".join(" ",@formatcmd)."\n: $!";
 
-        # and make the udb database
-        my $udbfile = "$outdir/aaseqs.udb";
-        my $usearch = "$Bin/usearch";
-        if (-x $usearch) {
-            system("$usearch -makeudb_ublast $blastdb -output $udbfile") == 0
-                || die "Failed to make the udb file";
-        } else {
-            print STDERR "Warning: skipped making aaseqs.udb:\n$usearch is not an executable\n";
-        }
+    # and make the udb database
+    my $udbfile = "$outdir/aaseqs.udb";
+    my $usearch = "$Bin/usearch";
+    if (-x $usearch) {
+      system("$usearch -makeudb_ublast $blastdb -output $udbfile") == 0
+        || die "Failed to make the udb file";
+    } else {
+      print STDERR "Warning: skipped making aaseqs.udb:\n$usearch is not an executable\n";
     }
-
     print STDERR "Success\n";
 }
 
