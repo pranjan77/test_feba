@@ -7,10 +7,11 @@ use DBI;
 my $db;
 my $dir = ".";
 my $noupdate;
-my $usage = "Usage: db_setup_specOG.pl -db feba.db [ -dir $dir ] [ -noupdate ]\n";
+my $usage = "Usage: db_setup_specOG.pl -db feba.db [ -dir $dir ] [ -noupdate ] [ -debug ]\n";
+my $debug;
 
 die $usage
-    unless GetOptions('db=s' => \$db, 'dir=s' => \$dir, 'noupdate' => \$noupdate)
+    unless GetOptions('db=s' => \$db, 'dir=s' => \$dir, 'noupdate' => \$noupdate, 'debug' => \$debug)
     && defined $db
     && @ARGV == 0;
 
@@ -107,6 +108,8 @@ while (my ($expGroup, $condHash) = each %specGene) {
             my @expNames = keys %{ $specExp{$expGroup}{$condition}{$orgId} };
             die unless @expNames > 0;
             my $expSpec = join(",", map {"'".$_."'"} @expNames);
+            print STDERR "Group $expGroup condition $condition org $orgId geneSpec $geneSpec expSpec $expSpec\n"
+              if defined $debug;
             my $rows = $dbh->selectall_arrayref(
                 "SELECT locusId, min(fit), max(fit), min(t), max(t)
                  FROM GeneFitness
@@ -121,6 +124,8 @@ while (my ($expGroup, $condHash) = each %specGene) {
         while (my ($orgId, $geneHash) = each %$orgHash) {
             foreach my $locusId (keys %$geneHash) {
                 die if !defined $og{$orgId}{$locusId};
+                die "Locus $locusId has specific phenotype but no fitness data?"
+                  unless defined $fit{$orgId}{$locusId};
                 my (undef, $minfit, $maxfit, $minT, $maxT) = @{ $fit{$orgId}{$locusId} };
                 die "No data for $orgId $locusId $expGroup $condition" unless defined $minfit;
                 print SPECOG join("\t", $og{$orgId}{$locusId}, $expGroup, $condition,
