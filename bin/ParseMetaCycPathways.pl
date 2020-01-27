@@ -141,9 +141,11 @@ while (my $path = ParsePTools($fhpath)) {
       # ignore;
     } else {
       $string =~ m/^[(]([^()]+)[)]$/ || die "Cannot parse PREDECESSORS for pathway $pathwayId: $string";
-      my @pre = split / +/, $1;
+      my $pre = $1;
+      # both reaction and predecessor ids are often quoted, not sure why
+      $pre =~ s/"//g;
+      my @pre = split / +/, $pre;
       my $rxnId = shift @pre;
-      $rxnId = $1 if $rxnId =~ m/^"(.*)"$/; # not sure why but these are sometimes quoted
       push @{ $pred{$rxnId} }, @pre;
     }
   }
