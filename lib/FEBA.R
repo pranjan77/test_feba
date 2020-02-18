@@ -362,7 +362,7 @@ FEBA_Fit = function(expsUsed, all, genes,
         write("Aggregating Time0 totals",stderr());
 
         # the next few lines are much faster than doing
-	# t0_gN = data.frame(locusId = names(t0_gN_list[[1]]), aggregate(t0tot[has_gene2,,drop=F], list(locusId=all$locusId[has_gene2]), sum);
+	# t0_gN = data.frame(locusId = names(t0_gN_list[[1]]), aggregate(t0tot[has_gene2, drop=F], list(locusId=all$locusId[has_gene2]), sum);
         indexBy = as.factor(all$locusId[has_gene2]);
         t0_gN_list = mclapply(names(t0tot), function(n) tapply(t0tot[has_gene2,n], indexBy, sum));
         names(t0_gN_list) = names(t0tot);
@@ -432,8 +432,15 @@ FEBA_Fit = function(expsUsed, all, genes,
                 cntrl = setdiff(expsT0[[ t0set ]], n);
 		if(length(cntrl) < 1) stop("No Time0 experiments for ",n," should not be reachable");
 		if(debug) cat("StrainFitness() on", n, "versus", cntrl,"\n");
-		d = StrainFitness(all[[n]], rowSums(all[,cntrl,drop=F]));
-		return(list(gene_fit=gene_fit, strain_fit=d$fit, strain_se=d$se));
+		straindata = StrainFitness(all[[n]], rowSums(all[,cntrl,drop=F]));
+                gTest = gene_fit$locusId[abs(gene_fit$fitnorm) > 1];
+                u = which(strainsUsed & all$locusId %in% gTest);
+                polar = PolarTest(gTest, all[u, c("locusId","strand")], straindata$fit[u], debug=debug);
+                if(debug) cat("Polar",n,"succeeded","nrows",nrow(polar),"\n");
+                if(!is.null(polar) && nrow(polar) > 0) polar$expName = n;
+		return(list(gene_fit=gene_fit,
+                            strain_fit=straindata$fit, strain_se=straindata$se,
+                            polar=polar));
 	});
 	names(results) = names(all)[-metacol];
 	results = results[!sapply(results,is.null)];
@@ -445,7 +452,20 @@ FEBA_Fit = function(expsUsed, all, genes,
 	names(fit) = sub("fitnorm","lrn",names(fit));
 	names(fit) = sub("fit","lr",names(fit));
 	if (debug) cat("Extracted fitness values\n");
-	fit$version = "1.1.1";
+        fit$polar = do.call(rbind, lapply(results, function(x) x$polar));
+        if(!is.null(fit$polar) && nrow(fit$polar) > 0) {
+          if(debug) cat("Initial rows in combined polar:",nrow(fit$polar),"\n");
+          fit$polar = merge(fit$polar, genes[,c("locusId","sysName","desc")]);
+          fit$polar = merge(fit$polar, data.frame(expName=expsUsed$name, expDesc=expsUsed$Description));
+          d = which(abs(fit$lrn) >= 1, arr.ind=T);
+          d = data.frame(fit=fit$lrn[d], expName=names(fit$lrn)[d[,2]], locusId=fit$g[d[,1]]);
+          fit$polar = merge(fit$polar, d, all.x=T);
+          if(debug) cat("Final rows in combined polar:",nrow(fit$polar),"\n");
+        } else {
+          fit$polar = data.frame();
+        }
+        # Version 1.2: added fit$polar
+	fit$version = "1.2.1";
 
 	q_col = words("name short t0set");
 	if(!is.null(expsUsed$num)) q_col = c(q_col, "num");
@@ -720,6 +740,11 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 
         writeDelim(fit$high, nameToPath("high_fitness.tab"));
         wroteName("high_fitness.tab");
+
+        if(nrow(fit$polar) > 0) {
+          writeDelim(fit$polar[,words("locusId sysName desc expName expDesc fit absDiff p")], nameToPath("polar_effects.tab"));
+          wroteName("polar_effects.tab");
+        }
 
 	if(writeImage) {
 	    img = format(Sys.time(),"fit%Y%b%d.image"); # e.g., fit2013Oct24.image
@@ -1174,4 +1199,27 @@ HighFit = function(fit, genes, expsUsed, min.fit=4, min.t=5, max.se=2, min.gMean
   high = merge(genes[,c("locusId","sysName","desc")], high);
   high = high[order(high$expName, -high$fit),];
   return(high);
+}
+
+# genes is a list of locusIds
+# strains includes locusId and strand
+# returns the difference between the two strands and a p value,
+# if it meets the thresholds
+PolarTest = function(genes, strains, strain_fit,
+                     mindiff=1, maxp=0.01, debug=F) {
+  if(length(genes)==0) return(NULL);
+  stopifnot(nrow(strains) == length(strain_fit));
+  if(debug) cat("PolarTest has",length(genes),"genes",nrow(strains),"strains","\n");
+  groups = split(1:nrow(strains), strains$locusId);
+  results = lapply(groups, function(i) {
+    values = strain_fit[i];
+    isPlus = strains$strand[i] == "+";
+    if (sum(isPlus) < 2 || sum(!isPlus) < 2) return(NULL);
+    diff = abs(mean(values[isPlus]) - mean(values[!isPlus]));
+    if (diff < mindiff) return(NULL);
+    data.frame(locusId = strains$locusId[i[1]], absDiff=diff, p=t.test(values[isPlus], values[!isPlus])$p.value);
+  });
+  results = do.call(rbind, results);
+  if (is.null(results) || nrow(results) == 0) return(NULL);
+  return(subset(results, p < maxp));
 }
