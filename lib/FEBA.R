@@ -1217,7 +1217,11 @@ PolarTest = function(genes, strains, strain_fit,
     if (sum(isPlus) < 2 || sum(!isPlus) < 2) return(NULL);
     diff = abs(mean(values[isPlus]) - mean(values[!isPlus]));
     if (diff < mindiff) return(NULL);
-    data.frame(locusId = strains$locusId[i[1]], absDiff=diff, p=t.test(values[isPlus], values[!isPlus])$p.value);
+    data.frame(locusId = strains$locusId[i[1]], absDiff=diff,
+               # t.test will occasionally fail because all values are equal;
+               # return a p-value of 0 in this case (have already verified a large difference)
+               p=tryCatch( { t.test(values[isPlus], values[!isPlus])$p.value },
+                           error = function(e) { 0 } ));
   });
   results = do.call(rbind, results);
   if (is.null(results) || nrow(results) == 0) return(NULL);
