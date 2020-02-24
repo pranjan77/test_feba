@@ -22,6 +22,7 @@ use DBI;
 use lib "../lib";
 use Utils;
 use URI::Escape;
+use HTML::Entities;
 
 my $cgi=CGI->new;
 
@@ -47,11 +48,12 @@ if ($orgId ne "" && !defined $expGroup && ($cgi->param("All experiments") || $ex
 } elsif ($orgId eq "" && !$expSpec && !$expGroup && !$condition1) {
   print redirect(-url=>"orgAll.cgi");
   exit(0);
-} 
+}
 
 my $specShow = $expSpec;
 if ($specShow eq "") {
-    $specShow = defined $condition1 ? join(" ", $expGroup, $condition1) : $expGroup;
+    $specShow = defined $condition1 ? join(" ", encode_entities($expGroup), encode_entities($condition1))
+      : encode_entities($expGroup);
     $specShow = "" if !defined $specShow;
 }
 my $start = Utils::start_page("Experiments for $specShow");
