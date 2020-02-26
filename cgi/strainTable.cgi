@@ -19,6 +19,13 @@
 # addexp -- additional experiments (i.e. a setname or a condition)
 # zoom -- in or out
 # pan -- left or right
+# object -- an additional object to show, specified by a colon-delimited set of arguments such as
+#	b:1000:e:2000:s:1:n:name:d:popup
+#	begin, end, and name must be specified, and begin should be less than end
+#	object is shown as unstranded if strand is absent
+#	use 1 for + strand, not "+", because of CGI encoding issues
+#	d is shown as popup text and is optional
+#	(unlike genomeBrowse.cgi, just one object is supported)
 
 use strict;
 use CGI qw(-nosticky :standard Vars);
@@ -46,6 +53,7 @@ my $tsv = $cgi->param('tsv') || 0;
 my $expName = $cgi->param('expName') || "";
 my $debug = $cgi->param('debug') || "";
 my $help = $cgi->param('help') || "";
+my $objspec = $cgi->param('object') || "";
 
 if (defined $locusSpec && $locusSpec ne "") {
     my $sysName;
@@ -63,6 +71,41 @@ if (defined $locusSpec && $locusSpec ne "") {
     die "Invalid begin parameter" unless $begin =~ m/^-?\d+$/;
     die "Invalid end parameter" unless $end =~ m/^\d+$/;
 }
+
+my %object = ();
+if ($objspec) {
+  die "object is used by scaffold is not set" unless $scaffoldId ne "";
+  my %keynames = ("b" => "begin", "e" => "end", "s" => "strand", "n" => "name", "d" => "desc");
+  my @parts = split /:/, $objspec;
+  while (@parts > 0) {
+    my $key = shift @parts;
+    die "Unknown key $key in object argument\n" unless exists $keynames{$key};
+    my $value = shift @parts;
+    die "Wrong number of fields in $objspec\n" unless defined $value;
+    $object{$keynames{$key}} = $value;
+  }
+  $object{object} = 1 ; # so that geneArrows() knows it is an object
+  die "Invalid object $objspec\n"
+    unless exists $object{begin} && exists $object{end} && exists $object{name};
+  die "begin must be less than end" unless $object{begin} < $object{end};
+  # To build the URL for getNtSeq.cgi, may need to reverse begin and end
+  my ($beginL, $endL) = ($object{begin}, $object{end});
+  ($beginL,$endL) = ($endL,$beginL)
+    if exists $object{strand} && ($object{strand} eq "-" || $object{strand} eq "-1");
+  # this link is currently always on the + strand, should fix
+  $object{URL} = "getNtSeq.cgi?orgId=$orgId&scaffoldId=$scaffoldId&begin=$beginL&end=$endL";
+
+  if (!defined $begin || !defined $end) {
+    $begin = $object{begin} - 500;
+    $end = $object{begin} + 500;
+    if ($begin - $end + 1 < 4000) {
+      my $center = int(($begin+$end)/2);
+      $begin = $center - 2000;
+      $end = $center + 2000;
+    }
+  }
+}
+
 my $zoom = $cgi->param('zoom') || "";
 my $initwidth = $end - $begin + 1;
 if ($zoom eq "in") {
@@ -154,6 +197,7 @@ if ($help) {
         hidden( -name => 'scaffoldId', -value => $scaffoldId, -override => 1),
         hidden( -name => 'begin', -value => $begin, -override => 1),
         hidden( -name => 'end', -value => $end, -override => 1),
+        hidden( -name => 'object', -value => $objspec, -override => 1),
         join("\n", map { hidden( -name => 'expName', -value => $_, -override => 1) } @expNames),
         p({-class => "buttons", style=>"align:left; white-space:nowrap; line-height:40px;"}, "Add experiment(s): ",
            textfield(-name => 'addexp', -default => "", -override => 1, -size => 20, -maxLength => 100),
@@ -169,7 +213,7 @@ if ($help) {
         if scalar(@expNames) > 0;
     
 
-  if (@$genes == 0) {
+  if (@$genes == 0 && ! $objspec) {
       print "No genes in range.";
   } else {
       # sort @$genes;
@@ -178,7 +222,10 @@ if ($help) {
               print $genea->{begin} . "\t" . $genea->{end} . "\t | ";
           }
       }
-      print Utils::geneArrows(\@$genes, $locusSpec, $begin, $end);
+      my @show = @$genes;
+      push @show, \%object;
+      @show = sort { $a->{begin} <=> $b->{begin} } @show;
+      print Utils::geneArrows(\@show, $locusSpec, $begin, $end);
   }
 }
 
@@ -225,6 +272,7 @@ if (scalar(@expNames)==0) {
 # add row of links for removing items
 my @remove_row = map { td("") } @base_headings; # 
 my $baseURL = "strainTable.cgi?orgId=$orgId&scaffoldId=$scaffoldId&begin=$begin&end=$end";
+$baseURL .= "&object=$objspec" if $objspec;
 foreach my $expName (@expNames) {
     my @otherExps = grep { $_ ne $expName } @expNames;
     my @otherExpSpec = map { "expName=$_" } @otherExps;
