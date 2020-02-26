@@ -14,6 +14,8 @@
 #	scaffoldId, begin, end -- the range of interest (limited to 50 kb)
 # or
 #	locusId -- which gene to show (by default, range is exactly the width of the gene)
+# or
+#	scaffoldId, object (see below). [Object can also be specified together with begin/end]
 # Optional CGI parameters:
 # expName -- which experiment(s) to show. (Can be more than one, or none.)
 # addexp -- additional experiments (i.e. a setname or a condition)
