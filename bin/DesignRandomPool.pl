@@ -29,6 +29,7 @@ The MapTnSeq files must be tab-delimited with fields
     read,barcode,scaffold,pos,strand,uniq,qBeg,qEnd,score,identity
 where qBeg and qEnd are the positions in the read, after the
 transposon sequence is removed, that match the genome.
+Gzipped (*.gz) input files are also supported.
 
 The genes table must include the fields
    scaffoldId, begin, end, strand, desc
@@ -74,7 +75,14 @@ END
     print STDERR join("\n", "Reading mapping files:", @ARGV)."\n"
       if @ARGV > 0;
 
-    while(<>) {
+    foreach my $file (@ARGV) {
+      my $fhIn;
+      if ($file =~ m/[.]gz$/) {
+        open($fhIn, '-|', 'zcat', $file) || die "Cannot run zcat on $file";
+      } else {
+        open($fhIn, "<", $file) || die "Cannot read $file";
+      }
+      while(<$fhIn>) {
         chomp;
         my ($read,$barcode,$scaffold,$pos,$strand,$uniq,$qBeg,$qEnd,$score,$identity) = split /\t/, $_;
         if ($scaffold eq "pastEnd") {
@@ -88,6 +96,8 @@ END
         } else {
             $nSkipQBeg++;
         }
+      }
+      close($fhIn) || die "Error reading $file";
     }
     print STDERR "Read $nMapped mapped reads for " . scalar(keys %barPosCount) . " distinct barcodes\n";
     print STDERR "(Skipped $nSkipQBeg reads with qBeg > $maxQBeg)\n" if $nSkipQBeg > 0;
