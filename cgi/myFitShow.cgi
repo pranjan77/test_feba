@@ -23,6 +23,7 @@ use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
 use IO::Handle;
 use URI::Escape;
+use HTML::Entities qw{encode_entities};
 
 use lib "../lib";
 use Utils;
@@ -466,7 +467,7 @@ sub end($) {
   if ($count >= 100) {
     print p("Only the first 100 results are shown.");
   } elsif ($count == 0) {
-    print p("No gene found for $geneSpec", $orgDescriptor);
+    print p("No gene found for", HTML::Entities::encode_entities($geneSpec), $orgDescriptor);
   } elsif (! $show_curated) {
     # show something at bottom so is clear search is done
     print p("Done searching.");
