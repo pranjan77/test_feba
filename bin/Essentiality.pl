@@ -28,8 +28,11 @@ Usage: Essentiality.pl [ -minReads $minReads ]
 	$blatShow
         [ -minLength $minLength ] [ -minIdentity $minIdentity ]
 
-The mapped.tab files are from MapTnSeq.pl. The genes table must include the fields
-    locusId, scaffoldId, begin, end, strand
+The mapped.tab files are from MapTnSeq.pl. They can be gzipped as well (if the names
+end with .gz).
+
+The genes table must include the fields locusId, scaffoldId, begin,
+end, strand
 
 By default, there must be at least minReads insertions at a location
 or it is ignored.
@@ -106,25 +109,30 @@ END
     my $nUsed = 0; # (genomic and OK qBeg only)
     my %counts = (); # scaffoldId => strand => pos => number of reads
     foreach my $mapfile (@mapfiles) {
-	open(MAP, "<", $mapfile) || die "Cannot read $mapfile";
-	while(<MAP>) {
-	    $nReads++;
-	    chomp;
-	    my ($readname, $barcode, $scaffoldId, $pos, $strand, $uniq, $readBeg, $readEnd, $score, $identity) = split /\t/, $_, -1;
-	    die "Not enough columns in\n$_" unless defined $identity;
-	    next if $scaffoldId eq "pastEnd";
-	    die "Unrecognized scaffold $scaffoldId" unless exists $seqs->{$scaffoldId};
-	    die "Invalid position $pos" unless $pos =~ m/^\d+$/ && $pos >= 1 && $pos <= length($seqs->{$scaffoldId});
-	    die "Invalid strand $strand" unless $strand eq "+" || $strand eq "-";
-	    if ($readBeg > 3) { # should be rare
-		$nSkip++;
-		next;
-	    }
-	    # accept possibly non-unique reads as the bias is to avoid false positives
-	    $counts{$scaffoldId}{$strand}{$pos}++;
-	    $nUsed++;
-	}
-	close(MAP) || die "Error reading $mapfile";
+      my $fhMap;
+      if ($mapfile =~ m/[.]gz$/){
+        open ($fhMap, "-|", "zcat", $mapfile) || die "Cannot zcat $mapfile";
+      } else {
+	open($fhMap, "<", $mapfile) || die "Cannot read $mapfile";
+      }
+      while(<$fhMap>) {
+        $nReads++;
+        chomp;
+        my ($readname, $barcode, $scaffoldId, $pos, $strand, $uniq, $readBeg, $readEnd, $score, $identity) = split /\t/, $_, -1;
+        die "Not enough columns in\n$_" unless defined $identity;
+        next if $scaffoldId eq "pastEnd";
+        die "Unrecognized scaffold $scaffoldId" unless exists $seqs->{$scaffoldId};
+        die "Invalid position $pos" unless $pos =~ m/^\d+$/ && $pos >= 1 && $pos <= length($seqs->{$scaffoldId});
+        die "Invalid strand $strand" unless $strand eq "+" || $strand eq "-";
+        if ($readBeg > 3) { # should be rare
+          $nSkip++;
+          next;
+        }
+        # accept possibly non-unique reads as the bias is to avoid false positives
+        $counts{$scaffoldId}{$strand}{$pos}++;
+        $nUsed++;
+      }
+      close($fhMap) || die "Error reading $mapfile";
     }
 
     # Count the "good" reads and write them out along with what gene they are in (if any)
