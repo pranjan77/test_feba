@@ -249,14 +249,14 @@ sub ExpToPubId($$$);
     # Create db.Gene.*
     foreach my $org (@orgs) {
         my @genes = &ReadTable("$indir/$org/genes",
-                               qw{locusId sysName scaffoldId begin end desc name GC nTA});
+                               qw{locusId sysName scaffoldId begin end desc name GC});
         die "No genes for $org" unless @genes > 0;
         StartWork("Gene", $org);
         foreach my $row (@genes) {
             $row->{orgId} = $org;
             $row->{gene} = $row->{name};
             $row->{type} = 1 if !exists $row->{type};
-            WorkPutHash($row, qw{orgId locusId sysName scaffoldId begin end type strand gene desc GC nTA});
+            WorkPutHash($row, qw{orgId locusId sysName scaffoldId begin end type strand gene desc GC});
         }
         EndWork();
     }

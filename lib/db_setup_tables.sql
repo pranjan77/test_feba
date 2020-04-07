@@ -24,7 +24,6 @@ CREATE TABLE Gene(
    gene             TEXT,    /* a gene name like recA */
    desc             TEXT,
    GC               REAL,    /* %GC of the gene's sequence */
-   nTA              INT,     /* number of TA dinucleotides in the gene's sequence */
    PRIMARY KEY (orgId, locusId)
 );
 CREATE INDEX 'locusOrg' on Gene ('locusId' ASC, 'orgId' ASC);
