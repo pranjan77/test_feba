@@ -8,6 +8,7 @@ use strict;
 	. "   regions must include scaffold, begin, end, and strand fields\n"
 	. "   begin and end must be 1-based and inclusive\n"
 	. "   other fields are (silently) maintained\n"
+        . "   (An earlier version of this script reported #central TAs rather than total #TAs.)\n"
 	unless @ARGV == 2;
     my ($fnaFile, $regionsFile) = @ARGV;
 
@@ -96,8 +97,8 @@ use strict;
 	my $nAT = scalar(@hits);
 	die "No ACGT characters for $seqName $begin $end" if $nGC == 0 && $nAT == 0;
 
-	my $trimmed = substr($subseq, int($sublen*0.1+0.5), int($sublen*0.8+0.5));
-	@hits = $trimmed =~ m/TA/g;
+	#my $trimmed = substr($subseq, int($sublen*0.1+0.5), int($sublen*0.8+0.5));
+	@hits = $subseq =~ m/TA/g;
 	my $nTA = scalar(@hits);
 
 	my $GC = sprintf("%.4f", $nGC / ($nGC+$nAT));
