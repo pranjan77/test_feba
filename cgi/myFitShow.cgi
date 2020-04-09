@@ -42,11 +42,10 @@ my $orginfo = Utils::orginfo($dbh);
 die "Illegal orgId parameter $orgSpec" if $orgSpec ne "" & !exists $orginfo->{$orgSpec};
 
 my $orgTitle = $cgi->param('orgId') ? "in $orginfo->{$orgSpec}{genome}" : "";
-my $start = Utils::start_page("Genes matching $geneSpec $orgTitle");
-
 $geneSpec =~ s/[ \t]*$//;
 $geneSpec =~ s/^[ \t]*//;
-    
+my $start = Utils::start_page("Genes matching " . encode_entities($geneSpec) . " " . $orgTitle);
+
 # if no gene or locus specified
 if (!defined $geneSpec || $geneSpec eq "") {
     print $cgi->header;
