@@ -124,13 +124,15 @@ foreach my $o (@genes) {
     $first = 0;
   }
 }
-print
-  table({ cellpadding => 3, cellspacing =>0}, @trows),
-  $nSkipOrth ? p("$nSkipOrth orthologs are not shown because they lack fitness data for this condition (or they lack data entirely)") : "",
-  p(a({href => "orthCond.cgi?expGroup=" . uri_escape($expGroup) . "&condition1=" . uri_escape($condition1) },
-      "Specific phenotypes for $expGroup $condition1 across organisms")),
-  p(a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Show all homologs")),
-  p(a({-href => "cmpbrowser.cgi?anchorOrg=$orgId&anchorLoci=$locusId"}, "Comparative fitness browser"));
+print table({ cellpadding => 3, cellspacing =>0}, @trows);
+print p("$nSkipOrth orthologs are not shown because they lack fitness data for this condition (or they lack data entirely)")
+  if $nSkipOrth;
+print p("$showId is not a protein-cnding gene, so it has no orthologs.") if $gene->{type} != 1;
+print p(a({href => "orthCond.cgi?expGroup=" . uri_escape($expGroup) . "&condition1=" . uri_escape($condition1) },
+      "Specific phenotypes for $expGroup $condition1 across organisms"));
+print p(a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Show all homologs"))
+  if $gene->{type} == 1;
+print p(a({-href => "cmpbrowser.cgi?anchorOrg=$orgId&anchorLoci=$locusId"}, "Comparative fitness browser"));
 
 $dbh->disconnect();
 Utils::endHtml($cgi);
