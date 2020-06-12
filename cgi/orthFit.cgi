@@ -127,7 +127,7 @@ foreach my $o (@genes) {
 print table({ cellpadding => 3, cellspacing =>0}, @trows);
 print p("$nSkipOrth orthologs are not shown because they lack fitness data for this condition (or they lack data entirely)")
   if $nSkipOrth;
-print p("$showId is not a protein-cnding gene, so it has no orthologs.") if $gene->{type} != 1;
+print p("$showId is not a protein-coding gene, so it has no orthologs.") if $gene->{type} != 1;
 print p(a({href => "orthCond.cgi?expGroup=" . uri_escape($expGroup) . "&condition1=" . uri_escape($condition1) },
       "Specific phenotypes for $expGroup $condition1 across organisms"));
 print p(a({href => "mySeqSearch.cgi?orgId=$orgId&locusId=$locusId"}, "Show all homologs"))
