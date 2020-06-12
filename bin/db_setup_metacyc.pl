@@ -7,7 +7,7 @@ use FEBA_Utils; # for ReadFasta(), ReadTable()
 use DBI;
 
 my $gdir = "g";
-my $reactionsfile = "metacyc_reactions.tab";
+#my $reactionsfile = "metacyc_reactions.tab";
 my $metaidsfile = "metacyc_ids.tab";
 my $db = undef;
 my $dir = ".";
