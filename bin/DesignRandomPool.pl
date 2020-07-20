@@ -11,7 +11,7 @@ use lib "$Bin/../lib";
 use FEBA_Utils; # for reverseComplement
 sub Variants($); # return all 1-nt variants for a sequence
 
-my $minN = 5;
+my $minN = 10;
 my $minFrac = 0.75;
 my $minRatio = 8.0;
 my $maxQBeg = 3;
