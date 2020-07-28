@@ -53,10 +53,12 @@ Other optional arguments:
 
     public_file (which is optional) should contain lines of the form
 	orgId SetName pubId key1=value1 ... keyN=valueN
-	where the key/value pairs are optional.
-	Use a pubId of "-" for unpublished
-	Use "_" instead of " " to include a space in a value.
-	There can also be
+	  where the key/value pairs are optional.
+	  Use "_" instead of " " to include a space in a value.
+      or
+        orgId * pubId exps=name1,name2,...,nameN
+      For either format, use a pubId of "-" for unpublished
+      Other types of (non informative lines):
 	comment lines (starting with "#"),
 	comments at the end of rules (starting with "#"),
 	or empty lines.
@@ -199,7 +201,8 @@ sub ExpToPubId($$$);
 
     my %pubrules = (); # orgId => list of [ rule, pubId ]
     my %ignorePubOrgs = ();
-    # each rule is a hash that includes SetName and optionally other fields as well
+    # each rule is a hash that includes SetName and optionally other fields as well,
+    # or, it includes expNames as a list
     if (defined $pubfile) {
         open(PUB, "<", $pubfile) || die "Cannot read $pubfile";
         my $nRules = 0;
@@ -220,15 +223,29 @@ sub ExpToPubId($$$);
             if (!exists $orgUse{$orgId}) {
               $ignorePubOrgs{$orgId} = 1;
             } else {
-                my $rule = { "SetName" => $set };
+              my $rule;
+              if ($set eq "*") {
+                my $expsSpec = shift @parts;
+                die "Invalid public rule $line\n"
+                  unless defined $expsSpec && $expsSpec =~ m/^exps=/;
+                $expsSpec =~ s/^exps=//;
+                my @expNames = split /,/, $expsSpec;
+                foreach my $expName (@expNames) {
+                  die "Invalid exps= specifier $expsSpec in $pubfile\n"
+                    unless $expName =~ m/^[a-zA-Z][a-zA-Z0-9]*\d$/;
+                }
+                $rule = { 'expNames' => \@expNames };
+              } else {
+                $rule = { "SetName" => $set };
                 foreach my $part (@parts) {
                     my ($key,$value) = split /=/, $part;
                     die "Invalid public assignment $part in\n$line\n"
                         unless defined $value && $value ne "SetName";
                     $rule->{$key} = $value;
                 }
-                push @{ $pubrules{$orgId} }, [ $rule, $pubId ];
-                $nRules++;
+              }
+              push @{ $pubrules{$orgId} }, [ $rule, $pubId ];
+              $nRules++;
             }
         }
         close(PUB);
@@ -339,12 +356,22 @@ sub ExpToPubId($$$);
         # only successful experiments
         @q = grep { $_->{u} eq "TRUE" } @q
           unless defined $bad;
+        my %q = map { $_->{name} => $_ } @q;
         my $nExpsSucceeded = scalar(@q);
         if (defined $pubfile) {
           foreach my $q (@q) {
             $q->{pubId} = &ExpToPubId($q, $exps{$q->{name}}, $pubrules{$org});
           }
           @q = grep { defined $_->{pubId} } @q;
+          # Also warn if experiments are specified to be released but do not exist
+          foreach my $rule (@{ $pubrules{$org} }) {
+            if (exists $rule->[0]{expNames}) {
+              foreach my $expName (@{ $rule->[0]{expNames} }) {
+                print STDERR "Warning: org $org experiment $expName is to be released, but does not exist or was low quality!\n"
+                  unless exists $q{$expName};
+              }
+            }
+          }
         }
         my $nFiltered = scalar(@q);
         print STDERR "$org: read $nExpsRead experiments, $nExpsSucceeded kept";
@@ -884,19 +911,25 @@ sub ExpToPubId($$$) {
     my ($q, $exp, $rules) = @_;
     foreach my $row (@$rules) {
       my ($rule, $pubId) = @$row;
-      next unless $rule->{SetName} eq $exp->{SetName};
-      # See if all other fields match
-      my $match = 1;
-      while (my ($key,$value) = each %$rule) {
-        if (exists $q->{$key}) {
-          $match = 0 unless &wsu($q->{$key}) eq &wsu($value);
-        } elsif (exists $exp->{$key}) {
-          $match = 0 unless &wsu($exp->{$key}) eq &wsu($value);
-        } else {
-          die "Cannot handle rule for $key=$value because $key does not exist for either q or experiment for $exp->{name}";
+      if (exists $rule->{expNames}) {
+        foreach my $expName (@{ $rule->{expNames} }) {
+          return $pubId if $expName eq $exp->{name};
         }
+      } else {
+        next unless $rule->{SetName} eq $exp->{SetName};
+        # See if all other fields match
+        my $match = 1;
+        while (my ($key,$value) = each %$rule) {
+          if (exists $q->{$key}) {
+            $match = 0 unless &wsu($q->{$key}) eq &wsu($value);
+          } elsif (exists $exp->{$key}) {
+            $match = 0 unless &wsu($exp->{$key}) eq &wsu($value);
+          } else {
+            die "Cannot handle rule for $key=$value because $key does not exist for either q or experiment for $exp->{name}";
+          }
+        }
+        return $pubId if $match;
       }
-      return $pubId if $match;
     }
     return undef;
 }
