@@ -53,7 +53,7 @@ my $spec = $dbh->selectall_arrayref(qq{SELECT * from SpecificPhenotype JOIN Gene
 				    { Slice => {} },
 				    $orgId, $expName);
 my $start = Utils::start_page("Experiment $expName for $orginfo->{$orgId}{genome}");
-my $tabs;
+my $tabs = "";
 if ($show eq "") {
 	$tabs = Utils::tabsExp($dbh,$cgi,$orgId,$expName,$exp->{expGroup},$exp->{condition_1},"overview");
 } elsif ($show eq "specific") {
