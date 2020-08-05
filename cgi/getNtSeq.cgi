@@ -41,13 +41,12 @@ if (my $locusId = $cgi->param('locusId')) {
   my $scaffoldId = $gene->{scaffoldId};
   my $seq = $dbh->selectrow_array("SELECT sequence FROM ScaffoldSeq WHERE orgId = ? AND scaffoldId = ?",
                                   {}, $orgId, $gene->{scaffoldId});
-  my ($upseq, $geneseq, $downseq); # 200 nt upstream, gene sequence, 200 nt downstream
   my $begin = $gene->{begin};
   my $end = $gene->{end};
   die "begin must be less than end" unless $begin < $end;
   die "Invalid begin/end" unless $begin >= 1 && $end <= length($seq);
   # Logic as if gene is on + strand
-  $geneseq = substr($seq, $begin-1, $end-$begin+1);
+  my $geneseq = substr($seq, $begin-1, $end-$begin+1);
   my $beginUp = $begin - 200;
   $beginUp = 1 if $beginUp < 1;
   my $upseq = substr($seq, $beginUp-1, $begin-$beginUp);
