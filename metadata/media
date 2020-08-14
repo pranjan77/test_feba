@@ -1595,54 +1595,64 @@ Media	ZMB_noFolicAcid
 Description	Media for culturing Bifidobacterium minus folic acid	
 Minimal	TRUE	
 Controlled vocabulary	Concentration	Units
-D-Glucose	15	g/L
-L-Histidine	0.17	g/L
-L-Isoleucine	0.24	g/L
-L-Leucine	1	g/L
-L-Methionine	0.06	g/L
-L-Valine	0.7	g/L
-L-Arginine	0.72	g/L
+ZMB	1	X
+Folic Acid	-	-
+		
+Media	ZMB_ALS	
+Description	Media for culturing Bifidobacterium - An altered ZMB media from Anthony Shiver	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+D-Glucose	2	g/L
+L-Histidine	0.5	g/L
+L-Isoleucine	0.5	g/L
+L-Leucine	0.5	g/L
+L-Methionine	0.5	g/L
+L-Valine	0.5	g/L
+L-Arginine	0.5	g/L
 m-Inositol	0.002	g/L
-Potassium phosphate dibasic	3.1	g/L
-Potassium phosphate monobasic	6.4	g/L
-L-Glutamic acid monopotassium salt monohydrate	0.6	g/L
-L-Phenylalanine	0.4	g/L
-L-Proline	0.7	g/L
+Potassium phosphate dibasic	4.5	g/L
+Potassium phosphate monobasic	4.5	g/L
+L-Glutamic acid monopotassium salt monohydrate	0.5	g/L
+L-Phenylalanine	0.5	g/L
+L-Proline	0.5	g/L
 L-Asparagine	0.5	g/L
-L-Aspartic Acid	0.05	g/L
-L-Glutamine	0.6	g/L
+L-Aspartic Acid	0.5	g/L
+L-Glutamine	0.5	g/L
 L-Serine	0.5	g/L
 L-Threonine	0.5	g/L
-L-Cysteine hydrochloride monohydrate	0.2	g/L
-L-Alanine	0.4	g/L
-Glycine	0.3	g/L
+L-Cysteine hydrochloride monohydrate	0.5	g/L
+L-Alanine	0.5	g/L
+Glycine	0.5	g/L
 L-Lysine	0.5	g/L
-L-Tryptophan	0.2	g/L
-L-tyrosine	0.3	g/L
+L-Tryptophan	0.5	g/L
+L-tyrosine	0.5	g/L
 biotin	0.006	g/L
 calcium pantothenate	0.0012	g/L
 Nicotinic Acid	0.0009	g/L
 Pyridoxamine dihydrochloride	0.0048	g/L
 Riboflavin	0.0009	g/L
-Magnesium Sulfate Heptahydrate	1	g/L
+Cyanocobalamin	0.00001	g/L
+Magnesium Sulfate Heptahydrate	0.004	g/L
 Iron (II) sulfate heptahydrate	0.004	g/L
 Zinc sulfate heptahydrate	0.005	g/L
+Folic Acid	0.00056	g/L
 4-Aminobenzoic acid	0.000056	g/L
 Thiamine HCl	0.00056	g/L
 Potassium acetate	0.9	g/L
 Lipoic acid	0.001	g/L
 Tween 80	0.5	g/L
-Adenine hydrochloride hydrate	0.011	g/L
-Guanine	0.0056	g/L
+Adenine hydrochloride hydrate	0.0368	g/L
+Guanine	0.0376	g/L
 Uracil	0.023	g/L
-Xanthine	0.0038	g/L
+Cytosine	0.0222	g/L
+Xanthine	0.0304	g/L
 Ammonium heptamolybdate tetrahydrate	0.00019	g/L
 Manganese (II) sulfate monohydrate	0.00038	g/L
-Calcium chloride dihydrate	0.04	g/L
+Calcium chloride dihydrate	0.000012	g/L
 Cobalt chloride hexahydrate	0.00019	g/L
-Copper (II) sulfate pentahydrate	0.00019	g/L
+Copper (II) sulfate pentahydrate	0.000012	g/L
 Boric Acid	0.00075	g/L
-Potassium iodide	0.00011	g/L
+Potassium iodide	0.00016	g/L
 EDTA	0.0075	g/L
 L-glutathione reduced	0.015	g/L
 Ammonium Sulfate	1	g/L
@@ -1656,7 +1666,7 @@ Controlled vocabulary	Concentration	Units
 Sodium sulfate	50	mM
 Sodium D,L-Lactate	60	mM
 Ammonium chloride	20	mM
-PIPES	30	mM
+PIPES sesquisodium salt	30	mM
 Magnesium chloride hexahydrate	8	mM
 Calcium chloride	0.6	mM
 Potassium phosphate dibasic	2.2	mM
@@ -1949,3 +1959,428 @@ L-glutathione reduced	0.015	g/L
 Ammonium Sulfate	1	g/L
 Sodium Chloride	3	g/L
 MOPS	15	g/L
+		
+Media	CPG	
+Description	Casamino acid-Peptone-Glucose (CPG) medium	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+casamino acids	1	g/L
+Bacto Peptone	10	g/L
+D-Glucose	5	g/L
+Yeast extract	1	g/L
+		
+Media	M63_quarter_strength	
+Description	Defined media	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Potassium phosphate monobasic	3.4	g/L
+Ammonium Sulfate	0.5	g/L
+Iron (II) sulfate heptahydrate	1.25E-05	g/L
+Magnesium sulfate	0.0517	mM
+D-Glucose	10	mM
+		
+Media	M5G	
+Description	Caulobacter defined media; used in Ryan lab	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+PIPES sesquisodium salt	10	mM
+Sodium Chloride	1	mM
+Potassium Chloride	1	mM
+Ammonium chloride	10	mM
+Magnesium sulfate	0.5	mM
+Calcium chloride	0.5	mM
+Disodium phosphate	0.2	mM
+Potassium phosphate monobasic	0.03	mM
+Ferric EDTA	0.01	mM
+D-Glucose	11.1	mM
+		
+Media	SGW_Northen_Exometabolite_mix_1	
+Description	SGW media with Northen lab exometabolite mix 1	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Potassium phosphate monobasic	0.6	g/L
+Ammonium chloride	0.15	g/L
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+Northen_Exometabolite_mix_1	10	X
+		
+Media	SGW_Northen_Exometabolite_mix_2x	
+Description	SGW media with Northen lab exometabolite mix 1	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Potassium phosphate monobasic	0.6	g/L
+Ammonium chloride	0.15	g/L
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+Northen_Exometabolite_mix_1	2	X
+		
+Media	SGW_Northen_Exometabolite_mix_5x	
+Description	SGW media with Northen lab exometabolite mix 1	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Potassium phosphate monobasic	0.6	g/L
+Ammonium chloride	0.15	g/L
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+Northen_Exometabolite_mix_1	5	X
+		
+Media	ZMB_ALS_noAlanine	
+Description	Media for culturing Bifidobacterium minus alanine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+L-Alanine	-	-
+		
+Media	ZMB_ALS_noArginine	
+Description	Media for culturing Bifidobacterium minus arginine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+L-Arginine	-	-
+		
+Media	ZMB_ALS_noGlycine	
+Description	Media for culturing Bifidobacterium minus glycine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+Glycine	-	-
+		
+Media	ZMB_ALS_noHistidine	
+Description	Media for culturing Bifidobacterium minus histidine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+L-Histidine	-	-
+		
+Media	ZMB_ALS_noLysine	
+Description	Media for culturing Bifidobacterium minus lysine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+L-Lysine	-	-
+		
+Media	ZMB_ALS_noProline	
+Description	Media for culturing Bifidobacterium minus proline	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+L-Proline	-	-
+		
+Media	ZMB_ALS_noSerine	
+Description	Media for culturing Bifidobacterium minus serine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+L-Serine	-	-
+		
+Media	ZMB_ALS_noThreonine	
+Description	Media for culturing Bifidobacterium minus threonine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+L-Threonine	-	-
+		
+Media	ZMB_ALS_noValine	
+Description	Media for culturing Bifidobacterium minus valine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+L-Valine	-	-
+		
+Media	ZMB_ALS_noTyrosine	
+Description	Media for culturing Bifidobacterium minus tyrosine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+L-tyrosine	-	-
+		
+Media	ZMB_ALS_noTryptophan	
+Description	Media for culturing Bifidobacterium minus tryptophan	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+L-Tryptophan	-	-
+		
+Media	ZMB_ALS_noGlutamine	
+Description	Media for culturing Bifidobacterium minus glutamine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+L-Glutamine	-	-
+		
+Media	ZMB_ALS_noMethionine	
+Description	Media for culturing Bifidobacterium minus methionine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+L-Methionine	-	-
+		
+Media	ZMB_ALS_noGlutamate	
+Description	Media for culturing Bifidobacterium minus glutamate	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+L-Glutamic acid monopotassium salt monohydrate	-	-
+		
+Media	ZMB_ALS_noCysteine	
+Description	Media for culturing Bifidobacterium minus cysteine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+L-Cysteine hydrochloride monohydrate	-	-
+		
+Media	ZMB_ALS_noAsparagine	
+Description	Media for culturing Bifidobacterium minus asparagine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+L-Asparagine	-	-
+		
+Media	ZMB_ALS_noAsparticAcid	
+Description	Media for culturing Bifidobacterium minus aspartic acid	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+L-Aspartic Acid	-	-
+		
+Media	ZMB_ALS_noLeucine	
+Description	Media for culturing Bifidobacterium minus leucine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+L-Leucine	-	-
+		
+Media	ZMB_ALS_noIsoleucine	
+Description	Media for culturing Bifidobacterium minus isoleucine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+L-Isoleucine	-	-
+		
+Media	ZMB_ALS_noPhenylalanine	
+Description	Media for culturing Bifidobacterium minus phenylalanine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+L-Phenylalanine	-	-
+		
+Media	ZMB_ALS_noPyridoxamine	
+Description	Media for culturing Bifidobacterium minus pyridoxamine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+Pyridoxamine dihydrochloride	-	-
+		
+Media	ZMB_ALS_noThiamine	
+Description	Media for culturing Bifidobacterium minus thiamine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+Thiamine HCl	-	-
+		
+Media	ZMB_ALS_noPantothenate	
+Description	Media for culturing Bifidobacterium minus pantothenate	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+calcium pantothenate	-	-
+		
+Media	ZMB_ALS_noNicotinicAcic	
+Description	Media for culturing Bifidobacterium minus nicotinic acid	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+Nicotinic Acid	-	-
+		
+Media	ZMB_ALS_noGlutathione	
+Description	Media for culturing Bifidobacterium minus glutathione	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+L-glutathione reduced	-	-
+		
+Media	ZMB_ALS_noRiboflavin	
+Description	Media for culturing Bifidobacterium minus riboflavin	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+Riboflavin	-	-
+		
+Media	ZMB_ALS_noBiotin	
+Description	Media for culturing Bifidobacterium minus biotin	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+biotin	-	-
+		
+Media	ZMB_ALS_noLipoicAcid	
+Description	Media for culturing Bifidobacterium minus Lipoic acid	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+Lipoic acid	-	-
+		
+Media	ZMB_ALS_noAdenine	
+Description	Media for culturing Bifidobacterium minus adenine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+Adenine hydrochloride hydrate	-	-
+		
+Media	ZMB_ALS_noGuanine	
+Description	Media for culturing Bifidobacterium minus guanine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+Guanine	-	-
+		
+Media	ZMB_ALS_noUracil	
+Description	Media for culturing Bifidobacterium minus uracil	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+Uracil	-	-
+		
+Media	ZMB_ALS_noCytosine	
+Description	Media for culturing Bifidobacterium minus cytosine	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+Cytosine	-	-
+		
+Media	ZMB_ALS_noCyanocobalamin	
+Description	Media for culturing Bifidobacterium minus cyanocobalamin	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+ZMB_ALS	1	X
+Cyanocobalamin	-	-
+		
+Media	ZMB_ALS_GLCMD	
+Description	Media for culturing Bifidobacterium with 5 spiked in amino acids	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+D-Glucose	2	g/L
+L-Leucine	0.5	g/L
+L-Methionine	0.5	g/L
+m-Inositol	0.002	g/L
+Potassium phosphate dibasic	4.5	g/L
+Potassium phosphate monobasic	4.5	g/L
+L-Aspartic Acid	0.5	g/L
+L-Cysteine hydrochloride monohydrate	0.5	g/L
+Glycine	0.5	g/L
+biotin	0.006	g/L
+calcium pantothenate	0.0012	g/L
+Nicotinic Acid	0.0009	g/L
+Pyridoxamine dihydrochloride	0.0048	g/L
+Riboflavin	0.0009	g/L
+Cyanocobalamin	0.00001	g/L
+Magnesium Sulfate Heptahydrate	0.004	g/L
+Iron (II) sulfate heptahydrate	0.004	g/L
+Zinc sulfate heptahydrate	0.005	g/L
+Folic Acid	0.00056	g/L
+4-Aminobenzoic acid	0.000056	g/L
+Thiamine HCl	0.00056	g/L
+Potassium acetate	0.9	g/L
+Lipoic acid	0.001	g/L
+Tween 80	0.5	g/L
+Adenine hydrochloride hydrate	0.0368	g/L
+Guanine	0.0376	g/L
+Uracil	0.023	g/L
+Cytosine	0.0222	g/L
+Xanthine	0.0304	g/L
+Ammonium heptamolybdate tetrahydrate	0.00019	g/L
+Manganese (II) sulfate monohydrate	0.00038	g/L
+Calcium chloride dihydrate	0.000012	g/L
+Cobalt chloride hexahydrate	0.00019	g/L
+Copper (II) sulfate pentahydrate	0.000012	g/L
+Boric Acid	0.00075	g/L
+Potassium iodide	0.00016	g/L
+EDTA	0.0075	g/L
+L-glutathione reduced	0.015	g/L
+Ammonium Sulfate	1	g/L
+Sodium Chloride	3	g/L
+MOPS	15	g/L
+		
+		
+Media	ZMB_ALS_GHP	
+Description	Media for culturing Bifidobacterium with 3 spiked in amino acids	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+D-Glucose	2	g/L
+L-Histidine	0.5	g/L
+m-Inositol	0.002	g/L
+Potassium phosphate dibasic	4.5	g/L
+Potassium phosphate monobasic	4.5	g/L
+L-Proline	0.5	g/L
+Glycine	0.5	g/L
+biotin	0.006	g/L
+calcium pantothenate	0.0012	g/L
+Nicotinic Acid	0.0009	g/L
+Pyridoxamine dihydrochloride	0.0048	g/L
+Riboflavin	0.0009	g/L
+Cyanocobalamin	0.00001	g/L
+Magnesium Sulfate Heptahydrate	0.004	g/L
+Iron (II) sulfate heptahydrate	0.004	g/L
+Zinc sulfate heptahydrate	0.005	g/L
+Folic Acid	0.00056	g/L
+4-Aminobenzoic acid	0.000056	g/L
+Thiamine HCl	0.00056	g/L
+Potassium acetate	0.9	g/L
+Lipoic acid	0.001	g/L
+Tween 80	0.5	g/L
+Adenine hydrochloride hydrate	0.0368	g/L
+Guanine	0.0376	g/L
+Uracil	0.023	g/L
+Cytosine	0.0222	g/L
+Xanthine	0.0304	g/L
+Ammonium heptamolybdate tetrahydrate	0.00019	g/L
+Manganese (II) sulfate monohydrate	0.00038	g/L
+Calcium chloride dihydrate	0.000012	g/L
+Cobalt chloride hexahydrate	0.00019	g/L
+Copper (II) sulfate pentahydrate	0.000012	g/L
+Boric Acid	0.00075	g/L
+Potassium iodide	0.00016	g/L
+EDTA	0.0075	g/L
+L-glutathione reduced	0.015	g/L
+Ammonium Sulfate	1	g/L
+Sodium Chloride	3	g/L
+MOPS	15	g/L
+		
+Media	RCH2_defined_noCarbon_noVitamins	
+Description	Defined minimal media for soil and groundwater bacteria with no carbon and no vitamins	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+PIPES sesquisodium salt	30	mM
+Wolfe's mineral mix	1	X
+		
+Media	Agro_defined_trehalose	
+Description	Defined minimal media for growing Agrobacterium	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Urea	9.00E-01	g/L
+Magnesium Sulfate Heptahydrate	1.50E-01	g/L
+Calcium chloride dihydrate	2.50E-02	g/L
+Iron (II) sulfate heptahydrate	1.00E-02	g/L
+Citric Acid	1.60E-01	g/L
+Potassium phosphate monobasic	5.40E+00	g/L
+Sodium phosphate dibasic heptahydrate	1.08E+01	g/L
+D-Trehalose dihydrate	2.00E+01	g/L
+		
+Media	Pro99_seawater	
+Description	Media from MIT for growing phototrophic bacteria	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Sodium phosphate monobasic monohydrate	50	uM
+Ammonium chloride	800	uM
+EDTA (disodium salt)	1.17	uM
+Iron (III) chloride hexahydrate	1.18	uM
+Zinc sulfate heptahydrate	0.008	uM
+Cobalt chloride hexahydrate	0.005	uM
+Manganese (II) chloride tetrahydrate	0.09	uM
+Sodium Molybdate Dihydrate	0.003	uM
+Sodium selenite pentahydrate	0.01	uM
+Nickel (II) chloride hexahydrate	0.01	uM
+Filtered Seawater	1	X

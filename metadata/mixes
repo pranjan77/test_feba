@@ -694,3 +694,54 @@ Nickel (II) sulfate hexahydrate	2.28	uM
 copper (II) chloride dihydrate	0.06	uM
 Sodium selenite pentahydrate	0.21	uM
 Sodium tungstate dihydrate	0.144	uM
+		
+Media	Northen_Exometabolite_mix_1	
+Description	Exometabolite mix	
+X	10	
+Controlled vocabulary	Concentration	Units
+D-Mannitol	880.5	uM
+D-Glucose	824.8	uM
+D-Fructose	806.5	uM
+D-Trehalose dihydrate	561.8	uM
+D-Arabinose	207.6	uM
+D-Maltose monohydrate	165.4	uM
+Arabitol	105.2	uM
+L-Leucine	60	uM
+L-Isoleucine	60	uM
+Glycine	40	uM
+L-Arginine	40	uM
+L-Proline	40	uM
+L-Threonine	40	uM
+L-Lysine	40	uM
+L-Phenylalanine	40	uM
+D-Mannose	39.4	uM
+Uridine	22.5	uM
+Carnitine Hydrochloride	20	uM
+L-Asparagine	20	uM
+L-Serine	20	uM
+L-Valine	20	uM
+L-tyrosine	20	uM
+L-Tryptophan	20	uM
+L-Methionine	20	uM
+L-Glutamic acid monopotassium salt monohydrate	20	uM
+L-Citrulline	20	uM
+L-Aspartic Acid	20	uM
+L-Alanine	20	uM
+L-Histidine	20	uM
+L-Glutamine	20	uM
+4-Guanidinobutyric acid	5.9	uM
+Hypoxanthine	4.2	uM
+Uracil	3.2	uM
+Thiamine HCl	3.2	uM
+Guanine	3.2	uM
+Cytosine	3.2	uM
+Adenine hydrochloride hydrate	3.2	uM
+Thymidine	2.6	uM
+spermidine	2.6	uM
+Orotic acid	2.6	uM
+Inosine	2.6	uM
+2'-Deoxyinosine	2.6	uM
+Cytidine	2.6	uM
+Choline chloride	2.6	uM
+Adenosine	2.6	uM
+2'-Deoxyuridine	2.6	uM
