@@ -154,7 +154,7 @@ print p("Sorting the pathway failed to terminate") if $nRound == $maxRounds;
 
 # some reactions may still not have scores if there are subgraph cycles; those
 # will be placed arbitrarily
-my @rxnIds = sort { ($score{$a} || 0) <=> ($score{$b} || 0) || $a <=> $b } keys %rxns;
+my @rxnIds = sort { ($score{$a} || 0) <=> ($score{$b} || 0) || $a cmp $b } keys %rxns;
 
 if ($debug) {
   print p("Reaction ordering and scores after $nRound rounds:");
