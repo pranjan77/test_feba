@@ -70,6 +70,7 @@ Other options:
   -debug -- do not do any work, just show what commands would be run
   -limit -- limit the #reads analyzed per sample (mostly for debugging)
   -offset -- If IT001 is named S97, use -offset 96
+  -preseq, -postseq, -nPreExpected -- see MultiCodes.pl
 END
     ;
 
@@ -83,6 +84,7 @@ my $debug = undef;
     my ($n25, $bs3);
     my $setspec = undef;
     my $fastq = undef;
+    my ($preseq, $postseq, $nPreExpected);
 
     die $usage unless GetOptions('debug' => \$debug,
                                  'n25' => \$n25,
@@ -92,6 +94,9 @@ my $debug = undef;
                                  'pieceLines=i' => \$linesPerPiece,
 				 'limit=i' => \$limitReads,
 				 'indexes=s' => \$barcodes,
+                                 'preseq=s' => \$preseq,
+                                 'postseq=s' => \$postseq,
+                                 'nPreExpected=s' => \$nPreExpected,
                                  'in=s' => \$fastq,
                                  'sets=s' => \$setspec,
                                  'offset=i' => \$offset);
@@ -231,6 +236,9 @@ my $debug = undef;
         $corecmd .= " -n25" if defined $n25;
         $corecmd .= " -bs3" if defined $bs3;
 	$corecmd .= " -limit $limitReads" if defined $limitReads;
+        $corecmd .= " -preseq $preseq" if defined $preseq;
+        $corecmd .= " -postseq $postseq" if defined $postseq;
+        $corecmd .= " -nPreExpected $nPreExpected" if defined $nPreExpected;
 	if (defined $barcodes) {
 	    $corecmd .= " -primers $barcodes";
 	} else {
@@ -267,8 +275,9 @@ my $debug = undef;
             } elsif ($name =~ m/^(\d+)_S\d+_L\d+_R\d+_/) {
               # e.g. 18_S1_L001_R1_001.fastq.gz is IT018
               $sampleNum = $1;
-            } elsif ($name =~ m/^[A-Z]*\d*_S(\d+)_L\d+_R\d+/) {
+            } elsif ($name =~ m/^[A-Z]*\d*_S(\d+)_*L*\d*_R\d+/) {
               # e.g. A10_S106_L003_R1_001.fastq.gz
+              # e.g. A10_S10_R1_001.fastq.gz
               $sampleNum = $1;
 	    } elsif ($name =~ m/undetermined/i) {
               print STDERR "Skipping $name\n";
