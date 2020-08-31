@@ -2384,3 +2384,21 @@ Sodium Molybdate Dihydrate	0.003	uM
 Sodium selenite pentahydrate	0.01	uM
 Nickel (II) chloride hexahydrate	0.01	uM
 Filtered Seawater	1	X
+		
+Media	MRS_recovery	
+Description	Media for culturing lactobacilli with some different additives relative to MRS	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+D-Glucose	56.00	mM
+Proteose Peptone	10.00	g/L
+Beef extract	10.00	g/L
+Yeast Extract	5.00	g/L
+Tween 80	1.00	g/L
+Triammonium citrate	0.20	g/L
+Sodium acetate	0.50	g/L
+Potassium phosphate dibasic	0.20	g/L
+Magnesium sulfate	0.10	g/L
+Manganese (II) sulfate monohydrate	0.05	g/L
+L-Cysteine	8.25	mM
+Calcium chloride dihydrate	0.10	mM
+Iron (II) sulfate heptahydrate	0.12	mM
