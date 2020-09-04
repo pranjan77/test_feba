@@ -52,13 +52,13 @@ div({-id=>"ntcontent"},
         a({href=>"geneSearch.cgi"},'by Gene<BR>',img({src=>"../images/genesearch.png"}))
         ),
       td({class=>"searchbar"},
-        a({href=>"blastSearch.cgi"},'by Sequence<BR>',img({src=>"http://i.imgur.com/agupF5p.png"}))
+        a({href=>"blastSearch.cgi"},'by Sequence<BR>',img({src=>"../images/bysequence.png"}))
         ),
       td({class=>"searchbar"},
-        a({href=>"expSearch.cgi"},'by Condition<BR>',img({src=>"http://i.imgur.com/c0HPmVU.png"}))
+        a({href=>"expSearch.cgi"},'by Condition<BR>',img({src=>"../images/bycondition.png"}))
         ),
       td({class=>"searchbar"},
-        a({href=>"orgAll.cgi"},'Organisms<BR>',img({src=>"http://i.imgur.com/QUcjMNZ.png"}))
+        a({href=>"orgAll.cgi"},'Organisms<BR>',img({src=>"../images/organisms.png"}))
         ),
       td({class=>"searchbar"},
         'See Conditions:<BR><BR>', a({href=>"cond.cgi?expGroup=carbon%20source", title=>"Carbon Sources"},"Carbon Sources<BR>"), a({href=>"cond.cgi?expGroup=nitrogen source", title=>"Nitrogen Sources"},"Nitrogen Sources<BR>"), a({href=>"cond.cgi?expGroup=stress", title=>"Stresses"},"Stresses"),
