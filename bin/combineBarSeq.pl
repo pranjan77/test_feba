@@ -14,6 +14,8 @@ my $save_ignore = 0; # make a file of ignored lines (out.codes.ignored) ?
 
 {
     die "Usage: combineBarSeq.pl out pool_file codesfiles...\n"
+      . "  Codes files may be gzipped.\n"
+      . "  Writes out.poolcount and out.colsum.\n"
 	unless @ARGV >= 3;
     my $out = shift @ARGV;
     my $poolfile = shift @ARGV;
@@ -50,84 +52,88 @@ my $save_ignore = 0; # make a file of ignored lines (out.codes.ignored) ?
     my $nUsed = 0;
     my $nIgnore = 0;
     foreach my $file (@codesFiles) {
+      if ($file =~ m/[.]gz$/) {
+        open(IN, "zcat $file |") || die "Cannot zcat $file";
+      } else {
 	open(IN, "<", $file) || die "Cannot read $file";
-	my $header = <IN>;
-	chomp $header;
-	my @cols = split /\t/, $header;
-	my $first = shift @cols;
-	die "Not a barcode counts file -- $file" unless $first eq "barcode";
-	die "No index columns in $file" unless @cols > 0;
-	if ($nSamples == 0) { # first file
-	    @indexes = @cols;
-	    $nSamples = scalar(@indexes);
-	    @colSums = (0) x $nSamples;
-	    @colSumsUsed = (0) x $nSamples;
-	    if (scalar(@cols) == 1) {
-		$oneperfile = 1;
-		$thisIndex = 0;
-	    }
-	} elsif ($oneperfile) {
-	    die "More than one data column in $file" unless scalar(@cols) == 1;
-	    my %oldcol = map { $indexes[$_] => $_ } (0..(scalar(@indexes)-1));
-	    my $thisCol = $cols[0];
-	    if (exists $oldcol{ $thisCol }) {
-		$thisIndex = $oldcol{ $thisCol };
-	    } else {
-		$nSamples++;
-		push @indexes, $thisCol;
-		$thisIndex = scalar(@indexes)-1;
-		push @colSums, 0;
-		push @colSumsUsed, 0;
-	    }
-	} else {
-	    die "Wrong number of columns in $file" unless scalar(@cols) == scalar(@indexes);
-	    foreach my $i (0..(scalar(@cols)-1)) {
-		die "Index mismatch in $file vs. $codesFiles[0] -- $cols[$i] vs. $indexes[$i]"
-		    unless $cols[$i] eq $indexes[$i];
-	    }
-	}
-	my $nThisFile = 0;
+      }
+      my $header = <IN>;
+      chomp $header;
+      my @cols = split /\t/, $header;
+      my $first = shift @cols;
+      die "Not a barcode counts file -- $file" unless $first eq "barcode";
+      die "No index columns in $file" unless @cols > 0;
+      if ($nSamples == 0) { # first file
+        @indexes = @cols;
+        $nSamples = scalar(@indexes);
+        @colSums = (0) x $nSamples;
+        @colSumsUsed = (0) x $nSamples;
+        if (scalar(@cols) == 1) {
+          $oneperfile = 1;
+          $thisIndex = 0;
+        }
+      } elsif ($oneperfile) {
+        die "More than one data column in $file" unless scalar(@cols) == 1;
+        my %oldcol = map { $indexes[$_] => $_ } (0..(scalar(@indexes)-1));
+        my $thisCol = $cols[0];
+        if (exists $oldcol{ $thisCol }) {
+          $thisIndex = $oldcol{ $thisCol };
+        } else {
+          $nSamples++;
+          push @indexes, $thisCol;
+          $thisIndex = scalar(@indexes)-1;
+          push @colSums, 0;
+          push @colSumsUsed, 0;
+        }
+      } else {
+        die "Wrong number of columns in $file" unless scalar(@cols) == scalar(@indexes);
+        foreach my $i (0..(scalar(@cols)-1)) {
+          die "Index mismatch in $file vs. $codesFiles[0] -- $cols[$i] vs. $indexes[$i]"
+            unless $cols[$i] eq $indexes[$i];
+        }
+      }
+      my $nThisFile = 0;
 
-	while(<IN>) {
-	    $nThisFile++;
-	    chomp;
-	    my @F = split /\t/, $_;
-	    my $barcode = shift @F; # actually rcbarcode
-	    # note am allowing N in barcode but not in pool
-	    die "Invalid barcode: $barcode" unless $barcode =~ m/^[ACGTN]+$/; 
-	    die "Wrong number of columns in $file" unless scalar(@F) == ($oneperfile ? 1 : $nSamples);
-	    if (exists $pool{$barcode}) {
-		$nUsed++;
-		if ($oneperfile) {
-		    $colSumsUsed[$thisIndex] += $F[0];
-		    $counts{$barcode}[$thisIndex] += $F[0];
-		} else {
-		    for (my $i = 0; $i < $nSamples; $i++) {
-			$colSumsUsed[$i] += $F[$i];
-		    }
-		    if (exists $counts{$barcode}) {
-			my $row = $counts{$barcode};
-			for (my $i = 0; $i < $nSamples; $i++) {
-			    $row->[$i] += $F[$i];
-			}
-		    } else {
-			$counts{$barcode} = \@F;
-		    }
-		}
-	    } else {
-		print IGNORE join("\t",$barcode,@F)."\n" if $save_ignore;
-		$nIgnore++;
-	    }
-	    if ($oneperfile) {
-		$colSums[$thisIndex] += $F[0];
-	    } else {
-		for (my $i = 0; $i < $nSamples; $i++) {
-		    $colSums[$i] += $F[$i];
-		}
-	    }
-	}
-	close(IN) || die "Error reading from $file";
-	print STDERR "Warning: no entries in $file\n" if $nThisFile == 0;
+      while(<IN>) {
+        $nThisFile++;
+        chomp;
+        my @F = split /\t/, $_;
+        my $barcode = shift @F; # actually rcbarcode
+        # note am allowing N in barcode but not in pool
+        die "Invalid barcode: $barcode" unless $barcode =~ m/^[ACGTN]+$/; 
+        die "Wrong number of columns in $file" unless scalar(@F) == ($oneperfile ? 1 : $nSamples);
+        if (exists $pool{$barcode}) {
+          $nUsed++;
+          if ($oneperfile) {
+            $colSumsUsed[$thisIndex] += $F[0];
+            $counts{$barcode}[$thisIndex] += $F[0];
+          } else {
+            for (my $i = 0; $i < $nSamples; $i++) {
+              $colSumsUsed[$i] += $F[$i];
+            }
+            if (exists $counts{$barcode}) {
+              my $row = $counts{$barcode};
+              for (my $i = 0; $i < $nSamples; $i++) {
+                $row->[$i] += $F[$i];
+              }
+            } else {
+              $counts{$barcode} = \@F;
+            }
+          }
+        } else {
+          print IGNORE join("\t",$barcode,@F)."\n" if $save_ignore;
+          $nIgnore++;
+        }
+        if ($oneperfile) {
+          $colSums[$thisIndex] += $F[0];
+        } else {
+          for (my $i = 0; $i < $nSamples; $i++) {
+            $colSums[$i] += $F[$i];
+          }
+        }
+      }
+      close(IN) || die "Error reading from $file";
+      print STDERR "Warning: no entries in $file\n" if $nThisFile == 0;
     }
     print STDERR sprintf("Pool %s entries %.1fK saw %.1fK lines ignored %.1fK lines from %d files\n",
                          $poolfile, scalar(keys %pool)/1000.0, $nUsed/1000.0, $nIgnore/1000.0, scalar(@codesFiles));
