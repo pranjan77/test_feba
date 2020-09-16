@@ -135,7 +135,7 @@ if (@$cond == 0) {
         } elsif ($row->{domainDb} eq 'TIGRFam') {
             push @trows, Tr({ -valign => 'top', -align => 'left' },
                             td([ $row->{definition} || $row->{domainName}, #name/description
-                                 a({href => "http://www.jcvi.org/cgi-bin/tigrfams/HmmReportPage.cgi?acc=$row->{domainId}"},
+                                 a({href => "https://www.ncbi.nlm.nih.gov/Structure/cdd/" . $row->{domainId}},
                                    $row->{domainId}), #ID
                                  a({title=>"Amino acids $begin to $row->{end} ($len) of $seqLen"}, div({class=>"line"}, img({src=>"../images/grayHorizLine.png", width=>"$newSeqLen", height=>'7'}), div({class=>"line2", style=>"left:$newBegin".'px'}, img({src=>"../images/chocolate.png", height=>'7', width=>"$newLen"})))), # $len, # $row->{}, #length diagram: end-begin
                                  # $row->{score}, #score
