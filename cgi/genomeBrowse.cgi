@@ -165,6 +165,17 @@ print
     "Zoom:", submit('zoom','in'), submit('zoom','out'), "\tPan:", submit('pan','left'), submit('pan','right')),
   end_form;
 
+print
+  start_form(-name => 'input', -method => 'GET', -action => 'strainTable.cgi'),
+  hidden( -name => 'orgId', -value => $orgId, -override => 1),
+  hidden( -name => 'scaffoldId', -value => $scaffoldId, -override => 1),
+  hidden( -name => 'begin', -value => $begin, -override => 1),
+  hidden( -name => 'end', -value => $end, -override => 1),
+  join("\n", @objhidden),
+  p({-class => "buttons", style=>"margin-top: 2em; text-align: left; white-space:nowrap; line-height:40px;"}, "Add experiment(s): ",
+    textfield(-name => 'addexp', -default => "", -override => 1, -size => 20, -maxLength => 100),
+    submit('Add','Add')),
+  end_form;
 
 print br(),
   p("Or see this region's",
