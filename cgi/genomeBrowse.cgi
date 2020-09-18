@@ -172,7 +172,9 @@ print br(),
       "nucleotide sequence"),
     "or the entire sequence of scaffold",
     a({ -href => "getNtSeq.cgi?orgId=$orgId&scaffoldId=$scaffoldId" },
-      $scaffoldId));
+      $scaffoldId),
+    "or the",
+    a({ -href => "https://iseq.lbl.gov/genomes/searchgenome/?query=$orgId" }, "ENIGMA genome browser"));
 
 print q{</div>};
 $dbh->disconnect();
