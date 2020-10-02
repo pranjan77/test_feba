@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #######################################################
-## mySeqSearch.cgi
+## showAlign.cgi
 ##
 ## Copyright (c) 2017 University of California
 ##
