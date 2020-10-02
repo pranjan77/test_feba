@@ -94,7 +94,7 @@ print
   li(a( {href => "http://papers.genomics.lbl.gov/cgi-bin/gapView.cgi?gdb=FitnessBrowser&gid=$orgId&set=aa",
          title => "Annotate amino acid biosynthesis pathways"},
         "GapMind for amino acid biosynthesis")),
-  li(a( {href => "https://iseq.lbl.gov/genomes/searchgenome/?query=$orgId"},
+  li(a( {href => "https://iseq.lbl.gov/genomes/genome/find?name=$orgId"},
         "ENIGMA genome browser")),
   end_ul();
 
