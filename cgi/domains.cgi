@@ -121,30 +121,30 @@ if (@$cond == 0) {
             $newLen = 600*$len/$seqLen;
             $newSeqLen = 600;
         }
+        my $domainDesc = $row->{definition} || $row->{domainName};
+        my ($domainURL, $imageName);
         if ($row->{domainDb} eq 'PFam') {
-            push @trows, Tr({ -valign => 'top', -align => 'left' },
-                            td([ $row->{domainName}, #name/description
-                                 a({href => "http://pfam.xfam.org/family/$row->{domainId}"},
-                                   $row->{domainId}), #ID
-                                 a({title=>"Amino acids $begin to $row->{end} ($len) of $seqLen"}, div({class=>"line"}, img({src=>"../images/grayHorizLine.png", width=>"$newSeqLen", height=>'7'}), div({class=>"line2", style=>"left:$newBegin".'px'}, img({src=>"../images/darkcyan.png", height=>'7', width=>"$newLen"})))),#$len, # $row->{}, #length diagram: end-begin
-                                 # $row->{score}, #score
-                                 a({title=>"Score: $row->{score}"},$row->{evalue}), #evalue with hover score
-                                 # $row->{begin}, #begin
-                                 # $row->{end}, #end
-                               ]));
+          $domainURL = "http://pfam.xfam.org/family/$row->{domainId}";
+          $imageName = "darkcyan.png";
         } elsif ($row->{domainDb} eq 'TIGRFam') {
-            push @trows, Tr({ -valign => 'top', -align => 'left' },
-                            td([ $row->{definition} || $row->{domainName}, #name/description
-                                 a({href => "https://www.ncbi.nlm.nih.gov/Structure/cdd/" . $row->{domainId}},
-                                   $row->{domainId}), #ID
-                                 a({title=>"Amino acids $begin to $row->{end} ($len) of $seqLen"}, div({class=>"line"}, img({src=>"../images/grayHorizLine.png", width=>"$newSeqLen", height=>'7'}), div({class=>"line2", style=>"left:$newBegin".'px'}, img({src=>"../images/chocolate.png", height=>'7', width=>"$newLen"})))), # $len, # $row->{}, #length diagram: end-begin
-                                 # $row->{score}, #score
-                                 a({title=>"Score: $row->{score}"},$row->{evalue}), #evalue with hover score
-                                 # $row->{begin}, #begin
-                                 # $row->{end}, #end
-                               ]));
-            $ecall{ $row->{ec} }{"TIGRFam"} = 1 if $row->{ec} ne "";
+          $domainURL = "https://www.ncbi.nlm.nih.gov/Structure/cdd/" . $row->{domainId};
+          $imageName = "chocolate.png";
+          $ecall{ $row->{ec} }{"TIGRFam"} = 1 if $row->{ec} ne "";
         }
+        push @trows, Tr({ -valign => 'top', -align => 'left' },
+                        td([ $domainDesc,
+                             a({ -href => $domainURL}, $row->{domainId}),
+                             a({ -title=> "Amino acids $begin to $row->{end} ($len) of $seqLen"},
+                               div( { class => "line" },
+                                    img({ src => "../images/grayHorizLine.png",
+                                          width => "$newSeqLen", height=>'7'}),
+                                    div( { class => "line2",
+                                           style => "left:${newBegin}px"},
+                                         a({ -href => "showHmmAlign.cgi?orgId=${orgId}&locusId=${locusId}&domainDb=$row->{domainDb}&domainName=$row->{domainName}" },
+                                             img({ src => "../images/${imageName}",
+                                                   height=>'7', width=>"$newLen"}))))),
+                             a({title=>"$row->{score} bits"},$row->{evalue})
+                           ]));
     }
     print table({cellspacing => 0, cellpadding => 3}, @trows);
 }
@@ -483,9 +483,14 @@ print
     # %0A encodes "\n" so that it looks like fasta input.
     a({-href => "http://pubseed.theseed.org/FIG/seedviewer.cgi?page=FigFamViewer&fasta_seq=>${sys}%0A$seq"},
       "FIGfam search")),
+  p("Find homologs in the",
+    a({-href => "https://iseq.lbl.gov/genomes/seqsearch?sequence=>${sys}%0A$seq"},
+      "ENIGMA genome browser")),
+
   h3("Protein Sequence ($seqLen amino acids)"),
   pre(">$sys $gene->{desc} ($orginfo->{$orgId}{genome})\n$seq"),
   '</div>';
+
 
 $dbh->disconnect();
 Utils::endHtml($cgi);

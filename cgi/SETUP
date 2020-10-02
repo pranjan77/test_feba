@@ -44,7 +44,7 @@ directory (within the main feba/ directory) and make it writable by
 your web server. You'll also need to create bin/usearch (tested with
 usearch 8, *not* usearch 6).
 
-Finally, to set up the cgi_data directory, you will need to run bin/db_setup.pl
+To set up the cgi_data directory, you will need to run bin/db_setup.pl
 It relies on the HTML directories that are created by BarSeqR.pl
 It also needs these additional inputs:
    All-vs-all best hits, see MakeBBH.pl
@@ -102,3 +102,12 @@ Run the comparisons to PFam, TIGRFam, KEGG, MetaCyc, Swiss-Prot, and SEED:
 	bin/SetupDoms.pl nickname1 .. nicknameN
 	(also see RunRapSearch.pl and run_seed.pl -- it calls both of these,
 	but the HMMs are the slowest part)
+
+For showHmmAlign.hmm to run, you will need to set up an hmm/ directory
+with the HMMer databases in pfam.hmm and tigrfam.hmm. You will also
+need to run
+
+	bin/hmmfetch --index hmm/tigrfam.hmm
+	bin/hmmfetch --index hmm/pfam.hmm
+
+to index them.
