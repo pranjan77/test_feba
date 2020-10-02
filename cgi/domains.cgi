@@ -140,7 +140,8 @@ if (@$cond == 0) {
                                           width => "$newSeqLen", height=>'7'}),
                                     div( { class => "line2",
                                            style => "left:${newBegin}px"},
-                                         a({ -href => "showHmmAlign.cgi?orgId=${orgId}&locusId=${locusId}&domainDb=$row->{domainDb}&domainName=$row->{domainName}" },
+                                         a({ -title => "view alignment with $row->{domainName}",
+                                             -href => "showHmmAlign.cgi?orgId=${orgId}&locusId=${locusId}&domainDb=$row->{domainDb}&domainName=$row->{domainName}" },
                                              img({ src => "../images/${imageName}",
                                                    height=>'7', width=>"$newLen"}))))),
                              a({title=>"$row->{score} bits"},$row->{evalue})

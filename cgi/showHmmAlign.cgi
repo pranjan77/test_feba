@@ -102,16 +102,22 @@ print p(small(qq{The lines below each alignment block (ending in "PP") shows the
                  "*" means at least 95% accuracy,
                  0 means at most 5% accuracy, and 1-9 means about 10-90% confidence.}));
 
+my %SSNames = ("B" => "beta-bridge (isolated)",
+               "C" => "coil/loop",
+               "E" => "beta-strand (hydrogen-bonded extended strand)",
+               "G" => "3/10-helix",
+               "H" => "alpha-helix",
+               "I" => "pi (5)-helix",
+               "S" => "bend",
+               "T" => "turn (hydrogen-bonded)");
+
 print p(small(qq{If the consensus structures are noted above the HMM sequence (lines ending in "CS"),
-                 then the codes are:<UL>},
-              li("B: beta-bridge"),
-              li("C: coil/loop"),
-              li("E: beta-strand"),
-              li("T: turn"),
-              li("G: 3/10-helix"),
-              li("H: alpha-helix"),
-              li("I: pi (5)-helix"),
-              "</UL>"));
+                 then the codes are:}));
+print "<UL>\n";
+foreach my $ss (sort keys %SSNames) {
+  print li(small("$ss: $SSNames{$ss}"));
+}
+print "</UL>\n";
 
 Utils::endHtml($cgi);
 exit(0);
