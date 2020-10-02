@@ -15,24 +15,32 @@ Usage: db_setup.pl -reanno reannotation_file -db db_file_name
 
 Optional arguments:
   -nometacyc -- skip recomputing metacyc pathway coverage
+  -debug -- report progress
 END
     ;
 
 {
-    my ($reannofile,$db, $nometacyc);
+    my ($reannofile, $db, $nometacyc, $debug);
     die $usage unless GetOptions('reanno=s' => \$reannofile,
                                  'db=s' => \$db,
-                                'nometacyc' => \$nometacyc)
+                                 'nometacyc' => \$nometacyc,
+                                 'debug' => \$debug)
         && @ARGV == 0
         && defined $reannofile
         && defined $db;
     my @annos = ReadTable($reannofile, ['orgId', 'locusId', 'new_annotation', 'comment']);
     print STDERR "Read " . scalar(@annos) . " rows from $reannofile\n";
-    my $dbh = DBI->connect("dbi:SQLite:dbname=$db", "", "", { RaiseError => 1 }) || die $DBI::errstr;
+    my $tmpDb = "$db.$$.tmp";
+    print STDERR "Copying to $tmpDb (slow)\n";
+    system("cp", $db, $tmpDb) == 0 || die "Cannot cp $db $tmpDb -- $!";
+
+    my $dbh = DBI->connect("dbi:SQLite:dbname=$tmpDb", "", "", { RaiseError => 1 }) || die $DBI::errstr;
+    print STDERR "Modifying $tmpDb\n";
+
     my $clear_statement = $dbh->prepare(qq{ DELETE FROM Reannotation; });
-    $clear_statement->execute() || die "Cannot clear the Reannotation table in $db";
+    $clear_statement->execute() || die "Cannot clear the Reannotation table in $tmpDb";
     my $clear_statement2 = $dbh->prepare(qq{ DELETE FROM ReannotationEC; });
-    $clear_statement2->execute() || die "Cannot clear the ReannotationEC table in $db";
+    $clear_statement2->execute() || die "Cannot clear the ReannotationEC table in $tmpDb";
 
     my $insert_statement = $dbh->prepare(qq{ INSERT INTO Reannotation VALUES (?,?,?,?); });
     my $insert_statement2 = $dbh->prepare(qq{ INSERT INTO ReannotationEC VALUES (?,?,?); });
@@ -53,6 +61,7 @@ END
         } else {
           $insert_statement->execute($row->{orgId}, $row->{locusId}, $row->{new_annotation}, $row->{comment})
             || die "Failed to insert into Reannotation";
+          print "Inserted $row->{orgId} $row->{locusId}\n" if $debug;
           $nAdd++;
           # And try to parse EC number(s) from the annotation
           # This can be [EC 1.1.1.1] or [EC 1.1.1.1 1.1.1.2] or [EC 1.1.1.1; 1.1.1.1.2]
@@ -88,7 +97,10 @@ END
     print STDERR "Ignored reannotations for unknown organisms: " . join(" ", sort keys %skipOrgs) . "\n"
       if keys(%skipOrgs) > 0;
     unless (defined $nometacyc) {
-      my @covercmd = ("$Bin/db_update_metacyc_coverage.pl", "-db", $db);
+      my @covercmd = ("$Bin/db_update_metacyc_coverage.pl", "-db", $tmpDb);
       system(@covercmd) == 0 || die "Error running " . join(" ", @covercmd) . "\n: $!";
     }
+
+    print STDERR "Moving $tmpDb to $db\n" if $debug;
+    rename($tmpDb, $db) || die "Cannot rename $tmpDb to $db\n";
 }
