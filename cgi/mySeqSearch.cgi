@@ -235,7 +235,8 @@ if (@hits > 0) {
 
 print qq[<br>Or search for homologs using
 	<A HREF="http://papers.genomics.lbl.gov/cgi-bin/litSearch.cgi?query=>$def%0A$seq"
-           TITLE="Find papers about this protein or its homologs">PaperBLAST</A>
+           TITLE="Find papers about this protein or its homologs">PaperBLAST</A>,
+       <A HREF="https://iseq.lbl.gov/genomes/seqsearch?sequence=>$def%0A$seq">ENIGMA genome browser</A>,
        or
        <A HREF="http://www.microbesonline.org/cgi-bin/seqsearch.cgi?qtype=protein&query=$seq">MicrobesOnline</A>
        <BR>
