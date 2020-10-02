@@ -185,7 +185,7 @@ print br(),
     a({ -href => "getNtSeq.cgi?orgId=$orgId&scaffoldId=$scaffoldId" },
       $scaffoldId),
     "or the",
-    a({ -href => "https://iseq.lbl.gov/genomes/searchgenome/?query=$orgId" }, "ENIGMA genome browser"));
+    a({ -href => "https://iseq.lbl.gov/genomes/genome/find?name=$orgId" }, "ENIGMA genome browser"));
 
 print q{</div>};
 $dbh->disconnect();
