@@ -1,6 +1,9 @@
 The model files tell MapTnSeq.pl what each read should look like.
 
-If using the newer TnSeq protocol, with a two-stage PCR, use
+If using TnSeq_v3, with a two-stage PCR and an inline indexing check,
+use either the "universal" models or the ".2" models.
+
+If using the v2 TnSeq protocol, with a two-stage PCR, use
 model_pKMW3.2 for pKMW3-based Mariner libraries
 model_pKMW7.2 for pKMW7-based Tn5 libraries
 model_magic_mariner.2 for mariner libraries built with the magic pool approach
@@ -28,6 +31,10 @@ nnnnnnCGCCCTGCAGGGATGTCCACGAGGTCTCTNNNNNNNNNNNNNNNNNNNNCGTACGCTGCAGGTCGACGGCCGGC
 
 where the beginning nnnnnn means 6 random nucleotides and the 20 Ns
 are the random barcode.
+
+For TnSeq_v3, the ns at the beginning of the model are ignored --
+instead, the beginning of the read is described by nN, index2, and
+nExtra in the tnseq3.index2 table in this directory.
 
 The second line of the model file is optional. It describes the
 vector's sequence after the inverted repeat (that is, after where the

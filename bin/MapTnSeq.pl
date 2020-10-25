@@ -7,6 +7,8 @@
 use strict;
 use Getopt::Long;
 use FindBin qw($Bin);
+use lib "$Bin/../lib";
+use FEBA_Utils qw{ReadTable};
 
 my $minQuality = 10; # every nucleotide in a barcode must be at least this quality
 my $flanking = 5; # number of nucleotides on each side that must match
@@ -36,6 +38,7 @@ my %nameToBarcode = ();
 
 my $usage = <<END
 Usage: MapTnSeq.pl [ -debug ] [ -limit maxReads ] [ -minQuality $minQuality ]
+            [-tnseq3 inline1]
             [-flanking $flanking]  [ -wobble $wobbleAllowed ]
             [ -minIdentity $minIdentity ] [ -minScore $minScore ] [ -delta $delta ]
             [ -tileSize $tileSize ] [ -stepSize $stepSize ]
@@ -51,6 +54,13 @@ Usage: MapTnSeq.pl [ -debug ] [ -limit maxReads ] [ -minQuality $minQuality ]
     
     nnnnnnCGCCCTGCAGGGATGTCCACGAGGTCTCTNNNNNNNNNNNNNNNNNNNNCGTACGCTGCAGGTCGACGGCCGGCCAGACCGGGGACTTATCAGCCAACCTGT
 
+    If using -tnseq3, then the n's at the beginning are removed; the
+    tnseq3.index2 file in primers/ describes the number of variable
+    characters at the beginning of the read (nN), the "index2"
+    sequence to check demultiplexing, and the number of characters
+    from there to the beginning of the constant sequence in the model
+    (nExtra).
+
     All characters in the model read must be ACGT except for the
     optional block of n\'s at the front and a block of Ns which
     represents the barcode.
@@ -59,7 +69,9 @@ Usage: MapTnSeq.pl [ -debug ] [ -limit maxReads ] [ -minQuality $minQuality ]
     sequence "past the end" of the transposon that might arise from
     residual intact plasmid.
 
-    This script does not handle sample multiplexing.
+    This script does not handle sample multiplexing (although if using
+    -index3, the "inline2" code is checked, and non-matching reads are
+    filtered out).
 
     The output file is tab-delimited and contains, for each usable
     read, the read name, the barcode, which scaffold the insertion
@@ -101,10 +113,11 @@ sub BLAT8($$$$$$$$); # BLAT to a blast8 format file
     my $blatcmd = -e "$Bin/blat" ? "$Bin/blat" : "blat";
     my $unmappedFile = undef;
     my $truncFile = undef;
-    
+    my $tnseq3 = undef;
     my $minGenomeId = 90;
 
     (GetOptions('debug' => \$debug, 'limit=i' => \$limit, 'minQuality=i' => \$minQuality,
+                'tnseq3=s' => \$tnseq3,
 		'unmapped=s' => \$unmappedFile,
                 'trunc=s' => \$truncFile,
                 'flanking=i' => \$flanking, 'minIdentity=i' => \$minIdentity, 'minScore=i' => \$minScore,
@@ -126,15 +139,30 @@ sub BLAT8($$$$$$$$); # BLAT to a blast8 format file
     die "Invalid minimum identity" if $minIdentity < 50 || $minIdentity > 100;
     die "delta cannot be negative\n" if $delta < 0;
 
+    my $primerInfo; # if using tnseq3 -- key fields are nN, the index2 sequence, and nExtra
+    if (defined $tnseq3) {
+      my $primersFile = "$Bin/../primers/tnseq3.index2";
+      die "No such file: $primersFile -- cannot interpret the -tnseq3 argument\n"
+        unless -e $primersFile;
+      my @requiredFields = qw{index_name nN index2 nExtra};
+      my @primerInfo = ReadTable($primersFile, \@requiredFields);
+      @primerInfo = grep { $_->{index_name} eq $tnseq3 } @primerInfo;
+      die "Unknown index_name $tnseq3 does not appear in $primersFile\n"
+        unless @primerInfo > 0;
+      $primerInfo = $primerInfo[0];
+      print STDERR "index_name $tnseq3: before model, reads start with $primerInfo->{nN} ignored nt, $primerInfo->{index2}, and $primerInfo->{nExtra} ignored nt\n";
+    }
+
     open(MODEL, "<", $modelFile) || die "Cannot read $modelFile";
     my $model = <MODEL>;
     $model =~ s/[\r\n]+$//;
     die "Invalid model: $model" unless $model =~ m/^n*[ACGT]+N+[ACGT]+$/;
+    $model =~ s/^n*// if defined $tnseq3;
     my $pastEnd = <MODEL>;
     if (defined $pastEnd) {
 	chomp $pastEnd;
 	die "Invalid past-end sequence: $pastEnd" unless $pastEnd =~ m/^[ACGT]+$/;
-    }	
+    }
     close(MODEL) || die "Error reading $modelFile";
 
     my $barcodeStart = index($model, "N");
@@ -172,6 +200,7 @@ sub BLAT8($$$$$$$$); # BLAT to a blast8 format file
     }
 
     my $nReads = 0;
+    my $nNoIndex = 0; # reads that failed demultiplexing check
     my $nTryToMap = 0;
     # read name => 1 if mapped or pastEnd, 0 otherwise
     # to save memory, only fill out with the -unmapped option
@@ -201,15 +230,32 @@ sub BLAT8($$$$$$$$); # BLAT to a blast8 format file
         next if $name =~ m/^\S+ 2:/; # ignore second side of paired-end reads
         $nReads++;
 
+        my $prefixLen = 0;
+        $prefixLen = $primerInfo->{nN} + length($primerInfo->{index2}) + $primerInfo->{nExtra}
+          if defined $primerInfo;
+
         # short sequences are unmappable
-        next unless length($seq) >= length($model) + $minScore;
+        next unless length($seq) >= length($model) + $minScore + $prefixLen;
         $nLong++;
+
+        my $shortname = $name; $shortname =~ s/ .*$//;
+        die "Duplicate read name: $shortname" if exists $nameToBarcode{$shortname};
+
+        if (defined $primerInfo) {
+          my $demult = substr($seq, $primerInfo->{nN}, length($primerInfo->{index2}));
+          if ($demult ne $primerInfo->{index2}) {
+            print STDERR "Read $shortname failed demultiplexing ($demult not $primerInfo->{index2})\n"
+              if $debug;
+            $nNoIndex++;
+            next;
+          }
+          # else
+          $seq = substr($seq, $prefixLen);
+        }
 
         my ($barcode,$obsStart) = FindBarcode($seq,$quality,$model,$barcodeStart,$barcodeEnd);
         next unless defined $barcode;
 
-        my $shortname = $name; $shortname =~ s/ .*$//;
-        die "Duplicate read name: $shortname" if exists $nameToBarcode{$shortname};
         $nameToBarcode{$shortname} = $barcode;
 
         my $transposonEnd = FindModelEnd($seq,$model,$obsStart - $barcodeStart);
@@ -233,7 +279,11 @@ sub BLAT8($$$$$$$$); # BLAT to a blast8 format file
     # Prematurely closing the pipe gives an error
     close(FASTQ) || ($pipe && defined $limit) || die "Error reading from $fastqFile: $!";
     close(TMPFNA) || die "Error writing to $tmpFna";
-    print STDERR "Read $nReads reads\n";
+    if (defined $primerInfo) {
+      print STDERR "Read $nReads reads, ignored $nNoIndex without matching index\n";
+    } else {
+      print STDERR "Read $nReads reads\n";
+    }
     if ($truncFile) {
       close($trunc_fh) || die "Error writing to $truncFile";
     }
