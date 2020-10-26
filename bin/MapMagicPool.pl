@@ -110,29 +110,34 @@ sub median;
     my $nReads = 0;
     my $nMatch = 0; # reads for known barcodes
     foreach my $file (@mappingfiles) {
-        open(FILE, "<", $file) || die "Cannot read $file";
-        while(my $line = <FILE>) {
-            chomp $line;
-            $nReads++;
-            my ($read,$barcode,$scaffold,$pos,$strand,$uniq,$sbeg,$send,$bits,$identity) = split /\t/, $line, -1;
-            die "Invalid line\n$line\nin $file"
-                unless defined $identity;
-            next unless exists $rcToConstruct{$barcode};
-            my $con = $rcToConstruct{$barcode};
-            if ($scaffold eq "pastEnd") {
-                $constructPastEnd{$con}++;
-                $nMatch++;
-            } else {
-                die "Invalid line\n$line\nin $file"
-                    unless $pos =~ m/^\d+$/
-                    && ($strand eq "+" || $strand eq "-")
-                    && $scaffold ne "";
-                $count{$barcode}{ join("\t",$scaffold,$pos,$strand) }++ if $uniq eq "1";
-                $constructMapped{$con}++;
-                $nMatch++;
-            }
+      my $fh;
+      if ($file =~ m/[.]gz$/) {
+        open($fh, "zcat $file |") || die "Cannot zcat $file\n";
+      } else {
+        open($fh, "<", $file) || die "Cannot read $file";
+      }
+      while(my $line = <$fh>) {
+        chomp $line;
+        $nReads++;
+        my ($read,$barcode,$scaffold,$pos,$strand,$uniq,$sbeg,$send,$bits,$identity) = split /\t/, $line, -1;
+        die "Invalid line\n$line\nin $file"
+          unless defined $identity;
+        next unless exists $rcToConstruct{$barcode};
+        my $con = $rcToConstruct{$barcode};
+        if ($scaffold eq "pastEnd") {
+          $constructPastEnd{$con}++;
+          $nMatch++;
+        } else {
+          die "Invalid line\n$line\nin $file"
+            unless $pos =~ m/^\d+$/
+              && ($strand eq "+" || $strand eq "-")
+                && $scaffold ne "";
+          $count{$barcode}{ join("\t",$scaffold,$pos,$strand) }++ if $uniq eq "1";
+          $constructMapped{$con}++;
+          $nMatch++;
         }
-        close(FILE) || die "Error reading $file";
+      }
+      close($fh) || die "Error reading $file";
     }
     die "No reads\n" if $nReads == 0;
     print STDERR sprintf("Reads %d Matching known barcodes %d (%.3f%%)\n",
