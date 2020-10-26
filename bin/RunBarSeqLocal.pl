@@ -18,13 +18,14 @@ RunBarSeqLocal.pl [ -indexes BarSeqPrimersH48 | -n25 | -bs3 ]
 or
 RunBarSeqLocal.pl [ -indexes BarSeqPrimersH48 | -n25 | -bs3 ]
     -in fastq.gz_file_or_directory_with_fastq.gz_files
-    -sets organism1_libraryname1_setname1,...,organismN_libraryN_setnameN
+    [ -sets organism1_libraryname1_setname1,...,organismN_libraryN_setnameN | -nopool ]
 
 Examples:
 feba/bin/RunBarSeqLocal.pl g/Keio Keio_ML9_set1 fastq/Keio_ML9_set1
 feba/bin/RunBarSeqLocal.pl -indexes feba/primers/BarSeqPrimersH48 g/MR1 MR1_ML3_set1 fastq/MR1_ML3_set1
 feba/bin/RunBarSeqLocal.pl -indexes feba/primers/BarSeqPrimersH48 g/psRCH2 psRCH2_ML7_set1 fastq/7341.4.68147.fastq.gz 
 feba/bin/RunBarSeqLocal.pl -n25 -in HiSeq_barcodes/FEBA_BS_186 -sets MR1_ML3_set12,Koxy_ML2_set9
+feba/bin/RunBarSeqLocal.pl --bs3 -in HiSeq_barcodes/FEBA_BS_265 -nopool
 
 RunBarSeq.pl has two phases -- the first phase counts the barcodes in
 the fastq file(s).  If the BarSeq was run with the newer style of
@@ -55,6 +56,8 @@ expected to be in
 and overwriting output files is not allowed. Also you can separate the sets
 by ; and optional whitespace instead of by ,.)
 
+The second phase is skipped if -nopool is used.
+
 Output files are in organism_directory/ --
 setname.colsum -- total parsed reads per index
 setname.poolcount -- counts for strains in the pool
@@ -67,16 +70,16 @@ Other options:
 	(default is $minQuality)
   -pieceLines $linesPerPiece -- number of lines per piece
   -nosplit -- do not run split, use existing pieces
-  -debug -- do not do any work, just show what commands would be run
+  -test -- do not do any work, just show what commands would be run
   -limit -- limit the #reads analyzed per sample (mostly for debugging)
   -offset -- If IT001 is named S97, use -offset 96
   -preseq, -postseq, -nPreExpected -- see MultiCodes.pl
 END
     ;
 
-sub maybeRun($); # run command unless $debug is defined
+sub maybeRun($); # run command unless $test is defined
  
-my $debug = undef;
+my $test = undef;
 {
     my $nosplit = undef;
     my $limitReads = undef;
@@ -84,9 +87,9 @@ my $debug = undef;
     my ($n25, $bs3);
     my $setspec = undef;
     my $fastq = undef;
-    my ($preseq, $postseq, $nPreExpected);
+    my ($preseq, $postseq, $nPreExpected, $nopool);
 
-    die $usage unless GetOptions('debug' => \$debug,
+    die $usage unless GetOptions('test' => \$test,
                                  'n25' => \$n25,
                                  'bs3' => \$bs3,
                                  'nosplit' => \$nosplit,
@@ -99,9 +102,11 @@ my $debug = undef;
                                  'nPreExpected=s' => \$nPreExpected,
                                  'in=s' => \$fastq,
                                  'sets=s' => \$setspec,
-                                 'offset=i' => \$offset);
+                                 'offset=i' => \$offset,
+                                 'nopool' => \$nopool);
     my @gdirs = ();
     my @setnames = ();
+    die "Cannot use both -sets and -nopool\n" if defined $setspec && defined $nopool;
     if (defined $setspec) {
       die $usage unless defined $fastq && @ARGV == 0;
       @setnames = split /[,;]\s*/, $setspec;
@@ -147,6 +152,8 @@ my $debug = undef;
             if -s $file; # if not empty
         }
       }
+    } elsif (defined $nopool) {
+      die $usage unless defined $fastq && @ARGV == 0;
     } else {
       die $usage unless @ARGV == 3;
       my ($gdir, $setname);
@@ -175,7 +182,7 @@ my $debug = undef;
     my @parts;
     my @codes;
     my $codeGlob;
-    my $setname1 = $setnames[0]; # for naming the parts
+    my $setname1 = $setnames[0] || "noset"; # for naming the parts
     if (-d $fastq) {
 	@parts = glob("$fastq/*fastq.gz");
 	@parts = grep { !m/^[.]/ }  @parts;
@@ -212,13 +219,13 @@ my $debug = undef;
         if (defined $nosplit && scalar(@parts) > 0) {
             print STDERR "Skipping the split step, just redoing the analysis with " . scalar(@parts) . " existing pieces\n";
             maybeRun("rm $codeGlob")
-                if scalar(@codes) > 0 && ! defined $debug;
+                if scalar(@codes) > 0 && ! defined $test;
         } else {
             # do the splitting
             maybeRun("rm $prefix/${setname1}_BarSeq.part*") if (scalar(@parts) > 0 || scalar(@codes) > 0);
             my $cmd = "gunzip -c $fastq | split -l $linesPerPiece -d - $prefix/${setname1}_BarSeq.part";
             maybeRun($cmd);
-            system("touch $prefix/${setname1}_BarSeq.part00") if defined $debug;
+            system("touch $prefix/${setname1}_BarSeq.part00") if defined $test;
 	    @parts = glob("$prefix/${setname1}_BarSeq.part*[0-9]"); # now @parts is actually there
         }
     }
@@ -230,7 +237,7 @@ my $debug = undef;
     maybeRun("rm -f $codeGlob");
     open(CMDS, ">", $cmdsfile) || die "Cannot write to $cmdsfile";
     foreach my $i (@parts) {
-	print STDERR "Considering part $i\n" if $debug;
+	print STDERR "Considering part $i\n" if $test;
 
         my $corecmd = "$Bin/MultiCodes.pl -minQuality $minQuality";
         $corecmd .= " -n25" if defined $n25;
@@ -309,7 +316,11 @@ my $debug = undef;
     maybeRun("$Bin/submitter.pl $cmdsfile");
 
     # combine the results
-    if (!defined $debug) {
+    if (defined $nopool) {
+      print STDERR "codes files were computed; skipping comparison to pool(s)\n"
+        unless defined $test;
+    } else {
+      if (!defined $test) {
 	# Parse all the log files
 	my @logs = map { my $out = $_; $out =~ s/[.]codes$/.log/; $out; } @codes;
 	my $nReads = 0;
@@ -342,18 +353,19 @@ my $debug = undef;
 			     $nUsable/1e6, 100.0*$nUsable/($nReads+0.1),
 			     $nFiles,
 			     defined $setspec ? "" : "for $setname1");
-    }
-    foreach my $i (0..(scalar(@gdirs)-1)) {
-      my $path = $gdirs[$i] . "/" . $setnames[$i];
-      print STDERR "Combining codes files $codeGlob into $path\n";
-      my $cmd = "$Bin/combineBarSeq.pl $path $poolfiles[$i] $codeGlob";
-      maybeRun($cmd);
+      }
+      foreach my $i (0..(scalar(@gdirs)-1)) {
+        my $path = $gdirs[$i] . "/" . $setnames[$i];
+        print STDERR "Combining codes files $codeGlob into $path\n";
+        my $cmd = "$Bin/combineBarSeq.pl $path $poolfiles[$i] $codeGlob";
+        maybeRun($cmd);
+      }
     }
 }
 
 sub maybeRun($) {
     my ($cmd) = @_;
-    if (defined $debug) {
+    if (defined $test) {
         print STDERR "Would run: $cmd\n";
     } else {
         system($cmd) == 0 || die "script failed: $cmd";
