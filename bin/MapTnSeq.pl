@@ -38,7 +38,7 @@ my %nameToBarcode = ();
 
 my $usage = <<END
 Usage: MapTnSeq.pl [ -debug ] [ -limit maxReads ] [ -minQuality $minQuality ]
-            [-tnseq3 inline1]
+            [-tnseq3 index_name]
             [-flanking $flanking]  [ -wobble $wobbleAllowed ]
             [ -minIdentity $minIdentity ] [ -minScore $minScore ] [ -delta $delta ]
             [ -tileSize $tileSize ] [ -stepSize $stepSize ]
@@ -54,12 +54,12 @@ Usage: MapTnSeq.pl [ -debug ] [ -limit maxReads ] [ -minQuality $minQuality ]
     
     nnnnnnCGCCCTGCAGGGATGTCCACGAGGTCTCTNNNNNNNNNNNNNNNNNNNNCGTACGCTGCAGGTCGACGGCCGGCCAGACCGGGGACTTATCAGCCAACCTGT
 
-    If using -tnseq3, then the n's at the beginning are removed; the
-    tnseq3.index2 file in primers/ describes the number of variable
-    characters at the beginning of the read (nN), the "index2"
-    sequence to check demultiplexing, and the number of characters
-    from there to the beginning of the constant sequence in the model
-    (nExtra).
+    If using -tnseq3 (for the TnSeq_v3 protocol), then the n's at the
+    beginning of the model are ignored. Instead, the tnseq3.index2
+    file in primers/ describes the number of variable characters at
+    the beginning of the read (nN), the "index2" sequence to check
+    demultiplexing, and the number of characters from there to the
+    beginning of the constant sequence in the model (nExtra).
 
     All characters in the model read must be ACGT except for the
     optional block of n\'s at the front and a block of Ns which
@@ -69,9 +69,9 @@ Usage: MapTnSeq.pl [ -debug ] [ -limit maxReads ] [ -minQuality $minQuality ]
     sequence "past the end" of the transposon that might arise from
     residual intact plasmid.
 
-    This script does not handle sample multiplexing (although if using
-    -index3, the "inline2" code is checked, and non-matching reads are
-    filtered out).
+    This script does not handle sample demultiplexing (although if
+    using -tnseq3, the "index2" code is checked, and non-matching
+    reads are filtered out).
 
     The output file is tab-delimited and contains, for each usable
     read, the read name, the barcode, which scaffold the insertion
