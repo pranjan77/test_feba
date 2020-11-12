@@ -53,7 +53,7 @@ For a specified protein sequence, Fitness BLAST shows homologs that have <A HREF
 
 <script>
 /* The root of the server being used for Fitness BLAST. Should end with '/' */
-var server_root = "http://fit.genomics.lbl.gov/";
+var server_root = "https://fit.genomics.lbl.gov/";
 
 /* this would be replaced by the protein sequence of interest */
 var uvrC ="MSDQFDAKAFLKTVTSQPGVYRMYDAGGTVIYVGKAKDLKKRLSSYFRSNLASRKTEALVAQIQQIDVTVTHTETEALLLEHNYIKLYQPRYNVLLRDDKSYPFIFLSGDTHPRLAMHRGAKHAKGEYFGPFPNGYAVRETLALLQKIFPIRQCENSVYRNRSRPCLQYQIGRCLGPCVEGLVSEEEYAQQVEYVRLFLSGKDDQVLTQLISRMETASQNLEFEEAARIRDQIQAVRRVTEKQFVSNTGDDLDVIGVAFDAGMACVHVLFIRQGKVLGSRSYFPKVPGGTELSEVVETFVGQFYLQGSQMRTLPGEILLDFNLSDKTLLADSLSELAGRKINVQTKPRGDRARYLKLARTNAATALTSKLSQQSTVHQRLTALASVLKLPEVKRMECFDISHTMGEQTVASCVVFDANGPLRAEYRRYNITGITPGDDYAAMNQVLRRRYGKAIDDSKIPDVILIDGGKGQLAQAKNVFAELDVSWDKNHPLLLGVAKGADRKAGLETLFFEPEGEGFSLPPDSPALHVIQHIRDESHDHAIGGHRKKRAKVKNTSSLETIEGVGPKRRQMLLKYMGGLQGLRNASVEEIAKVPGISQGLAEKIFWSLKH";
@@ -84,11 +84,11 @@ fitblast_load_table("fitblast_table_uvrC", server_root, uvrC);
 <p>and here is a concrete example:
 
 <pre>
-&lt;script src="http://fit.genomics.lbl.gov/d3js/d3.min.js"&gt;&lt;/script&gt;
-&lt;script src="http://fit.genomics.lbl.gov/images/fitblast.js"&gt;&lt;/script&gt;
+&lt;script src="https://fit.genomics.lbl.gov/d3js/d3.min.js"&gt;&lt;/script&gt;
+&lt;script src="https://fit.genomics.lbl.gov/images/fitblast.js"&gt;&lt;/script&gt;
 &lt;div id="fitblast"&gt;&lt;/div&gt;
 &lt;script&gt;
-  fitblast_load_short("fitblast", "http://fit.genomics.lbl.gov/",
+  fitblast_load_short("fitblast", "https://fit.genomics.lbl.gov/",
       "MKILVIGPSWVGDMMMSQSLYRTLKARYPQAIIDVMAPAWCRPLLSRMPEVNEAIPMPL");
 &lt;/script&gt;
 </pre>
@@ -97,11 +97,11 @@ fitblast_load_table("fitblast_table_uvrC", server_root, uvrC);
 
 <P>Alternatively, to have Fitness BLAST return formatted HTML, use URLs like this:
 
-<pre><font color="blue">http://fit.genomics.lbl.gov/cgi-bin/seqservice.cgi?html=1&amp;seq=MSSLQRIVLIDTHLPGVVELALDGHTNICGTNASGKTTLQRLVPVFYGEYPSRVVPSTRDSFERWYLPHDSSYIIYEYRRGDGMLYQAVLSSNGDGKGISYRFIAKGFELDDYVKARNGDS</font></pre>
+<pre><font color="blue">https://fit.genomics.lbl.gov/cgi-bin/seqservice.cgi?html=1&amp;seq=MSSLQRIVLIDTHLPGVVELALDGHTNICGTNASGKTTLQRLVPVFYGEYPSRVVPSTRDSFERWYLPHDSSYIIYEYRRGDGMLYQAVLSSNGDGKGISYRFIAKGFELDDYVKARNGDS</font></pre>
 
 <H3><A NAME="genomes">Fitness BLAST for Genomes</A></H3>
 
-As an alternative, you can pre-compute best hits for all genes in a genome at once (<A HREF="http://fit.genomics.lbl.gov/cgi-bin/batch_blast.cgi">link</A>).
+As an alternative, you can pre-compute best hits for all genes in a genome at once (<A HREF="https://fit.genomics.lbl.gov/cgi-bin/batch_blast.cgi">link</A>).
 
 <p><small>Developed by <A HREF="http://morgannprice.org/">Morgan Price</A>. Please report any errors to <A HREF="mailto:funwithwords26@gmail.com">Morgan</A>.</small></p>
 </body>
