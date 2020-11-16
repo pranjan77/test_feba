@@ -6,11 +6,11 @@
 # This script is modified from server_paper_example6.pl
 #	http://servers.nmpdr.org/sapling/server.cgi?code=server_paper_example6.pl
 use strict;
+use Data::Dumper;
 use lib "sas/lib";
 use lib "sas/modules/lib";
 
 use ANNOserver;
-use Data::Dumper;
 
 die "Usage: run_seed.pl nickname\n" unless @ARGV==1;
 my $dir = $ARGV[0];
