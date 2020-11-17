@@ -96,9 +96,16 @@ foreach my $o (@genes) {
   my $first = 1;
   $shade++;
   foreach my $row (@$data) {
-    my $ratio = $o->{orgId} eq $orgId ? "&mdash;" : sprintf("%.2f",$o->{ratio});
-    my $orgShort = "";
+    my $ratio;
+    if ($o->{orgId} eq $orgId) {
+      $ratio = "&mdash;";
+    } else {
+      $ratio = a({-href => "showAlign.cgi?query=${orgId}:${locusId}&subject=$o->{orgId}:$o->{locusId}",
+                  -title => "View alignment"},
+                 sprintf("%.2f",$o->{ratio}));
+    }
 
+    my $orgShort = "";
     if ($first) {
       my $d = $orginfo->{$o->{orgId}};
       my $short = $d->{genome}; $short =~ s/^(.)[^ ]+/$1./;
