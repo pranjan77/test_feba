@@ -347,7 +347,7 @@ sub ParseMediaFile($) {
                 }
             }
         } else {
-            die "Wrong number of fields in\n$line\n";
+            die "Wrong number of fields in\n$line";
         }
     }
     close(MEDIA) || die "Error reading $mediaFile";
