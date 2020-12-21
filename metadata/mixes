@@ -745,3 +745,92 @@ Cytidine	2.6	uM
 Choline chloride	2.6	uM
 Adenosine	2.6	uM
 2'-Deoxyuridine	2.6	uM
+		
+Media	Hans Metal Mix	
+Description	Mixture of FRC relevant metals	
+X	100	
+Controlled vocabulary	Concentration	Units
+Cobalt chloride hexahydrate	0.79	g/L
+Cadmium chloride hemipentahydrate	9.3	mg/L
+Nickel (II) chloride hexahydrate	5.1	g/L
+Aluminum chloride hydrate	158	mg/L
+Manganese (II) chloride tetrahydrate	71.8	g/L
+Zinc chloride	285.1	mg/L
+		
+Media	4 Carbon Mix	
+Description	Mixture of carbon sources	
+X	1	
+Controlled vocabulary	Concentration	Units
+Sodium L-Lactate	1.25	mM
+Sodium acetate	1.25	mM
+Glutamic acid	1.25	mM
+Benzoic acid	1.25	mM
+		
+Media	NLDM_metabolites	
+Description	Northen Lab Defined Medium	
+X	1	
+Controlled vocabulary	Concentration	Units
+Sucrose	875	uM
+D-Glucose	875	uM
+D-Trehalose	875	uM
+Myo-inositol	875	uM
+Xylose	875	uM
+D-Mannitol	875	uM
+n-Acetyl glucosamine	875	uM
+Sodium-L-Lactate	525	uM
+Malic acid	525	uM
+Citric acid	525	uM
+Succinic acid	525	uM
+Sodium Pyruvate	525	uM
+alpha Ketoglutaric acid	525	uM
+Citrulline	525	uM
+L-Alanine	175	uM
+L-Arginine	175	uM
+L-Asparagine	175	uM
+L-Aspartic acid	175	uM
+L-Cysteine	175	uM
+L-Glutamic acid	175	uM
+L-Glutamine	175	uM
+L-Glycine	175	uM
+L-Histidine	175	uM
+L-Isoleucine	175	uM
+L-Leucine	175	uM
+L-Lysine	175	uM
+L-Methionine	175	uM
+L-Phenylalanine	175	uM
+L-Proline	175	uM
+L-Serine	175	uM
+L-Threonine	175	uM
+L-Tryptophan	175	uM
+L-Tyrosine	175	uM
+L-Valine	175	uM
+5-methyluridine	17.5	uM
+Adenine	17.5	uM
+Adenosine	17.5	uM
+Cytidine	17.5	uM
+Cytosine	17.5	uM
+Guanine	17.5	uM
+Guanosine	17.5	uM
+Hypoxanthine	17.5	uM
+Inosine	17.5	uM
+Thymine	17.5	uM
+Uracil	17.5	uM
+Uridine	17.5	uM
+Xanthine	17.5	uM
+Xanthosine	17.5	uM
+gamma-Aminobutyric acid	17.5	uM
+Ectoine	17.5	uM
+Trimethylglycine	17.5	uM
+N-Acetyl-glutamic acid	17.5	uM
+Nicotinamide	17.5	uM
+Ornithine HCl	17.5	uM
+Shikimic acid	17.5	uM
+Spermidine	17.5	uM
+Taurine	17.5	uM
+Trigonelline HCl	17.5	uM
+Carnitine HCl	17.5	uM
+choline chloride	17.5	uM
+n-Acetyl-glutamine	17.5	uM
+n-Acetyl-lysine	17.5	uM
+n-Acetyl-muramic acid	17.5	uM
+sn-glycero-3-phosphocholine	17.5	uM
