@@ -143,7 +143,7 @@ my $test = undef;
         my $setname = $setnames[$i];
         my $gdir = $gdirs[$i];
         my $out = "$gdir/$setname";
-        foreach my $file ("$out.colsum", "$out.poolcount") {
+        foreach my $file ("$out.poolcount") {
           die join("\n",
                    "Error: output for $gdir $setname already exists!",
                    "See file $file",
@@ -198,6 +198,11 @@ my $test = undef;
 	} else {
 	    $codeGlob = "$fastq/*.codes";
 	}
+        # Check that we can read all the input files
+        foreach my $file (@parts) {
+          open(my $fh, "<", $file) || die "Cannot read from $file\n";
+          close($fh) || die "Error reading from $file";
+        }
 	@codes = map { my $i = $_; $i =~ s/.fastq.gz$/.codes/; $i; } @parts;
 	@codes = grep { -e $_ } @codes; # only the files that were previously made
     } else {
