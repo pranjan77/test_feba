@@ -213,7 +213,8 @@ my $doOff1 = undef;
             $nWrongPrePos++;
             die "Over 10% of reads have the wrong spacing (not $nPreExpectedMin:$nPreExpectedMax) to the pre-sequence ($nWrongPrePos of $nReads so far).\n".
                 "Perhaps you forget to specify the protocol (i.e., -n25 or -bs3)?\n"
-                if $nWrongPrePos >= 200 && $nWrongPrePos >= 0.1 * $nReads;
+                if $nWrongPrePos >= 200 && $nWrongPrePos >= 0.1 * $nReads
+                  && ! $ENV{FEBA_NO_FAIL};
         }
         next unless defined $barcode;
         $nOff{$off}++;
