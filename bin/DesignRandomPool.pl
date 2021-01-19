@@ -8,7 +8,8 @@ use strict;
 use Getopt::Long;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
-use FEBA_Utils; # for reverseComplement
+use FEBA_Utils qw{reverseComplement};
+use Utils qw{commify};
 sub Variants($); # return all 1-nt variants for a sequence
 
 my $minN = 10;
@@ -75,7 +76,11 @@ END
     print STDERR join("\n", "Reading mapping files:", @ARGV)."\n"
       if @ARGV > 0;
 
+    my $firstFile = 1;
+    my $firstCounts = undef; # barcode => number of times seen in first file
     foreach my $file (@ARGV) {
+      my %count = (); # barcode => number of times seen in this file
+      my $nReadsThisFile = 0;
       my $fhIn;
       if ($file =~ m/[.]gz$/) {
         open($fhIn, '-|', 'zcat', $file) || die "Cannot run zcat on $file";
@@ -85,6 +90,8 @@ END
       while(<$fhIn>) {
         chomp;
         my ($read,$barcode,$scaffold,$pos,$strand,$uniq,$qBeg,$qEnd,$score,$identity) = split /\t/, $_;
+        $nReadsThisFile++;
+        $count{$barcode}++;
         if ($scaffold eq "pastEnd") {
             $pastEnd{$barcode}++;
             $nMapped++;
@@ -98,6 +105,23 @@ END
         }
       }
       close($fhIn) || die "Error reading $file";
+      my $nBarcodesThisFile = scalar(keys %count);
+      my $nBarcodesThisFileNonUniq = scalar(grep { $_ > 1 } (values %count));
+      print STDERR "$file has ",
+        Utils::commify($nReadsThisFile), " mappings, ",
+        Utils::commify($nBarcodesThisFile),  " barcodes, ",
+        Utils::commify($nBarcodesThisFileNonUniq), " non-unique barcodes\n";
+      if ($firstFile) {
+        $firstCounts = \%count;
+        $firstFile = 0;
+      } else {
+        my $nNonUniqInFirst = 0;
+        while (my ($barcode, $count) = each %count) {
+          $nNonUniqInFirst++ if $count > 1 && exists $firstCounts->{$barcode};
+        }
+        my $percent = sprintf("%.1f", 100 * $nNonUniqInFirst / $nBarcodesThisFileNonUniq);
+        print STDERR "  Shared with first file: $percent % of non-singleton barcodes\n";
+      }
     }
     print STDERR "Read $nMapped mapped reads for " . scalar(keys %barPosCount) . " distinct barcodes\n";
     print STDERR "(Skipped $nSkipQBeg reads with qBeg > $maxQBeg)\n" if $nSkipQBeg > 0;
