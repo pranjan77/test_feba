@@ -2436,7 +2436,7 @@ Magnesium Sulfate Heptahydrate	5.00E-03	g/L
 Sodium pyruvate	3.00E-02	g/L
 		
 		
-Media	UGA_defined_nocarbon	
+Media	UGA	
 Description	Variation of ENIGMA denitrification media for aerobic growth	
 Minimal	TRUE	
 Controlled vocabulary	Concentration	Units
@@ -2467,7 +2467,7 @@ ATCC Wolfe's mineral mix	1	X
 ATCC Wolfe's vitamin mix	1	X
 		
 		
-Media	NLDM_defined_nocarbon	
+Media	NLDM	
 Description	Northen lab metabolite media	
 Minimal	TRUE	
 Controlled vocabulary	Concentration	Units
@@ -2569,3 +2569,14 @@ ATCC Wolfe's mineral mix	1	X
 ATCC Wolfe's vitamin mix	1	X
 Sodium phosphate dibasic	4.735	mM
 Sodium phosphate monobasic	0.265	mM
+
+Media	RCH2
+Description	Defined minimal media for soil and groundwater bacteria with no carbon and no vitamins
+Minimal	TRUE
+Controlled vocabulary	Concentration	Units
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+PIPES sesquisodium salt	30	mM
+Wolfe's mineral mix	1	X
+
