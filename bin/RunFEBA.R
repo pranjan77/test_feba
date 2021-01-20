@@ -89,7 +89,7 @@ RunFEBA = function(args = commandArgs(trailingOnly=TRUE)) {
 	options(width=100);
 	fit = FEBA_Fit(exps, all, genes, dir=dir,
 		strainsUsed=strainsUsed, genesUsed=genesUsed, genesUsed12=genesUsed12);
-	FEBA_Save_Tables(fit, genes, org, expsU=exps, dir=dir, FEBAdir=FEBAdir);
+	FEBA_Save_Tables(fit, genes, org, dir=dir, FEBAdir=FEBAdir);
 	write(date(), paste(dir,"/.FEBA.success", sep="")); # report success to BarSeqR.pl
 }
 

@@ -465,7 +465,8 @@ FEBA_Fit = function(expsUsed, all, genes,
           fit$polar = data.frame();
         }
         # Version 1.2: added fit$polar
-	fit$version = "1.2.1";
+        # Version 1.2.2: per-day clustering plots
+	fit$version = "1.2.2";
 
 	q_col = words("name short t0set");
 	if(!is.null(expsUsed$num)) q_col = c(q_col, "num");
@@ -529,6 +530,8 @@ FEBA_Fit = function(expsUsed, all, genes,
 		cat("Only", sum(fit$q$u),"experiments of", nrow(fit$q)," passed quality filters!\n", file=stderr());
 	}
         fit$high = HighFit(fit, genes, expsUsed);
+        # Save changes to expsUsed (i.e., ignore and computation of t0set)
+        fit$expsUsed = expsUsed;
 	return(fit);
 }
 
@@ -538,7 +541,6 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 		 writeImage=TRUE,
 		 FEBAdir="src/feba",
 		 template_file=paste(FEBAdir,"/lib/FEBA_template.html",sep=""),
-		 expsU=expsUsed,
 		 ... # for FEBA_Quality_Plot
 		 ) {
 	if(!file.exists(dir)) dir.create(dir);
@@ -654,33 +656,11 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	dev.off();
 	wroteName("fit_quality_cor12.pdf");
 
-	labelAll = sprintf("%s #%d gMed=%.0f rho12=%.2f %30.30s",
-		      sub("^set","",fit$q$name), fit$q$num, fit$q$gMed, fit$q$cor12, fit$q$short);
-        labelAll = ifelse(fit$q$short=="Time0", paste(labelAll, fit$q$t0set), labelAll);
+        PlotFitnessClust(fit, nameToPath("fit_cluster_logratios.pdf"));
+	wroteName("fit_cluster_logratios.pdf");
 
-	use = fit$q$short != "Time0";
-	if(sum(use) > 2) {
-	    lrClust = hclust(as.dist(1-cor(fit$lrn[,as.character(fit$q$name)[use]], use="p")));
-	    pdf(nameToPath("fit_cluster_logratios.pdf"),
-		pointsize=8, width=0.25*pmax(8,sum(use)), height=8,
-		title=paste(org,"Cluster Logratios"));
-	    plot(lrClust, labels=labelAll[use], main="");
-	    dev.off();
-	    wroteName("fit_cluster_logratios.pdf");
-	}
-
-	if (ncol(fit$gN)-1 >= 3) { # at least 3 things to cluster
-	    countClust = hclust(as.dist(1-cor(log2(1+fit$gN[fit$gN$locusId %in% fit$genesUsed,-1]))));
-	    pdf(nameToPath("fit_cluster_logcounts.pdf"),
-		pointsize=8, width=pmax(5,0.25*nrow(fit$q)), height=8,
-		title=paste(org,"Cluster Log Counts"));
-	    # Some Time0s may be missing from fit$q
-	    d = match(names(fit$gN)[-1], fit$q$name);
-	    labelAll2 = ifelse(is.na(d), paste("Time0", sub("^set","",names(fit$gN)[-1])), labelAll[d]);
-	    plot(countClust, labels=labelAll2, main="");
-	    dev.off();
-	    wroteName("fit_cluster_logcounts.pdf");
-	}
+        PlotCountClust(fit, nameToPath("fit_cluster_logcounts.pdf"));
+        wroteName("fit_cluster_logcounts.pdf");
 
         d = table(genes$scaffoldId[genes$locusId %in% fit$genesUsed]);
 	maxSc = names(d)[which.max(d)];
@@ -705,10 +685,8 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	dev.off();
 	wroteName("fit_chr_bias.pdf");
 
-	if (!is.null(expsU)) {
-		writeDelim(expsU, nameToPath("expsUsed"));
-		wroteName("expsUsed");
-	}
+	writeDelim(fit$expsUsed, nameToPath("expsUsed"));
+	wroteName("expsUsed");
 
 	if (is.null(fit$cofit)) {
 	    d = data.frame(locusId="",sysName="",desc="",hitId="",cofit=0,rank=0,hitSysName="",hitDesc="");
@@ -733,7 +711,7 @@ FEBA_Save_Tables = function(fit, genes, org="?",
         d = which(abs(fit$lrn) > 2 & abs(fit$t) > 5, arr.ind=T);
         if (nrow(d) >= 1) {
 	  out = data.frame(locusId=fit$g[d[,1]], name=names(fit$lrn)[d[,2]], lrn=fit$lrn[d], t=fit$t[d]);
-	  out = merge(genes[,words("locusId sysName desc")], merge(expsU[,c("name","short")], out));
+	  out = merge(genes[,words("locusId sysName desc")], merge(fit$expsUsed[,c("name","short")], out));
 	  writeDelim(out, nameToPath("strong.tab"));
 	  wroteName("strong.tab");
 	}
@@ -748,7 +726,9 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 
 	if(writeImage) {
 	    img = format(Sys.time(),"fit%Y%b%d.image"); # e.g., fit2013Oct24.image
-	    expsUsed = expsU;
+            expsUsed = fit$expsUsed;
+            # expsUsed used to be separate from fit; it is saved as a separate object in the
+            # image, in addition to being part of fit, for backwards compatibility
 	    save(fit, genes, expsUsed, file=nameToPath(img));
 	    wroteName(img);
 	    unlink(nameToPath("fit.image"));
@@ -1226,4 +1206,83 @@ PolarTest = function(genes, strains, strain_fit,
   results = do.call(rbind, results);
   if (is.null(results) || nrow(results) == 0) return(NULL);
   return(subset(results, p < maxp));
+}
+
+PlotCountClust = function(fit, outpdf) {
+  pdf(outpdf, width=9, height=11, pointsize=8);
+
+  stopifnot(nrow(fit$expsUsed) == ncol(fit$gN) - 1);
+  stopifnot(all(fit$expsUsed$name == names(fit$gN)[-1]));
+
+  labelAll = sprintf("%s #%d gMed=%.0f rho12=%.2f %-30.30s",
+                     sub("^set","",fit$q$name), fit$q$num, fit$q$gMed, fit$q$cor12, fit$q$short);
+  labelAll = ifelse(fit$q$short=="Time0", paste(labelAll, fit$q$t0set), labelAll);
+  d = match(names(fit$gN)[-1], fit$q$name);
+  labelAll2 = ifelse(is.na(d), paste("Time0", sub("^set","",names(fit$gN)[-1])), labelAll[d]);
+
+  data = log2(1 + fit$gN[fit$gN$locusId %in% fit$genesUsed, -1]);
+  colnames(data) = labelAll2;
+  cors = cor(data);
+  corsNoDiag = cors;
+  diag(corsNoDiag) = -1;
+  closest = apply(corsNoDiag, 1, which.max);
+
+  # First, show the Time0 samples, and the closest samples (whether they are time0s or not)
+  iTime0 = which(fit$expsUsed$short == "Time0");
+  if (length(iTime0) > 0 && nrow(fit$expsUsed) > 1) {
+    use = sort(unique(c(iTime0, closest[iTime0])));
+    hclust = hclust(as.dist(1-cor(data[,use])));
+    par(mar=c(3,1,3,40));
+    if (length(use) > 60) par(cex=0.6);
+    plot(as.dendrogram(hclust), horiz=T, main="Time0 and similar samples\n(clustered by log-count)");
+  } else {
+    blankplot("Too few samples");
+  }
+  for(t0set in unique(fit$expsUsed$t0set)) {
+    use = which(fit$expsUsed$t0set == t0set);
+    use = sort(unique(c(use, closest[use])));
+    if (length(use) >= 2) {
+      par(mar=c(3,1,3,30), cex=1);
+      hclust = hclust(as.dist(1-cor(data[,use])));
+      plot(as.dendrogram(hclust), horiz=T, main=paste(t0set, "and similar samples\n(clustered by log-count)"));
+    }
+  }
+  dev.off();
+}
+
+blankplot = function(text) {
+  plot(0:1, 0:1, xlab="", ylab="", col=NA, xaxt="n", yaxt="n");
+  text(0.5, 0.5, text, adj=c(0.5,0.5));
+}
+
+PlotFitnessClust = function(fit, outpdf) {
+  pdf(outpdf, width=9, height=11, pointsize=8);
+
+  stopifnot(nrow(fit$q) == ncol(fit$lrn));
+  stopifnot(all(fit$q$name == names(fit$lrn)));
+
+  labelAll = sprintf("%s (#%5d) %-3.3s %-30.30s",
+                     sub("^set","",fit$q$name), fit$q$num,
+                     ifelse(fit$q$u,"Use","Not"), fit$q$short);
+  labelAll = ifelse(fit$q$short=="Time0", paste(labelAll, fit$q$t0set), labelAll);
+
+  data = fit$lrn;
+  colnames(data) = labelAll;
+  cors = cor(data);
+  corsNoDiag = cors;
+  diag(corsNoDiag) = -1;
+  closest = apply(corsNoDiag, 1, which.max);
+
+  for(t0set in unique(fit$q$t0set)) {
+    use = which(fit$q$t0set == t0set & fit$q$short != "Time0");
+    use = sort(unique(c(use, closest[use])));
+    if (length(use) >= 2) {
+      par(mar=c(3,1,3,30));
+      hclust = hclust(as.dist(1-cor(data[,use])));
+      plot(as.dendrogram(hclust), horiz=T, main=paste(t0set, "and similar experiments\n(clustered by fitness)"));
+    } else {
+      blankplot("Too few sample for", t0set);
+    }
+  }
+  dev.off();
 }
