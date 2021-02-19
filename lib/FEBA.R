@@ -1208,8 +1208,8 @@ PolarTest = function(genes, strains, strain_fit,
   return(subset(results, p < maxp));
 }
 
-PlotCountClust = function(fit, outpdf) {
-  pdf(outpdf, width=9, height=11, pointsize=8);
+PlotCountClust = function(fit, outpdf, width=9, height=14, pointsize=8) {
+  pdf(outpdf, width=width, height=height, pointsize=pointsize);
 
   stopifnot(nrow(fit$expsUsed) == ncol(fit$gN) - 1);
   stopifnot(all(fit$expsUsed$name == names(fit$gN)[-1]));
