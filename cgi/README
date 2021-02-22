@@ -119,6 +119,7 @@ org.cgi -- links to experiments (exps.cgi), specific phenotypes (spec.cgi),
         SEED subsystems (seedsubsystemsOrg.cgi),
         MetaCyc pathways (pathwaysOrg.cgi)
 	heatmap builder (heatmap.cgi)
+        experiment correlations (expCor.cgi)
         links to genome browser for each scaffold
         and downloads
         (createFitData.cgi, createCofitData.cgi, spec.cgi, createExpData.cgi, orgSeqs.cgi)

@@ -440,6 +440,10 @@ if ($view) {
           a({ -href => "genesFit.cgi?orgId=$orgId&" . join("&", map "locusId=$_", @locusIds) },
             "top conditions for $nloci genes"))
     if $nloci > 1;
+  print p("Or see",
+          a({ -href => "expCor.cgi?orgId=$orgId&" . join("&", map { "e=$_" } @c) },
+            "experiment correlations"))
+    if scalar(@c) > 1;
   print p("Or download",
           a({ -href => "createFitData.cgi?" . join("&", "orgId=$orgId", map { "expName=$_" } @c) },
             "fitness data"),

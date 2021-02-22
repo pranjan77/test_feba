@@ -392,6 +392,8 @@ if ($help) {
 my $tx_name = @expNames1 > 1 ? "combined t" : "t";
 my $ty_name = @expNames2 > 1 ? "combined t" : "t";
 
+my $expCorSpec = join("&", map { "e=$_" } (@expNames1, @expNames2));
+
 my $heatmapColumnSpec = join("&", map { "c=$_" } (@expNames1,@expNames2));
 print <<END
 $start
@@ -472,6 +474,8 @@ and |fit| &gt; <select name="minabs" style="width: 60px;">
 </select></b>
 <input type="submit" name="submit" value="Go">
 </form>
+
+<b> Or see <A HREF="expCor.cgi?orgId=${orgId}&${expCorSpec}">correlations</b>
 
 </TD></TR></TABLE>
 </P>
