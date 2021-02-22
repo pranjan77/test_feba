@@ -58,13 +58,23 @@ if ($add) {
   if (@$exps == 0) {
     push @errors, qq{No experiments matching "$add"};
   } else {
+    my $tooMany = 0;
+    my $nIgnore = 0;
     foreach my $exp (@$exps) {
       my $expName = $exp->{expName};
-      if (!exists $exps{$expName} && scalar(@exps) < $maxExp) {
+      if (exists $exps{$expName}) {
+        $nIgnore++;
+      } elsif (scalar(@exps) < $maxExp) {
         push @exps, $exp;
         $exps{$expName} = $exp;
+      } else {
+        $tooMany = 1;
       }
     }
+    push @errors, qq{Not all matching experiments are shown: the limit is $maxExp.}
+      if $tooMany;
+    push @errors, qq{$nIgnore matching experiment(s) are already shown.}
+      if $nIgnore > 0;
   }
 }
 
@@ -74,6 +84,10 @@ print
   '<div id="ntcontent">',
   h2("Experiment Correlations for",
      a({ -href => "org.cgi?orgId=$orgId" }, $orginfo->{$orgId}{genome}));
+
+foreach my $error (@errors) {
+  print h3($error);
+}
 
 my @hidden = ();
 push @hidden, hidden('orgId', $orgId);
