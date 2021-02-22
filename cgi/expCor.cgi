@@ -153,6 +153,8 @@ if (@exps > 0) {
     my $cors = $cors[$i];
     foreach my $expName2 (@expNameSorted) {
       $cors{$expName1}{$expName2} = $cors->{$expName2};
+      die "Self correlation for $expName1 is not 1"
+        if $expName1 eq $expName2 && $cors->{$expName2} != 1;
     }
   }
 
