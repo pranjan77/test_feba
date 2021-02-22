@@ -84,6 +84,7 @@ print
   h3("Tools"),
   start_ul(),
   li(a( {href => "heatmap.cgi?orgId=$orgId"}, "Build heatmap")),
+  li(a( {href => "expCor.cgi?orgId=$orgId"}, "Experiment correlations")),
   li(a( {href => "keggmaplist.cgi?orgId=$orgId"}, "KEGG maps")),
   li(a( {href => "keggmap.cgi?mapId=01100&orgId=$orgId"}, "KEGG overview map")),
   li(a( {href => "seedsubsystemsOrg.cgi?orgId=$orgId"}, "SEED subsystems")),
