@@ -189,6 +189,7 @@ if (@exps > 0) {
   }
   print table( { cellspacing => 0, cellpadding => 1 }, @trows);
 } else {
+  print p("No experiments have been selected. Please search for experiments to add.");
   print  '</div>'; # end ntcontent
 }
 
