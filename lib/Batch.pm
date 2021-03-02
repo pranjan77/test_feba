@@ -24,8 +24,8 @@ sub get_batch_dbh {
     die "Invalid jobId" unless $jobId =~ m/^[a-zA-Z0-9_:-]+$/;
     die "No directory for jobId $jobId" unless -d "../job_data/$jobId";
     my $dbfile = "../job_data/$jobId/job.db";
-    return undef unless -e $dbfile;
-    my $bdb = DBI->connect("dbi:SQLite:dbname=$dbfile","","",{ RaiseError => 1 });
+    return undef unless -s $dbfile;
+    my $bdb = DBI->connect("dbi:SQLite:dbname=$dbfile","","");
     return undef unless $bdb;
     my $query = $bdb->selectrow_arrayref("SELECT * FROM Query limit 1;");
     return undef unless @$query;
