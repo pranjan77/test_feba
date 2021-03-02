@@ -26,8 +26,16 @@ my $jobId = $cgi->param('jobId');
 die "Much specify jobId" unless $jobId ne "";
 
 my $bdb = Batch::get_batch_dbh($jobId);
+if (!defined $bdb) {
+  print header,
+    Utils::start_page("Fitness BLAST"),
+    '<div id="ntcontent">',
+    p("Sorry, this analysis did not complete successfully."),
+    p(a({ -href => "batch_blast.cgi?jobId=$jobId" }, "Do you want to rerun it?"));
+  Utils::endHtml($cgi);
+}
+#else
 my $jobname = Batch::get_job_name($jobId,$bdb);
-
 my $stats = $bdb->selectrow_hashref(qq{SELECT COUNT(*) AS nProt,
                                        SUM(hasSpecific OR hasCofit) AS nLink,
                                        SUM(isHypo) AS nHypo,

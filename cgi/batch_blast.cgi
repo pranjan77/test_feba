@@ -10,13 +10,14 @@
 #
 # Optional CGI parameters:
 # file -- the fasta file to process
+# confirm -- confirm rebuild
 
 use strict;
 use CGI qw(:standard Vars -nosticky);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
 use IO::Handle; # for autoflush
-use URI::Escape;
+use URI::Escape qw{uri_escape};
 use Digest::MD5 qw(md5_hex);
 
 use lib "../lib";
@@ -49,7 +50,8 @@ if (defined $jobId && !defined $confirm) {
     die "Unknown job $jobId" unless -d $dir;
     die "No query file for this job" unless -e "$dir/query.faa";
     my $bdb = Batch::get_batch_dbh($jobId);
-    my $jobname = Batch::get_job_name($jobId,$bdb);
+    my $jobname = $jobId;
+    $jobname = Batch::get_job_name($jobId,$bdb) if $bdb;
     print
         header,
         Utils::start_page("Fitness BLAST for Genomes - Rerunning $jobname"),
@@ -153,9 +155,9 @@ sub ProcessJob($) {
     
     my $desc = $parse{desc};
     foreach my $name (keys %$desc) {
-        unless ($name =~ m/^[0-9A-Za-z._-|]+$/) {
+        unless ($name =~ m/^[0-9A-Za-z._|-]+$/) {
             print
-                p("Sorry, the identifier " . URI_Escape($name) . " is not valid."),
+                p("Sorry, the identifier " . uri_escape($name) . " is not valid."),
                 p("Identifiers in the fasta file may only contain the characters a-zA-Z0-9._|-");
             exit(0);
         }

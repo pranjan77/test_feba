@@ -18,12 +18,18 @@ use DBI;
 use Carp;
 
 # Checks the validity of the argument as well
+# Returns undef if it cannot load the database
 sub get_batch_dbh {
     my ($jobId) = @_;
     die "Invalid jobId" unless $jobId =~ m/^[a-zA-Z0-9_:-]+$/;
     die "No directory for jobId $jobId" unless -d "../job_data/$jobId";
     my $dbfile = "../job_data/$jobId/job.db";
-    return DBI->connect("dbi:SQLite:dbname=$dbfile","","",{ RaiseError => 1 }) || die $DBI::errstr;
+    return undef unless -e $dbfile;
+    my $bdb = DBI->connect("dbi:SQLite:dbname=$dbfile","","",{ RaiseError => 1 });
+    return undef unless $bdb;
+    my $query = $bdb->selectrow_arrayref("SELECT * FROM Query limit 1;");
+    return undef unless @$query;
+    return $bdb;
 }
 
 sub get_job_name {
