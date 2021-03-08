@@ -63,6 +63,8 @@ use strict;
 	my $sysName = "";
 	# \S for non-whitespace, \b for word boundary
 	$sysName = $1 if $attributes =~ m/\blocus_tag=([^ ;]+)\b/;
+        $sysName = $1 if $attributes =~ m/^ID=([0-9A-Z_]+);/;
+        $sysName =~ s/_CDS$//;
 	if ($sysName eq "" && defined $last && $last->{begin} == $begin && $last->{end} == $end) {
 	    $sysName = $1 if $last->{attributes} =~ m/\blocus_tag=([^ ;]+)\b/;
 	}
