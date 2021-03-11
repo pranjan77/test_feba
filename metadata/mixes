@@ -772,18 +772,18 @@ X	1
 Controlled vocabulary	Concentration	Units
 Sucrose	875	uM
 D-Glucose	875	uM
-D-Trehalose	875	uM
-Myo-inositol	875	uM
-Xylose	875	uM
+D-Trehalose dihydrate	875	uM
+m-Inositol	875	uM
+D-Xylose	875	uM
 D-Mannitol	875	uM
-n-Acetyl glucosamine	875	uM
-Sodium-L-Lactate	525	uM
-Malic acid	525	uM
-Citric acid	525	uM
-Succinic acid	525	uM
-Sodium Pyruvate	525	uM
-alpha Ketoglutaric acid	525	uM
-Citrulline	525	uM
+N-Acetyl-D-Glucosamine	875	uM
+Sodium L-Lactate	525	uM
+D,L-Malic Acid	525	uM
+Citric Acid	525	uM
+Sodium succinate dibasic hexahydrate	525	uM
+Sodium pyruvate	525	uM
+a-Ketoglutaric acid disodium salt hydrate	525	uM
+L-Citrulline	525	uM
 L-Alanine	175	uM
 L-Arginine	175	uM
 L-Asparagine	175	uM
@@ -791,7 +791,7 @@ L-Aspartic acid	175	uM
 L-Cysteine	175	uM
 L-Glutamic acid	175	uM
 L-Glutamine	175	uM
-L-Glycine	175	uM
+Glycine	175	uM
 L-Histidine	175	uM
 L-Isoleucine	175	uM
 L-Leucine	175	uM
@@ -802,10 +802,10 @@ L-Proline	175	uM
 L-Serine	175	uM
 L-Threonine	175	uM
 L-Tryptophan	175	uM
-L-Tyrosine	175	uM
+L-tyrosine	175	uM
 L-Valine	175	uM
 5-methyluridine	17.5	uM
-Adenine	17.5	uM
+Adenine hydrochloride hydrate	17.5	uM
 Adenosine	17.5	uM
 Cytidine	17.5	uM
 Cytosine	17.5	uM
@@ -818,19 +818,101 @@ Uracil	17.5	uM
 Uridine	17.5	uM
 Xanthine	17.5	uM
 Xanthosine	17.5	uM
-gamma-Aminobutyric acid	17.5	uM
+Gamma-Aminobutyric Acid Hydrochloride	17.5	uM
 Ectoine	17.5	uM
 Trimethylglycine	17.5	uM
 N-Acetyl-glutamic acid	17.5	uM
 Nicotinamide	17.5	uM
-Ornithine HCl	17.5	uM
-Shikimic acid	17.5	uM
-Spermidine	17.5	uM
+L-Ornithine	17.5	uM
+Shikimic Acid	17.5	uM
+spermidine	17.5	uM
 Taurine	17.5	uM
 Trigonelline HCl	17.5	uM
-Carnitine HCl	17.5	uM
-choline chloride	17.5	uM
+Carnitine Hydrochloride	17.5	uM
+Choline chloride	17.5	uM
 n-Acetyl-glutamine	17.5	uM
 n-Acetyl-lysine	17.5	uM
 n-Acetyl-muramic acid	17.5	uM
 sn-glycero-3-phosphocholine	17.5	uM
+		
+Media	ATCC Wolfe's vitamin mix	
+Description	Vitamin Supplement (ATCC® MD-VS™) based on Wolfe's Vitamin Solution	
+X	1	
+Controlled vocabulary	Concentration	Units
+Folic Acid	20	ug/L
+Pyridoxine HCl	100	ug/L
+Riboflavin	50	ug/L
+biotin	20	ug/L
+Thiamine HCl	50	ug/L
+Nicotinic Acid	50	ug/L
+calcium pantothenate	50	ug/L
+Cyanocobalamin	1	ug/L
+4-Aminobenzoic acid	50	ug/L
+Lipoic acid	50	ug/L
+		
+Media	ATCC Wolfe's mineral mix	
+Description	Trace Mineral Supplement (ATCC® MD-TMS™) based on Wolfe's mineral solution	
+X	1	
+Controlled vocabulary	Concentration	Units
+EDTA	5	mg/L
+Magnesium Sulfate Heptahydrate	3	mg/L
+Manganese (II) sulfate monohydrate	5	mg/L
+Sodium Chloride	10	mg/L
+Iron (II) sulfate heptahydrate	1	mg/L
+Cobalt(II) nitrate hexahydrate	1	mg/L
+Calcium Chloride Dihydrate	1	mg/L
+Zinc sulfate heptahydrate	1	mg/L
+Copper (II) sulfate pentahydrate	0.1	mg/L
+Aluminum potassium sulfate dodecahydrate	0.1	mg/L
+Boric Acid	0.1	mg/L
+Sodium Molybdate Dihydrate	0.1	mg/L
+Sodium selenite pentahydrate	0.01	mg/L
+Sodium tungstate dihydrate	0.1	mg/L
+Nickel (II) chloride hexahydrate	0.2	mg/L
+		
+Media	Selective_ion_mix_1	
+Description	Mixture of FRC relevant metals	
+X	1	
+Controlled vocabulary	Concentration	Units
+Cobalt chloride hexahydrate	0.002	mM
+Cadmium chloride hemipentahydrate	0.0005	mM
+Nickel (II) chloride hexahydrate	0.053	mM
+Aluminum chloride hydrate	2.25	mM
+Manganese (II) chloride tetrahydrate	1	mM
+Zinc chloride	0.01	mM
+		
+Media	SpecU	
+Description	Mixture of metals	
+X	1	
+Controlled vocabulary	Concentration	Units
+Cobalt chloride hexahydrate	0.008	mM
+Cadmium chloride hemipentahydrate	0.002	mM
+Nickel (II) chloride hexahydrate	0.053	mM
+Aluminum chloride hydrate	2.25	mM
+Manganese (II) chloride tetrahydrate	1	mM
+Zinc chloride	0.01	mM
+Uranyl acetate	0.0045	mM
+		
+Media	Other_metal_mix	
+Description	Mixture of metals	
+X	1	
+Controlled vocabulary	Concentration	Units
+silver chloride	0.0000136	mM
+Sodium arsenate dibasic heptahydrate	0.0000675	mM
+Barium chloride dihydrate	0.005	mM
+beryllium sulfate tetrahydrate	0.006	mM
+bismuth(III) chloride	0.0000589	mM
+sodium bromide	0.012	mM
+Cesium chloride	0.000207	mM
+copper (II) chloride dihydrate	0.00538	mM
+Ferric chloride	0.000941	mM
+Gallium(III)chloride	0.000373	mM
+Potassium Chloride	1.81	mM
+Lithium chloride	0.0774	mM
+Magnesium chloride hexahydrate	3.82	mM
+Manganese (II) chloride tetrahydrate	0.971	mM
+Sodium Chloride	12.5	mM
+lead (II) chloride	0.0000612	mM
+Sodium sulfate	5.31	mM
+Sodium selenate	0.000105	mM
+Strontium chloride	0.01	mM

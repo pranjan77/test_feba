@@ -506,7 +506,7 @@ Aluminum-NTA
 Caprolactam	105-60-2			113.16	Azepan-2-one						
 1-Pentanol	71-41-0			88.15	Pentan-1-ol						
 2-Ethylhexanol	104-76-7			130.23	2-Ethylhexan-1-ol						
-e-Amino-N-Caproic Acid	60-32-2			131.17	Aminocaproic acid; 6-Aminohexanoic acid						
+e-Amino-N-Caproic Acid	60-32-2			131.17	Aminocaproic acid; 6-Aminohexanoic acid; 6-aminocaproic acid						
 Cholinium dihydrogen phosphate	83846-92-8										
 Cholinium lysinate											
 Ethanolamine acetate											
@@ -599,7 +599,7 @@ Laminaribiose	34980-39-7	megazyme	O-LAM2	342.3
 Mannobiose	14417-51-7	megazyme	O-MBI	342.3							
 Mannotriose	28173-52-6	megazyme	O-MTR	504.44							
 Verbascose	546-62-3	megazyme	O-VER	828.72							
-Xylobiose	6860-47-5	megazyme	O-XBI	282.24							
+Xylobiose	6860-47-5	megazyme	O-XBI	282.24	1-4-D-Xylobiose						
 Xylotriose	47592-59-6	megazyme	O-XTR	414.36							
 D-apiose	639-97-4	santa cruz biotech	sc-285338	150.13							
 Arabinotriose	89315-59-3	megazyme	ATR	414.36							
@@ -912,7 +912,7 @@ Limonin	1180-71-8
 Harmalol	525-57-5										
 Quassin	76-78-8										
 Hesperidin	520-26-3										
-Quinic Acid	77-95-2										
+Quinic Acid	77-95-2				D-Quinic Acid						
 Harmine	442-51-3										
 Triptolide	38748-32-2										
 Actein	18642-44-9										
@@ -989,8 +989,8 @@ Warfarin	81-81-2			308.3
 Cephalexin	15686-71-2			347.4							
 Cefmetazole	56796-20-4			471.5							
 Lysozyme	2650-88-3										
-PEG 1500	25322-68-3			1500							
-PEG 8000	25322-68-3			8000							
+PEG 1500	25322-68-3			1500	Polyethylene glycol						
+PEG 8000	25322-68-3			8000	Polyethylene glycol						
 Serine hydroxamate	55779-32-3			120.11							
 Cephradine	38821-53-3			349.4							
 Vitafiber											
@@ -1037,14 +1037,46 @@ Loratadine	79794-75-5			382.89
 5-(2-thienyl)-pentanoic acid	21010-06-0			184.26							
 Roseoflavin	51093-55-1			405.41							
 Ginkgotoxin	1464-33-1			183.207							
-NLDM_metabolites											
-4 Carbon Mix 											
-Hans Metal Mix											
-R2A											
-RCH2											
-UGA											
-M9 minimal media plus											
-NLDM											
-Kan		Sigma	K4000-50G	582.58							
-Erm		Sigma	E5389	733.93							
-M9											
+2,6-diaminopimelic acid	583-93-7			190.2							
+Hydantoin	461-72-3			100.077							
+Phenylenediamine	106-50-3			108.144							
+DL-2-Aminobutyric acid	2835-81-6			103.12							
+3-aminobutyric acid	541-48-0			103.121							
+D-Lysine	923-27-3			146.19							
+L-Ornithine	70-26-8			132.16							
+Imidazole	288-32-4			68.08							
+3,5-Dinitrosalicylic acid	609-99-4			228.12							
+1,6-Hexanediamine	0124-09-04			116.208							
+L-pyroglutamic acid	149-87-1			129.115							
+pipercolic acid	3105-95-1			129.157							
+5-methyluridine	1463-10-1			258.23							
+Xanthosine	146-80-5			284.228							
+Ectoine	96702-03-03			142.158							
+Trimethylglycine	107-43-7			117.146							
+N-Acetyl-glutamic acid	5817-08-03			189.167							
+Taurine	107-35-7			125.14							
+Trigonelline HCl	6138-41-6			173.6							
+n-Acetyl-glutamine	5817-09-04			188.183							
+n-Acetyl-lysine	0692-04-06			188.227							
+n-Acetyl-muramic acid	10597-89-4			293.272							
+sn-glycero-3-phosphocholine	28319-77-9			257.2							
+alpha-Lactose	5989-81-1			360.31							
+Sodium gluconate	0527-07-01			218.137							
+methyl-beta-D-xylopyranoside	0612-05-05			164.16							
+Ribitol	488-81-3			152.146							
+Cellopentaose	2240-27-9			828.7							
+L-Xylose	0609-06-03			150.13							
+L-Galactose	15572-79-9			180.16							
+D-Saccharic acid potassium salt	576-42-1			248.23							
+Stachyose hydrate	54261-98-2			738.6							
+D-Glucuronic acid gamma lactone	32449-92-6			176.12							
+Gentibiose	554-91-6			342.3							
+Cellohexaose	2478-35-5			990.9							
+Cellotetraose	38819-01-01			666.58							
+Betanin	7659-95-2			550.47							
+Dextrin from potato starch	9004-53-9			NA							
+5-Aminolevulinic acid	106-60-5			131.131							
+trichloroethylene	79-01-6			131.38	TCE						
+L-Glutamic acid	56-86-0			147.13							
+Sodium phosphate dibasic	7558-79-4			141.96	Na2HPO4						
+Sodium phosphate monobasic	558-80-7			119.98	NaH2PO4						
