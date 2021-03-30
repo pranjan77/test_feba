@@ -1281,7 +1281,7 @@ PlotFitnessClust = function(fit, outpdf) {
       hclust = hclust(as.dist(1-cor(data[,use])));
       plot(as.dendrogram(hclust), horiz=T, main=paste(t0set, "and similar experiments\n(clustered by fitness)"));
     } else {
-      blankplot("Too few sample for", t0set);
+      blankplot(paste("Too few sample for", t0set));
     }
   }
   dev.off();
