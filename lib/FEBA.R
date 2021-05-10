@@ -111,7 +111,7 @@ AvgStrainFitness = function(strainCounts, strainT0, strainLocus,
 		 maxWeight = 20,
 		 minGeneFactorNStrains=3,
 		 returnStrainInfo=FALSE,
-		 debug=FALSE) {
+		 debug=getenv_numeric_or_default("FEBA_DEBUG",FALSE)) {
     if (length(strainCounts) < 1 || length(strainT0) < 1 || length(strainLocus) < 1
         || length(strainCounts) != length(strainT0) || length(strainCounts) != length(strainLocus))
         stop("No or misaligned input data");
@@ -448,7 +448,7 @@ FEBA_Fit = function(expsUsed, all, genes,
 	if(debug) cat("GeneFitness() succeeded\n");
 	fit = list(g = results[[1]]$gene_fit$locusId);
 	for(n in setdiff(names(results[[1]]$gene_fit), "locusId"))
-	    fit[[n]] = data.frame(lapply(results, function(x) x$gene_fit[[n]]));
+	    fit[[n]] = data.frame(lapply(results, function(x) x$gene_fit[[n]]), check.names=F);
 	names(fit) = sub("fitnorm","lrn",names(fit));
 	names(fit) = sub("fit","lr",names(fit));
 	if (debug) cat("Extracted fitness values\n");
