@@ -77,7 +77,7 @@
 
 <P><B>R</B>
 <UL>
-<LI><A HREF="fit.image">R image</A> (large)
+<LI>R images: <A HREF="fit.image">fitness results</A> and <A HREF="poolcount.image">counts per strain</A>
 <LI><A HREF="log">Log file from processing in R</A>
 <UL>
 <LI>At the top, "Ignoring" lists which samples were not analyzed at all. Either Drop=TRUE in the metadata or there were too few reads for the sample. These samples are not included in any of the tables.
@@ -219,9 +219,9 @@ As of April 9, 2014, the requirements for a successful experiment are:
 
 (The rules are implemented in FEBA_Exp_Status() in FEBA.R)
 
-<H3>The R image</H3>
+<H3>R images</H3>
 
-The R image includes:
+The main R image, fit.image, includes:
 
 <UL>
 <LI><B>genes</B> -- a table of genes, including
@@ -261,12 +261,21 @@ The R image includes:
 <LI><B>cofit</B> -- top cofitness hits for each gene
 <LI><B>specphe</B> -- specific phenotypes. A genes' phenotype is considered specific for a condition if abs(fit) > 1 and abs(fit) > percentileFit + 0.5 and abs(t) > 5, where percentileFit is the 95th percentile of abs(fit) for that gene. A gene may have more than one specific phenotypes.
 <LI><B>high</B> -- cases of significantly high fitness, including in experiments that did not meet quality metrics. This is especially useful for experiments where mutants in a few genes took over the population.
-<UL><LI>As of September 12, 2018, the criteria are fit &ge; 4; t &ge; 5; standard error = fit/t &le; 2;
-  gMean &ge; 10 (for the experiment); and fit &ge; maxFit - 8, where maxFit is for this experiment
+<UL><LI>As of May 2021, the criteria are
+  fit &ge; 4;
+  t &ge; 5;
+  nStrains >= 2, where nStrains is the number of strains used to compute the fitness value;
+  nReads >= 10, where 10 is the number of reads for those strains in the experimental sample;
+  nDetected/nStrains >= 0.5, where nDetected is the number of strains with at least one read in the experimental sample;
+  standard error = fit/t &le; 2;
+  gMean &ge; 10 (for the experiment);
+  and fit &ge; maxFit - 8, where maxFit is for this experiment.
 </UL>
 </UL></UL>
 <LI><B>expsUsed</B> -- a table of experiments
 </UL>
+
+The poolcount.image includes a data frame named all. It has one row per strain in the pool definition. The first 7 columns describe the barcode and the insertion location. There is also a column for each sample, with the count for that barcode in that sample.
 
 <H3>The pool of mutants</H3>
 

@@ -466,7 +466,8 @@ FEBA_Fit = function(expsUsed, all, genes,
         }
         # Version 1.2: added fit$polar
         # Version 1.2.2: per-day clustering plots
-	fit$version = "1.2.2";
+        # Version 1.3.1: improvements to the table of genes with high fitness
+	fit$version = "1.3.1";
 
 	q_col = words("name short t0set");
 	if(!is.null(expsUsed$num)) q_col = c(q_col, "num");
@@ -529,13 +530,13 @@ FEBA_Fit = function(expsUsed, all, genes,
 	} else {
 		cat("Only", sum(fit$q$u),"experiments of", nrow(fit$q)," passed quality filters!\n", file=stderr());
 	}
-        fit$high = HighFit(fit, genes, expsUsed);
+        fit$high = HighFit(fit, genes, expsUsed, all);
         # Save changes to expsUsed (i.e., ignore and computation of t0set)
         fit$expsUsed = expsUsed;
 	return(fit);
 }
 
-FEBA_Save_Tables = function(fit, genes, org="?",
+FEBA_Save_Tables = function(fit, genes, all, org="?",
 		 topdir="data/FEBA/html/",
 		 dir = paste(topdir,org,sep="/"),
 		 writeImage=TRUE,
@@ -734,6 +735,8 @@ FEBA_Save_Tables = function(fit, genes, org="?",
 	    unlink(nameToPath("fit.image"));
 	    file.symlink(img, nameToPath("fit.image"));
 	    cat("Created link for ",nameToPath("fit.image"),"\n", file=stderr());
+            save(all, file=nameToPath("poolcount.image"));
+            wroteName("poolcount.image");
 	}
 
 	if(!is.null(template_file)) {
@@ -1160,9 +1163,12 @@ SaveStrainUsage = function(fit, dir=".") {
 }
 
 # Note thresholds are different than in high_fit.pl
-HighFit = function(fit, genes, expsUsed, min.fit=4, min.t=5, max.se=2, min.gMean=10, max.below=8) {
-  wHigh = which(fit$lrn >= min.fit & fit$t >= min.t, arr.ind=T);
-  high = data.frame(locusId=fit$g[wHigh[,1]], expName=names(fit$lrn)[wHigh[,2]], fit=fit$lrn[wHigh], t=fit$t[wHigh]);
+HighFit = function(fit, genes, expsUsed, all,
+                   min.fit=4, min.t=5, max.se=2, min.reads=10, min.gMean=10, max.below=8,
+                   min.strains=2, min.strain.fraction=0.5) {
+  wHigh = which(fit$lrn >= min.fit & fit$t >= min.t & fit$tot >= min.reads & fit$n >= min.strains, arr.ind=T);
+  high = data.frame(locusId=fit$g[wHigh[,1]], expName=names(fit$lrn)[wHigh[,2]],
+                    fit=fit$lrn[wHigh], t=fit$t[wHigh], nReads=fit$tot[wHigh], nStrains=fit$n[wHigh]);
   # t ~= fit/standard_error, so estimate s.e. = fit/t
   high$se = high$fit/high$t;
   high$sdNaive = fit$sdNaive[wHigh];
@@ -1177,6 +1183,18 @@ HighFit = function(fit, genes, expsUsed, min.fit=4, min.t=5, max.se=2, min.gMean
   high = subset(high, gMean >= min.gMean & fit >= maxFit - max.below);
   names(high)[names(high)=="u"] = "used";
   high = merge(genes[,c("locusId","sysName","desc")], high);
+
+  # Compute #strains detected per gene x sample
+  u = all$locusId %in% high$locusId & fit$strainsUsed;
+  d = all[u, names(all) %in% high$expName];
+  nDetected = aggregate(d > 0, all[u,"locusId",drop=F], sum);
+  expNames = names(nDetected)[-1];
+  nDetected = data.frame(locusId=rep(nDetected$locusId, length(expNames)),
+                         expName=rep(expNames, each=nrow(nDetected)),
+                         # values, by experiment
+                         nDetected = unlist(nDetected[,-1]));
+  high = merge(high, nDetected);
+  high = subset(high, nDetected/nStrains >= min.strain.fraction);
   high = high[order(high$expName, -high$fit),];
   return(high);
 }
