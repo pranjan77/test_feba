@@ -180,16 +180,22 @@ if ($tsv != 1) {
         h2("Strain Fitness in ",
            a({-href => "org.cgi?orgId=$orgId"}, "$genome"),
            defined $locusSpecShow ? "around " . a({-href => "singleFit.cgi?orgId=$orgId&locusId=$locusSpec"}, $locusSpecShow)
-           : " at $scaffoldId: $begComma to $endComma"),
-        p("Experiments: ",
-          scalar(@expShow) > 0 ? join(", ", @expShow) : "none selected");
-
+           : " at $scaffoldId: $begComma to $endComma");
+    if (@expShow == 0) {
+      print p("No experiments selected");
+    } elsif (@expShow == 1) {
+      print p("Experiment:", @expShow);
+    } else {
+      print p("Averaging across", scalar(@expShow), "experiments:", @expShow);
+    }
 if ($help) {
         print qq[<div class="helpbox">
         <b><u>About this page:</u></b><BR><ul>
         <li>View the fitness of genes in various strains under a condition.</li>
         <li> Data on + strands are colored green, data on - strands are colored red, and data not affiliated with a gene are colored gray. Hover on points or blue links to see more information. Use the buttons to navigate the genome.</li>
-        <li>To get to this page, click on the colored fitness boxes across the site (mostly on any pages relating to genes).</li> 
+        <li>To get to this page, click on the colored fitness boxes across the site (mostly on any pages relating to genes).</li>
+        <li>To see the average strain fitness across replicates, type an condition (like "cisplatin") into the "Add experiments" box and hit "Add."
+        <ul><li>You can remove unwanted experiments by scrolling down to the per-strain table and clicking on "remove."</ul>
         </ul></div>];
     }
 
@@ -211,8 +217,12 @@ if ($help) {
         p(small(qq{Only strains with sufficient reads to estimate fitness are shown,
                    but the strain fitness values are still rather noisy and may be biased towards zero.
                    Strains near the edge of a gene are not shown as being associated with that
-                   gene (they are in grey).}))
-        if scalar(@expNames) > 0;
+                   gene (they are in grey).
+                   Strains in the central 10-90% of a gene are color coded by the insertions' strand.
+                   Conventionally, "+" means that the selectable marker is encoded on the forward strand,
+                   i.e., transcribed rightward.}
+               ))
+          if scalar(@expNames) > 0;
     
 
   if (@$genes == 0 && ! $objspec) {

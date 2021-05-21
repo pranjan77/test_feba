@@ -386,6 +386,7 @@ if ($help) {
     <li>To get to this page, search for any experiment and add another experiment to compare to.</li> 
     <li>Hover on a point to see what gene it is, or click to add the gene to the table.</li>
     <li>Or make a table of all the genes that are outliers, i.e., use "Low y" to list genes that are only important in $expDesc2.</li>
+    <li>You can also view averages across similar experiments -- for example, type "D-lactate" into the y axis box and click "Go".</li>
     </ul></div>];
 }
 
