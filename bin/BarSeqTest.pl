@@ -76,7 +76,7 @@ my $test = undef; # check for files, but do no work
         $index2 =~ s/IT0+/Index/;
         # Allow index to be at the end of the subdirectory name
         if ($file =~ m/^${index}[_.]/ || $file =~ m!_${index}[_./]!
-            || $file =~ m!/${index}[_.]!
+            || $file =~ m![/-]${index}[_.]!
             || $file =~ m/^${index2}_/ || $file =~ m/_${index2}_/
             || $file =~ m!/${index2}_!) {
           push @{ $fastqFiles{$index} }, $file;
