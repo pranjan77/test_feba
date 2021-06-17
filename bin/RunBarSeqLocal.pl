@@ -74,6 +74,7 @@ Other options:
   -limit -- limit the #reads analyzed per sample (mostly for debugging)
   -offset -- If IT001 is named S97, use -offset 96
   -preseq, -postseq, -nPreExpected -- see MultiCodes.pl
+  -bywell -- fastq.gz file names begin with A01_ for IT001, etc.
 END
     ;
 
@@ -88,6 +89,7 @@ my $test = undef;
     my $setspec = undef;
     my $fastq = undef;
     my ($preseq, $postseq, $nPreExpected, $nopool);
+    my $bywell = undef;
 
     die $usage unless GetOptions('test' => \$test,
                                  'n25' => \$n25,
@@ -103,7 +105,8 @@ my $test = undef;
                                  'in=s' => \$fastq,
                                  'sets=s' => \$setspec,
                                  'offset=i' => \$offset,
-                                 'nopool' => \$nopool);
+                                 'nopool' => \$nopool,
+                                 'bywell' => \$bywell);
     my @gdirs = ();
     my @setnames = ();
     die "Cannot use both -sets and -nopool\n" if defined $setspec && defined $nopool;
@@ -257,46 +260,56 @@ my $test = undef;
 	    my @path = split "/", $i;
 	    my $name = pop @path;
 	    my @pieces = split /[._]/, $name;
-	    my @indexes = grep m/^IT\d+$/, @pieces;
 	    my $index = undef;
             my $sampleNum = undef;
-	    # sometimes ITO (capital O) not IT0 (numeral zero)
-	    my @indexes2 = grep m/^ITO\d+$/, @pieces;
-	    my @indexes3 = grep m/IT0\d\d/, @pieces;
-
-	    if (@indexes == 1) {
-              $index = $indexes[0];
-	    } elsif (@indexes2 == 1){
-              # e.g. HiSeq_barcodes/FEBA_BS_81/Sample_FEBA_BS_81_ITO88/FEBA_BS_81_ITO88_GGCCTG_L001_R1_001.fastq.gz
-              $index = $indexes2[0];
-              $index =~ s/ITO/IT0/;
-            } elsif (@indexes3 == 1) {
-              $indexes3[0] =~ m/(IT0\d\d)/ || die;
-              $index = $1;
-	    } elsif ($name =~ m/_(\d+)_[ACGT][ACGT][ACGT][ACGT][ACGT][ACGT]_/
-		     || $name =~ m/_Index(\d+)_[ACGT][ACGT][ACGT][ACGT][ACGT][ACGT]_/i
-                     || $name =~ m/_Index(\d+)_S\d+_/
-                     || $i =~ m!_IT(\d\d\d)[/_.]!) {
-              # e.g. FEBA_BS_60_10_TAGCTT_L001_R1_001.fastq.gz
-              # e.g. FEBA_BS_125_Index10_S10_L001_R1_001.fastq.gz
-              # e.g. FEBA_BS_195_IT001/FEBA_BS_195_S97_L002_R1_001.fastq.gz
-              $sampleNum = $1;
-            } elsif ($name =~ m/_(\d+)_S\d+_L\d+_/) {
-              # e.g. FEBA_BS_117_24_S120_L002_R1_001.fastq.gz is IT024
-              $sampleNum = $1;
-            } elsif ($name =~ m/^(\d+)_S\d+_L\d+_R\d+_/) {
-              # e.g. 18_S1_L001_R1_001.fastq.gz is IT018
-              $sampleNum = $1;
-            } elsif ($name =~ m/^[A-Z]*\d*_S(\d+)_*L*\d*_R\d+/) {
-              # e.g. A10_S106_L003_R1_001.fastq.gz
-              # e.g. A10_S10_R1_001.fastq.gz
-              $sampleNum = $1;
-	    } elsif ($name =~ m/undetermined/i) {
-              print STDERR "Skipping $name\n";
-              next;
-	    } else {
-              die "Cannot identify the index ITnnn from file $i";
-	    }
+            if (defined $bywell) {
+              $pieces[0] =~ m/^([A-Z])(\d+)$/ || die "Cannot find well in $pieces[0] from file name $name in bywell mode\n";
+              my ($row,$column) = ($1,$2);
+              $row = ord($row) - ord("A");
+              $sampleNum = $row * 12 + $column;
+              die "Invalid sample number $sampleNum from file name $name for well $pieces[0] in bywell mode\n"
+                if $sampleNum < 1 || $sampleNum > 96;
+              $index = sprintf("IT%03d", $sampleNum);
+            } else {
+              my @indexes = grep m/^IT\d+$/, @pieces;
+              # sometimes ITO (capital O) not IT0 (numeral zero)
+              my @indexes2 = grep m/^ITO\d+$/, @pieces;
+              my @indexes3 = grep m/IT0\d\d/, @pieces;
+              
+              if (@indexes == 1) {
+                $index = $indexes[0];
+              } elsif (@indexes2 == 1){
+                # e.g. HiSeq_barcodes/FEBA_BS_81/Sample_FEBA_BS_81_ITO88/FEBA_BS_81_ITO88_GGCCTG_L001_R1_001.fastq.gz
+                $index = $indexes2[0];
+                $index =~ s/ITO/IT0/;
+              } elsif (@indexes3 == 1) {
+                $indexes3[0] =~ m/(IT0\d\d)/ || die;
+                $index = $1;
+              } elsif ($name =~ m/_(\d+)_[ACGT][ACGT][ACGT][ACGT][ACGT][ACGT]_/
+                       || $name =~ m/_Index(\d+)_[ACGT][ACGT][ACGT][ACGT][ACGT][ACGT]_/i
+                       || $name =~ m/_Index(\d+)_S\d+_/
+                       || $i =~ m!_IT(\d\d\d)[/_.]!) {
+                # e.g. FEBA_BS_60_10_TAGCTT_L001_R1_001.fastq.gz
+                # e.g. FEBA_BS_125_Index10_S10_L001_R1_001.fastq.gz
+                # e.g. FEBA_BS_195_IT001/FEBA_BS_195_S97_L002_R1_001.fastq.gz
+                $sampleNum = $1;
+              } elsif ($name =~ m/_(\d+)_S\d+_L\d+_/) {
+                # e.g. FEBA_BS_117_24_S120_L002_R1_001.fastq.gz is IT024
+                $sampleNum = $1;
+              } elsif ($name =~ m/^(\d+)_S\d+_L\d+_R\d+_/) {
+                # e.g. 18_S1_L001_R1_001.fastq.gz is IT018
+                $sampleNum = $1;
+              } elsif ($name =~ m/^[A-Z]*\d*_S(\d+)_*L*\d*_R\d+/) {
+                # e.g. A10_S106_L003_R1_001.fastq.gz
+                # e.g. A10_S10_R1_001.fastq.gz
+                $sampleNum = $1;
+              } elsif ($name =~ m/undetermined/i) {
+                print STDERR "Skipping $name\n";
+                next;
+              } else {
+                die "Cannot identify the index ITnnn from file $i";
+              }
+            }
             if (defined $sampleNum && !defined $index) {
               die "Invalid sample number $sampleNum with offset $offset from file $name\n"
                 unless $sampleNum - $offset >= 1;
