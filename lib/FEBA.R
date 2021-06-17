@@ -1183,6 +1183,7 @@ HighFit = function(fit, genes, expsUsed, all,
   high = subset(high, gMean >= min.gMean & fit >= maxFit - max.below);
   names(high)[names(high)=="u"] = "used";
   high = merge(genes[,c("locusId","sysName","desc")], high);
+  if (nrow(high) == 0) return(high);
 
   # Compute #strains detected per gene x sample
   u = all$locusId %in% high$locusId & fit$strainsUsed;
