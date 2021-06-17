@@ -2622,3 +2622,37 @@ Magnesium Sulfate Heptahydrate	0.1	g/L
 biotin	0.001	g/L
 Tryptone	5	g/L
 Yeast Extract	2.5	g/L
+		
+Media	Vogels_fungal_media	
+Description	media for growing fungi	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Trisodium citrate dihydrate	2.5	g/L
+Potassium phosphate monobasic	5	g/L
+Ammonium Nitrate	2	g/L
+Magnesium Sulfate Heptahydrate	0.2	g/L
+Calcium chloride dihydrate	0.1	g/L
+Citric Acid	0.25	g/L
+Zinc sulfate heptahydrate	0.25	g/L
+ammonium iron(II) sulfate hexahydrate	0.05	g/L
+Copper (II) sulfate pentahydrate	0.0125	g/L
+Manganese (II) sulfate monohydrate	0.0025	g/L
+Boric Acid	0.0025	g/L
+Sodium Molybdate Dihydrate	0.0025	g/L
+biotin	0.00025	g/L
+D-Glucose	15	g/L
+		
+Media	2x_UGA_defined_nocarbon	
+Description	Variation of ENIGMA denitrification media for aerobic growth	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium Chloride	7.48	mM
+Potassium Chloride	2.68	mM
+Magnesium sulfate heptahydrate	4.00	mM
+Calcium chloride dihydrate	0.20	mM
+Sodium Chloride	0.34	mM
+Monopotassium phosphate	10.00	mM
+ATCC Wolfe's mineral mix	2.00	X
+ATCC Wolfe's vitamin mix	2.00	X
+Sodium phosphate dibasic	8.10	mM
+Sodium phosphate monobasic	1.90	mM
