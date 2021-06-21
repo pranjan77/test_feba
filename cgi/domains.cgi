@@ -444,24 +444,10 @@ print
        "Search PFam"),
     "(including for weak hits, up to E = 1)"),
 
-  p(a({ -href => "https://www.rcsb.org/pdb/search/smart.do?"
-        . join("&",
-               "smartSearchSubtype_0=SequenceQuery",
-               "structureId_0=",
-               "chainId_0=",
-               "searchTool_0=blast",
-               "maskLowComplexity_0=yes",
-               "eValueCutoff_0=0.01",
-               "sequenceIdentityCutoff_0=0",
-               "smartSearchSubtype_1=+",
-               "t_1=",
-               "n_1=",
-               "smartHomologueReductionPercent=90",
-               "smartComparator=and",
-               "target=Current",
-               "sequence_0=${sys}$newline$seq"),
-       -title => "find similar proteins with known structures in RCSB"},
+  p(a({ -href => "http://www.ebi.ac.uk/thornton-srv/databases/cgi-bin/pdbsum/FindSequence.pl?pasted=$seq",
+        -title => "Find similar proteins with known structures (PDBsum)"},
       "Search structures")),
+
   p("Predict protein localization: ",
     a({-href => "http://www.psort.org/psortb/results.pl?"
              . join("&",
