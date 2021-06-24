@@ -49,7 +49,8 @@ if (@$reanno > 0) {
   my $faaFile = "$pre.faa";
   open(LIST, ">", $listFile) || die "Cannot write to $listFile";
   foreach my $row (@$reanno) {
-    print LIST join(":", $row->{orgId}, $row->{locusId}) . "\n";
+    print LIST join(":", $row->{orgId}, $row->{locusId}) . "\n"
+      if $row->{type} eq "1"; # proteion-coding genes only
   }
   close(LIST) || die "Error writing to $listFile";
   my $fastacmd = '../bin/blast/fastacmd';
@@ -66,10 +67,10 @@ print "Content-Disposition: attachment; filename=$filename\n\n";
 print join("\t", qw/organism orgId locusId sysName gene reannotation comment original_desc aaseq/)."\n";
 foreach my $row (@$reanno) {
   my $id = "lcl|" . $row->{orgId} . ":" . $row->{locusId};
-  die "No sequence for $id" unless exists $aaseqs->{$id};
+  die "No sequence for $id" if $row->{type} eq "1" && !exists $aaseqs->{$id};
   print join("\t", $orginfo->{ $row->{orgId} }{genome}, $row->{orgId},
              $row->{locusId}, $row->{sysName} || "", $row->{gene} || "",
              $row->{new_annotation}, $row->{comment}, $row->{desc},
-             $aaseqs->{$id})."\n";
+             $aaseqs->{$id} || "")."\n";
 }
 $dbh->disconnect();
