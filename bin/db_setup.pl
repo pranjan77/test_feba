@@ -418,7 +418,8 @@ sub ExpToPubId($$$);
                 $row->{$new} = !defined $exp->{$old} || $exp->{$old} eq "NA" ? "" : $exp->{$old};
             }
             # and compute nGenerations from StartOD and EndOD
-            if ($row->{nGenerations} eq ""
+            if (exists $row->{nGenerations} && exists $exp->{StartOD} && exists $exp->{EndOD}
+                && $row->{nGenerations} eq ""
                 && $exp->{StartOD} ne "" && $exp->{StartOD} ne "NA" && $exp->{StartOD} > 0
                 && $exp->{EndOD} ne "" && $exp->{EndOD} ne "NA" && $exp->{EndOD} > 0) {
               my $lr = log( $exp->{EndOD} / $exp->{StartOD} ) / log(2);
