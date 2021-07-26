@@ -107,7 +107,7 @@ Cephalothin sodium salt	58-71-9	Sigma	C4520-100MG	418.42		yes	no			yes
 Cerium(III) chloride	7790-86-5	Sigma	202983	246.48	cerium chloride		yes				
 Cerulenin	17397-89-6	Sigma	C2389-5MG	223.27			no				
 Cesium chloride	7647-17-8	Sigma	289329	168.36	cesium chloride		yes				
-Chloramphenicol	56-75-7	Sigma	C0378	323.13		yes	no			yes	
+Chloramphenicol	56-75-7	Sigma	C0378	323.13	Chlor	yes	no			yes	
 Chlorhexidine diacetate salt hydrate	56-95-1	Sigma	C6143	625.55		yes	no				
 Chlorpromazine hydrochloride	69-09-0	Sigma	C8138-5G	355.33		yes	no				
 Cholin acetate	14586-35-7	Sigma	670189	163.21			no			yes	
@@ -436,7 +436,7 @@ syringaldehyde	134-96-3	Sigma	57602	182.17						yes
 Syringic Acid	530-57-4	Sigma	S6881	198.17							
 TAPS sodium salt	91000-53-2	Sigma	T0647	265.26							
 Taurocholic acid sodium salt hydrate	345909-26-4	Sigma	T4009-250MG	537.68							
-Tetracycline hydrochloride	64-75-5	Sigma	T3383-25G	480.9		yes				yes	
+Tetracycline hydrochloride	64-75-5	Sigma	T3383-25G	480.9	Tet	yes				yes	
 Tetrazolium violet	1719-71-7	Sigma	T0138-1G	384.86		yes					
 Thallium(I) acetate	563-68-8	Sigma	T8266-5G	263.43			yes			yes	
 Theophylline	58-55-9	Sigma	t-1663 50g	180.2		yes					
@@ -1073,6 +1073,10 @@ D-Glucuronic acid gamma lactone	32449-92-6			176.12
 Gentibiose	554-91-6			342.3							
 Cellohexaose	2478-35-5			990.9							
 Cellotetraose	38819-01-01			666.58							
+Chlor											
+Tet											
+NLDM_novitamin											
+Aluminum											
 Betanin	7659-95-2			550.47							
 Dextrin from potato starch	9004-53-9			NA							
 5-Aminolevulinic acid	106-60-5			131.131							
