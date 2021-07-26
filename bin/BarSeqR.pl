@@ -114,13 +114,29 @@ END
 
     my @exps = &ReadTable($expsfile, qw{SetName Index Description Date_pool_expt_started});
     my $alpha = chr(206).chr(177);
+    my $Delta = chr(206).chr(148);
+    # Wierd dash that sometimes gets introduced into metadata
+    my $dash = chr(0xe2).chr(0x88).chr(0x92);
     foreach my $exp (@exps) {
-	# extra spaces at end are common data entry errors
-	$exp->{Description} =~ s/ *$//;
-	$exp->{SetName} =~ s/ *$//;
-	$exp->{Index} =~ s/ *$//;
-	# replace the greek letter alpha (bytes 206 177) with "a"
-	$exp->{Description} =~ s/$alpha/a/g;
+      # extra spaces at end are common data entry errors
+      $exp->{Description} =~ s/ *$//;
+      $exp->{SetName} =~ s/ *$//;
+      $exp->{Index} =~ s/ *$//;
+      # Fix non-ascii characters
+      foreach my $field (qw{Description Condition_1 Condition_2 Condition_3 Condition_4}) {
+        next if !exists $exp->{$field};
+        $exp->{$field} =~ s/^ +//;
+        $exp->{$field} =~ s/ +$//;
+        $exp->{$field} =~ s/$alpha/a/g;
+        if ($field eq "Description") {
+          $exp->{$field} =~ s/$Delta/&Delta;/g;
+        } else {
+          $exp->{$field} =~ s/$Delta/Delta/g;
+        }
+        $exp->{$field} =~ s/$dash/-/g;
+        # replace other non-ascii characers with .
+        $exp->{$field} =~ s/[^[:ascii:]]+/./g;
+      }
     }
 
     @exps = grep { $_->{Description} ne "" } @exps;
@@ -191,9 +207,6 @@ END
         # as sometimes they have condition set to Time0
         foreach my $field (qw{Condition_1 Condition_2 Condition_3 Condition_4}) {
           if (exists $exp->{$field} && $exp->{Group} ne "Time0") {
-            $exp->{$field} =~ s/$alpha/a/g;
-            $exp->{$field} =~ s/^ +//;
-            $exp->{$field} =~ s/ +$//;
             $exp->{$field} = "" if lc($exp->{$field}) eq "none";
             $exp->{$field} = "" if $exp->{$field} eq "NA";
             if ($exp->{$field} ne "") {
