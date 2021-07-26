@@ -324,10 +324,6 @@ FEBA_Fit = function(expsUsed, all, genes,
 	# if Group = Time0, it is a Time0, even if "short" has a different description
 	if(!is.null(expsUsed$Group)) expsUsed$short[expsUsed$Group == "Time0"] = "Time0";
    
-        write("Aggregating all over genes",stderr());
-	has_gene2 = !is.na(all$f) & all$f >= 0.1 & all$f <= 0.9; # has gene and is central
-	all_gN = aggregate(all[has_gene2,-metacol], list(locusId=all$locusId[has_gene2]), sum);
-
 	expsUsed$t0set = paste(expsUsed$Date_pool_expt_started, expsUsed$Set);
 	d = expsUsed[expsUsed$short=="Time0",];
 	expsT0 = split(d$name, d$t0set);
@@ -353,9 +349,18 @@ FEBA_Fit = function(expsUsed, all, genes,
 		cat("Experiments affected: ", expsUsed$name[u], "\n");
 		expsUsed$t0set[u] = newt0set;
 	    } else {
-		stop("No Time0 for", t0set);
+               cat("NO Time0 FOR ", t0set, "\n"); 
+               drop = expsUsed$name[expsUsed$t0set %in% t0set];
+               cat("DROPPING ", drop, "\n");
+               for (n in drop) all[[n]] = NULL;
+	       expsT0[[t0set]] = NULL;
+               expsUsed = expsUsed[!expsUsed$name %in% drop,];
 	    }
 	}
+
+        write("Aggregating all over genes",stderr());
+	has_gene2 = !is.na(all$f) & all$f >= 0.1 & all$f <= 0.9; # has gene and is central
+	all_gN = aggregate(all[has_gene2,-metacol], list(locusId=all$locusId[has_gene2]), sum);
 
 	# note that t0tot does not contain any metadata columns, but t0_gN does
 	t0tot = data.frame(lapply(expsT0, function(x) rowSums(all[,x,drop=F])), check.names=F);
