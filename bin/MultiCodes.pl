@@ -47,16 +47,21 @@ or, if -preseq -postseq -nPreExpected are all used, it expects a read of the for
 
 For a barcode to be counted, the preseq (9 nt upstream of the barcode)
 much match exactly; the postseq (9 nt downstream of the barcode) much
-also be correct unless the sequence is too short (in which 4 or 0 are
-checked) or minQuality = 0 (in which case the post-sequence is not
-checked and there is no guarantee that the barcode is the correct
-length).
+also be correct unless minQuality = 0 (in which case the post-sequence
+is not checked and there is no guarantee that the barcode is the
+correct length).
+
+If -minQuality > 0, then it also tries to estimate the diversity of the sample,
+and the out_prefix.good file lists the "good" barcodes (not off-by-1 from
+a more abundant barcode and with at least two reads). The "match10"
+field shows if the first 10 or last 10 nucleotides of the barcode match
+to a much-more abundant barcode; these are likely chimeras.
 END
     ;
 
 sub Variants($); # return all 1-nt variants for a sequence
 sub FindPrefix($$); # sequence, list of index prefixes => index of prefix or -1
-sub FindBarcode($$$); # sequence, quality, first post-prefix index => (barcode, spacing) or undef
+sub FindBarcode($$$); # sequence, quality, first post-prefix index => (spacingOk, barcode) or undef
 sub sum(@); # sum of a list of values
 
 my $preseq = undef; # before the barcode
@@ -151,7 +156,7 @@ my $doOff1 = undef;
 
     my $nReads = 0;
     my $nMulti = 0; # number with prefix identified
-    my %nOff = map {$_ => 0} (18..22); # only spacings of 20 are considered; count totals
+    my $nWithBarcode = 0; # number with a (quality) barocde identified
     my %codes = (); # barcode => number of times barcode is seen, with an array of one entry per multiplex tag
     my @prefix = (); # list of [ nLeading, indexseq (no leading Ns), name ]
 
@@ -187,54 +192,47 @@ my $doOff1 = undef;
     my $nWrongPrePos = 0;
     my $nWrongIndex2 = 0;
     while(my $header = <STDIN>) {
-        chomp $header;
-        my $seq = <STDIN>;
-        chomp $seq;
-        $nReads++;
-        <STDIN>;
-        my $quality = <STDIN>;
+      chomp $header;
+      my $seq = <STDIN>;
+      chomp $seq;
+      $nReads++;
+      <STDIN>;
+      my $quality = <STDIN>;
+      last if defined $nLimit && $nReads >= $nLimit;
 
-        last if defined $nLimit && $nReads >= $nLimit;
+      if (defined $index2) {
+        my $part = substr($seq, $index2At-1, $index2len);
+        if ($part ne $index2) {
+          $nWrongIndex2++;
+          next;
+        }
+      }
 
-        if (defined $index2) {
-          my $part = substr($seq, $index2At-1, $index2len);
-          if ($part ne $index2) {
-            $nWrongIndex2++;
-            next;
-          }
-        }
-
-        my $iPrefix = defined $iname ? 0 : FindPrefix($seq, \@prefix);
-        next if $iPrefix < 0;
-        $nMulti++;
-        my ($nLeading, $indexseq, $prefixName) = @{ $prefix[$iPrefix] };
-        my ($barcode,$off) = FindBarcode($seq, $quality, $nLeading+length($indexseq));
-        if (!defined $barcode && defined $off && $off >= 0) {
-            $nWrongPrePos++;
-            die "Over 10% of reads have the wrong spacing (not $nPreExpectedMin:$nPreExpectedMax) to the pre-sequence ($nWrongPrePos of $nReads so far).\n".
-                "Perhaps you forget to specify the protocol (i.e., -n25 or -bs3)?\n"
-                if $nWrongPrePos >= 200 && $nWrongPrePos >= 0.1 * $nReads
-                  && ! $ENV{FEBA_NO_FAIL};
-        }
-        next unless defined $barcode;
-        $nOff{$off}++;
-        next unless $off == 20;
-        if (!exists $codes{$barcode}) {
-            $codes{$barcode} = [];
-        }
-        $codes{$barcode}[$iPrefix]++;
+      my $iPrefix = defined $iname ? 0 : FindPrefix($seq, \@prefix);
+      next if $iPrefix < 0;
+      $nMulti++;
+      my ($nLeading, $indexseq, $prefixName) = @{ $prefix[$iPrefix] };
+      my ($barcode,$okSpacing) = FindBarcode($seq, $quality, $nLeading+length($indexseq));
+      if (defined $okSpacing && ! $okSpacing) {
+        $nWrongPrePos++;
+        die "Over 10% of reads have the wrong spacing (not $nPreExpectedMin:$nPreExpectedMax) to the pre-sequence ($nWrongPrePos of $nReads so far).\n".
+          "Perhaps you forget to specify the protocol (i.e., -n25 or -bs3)?\n"
+            if $nWrongPrePos >= 200 && $nWrongPrePos >= 0.1 * $nReads
+              && ! $ENV{FEBA_NO_FAIL};
+      }
+      next unless defined $barcode;
+      $nWithBarcode++;
+      $codes{$barcode} = [] unless exists $codes{$barcode};
+      $codes{$barcode}[$iPrefix]++;
     }
 
-    my $nOffTot = sum(values %nOff);
     my $nUniq = scalar(keys %codes);
-    print STDERR "Reads $nReads Multiplexed $nMulti Usable(20) $nOff{20} fraction " . ($nOff{20}/$nReads) . " unique codes $nUniq \n" if $nReads > 0;
+    print STDERR "Reads $nReads Multiplexed $nMulti Usable(20) $nWithBarcode "
+      . sprintf("(%.1f%%)", 100 * $nWithBarcode/$nReads) . " unique codes $nUniq \n" if $nReads > 0;
     print STDERR sprintf("Failed to match index2: %d reads (%.3f%%)\n", $nWrongIndex2, 100*$nWrongIndex2/$nReads)
       if $nReads > 0 && defined $index2;
     print STDERR sprintf("Wrong presequence position: %d reads (%.3f%%)\n", $nWrongPrePos, 100*$nWrongPrePos/($nReads-$nWrongIndex2))
       if $nReads > $nWrongIndex2;
-    foreach my $off (18..22) {
-        print STDERR sprintf("Off\t%d\t%d\t%.3f\n", $off, $nOff{$off}, $nOff{$off}/$nOffTot) if $nOffTot > 0;
-    }
 
     my %nPerCount = (); # number of codes with that count
     open(CODES, ">", "$out.codes.tmp") || die "Cannot write to $out.codes.tmp";
@@ -266,33 +264,67 @@ my $doOff1 = undef;
     # and look for off-by-1 cases
     my %offby1 = (); # barcode => 1 for likely off-by-1 errors
     if ($doOff1) {
-        open(CLOSE, ">", "$out.close") || die "Cannot write to $out.close";
-        print CLOSE join("\t",qw{code1 count1 code2 count2})."\n";
-        my $nCases = 0;
-	my $nOff1Reads = 0;
+      open(CLOSE, ">", "$out.close") || die "Cannot write to $out.close";
+      print CLOSE join("\t",qw{code1 count1 code2 count2})."\n";
+      my $nCases = 0;
+      my $nOff1Reads = 0;
 
-        while (my ($code,$count) = each %codes) {
-            my @variants = Variants($code);
-            foreach my $variant (@variants) {
-                if (($code cmp $variant) > 0 && exists $codes{$variant}) {
-		    my $n1 = sum(@$count);
-		    my $n2 = sum(@{$codes{$variant}});
-                    print CLOSE join("\t",$code,$n1,$variant,$n2)."\n";
-                    $offby1{ $n1 < $n2 ? $code : $variant } = 1;
-                    $nCases++;
-		    $nOff1Reads += $n1 < $n2 ? $n1 : $n2;
-                }
-            }
+      while (my ($code,$count) = each %codes) {
+        my @variants = Variants($code);
+        foreach my $variant (@variants) {
+          if (($code cmp $variant) > 0 && exists $codes{$variant}) {
+            my $n1 = sum(@$count);
+            my $n2 = sum(@{$codes{$variant}});
+            print CLOSE join("\t",$code,$n1,$variant,$n2)."\n";
+            $offby1{ $n1 < $n2 ? $code : $variant } = 1;
+            $nCases++;
+            $nOff1Reads += $n1 < $n2 ? $n1 : $n2;
+          }
         }
-        close(CLOSE) || die "Error writing to $out.close";
-	my $fOff1 = sprintf("%.3f", $nOff1Reads / ($nOff{20} || 1));
-        print STDERR "Wrote $nCases off-by-1 pairs ($nOff1Reads reads, fraction $fOff1) to $out.close\n";
+      }
+      close(CLOSE) || die "Error writing to $out.close";
+      my $fOff1 = sprintf("%.3f", $nOff1Reads / ($nWithBarcode || 1));
+      print STDERR "Wrote $nCases off-by-1 pairs ($nOff1Reads reads, fraction $fOff1) to $out.close\n";
+
+      # And write out good barcodes with >1 count, in order of abundance
+      my %goodCount = (); # barcode to total
+      while (my ($code, $count) = each %codes) {
+        if (!exists $offby1{$code}) {
+          my $tot = sum(@$count);
+          $goodCount{$code} = $tot if $tot > 1;
+        }
+      }
+
+      # If the 1st 10 or last 10 nt match, is potentially a chimera or other artefact
+      my %half1 = ();
+      my %half2 = ();
+      foreach my $code (keys %goodCount) {
+        my $half1 = substr($code, 0, 10);
+        push @{ $half1{$half1} }, $code;
+        my $half2 = substr($code, 10, 10);
+        push @{ $half2{$half2} }, $code;
+      }
+
+      open(my $fhGood, ">", "$out.good") || die "Cannot write to $out.good";
+      print $fhGood join("\t", "barcode", "n", "match10")."\n";
+      foreach my $code (sort { $goodCount{$b} <=> $goodCount{$a} || $a cmp $b } (keys %goodCount)) {
+        my $match1 = $half1{ substr($code, 0, 10) };
+        my $match2 = $half2{ substr($code, 10, 10) };
+        my $matchTo = "";
+        foreach my $sim (@$match1, @$match2) {
+          $matchTo = $sim
+            if $goodCount{$sim} >= 100 * $goodCount{$code};
+        }
+        print $fhGood join("\t", $code, $goodCount{$code}, $matchTo)."\n";
+      }
+      close($fhGood);
+      print STDERR "Wrote $out.good\n";
     }
 
     # and estimate diversity
-    if ($minQuality > 0 && $nOff{20} >= 1000 && $nPerCount{2} >= 10) {
+    if ($minQuality > 0 && $nWithBarcode >= 1000 && $nPerCount{2} >= 10) {
 	foreach my $fNoise (0, 0.005, 0.01, 0.02) {
-	    my $nNoise = int(0.5 + $nOff{20} * $fNoise);
+	    my $nNoise = int(0.5 + $nWithBarcode * $fNoise);
 	    next if $nNoise >= $nPerCount{1};
 	    print STDERR sprintf("If %.1f%% of reads are noise: diversity %.1f K from total barcodes %.1f K seen once %.1f K seen twice %.1f K\n",
 				 $fNoise*100,
@@ -300,7 +332,7 @@ my $doOff1 = undef;
 				 ($nUniq-$nNoise)/1000.0, ($nPerCount{1} - $nNoise)/1000.0, $nPerCount{2}/1000.0);
 	}
     }
-    if ($minQuality > 0 && $nOff{20} >= 1000 && $doOff1) {
+    if ($minQuality > 0 && $nWithBarcode >= 1000 && $doOff1) {
         my $nGoodCodes = 0;
         my $nGoodReads = 0;
         while (my ($code,$count) = each %codes) {
@@ -311,7 +343,7 @@ my $doOff1 = undef;
             }
         }
         print STDERR sprintf("Aside from singletons and off-by-1s, see %.1f K barcodes (%.1f%% of reads)\n",
-                             $nGoodCodes/1000.0, $nGoodReads * 100.0 / $nOff{20} );
+                             $nGoodCodes/1000.0, $nGoodReads * 100.0 / $nWithBarcode);
     }
     # and estimate bias
     if ($minQuality > 0 && $nUniq >= 5000) {
@@ -329,7 +361,7 @@ my $doOff1 = undef;
 	print sprintf("Barcodes with >= %d reads each: %.2f%% of codes (%.2f K), %.2f%% of reads (%.1f K)\n",
 		      $countSofar,
 		      (100 * $nCodesSofar)/$nUniq, $nCodesSofar/1000,
-		      (100.0 * $nReadsSofar)/$nOff{20}, $nReadsSofar/1000);
+		      (100.0 * $nReadsSofar)/$nWithBarcode, $nReadsSofar/1000);
     }
 }
 
@@ -347,72 +379,49 @@ sub FindPrefix($$) {
     return -1;
 }
 
+# returns barcode and if spacing to pre-sequence is correct, or undef
 sub FindBarcode($$$) {
-    my ($seq,$quality,$offset) = @_;
-    my $seq2 = substr($seq, $offset);
-    my $quality2 = substr($quality, $offset);
+  my ($seq,$quality,$offset) = @_;
+  my $seq2 = substr($seq, $offset);
+  my $quality2 = substr($quality, $offset);
 
-    my $prepos = index($seq2, $preseq);
-    unless($prepos >= 0 && $prepos >= $nPreExpectedMin && $prepos <= $nPreExpectedMax) {
-        print STDERR "seq2 $seq2 has invalid index-of-preseq $prepos\n" if $debug;
-        return (undef, $prepos) if $prepos >= 0; # report that the spacing was wrong
-        return undef;
-    }
-    my $barcode = substr($seq2, $prepos+length($preseq), 20);
-    unless(length($barcode) == 20 && $barcode =~ m/^[A-Z]+$/) {
-        # note barcodes with ambiguous sequences are ignored
-        # (we might want to allow one N in the future)
-        print STDERR "seq2 $seq2 has invalid barcode sequence $barcode\n" if $debug;
-        return undef;
-    }
+  my $prepos = index($seq2, $preseq);
+  unless($prepos >= 0 && $prepos >= $nPreExpectedMin && $prepos <= $nPreExpectedMax) {
+    print STDERR "seq2 $seq2 has invalid index-of-preseq $prepos\n" if $debug;
+    return (undef, 0) if $prepos >= 0; # report that the spacing was wrong
+    return undef; # preseq not found, could just be a noisy read
+  }
+  my $barcode = substr($seq2, $prepos+length($preseq), 20);
+  unless(length($barcode) == 20 && $barcode =~ m/^[A-Z]+$/) {
+    # Incorrect length should be rare but is possible if read is too short.
+    # Barcodes with ambiguous sequences are ignored
+    print STDERR "seq2 $seq2 has invalid barcode sequence $barcode\n" if $debug;
+    return undef;
+  }
 
-    my $postseqUsed = $postseq;
-    $postseqUsed = "" if $minQuality == 0;
-    if (length($seq2) < $prepos + length($preseq) + 20 + length($postseqUsed)) {
-        $postseqUsed = substr($postseqUsed, 0, 4);
-        print STDERR "Using postseq $postseqUsed\n" if $debug;
-
-        if (length($seq2) < $prepos + length($preseq) + 20) {
-            print STDERR "Giving up, too short\n" if $debug;
-            return undef;
-        }
-        if (length($seq2) < $prepos + length($preseq) + 20 + length($postseqUsed)) {
-            print STDERR "Ignoring postseq, too short\n" if $debug;
-            $postseqUsed = "";
-        }
+  if ($minQuality > 0) {
+    # check postSeq
+    my $seqAfter = substr($seq2, $prepos + length($preseq) + 20, length($postseq));
+    my $postSeqShort = substr($postseq, 0, length($seqAfter));
+    if ($seqAfter ne $postSeqShort) {
+      print "seq $seq2 barcode $barcode postseq not found\n" if $debug;
+      return undef;
     }
 
-    my $foundEnd = -1;
-    if ($postseqUsed eq "") {
-        $foundEnd = 20;
-    } else {
-        # need to check 20 first in case end of barcode matches post-seq. (AGAG issue)
-        foreach my $off (20,19,21,18,22) {
-            if (substr($seq2, $prepos + length($preseq) + $off, length($postseqUsed)) eq $postseqUsed) {
-                $foundEnd = $off;
-                last;
-            }
+    # check barcode quality
+    # the sanger encoding is !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJ
+    # so the quality score is encoded as 33+
+    my $barqual = substr($quality2, $prepos+length($preseq), 20);
+    my @scores = map { $_ - 33 } unpack("%C"x20, $barqual);
+    foreach my $score (@scores) {
+      die "Invalid score $score from barcode $barcode quality $barqual" if $score < 0 || $score > 100;
+      if ($score < $minQuality) {
+          print STDERR "Low quality $score for barcode $barcode in $seq2\n" if $debug;
+          return undef;
         }
     }
-    if ($foundEnd == -1) {
-        print STDERR "seq2 $seq2 barcode $barcode postseq not found\n" if $debug;
-        return undef;
-    }
-
-    if ($minQuality > 0) {
-        # the sanger code for !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJ
-        my $barqual = substr($quality2, $prepos+length($preseq), 20);
-        # quality score is encoded as 33+
-        my @scores = map { $_ - 33 } unpack("%C"x20, $barqual);
-        foreach my $score (@scores) {
-            die "Invalid score $score from barcode $barcode quality $barqual" if $score < 0 || $score > 100;
-            if ($score < $minQuality) {
-                print STDERR "Low quality $score for barcode $barcode in $seq2\n" if $debug;
-                return undef;
-            }
-        }
-    }
-    return($barcode,$foundEnd);
+  }
+  return($barcode, 1);
 }
 
 sub Variants($) {
