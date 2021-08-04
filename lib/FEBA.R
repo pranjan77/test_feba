@@ -867,7 +867,7 @@ eqline <- function(col="grey",lty=2,lwd=1) {
 # Returns a data frame with Gene1, Gene2, Sep for separation, and bOp (TRUE if predicted operon pair)
 CrudeOp = function(genes) {
 	d = merge(merge(data.frame(Gene1=genes$locusId[-nrow(genes)],Gene2=genes$locusId[-1]), genes, by.x="Gene1", by.y="locusId"), genes, by.x="Gene2", by.y="locusId",suffixes=1:2);
-	d = d[d$strand1==d$strand2,]
+	d = d[d$strand1==d$strand2 & d$scaffoldId1 == d$scaffoldId2,];
 	d$Sep = pmin(abs(d$begin1-d$end2),abs(d$end1-d$begin2));
 	d$bOp = d$Sep < median(d$Sep);
 	return(d);
