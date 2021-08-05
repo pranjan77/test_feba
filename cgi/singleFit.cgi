@@ -48,7 +48,7 @@ die "Invalid orgId argument" if $orgSpec ne "" && !exists $orginfo->{$orgSpec};
 
 my $start = Utils::start_page("Fitness for $locusSafe ($orgSpec)");
 
-my $query = qq{SELECT orgId, locusId, sysName, desc, gene, type FROM Gene
+my $query = qq{SELECT orgId, scaffoldId, locusId, sysName, desc, gene, type FROM Gene
 		WHERE locusId = ? };
 my $hits;
 if ($orgSpec) {
@@ -84,10 +84,18 @@ if (@$hits == 0) {
     p(Utils::gene_link($dbh, $gene, "lines"));
 
   if ($hits->[0]{has_fitness} == 0) {
-    print p("Sorry, no fitness data for $idShow.",
-              "This gene might not have mapped insertions due to chance,",
-              "or its mutants might be at low abundance after recovery from the freezer,",
-              "or its mutants might grow poorly in the conditions that were used to make the mutant library.");
+    my @reasons = ("This gene might not have mapped insertions due to chance,",
+                   "or its mutants might be at low abundance after recovery from the freezer,",
+                   "or its mutants might grow poorly in the conditions that were used to make the mutant library.");
+    # Is there fitness data for any gene on this scaffold?
+    my $scaffoldFit = $dbh->selectall_arrayref(qq{ SELECT * FROM Gene JOIN GeneFitness USING (orgId,locusId)
+                                                   WHERE orgId = ? AND scaffoldId = ?
+                                                   LIMIT 1 },
+                                               {}, $orgId, $gene->{scaffoldId});
+    @reasons = ("This gene is on scaffold $gene->{scaffoldId}, which did not have enough genes with insertions to allow normalization of the gene fitness values.")
+      if @$scaffoldFit == 0;
+    print p("Sorry, no fitness data for $idShow.", @reasons);
+
     my $exps = $dbh->selectall_arrayref("SELECT * from Experiment WHERE orgId = ? LIMIT 1", { Slice => {} }, $orgId);
     if (scalar(@$exps) > 0) {
       my $expName = $exps->[0]{expName};
