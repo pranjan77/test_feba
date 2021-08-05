@@ -74,7 +74,7 @@ my @expCand = ();
 my $choosing = undef;
 if (defined $query1 && $query1 ne "") {
   my @exps = @{ Utils::matching_exps($dbh,$orgId,$query1) };
-  Utils::fail($cgi, qq{No experiment matching "$query1"}) if @exps == 0;
+  Utils::fail($cgi, qq{No experiment matching "$query1" in $orginfo->{$orgId}{genome}}) if @exps == 0;
   my %expNames2 = map { $_ => 1 } @expNames2;
   @exps = grep { !exists $expNames2{ $_->{expName} } } @exps;
   if (@exps == 1) {
@@ -87,7 +87,7 @@ if (defined $query1 && $query1 ne "") {
   }
 } elsif (defined $query2 && $query2 ne "") {
   my @exps = @{ Utils::matching_exps($dbh,$orgId,$query2) };
-  Utils::fail($cgi, qq{No experiment matching "$query2"}) if @exps == 0;
+  Utils::fail($cgi, qq{No experiment matching "$query2" in $orginfo->{$orgId}{genome}}) if @exps == 0;
   my %expNames1 = map { $_ => 1 } @expNames1;
   @exps = grep { !exists $expNames1{ $_->{expName } } } @exps;
   if (@exps == 1) {

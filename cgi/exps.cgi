@@ -93,7 +93,9 @@ if ($orgId && defined $expGroup) {
 }
 
 if (@$exps == 0) {
-   print $cgi->h3(qq{No experiment found matching "$expSpec"});
+  my $msg = qq{No experiment found matching "$expSpec"};
+  $msg .= " in $orginfo->{$orgId}{genome}" if $orgId;
+  print $cgi->h3($msg);
 } else {
   my $heading = "Experiments";
   $heading .= " in ". $cgi->a({href => "org.cgi?orgId=$orgId"}, "$orginfo->{$orgId}{genome}") if $orgId ne "";
