@@ -47,7 +47,7 @@ my $orgId = $cgi->param('orgId') || die "No orgId found";
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
 my $genome = $orginfo->{$orgId}{genome} || die "Invalid orgId $orgId";
-my $expinfo = Utils::expinfo($dbh,$orgId); # expName => attribute => value
+my $expInfo = Utils::expinfo($dbh,$orgId); # expName => attribute => value
 
 my @r = $cgi->param('r');
 my @c = $cgi->param('c');
@@ -182,7 +182,7 @@ foreach my $locusId (@locusIds) {
                                                WHERE orgId = ? AND locusId = ?},
                                          "expName", {}, $orgId, $locusId);
   foreach my $expName (keys %{ $gene->{fit} }) {
-    die "No such experiment: $expName" unless exists $expinfo->{$expName};
+    die "No such experiment: $expName" unless exists $expInfo->{$expName};
   }
   $genes{$locusId} = $gene;
 }
@@ -257,15 +257,14 @@ push @headings, "&nbsp;" unless $view; # delete/edit/up/down controls
 push @headings, qw{Gene Description};
 foreach my $expName (@c) {
   print p({ -style => "color: red;" }, "Ignoring invalid experiment $expName (no longer in the Fitness Browser?)")
-    unless exists $expinfo->{$expName};
+    unless exists $expInfo->{$expName};
 }
-@c = grep { exists $expinfo->{$_} } @c;
+@c = grep { exists $expInfo->{$_} } @c;
 
 foreach my $expName (@c) {
-  die "Invalid column: $expName" unless exists $expinfo->{$expName};
-  my $exp = $expinfo->{$expName};
+  die "Invalid column: $expName" unless exists $expInfo->{$expName};
   my $show = a( {-href => "exp.cgi?orgId=$orgId&expName=$expName", -title => $expName},
-                     $expinfo->{$expName}{expDesc});
+                     $expInfo->{$expName}{expDesc});
   unless ($view) {
     my @args = ("orgId=$orgId", "view=$view");
     push @args, map "r=$_", @r;
@@ -335,13 +334,15 @@ foreach my $iRow (0..$maxRow) {
     }
     foreach my $expName (@c) {
       my $showId = $gene->{sysName} || $gene->{locusId};
+      $showId .= " (" . $gene->{gene} . ")" if $gene->{gene};
       my $fit = $gene->{fit}{$expName}{fit};
       my $strainUrl = "strainTable.cgi?orgId=$orgId&locusId=$gene->{locusId}&expName=$expName";
       my $t = $gene->{fit}{$expName}{t};
       my $show = "&nbsp;";
       if (defined $fit) {
         $show = a({ -href => $strainUrl,
-                    -title => "$showId: t = " . sprintf("%.1f",$t),
+                    -title => sprintf("fit = %.1f, t = %.1f for %s in %s (%s)",
+                                      $fit, $t, $showId, $expInfo->{$expName}{expDesc}, $expName),
                     -style => "color:rgb(0,0,0)" },
                   sprintf("%.1f", $fit));
       }
