@@ -449,13 +449,8 @@ print
       "Search structures")),
 
   p("Predict protein localization: ",
-    a({-href => "http://www.psort.org/psortb/results.pl?"
-             . join("&",
-                    "gram=$gram",
-                    "format=html",
-                    "sendresults=display",
-                    "email=",
-                    "seqs=>${sys}$newline$seq")},
+    a({-href => "https://papers.genomics.lbl.gov/cgi-bin/psortb.cgi?name=${sys}&type=${gram}&seq=${seq}",
+       -title => "PSORTb v3.0, Gram-${gram}"},
       "PSORTb"),
     "(Gram $gram $orgtype)"),
   p("Predict transmembrane helices:",
