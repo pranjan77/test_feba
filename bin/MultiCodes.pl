@@ -358,10 +358,10 @@ my $doOff1 = undef;
 	    $countSofar = $count;
 	    last if $nCodesSofar >= $f * $nUniq;
 	}
-	print sprintf("Barcodes with >= %d reads each: %.2f%% of codes (%.2f K), %.2f%% of reads (%.1f K)\n",
-		      $countSofar,
-		      (100 * $nCodesSofar)/$nUniq, $nCodesSofar/1000,
-		      (100.0 * $nReadsSofar)/$nWithBarcode, $nReadsSofar/1000);
+	print STDERR sprintf("Barcodes with >= %d reads each: %.2f%% of codes (%.2f K), %.2f%% of reads (%.1f K)\n",
+                             $countSofar,
+                             (100 * $nCodesSofar)/$nUniq, $nCodesSofar/1000,
+                             (100.0 * $nReadsSofar)/$nWithBarcode, $nReadsSofar/1000);
     }
 }
 
