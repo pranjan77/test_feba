@@ -279,7 +279,8 @@ sub matching_exps($$$) {
 	            OR expDesc LIKE "%$expSpec%"
 	            OR expDescLong LIKE "%$expSpec%"
                     OR setName = "$expSpec"
-                    OR timeZeroSet = "$expSpec")
+                    OR timeZeroSet = "$expSpec"
+                    OR dateStarted = "$expSpec" )
 	     $orgClause
 	     ORDER BY genus, species, strain, expGroup, condition_1, concentration_1, expDesc;};
     my $hits = $dbh->selectall_arrayref($sql, { Slice => {} });
@@ -299,7 +300,7 @@ sub matching_exps($$$) {
       foreach my $field (qw{expDesc expDescLong}) {
         $keep = 1 if $exp->{$field} =~ m/$expSpecReWord/i;
       }
-      foreach my $field (qw{setName timeZeroSet}) {
+      foreach my $field (qw{setName timeZeroSet dateStarted}) {
         $keep = 1 if lc($exp->{$field}) eq lc($expSpec);
       }
       push @out, $exp if $keep;
