@@ -2656,3 +2656,209 @@ ATCC Wolfe's mineral mix	2.00	X
 ATCC Wolfe's vitamin mix	2.00	X
 Sodium phosphate dibasic	8.10	mM
 Sodium phosphate monobasic	1.90	mM
+		
+Media	ZMB_Gut	
+Description	Media for culturing Bifidobacterium - An altered ZMB media from Rebecca Culver	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+D-Glucose	20	g/L
+D-Fructose	4	g/L
+D-Cellobiose	4	g/L
+D-Maltose monohydrate	4	g/L
+Beta-Lactose	4	g/L
+L-Histidine	0.5	g/L
+L-Isoleucine	0.5	g/L
+L-Leucine	0.5	g/L
+L-Methionine	0.5	g/L
+L-Valine	0.5	g/L
+L-Arginine	0.5	g/L
+m-Inositol	0.002	g/L
+Potassium phosphate dibasic	4.5	g/L
+Potassium phosphate monobasic	4.5	g/L
+L-Glutamic acid monopotassium salt monohydrate	0.5	g/L
+L-Phenylalanine	0.5	g/L
+L-Proline	0.5	g/L
+L-Asparagine	0.5	g/L
+L-Aspartic Acid	0.5	g/L
+L-Glutamine	0.5	g/L
+L-Serine	0.5	g/L
+L-Threonine	0.5	g/L
+L-Cysteine hydrochloride monohydrate	0.5	g/L
+L-Alanine	0.5	g/L
+Glycine	0.5	g/L
+L-Lysine	0.5	g/L
+L-Tryptophan	0.5	g/L
+L-tyrosine	0.5	g/L
+biotin	0.006	g/L
+calcium pantothenate	0.0012	g/L
+Nicotinic Acid	0.0009	g/L
+Pyridoxamine dihydrochloride	0.0048	g/L
+Riboflavin	0.0009	g/L
+Cyanocobalamin	0.00001	g/L
+Magnesium Sulfate Heptahydrate	0.004	g/L
+Iron (II) sulfate heptahydrate	0.004	g/L
+Zinc sulfate heptahydrate	0.005	g/L
+Folic Acid	0.00056	g/L
+4-Aminobenzoic acid	0.000056	g/L
+Thiamine HCl	0.00056	g/L
+Lipoic acid	0.001	g/L
+Tween 80	0.5	g/L
+Adenine hydrochloride hydrate	0.0368	g/L
+Guanine	0.0376	g/L
+Uracil	0.023	g/L
+Cytosine	0.0222	g/L
+Xanthine	0.0304	g/L
+Ammonium heptamolybdate tetrahydrate	0.00019	g/L
+Manganese (II) sulfate monohydrate	0.00038	g/L
+Calcium chloride dihydrate	0.000012	g/L
+Cobalt chloride hexahydrate	0.00019	g/L
+Copper (II) sulfate pentahydrate	0.000012	g/L
+Boric Acid	0.00075	g/L
+Potassium iodide	0.00016	g/L
+EDTA	0.0075	g/L
+L-glutathione reduced	0.015	g/L
+Ammonium Sulfate	1	g/L
+Sodium Chloride	3	g/L
+MOPS	15	g/L
+		
+Media	M9 minimal media_aromix_noCarbon	
+Description	E. coli defined media no carbon	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Magnesium sulfate	2	mM
+Calcium chloride	0.1	mM
+Sodium phosphate dibasic heptahydrate	12.8	g/L
+Potassium phosphate monobasic	3	g/L
+Sodium Chloride	0.5	g/L
+Ammonium chloride	1	g/L
+L-Phenylalanine	40	mg/L
+L-Tryptophan	40	mg/L
+4-Aminobenzoic acid	10	mg/L
+2,3-dihydroxybenzoic acid	10	mg/L
+		
+Media	R2A_Kan50_Tween01_Cycloheximide200	
+Description	R2A media for outgrowth of bacteria after plant experiments	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+R2A	1	X
+Kanamycin sulfate	0.05	mg/ml
+Tween 80	0.01	vol%
+Cycloheximide	0.2	mg/ml
+		
+Media	MME_noNitrogen_noCarbon	
+Description	Defined media without C and N from PNNL	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Potassium phosphate dibasic trihydrate	9.10	mM
+MOPS	20.00	mM
+Sodium Chloride	4.30	mM
+Ammonium chloride	9.30	mM
+Magnesium Sulfate Heptahydrate	0.41	mM
+Calcium chloride dihydrate	0.07	mM
+MME Trace Minerals	1	X
+		
+		
+Media	Hans_Basal_Media	
+Description	A defined medium from Hans	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+PIPES sesquisodium salt	0.03	M
+Potassium Chloride	0.10	g/L
+Sodium Chloride	0.01	g/L
+Calcium chloride dihydrate	0.01	g/L
+Magnesium chloride hexahydrate	0.10	g/L
+Sodium sulfate	0.10	g/L
+Ammonium chloride	0.25	g/L
+Sodium phosphate dibasic	0.10	g/L
+Sulfur-free DL minerals	1	x
+DL vitamins	1	x
+		
+Media	Hans_Basal_Media_plus_0.2x_20AA_mix	
+Description	A defined medium from Hans with 20 amino acid mix	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+PIPES sesquisodium salt	0.03	M
+Potassium Chloride	0.10	g/L
+Sodium Chloride	0.01	g/L
+Calcium chloride dihydrate	0.01	g/L
+Magnesium chloride hexahydrate	0.10	g/L
+Sodium sulfate	0.10	g/L
+Ammonium chloride	0.25	g/L
+Sodium phosphate dibasic	0.10	g/L
+Sulfur-free DL minerals	1	x
+DL vitamins	1	x
+20AA_mix	0.20	x
+		
+Media	MS_Basal_Salts_Robin	
+Description	Murashige and Skoog Basal Salts Medium from Robin	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium Nitrate	1650	mg/L
+Boric Acid	6.2	mg/L
+Calcium chloride	332.2	mg/L
+Cobalt chloride hexahydrate	0.025	mg/L
+Copper (II) sulfate pentahydrate	0.025	mg/L
+EDTA (disodium salt)	37.26	mg/L
+Iron (II) sulfate heptahydrate	27.8	mg/L
+Magnesium sulfate	180.7	mg/L
+Magnesium sulfate	16.9	mg/L
+Potassium iodide	0.83	mg/L
+Potassium nitrate	1900	mg/L
+Potassium phosphate monobasic	1250	uM
+Zinc sulfate heptahydrate	8.6	mg/L
+		
+Media	MS_Basal_Salts_Robin_0.5x	
+Description	Murashige and Skoog Basal Salts Medium from Robin at 0.5X concentration	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium Nitrate	825	mg/L
+Boric Acid	3.1	mg/L
+Calcium chloride	166.1	mg/L
+Cobalt chloride hexahydrate	0.0125	mg/L
+Copper (II) sulfate pentahydrate	0.0125	mg/L
+EDTA (disodium salt)	18.63	mg/L
+Iron (II) sulfate heptahydrate	13.9	mg/L
+Magnesium sulfate	90.35	mg/L
+Magnesium sulfate	8.45	mg/L
+Potassium iodide	0.415	mg/L
+Potassium nitrate	950	mg/L
+Potassium phosphate monobasic	625	uM
+Zinc sulfate heptahydrate	4.3	mg/L
+		
+Media	MS_Basal_Salts_Robin_LowPhosphate_0.5x	
+Description	Murashige and Skoog Basal Salts Medium from Robin at 0.5X concentration with low phosphate - 30uM	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium Nitrate	825	mg/L
+Boric Acid	3.1	mg/L
+Calcium chloride	166.1	mg/L
+Cobalt chloride hexahydrate	0.0125	mg/L
+Copper (II) sulfate pentahydrate	0.0125	mg/L
+EDTA (disodium salt)	18.63	mg/L
+Iron (II) sulfate heptahydrate	13.9	mg/L
+Magnesium sulfate	90.35	mg/L
+Magnesium sulfate	8.45	mg/L
+Potassium iodide	0.415	mg/L
+Potassium nitrate	950	mg/L
+Potassium phosphate monobasic	30	uM
+Zinc sulfate heptahydrate	4.3	mg/L
+		
+Media	RCH2_defined_with_Glycerol	
+Description	Defined minimal media for soil and groundwater bacteria with glycerol - used by Peter Kim for chemotaxis assays	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+Glycerol	2.2	mM
+PIPES sesquisodium salt	30	mM
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+		
+Media	RCH2_defined_NO_salts_with_Glycerol	
+Description	Defined minimal media for soil and groundwater bacteria with glycerol and no salts - used by Peter Kim for chemotaxis assays (by accident)	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Glycerol	2.2	mM
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X

@@ -916,3 +916,61 @@ lead (II) chloride	0.0000612	mM
 Sodium sulfate	5.31	mM
 Sodium selenate	0.000105	mM
 Strontium chloride	0.01	mM
+		
+Media	aromix	
+Description	Mix used for growing Salmonella	
+X	1	
+Controlled vocabulary	Concentration	Units
+L-Phenylalanine	40	mg/L
+L-Tryptophan	40	mg/L
+4-Aminobenzoic acid	10	mg/L
+2,3-dihydroxybenzoic acid	10	mg/L
+		
+Media	MME Trace Minerals	
+Description	Mineral mix for MME media	
+X	1000	
+Controlled vocabulary	Concentration	Units
+EDTA tetrasodium tetrahydrate salt	500	mg/L
+Ferric chloride	2000	mg/L
+Boric Acid	50	mg/L
+Zinc chloride	50	mg/L
+copper (II) chloride dihydrate	30	mg/L
+Manganese (II) chloride tetrahydrate	50	mg/L
+Diammonium molybdate	50	mg/L
+Cobalt chloride hexahydrate	50	mg/L
+Nickel (II) chloride hexahydrate	50	mg/L
+		
+Media	Sulfur-free DL minerals	
+Description	Sulfur-free DL minerals	
+X	100	
+Controlled vocabulary	Concentration	Units
+Magnesium chloride hexahydrate	0.03	g/L
+Nitrilotriacetic acid disodium salt	0.015	g/L
+Sodium Chloride	0.01	g/L
+Manganese (II) chloride tetrahydrate	0.005	g/L
+Cobalt chloride hexahydrate	0.001	g/L
+Zinc chloride	0.0013	g/L
+Calcium Chloride Dihydrate	0.001	g/L
+Iron (II) chloride tetrahydrate	0.001	g/L
+Nickel (II) chloride hexahydrate	0.00025	g/L
+Aluminum chloride hydrate	0.0002	g/L
+copper (II) chloride dihydrate	0.0001	g/L
+Boric Acid	0.0001	g/L
+Sodium Molybdate Dihydrate	0.0001	g/L
+Sodium selenite pentahydrate	0.003	g/L
+Sodium tungstate dihydrate	0.0025	g/L
+		
+Media	DL vitamins	
+Description	DL vitamin mix	
+X	100	
+Controlled vocabulary	Concentration	Units
+d-Biotin	0.02	mg/L
+Folic Acid	0.02	mg/L
+Pyridoxine HCl	0.1	mg/L
+Riboflavin	0.05	mg/L
+Thiamine	0.05	mg/L
+Nicotinic Acid	0.05	mg/L
+Pantothenic Acid	0.05	mg/L
+Vitamin B12	0.001	mg/L
+p-Amino Benzoic Acid	0.05	mg/L
+D,L-6,8-Thiotic Acid	0.05	mg/L
