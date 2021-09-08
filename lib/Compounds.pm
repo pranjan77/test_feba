@@ -341,6 +341,8 @@ sub ParseMediaFile($) {
                   $units =~ s/^ +//;
                   $units =~ s/ +$//;
                   die $line if $units eq "";
+                  $units = "g/L" if $units eq "mg/ml";
+                  $units = "X" if $units eq "x";
                   die "Invalid unit $units for\n$line\nin $curMedia, $mediaFile"
                     unless exists $validUnits{$units};
                   push @{ $comp{$curMedia} }, [ $compound, $concentration, $units ];
