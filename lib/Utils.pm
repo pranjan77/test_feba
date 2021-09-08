@@ -19,6 +19,7 @@ use Time::HiRes;
 use Carp;
 use List::Util qw(sum);
 use HTML::Entities qw{encode_entities};
+use Scalar::Util qw{looks_like_number};
 
 sub start_page($);
 sub get_style();
@@ -243,17 +244,37 @@ sub expinfo($$) {
     return $dbh->selectall_hashref("SELECT * FROM Experiment WHERE orgId = ?", "expName", {}, $orgId);
 }
 
+sub MaybeNumericCmp($$) {
+  my ($a,$b) = @_;
+  return $a <=> $b if looks_like_number($a) && looks_like_number($b);
+  #else
+  return $a cmp $b;
+}
+
 # Like cmp but for experiments, for ordering by group and condition/concentration, with
 # expDesc as a fallback.
 # Each argument should be a hash corresponding to a row in the Experiment table
 sub CompareExperiments($$) {
     my ($expA,$expB) = @_;
     die unless defined $expA->{expGroup} && defined $expB->{expGroup};
-    return $expA->{expGroup} cmp $expB->{expGroup}
-           || lc($expA->{condition_1}) cmp lc($expB->{condition_1})
-           || $expA->{concentration_1} cmp $expB->{concentration_1}
-           || lc($expA->{expDesc}) cmp lc($expB->{expDesc});
-}
+    my $cmp = $expA->{expGroup} cmp $expB->{expGroup}
+      || lc($expA->{condition_1}) cmp lc($expB->{condition_1})
+      || lc($expA->{condition_2}) cmp lc($expB->{condition_2})
+      || lc($expA->{condition_3}) cmp lc($expB->{condition_3})
+      || lc($expA->{condition_4}) cmp lc($expB->{condition_4})
+      || MaybeNumericCmp($expA->{concentration_1}, $expB->{concentration_1})
+      || MaybeNumericCmp($expA->{concentration_2}, $expB->{concentration_2})
+      || MaybeNumericCmp($expA->{concentration_3}, $expB->{concentration_3})
+      || MaybeNumericCmp($expA->{concentration_4}, $expB->{concentration_4});
+    return $cmp if $cmp;
+    # If those all match, sort by description (sometimes) and by experiment id
+    if ($expA->{concentration_1} ne "") {
+      # are already sorting by concentrations, so sort by experiment number
+      return $expA->{expName} cmp $expB->{expName};
+    }
+    return lc($expA->{expDesc}) cmp lc($expB->{expDesc})
+      || $expA->{expName} cmp $expB->{expName};
+  }
 
 # Should check that orgId is valid (if it is not empty) before calling.
 # Allows exact match to Group or Media, or word matches in expDesc or expDescLong, or partial word matches in Condition_*
