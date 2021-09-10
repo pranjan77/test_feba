@@ -115,9 +115,15 @@ if (@$exps == 0) {
   }
 }
 
-  my @trows = ();
+# experiment object to link, including hover text
+sub ExpLink($) {
+  my ($exp) = @_;
+  return a({ -href => "exp.cgi?orgId=$exp->{orgId}&expName=$exp->{expName}",
+             -title => "$exp->{expName} from $exp->{dateStarted} by $exp->{person}" },
+           $exp->{expName});
+}
 
-
+my @trows = ();
 # remove organism column if already specified
 if (defined $expGroup && defined $orgId && !defined $condition1){
    push @trows, $cgi->Tr({-valign => "top"}, $cgi->th(['Name', 'Group', 'Condition', 'Description' ]));
@@ -125,18 +131,19 @@ if (defined $expGroup && defined $orgId && !defined $condition1){
     my @cond = map $row->{"condition_".$_}, (1..4);
     @cond = grep $_ ne "", @cond;
     push @trows, $cgi->Tr({-valign => "top"},
-                          $cgi->td([$cgi->a({href => "exp.cgi?orgId=$row->{orgId}&expName=$row->{expName}"}, $row->{expName}),
-                          $row->{expGroup},
-                          join("; ", @cond),
-                          $row->{expDesc} ]));
+                          $cgi->td([ ExpLink($row),
+                                     $row->{expGroup},
+                                     join("; ", @cond),
+                                     $row->{expDesc} ]));
     }
 } else {
   push @trows, $cgi->Tr({-valign => "top"}, $cgi->th([ 'Organism', 'Name', 'Group', 'Condition', 'Description' ]));
   foreach my $row (@$exps) {
       push @trows, $cgi->Tr({-valign => "top"},
-             $cgi->td([ $cgi->a({href => "org.cgi?orgId=". $orginfo->{$row->{orgId}}->{orgId}}, "$orginfo->{$row->{orgId}}{genome}"),
-	              $cgi->a({href => "exp.cgi?orgId=$row->{orgId}&expName=$row->{expName}"}, $row->{expName}),
-		      $row->{expGroup}, $row->{condition_1}, $row->{expDesc} ]));
+             $cgi->td([ $cgi->a({ -href => "org.cgi?orgId=". $row->{orgId} },
+                                $orginfo->{$row->{orgId}}{genome}),
+                        ExpLink($row),
+                        $row->{expGroup}, $row->{condition_1}, $row->{expDesc} ]));
   }
 }
 
