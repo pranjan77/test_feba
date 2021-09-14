@@ -263,8 +263,16 @@ foreach my $expName (@c) {
 
 foreach my $expName (@c) {
   die "Invalid column: $expName" unless exists $expInfo->{$expName};
-  my $show = a( {-href => "exp.cgi?orgId=$orgId&expName=$expName", -title => $expName},
-                     $expInfo->{$expName}{expDesc});
+  my $exp = $expInfo->{$expName};
+  my $title = "$expName by $exp->{person} on $exp->{dateStarted} - $exp->{media}";
+  foreach my $i (1..4) {
+    my $cond = $exp->{"condition_${i}"};
+    my $units = $exp->{"units_${i}"};
+    my $conc = $exp->{"concentration_${i}"};
+    $title .= " + $conc $units $cond" if $cond ne "";
+  }
+  my $show = a( {-href => "exp.cgi?orgId=$orgId&expName=$expName", -title => $title},
+                     $exp->{expDesc});
   unless ($view) {
     my @args = ("orgId=$orgId", "view=$view");
     push @args, map "r=$_", @r;
