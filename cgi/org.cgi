@@ -79,6 +79,15 @@ if ((defined $orginfo->{$orgId}{taxonomyId}) && ($orginfo->{$orgId}{taxonomyId} 
 }
 
 print
+  qq[<div style="position: relative;"><div class="floatbox">],
+  start_form( -name    => 'input', -method  => 'GET', -action  => 'myFitShow.cgi' ),
+  p("Enter gene name or domain name:", br(),
+    textfield( -name      => 'gene', -size => 20, -maxlength => 100 ),
+    hidden('orgId'),
+    br(),
+    submit("Find gene")),
+  end_form,
+  qq[</div></div>],
   h3("Fitness Experiments"),
   table({cellspacing => 0, style => "margin-left: 50px;", cellpadding => 3}, @trows),
   h3("Tools"),
