@@ -22,7 +22,7 @@
 #
 # CGI parameters used to update the view:
 # addrow -- search for matching gene(s) in this organism [multiple space-delimited terms]
-# addrowAt -- -1 or 1 for top or bottom
+# addrowAt -- -1, 0, or 1 for top, middle, or bottom
 # addcol -- ditto but may add multiple experiments
 # addcolAt -- -1 or 1 for left or right
 # ca -- additional columns that may be added at left or right
@@ -90,9 +90,13 @@ foreach my $add (@addrow) {
   }
   if (defined $r) {
     if ($addrowAt eq "-1") {
-      unshift @r, $r;
-    } else {
-      push @r, $r;
+      unshift @r, $r; # at end (bottom)
+    } elsif ($addrowAt eq "1") {
+      push @r, $r; # at beginning (top)
+    } else { # add at middle
+      my $mid = int((scalar(@r)-1)/2); # 0 if empty
+      $mid++ if $mid < scalar(@r)-1;
+      splice @r, $mid, 0, ($r);
     }
   }
 }
@@ -379,6 +383,7 @@ while (grep($_ eq "_l$nlabel", @r)) {
 my $selectRowAt = qq{
 <SELECT name="addrowAt">
 <OPTION value=-1 >top</OPTION>
+<OPTION value=0 >middle</OPTION>
 <OPTION value=1 SELECTED >bottom</OPTION>
 </SELECT>
 };
