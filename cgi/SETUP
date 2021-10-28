@@ -111,3 +111,6 @@ need to run
 	bin/hmmfetch --index hmm/pfam.hmm
 
 to index them.
+
+For the phobius CGI, bin/phobius should include the decodeanhmm
+executable, phobius.options, and phobius.model

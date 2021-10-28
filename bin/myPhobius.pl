@@ -78,7 +78,7 @@ while(my $line = <$fhTmp>) {
   print $fhP join("\t", $iLine, $F[0], $F[1], $F[2]+$F[3], $F[4], $F[5]+$F[6]+$F[7]+$F[8])."\n";
 }
 close($fhTmp) || die "Error reading $tmpFile";
-unlink($fhTmp);
+unlink($tmpFile);
 close($fhP) || die "Error writing $out.plp";
 
 open(my $fhR, ">", "$out.R")
