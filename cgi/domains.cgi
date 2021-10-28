@@ -453,14 +453,9 @@ print
        -title => "PSORTb v3.0, Gram-${gram}"},
       "PSORTb"),
     "(Gram $gram $orgtype)"),
-  p("Predict transmembrane helices:",
-    a({-href => "http://www.cbs.dtu.dk/cgi-bin/webface2.fcgi?"
-             . join("&",
-                    "configfile=/usr/opt/www/pub/CBS/services/TMHMM-2.0/TMHMM2.cf",
-                    "outform=-noshort",
-                    "SEQ=>${sys}$newline$seq")},
-        "TMHMM")),
-
+  p("Predict transmembrane helices and signal peptides:",
+    a({-href => "myPhobius.cgi?name=${sys}&seq=${seq}"},
+      "Phobius")),
   p("Check the current SEED with",
     # %0A encodes "\n" so that it looks like fasta input.
     a({-href => "http://pubseed.theseed.org/FIG/seedviewer.cgi?page=FigFamViewer&fasta_seq=>${sys}%0A$seq"},
