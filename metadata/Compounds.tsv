@@ -270,7 +270,7 @@ Levofloxacin	100986-85-4	Sigma	28266-1G-F	361.37		yes
 Levulinic Acid	123-76-2	Sigma	L2009	116.12							
 limonene	138-86-3			136.24	D,L-Limonene						
 Lincomycin hydrochloride	859-18-7	Sigma	L6004	443		yes					
-Lipoic acid	1200-22-2	Sigma	O4471	206.33	Thioctic acid						
+Lipoic acid	1077-28-7	Sigma		206.33	Thioctic acid; D,L-6,8-Thioctic Acid						
 Lithium chloride	7447-41-8	Sigma	L4408	42.39			yes				
 Lomefloxacin hydrochloride	98079-52-8	Sigma	L2906	387.81						yes	
 m-Inositol	87-89-8	Sigma	I5125	180.16				yes			
@@ -533,7 +533,7 @@ Mucin from porcine stomach,Type II	84082-64-4	sigma	M2378-100G
 amylopectin from maize	9037-22-3	sigma	10120-250G								
 (+)-Arabinogalactan	9036-66-2	sigma	A9788-1G								
 Sodium alginate	9005-38-3	sigma	PHR1471-1G								
-Laminarin from Laminaria digitata	9008-22-4	sigma	L9634-1G								
+Laminarin from Laminaria digitata	9008-22-4	sigma	L9634-1G		Laminarin						
 Red Arabinan from sugar-beet		sigma	07681-1G								
 arabinogalactan	9036-66-2	sigma	A9788-1G								
 Levan - from Erwinia herbicola	9013-95-0	sigma	L8647-1G								
@@ -1107,3 +1107,14 @@ Epiandrosterone	481-29-8			290.447
 Indole-3-pyruvic acid	0392-12-1			203.19							
 Salicylic acid	69-72-7			138.122							
 Lumichrome	1086-80-2			242.23							
+Tricalcium phosphate	7758-87-4			310.18							
+Scopoletin	92-61-5			192.16							
+N-(3-oxohexanoyl)-DL-homoserine lactone	76924-95-3			213.23							
+N-decanoyl-DL-Homoserine lactone	177315-87-6			255.35							
+Acetylated xylan											
+O-methyl-D-glucuronoxylan											
+Aesculetin	0305-01-01			178.14							
+(5z)-4-bromo-5-(bromomethylene)-2(5h)-furanone	247167-54-0			253.88							
+Jasmonic acid	6894-38-8			210.27							
+Abscisic acid	21293-29-8			264.321							
+Capecitabine	154361-50-9			359.35							

@@ -2862,3 +2862,53 @@ Controlled vocabulary	Concentration	Units
 Glycerol	2.2	mM
 Wolfe's mineral mix	1	X
 Wolfe's vitamin mix	1	X
+		
+Media	Hans_Basal_Media_bicarb	
+Description	A bicarbonate buffered defined medium from Hans	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Sodium bicarbonate	2.50	g/L
+Potassium Chloride	0.10	g/L
+Sodium Chloride	0.01	g/L
+Calcium chloride dihydrate	0.01	g/L
+Magnesium chloride hexahydrate	0.10	g/L
+Sodium sulfate	0.10	g/L
+Ammonium chloride	0.25	g/L
+Sodium phosphate dibasic	0.10	g/L
+Sulfur-free DL minerals	1	x
+DL vitamins	1	x
+		
+Media	Hans_Basal_Media_bicarb_nitrate	
+Description	A bicarbonate buffered defined medium with nitrate from Hans	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Sodium bicarbonate	2.50	g/L
+Potassium Chloride	0.10	g/L
+Sodium Chloride	0.01	g/L
+Calcium chloride dihydrate	0.01	g/L
+Magnesium chloride hexahydrate	0.10	g/L
+Sodium sulfate	0.10	g/L
+Ammonium chloride	0.25	g/L
+Sodium phosphate dibasic	0.10	g/L
+Sulfur-free DL minerals	1	x
+DL vitamins	1	x
+sodium nitrate	1.00E+01	mM
+		
+Media	MSB	
+Description	A defined Ralstonia growth medium from Tiffany Lowe-Power lab (note, no carbon is added)	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Disodium phosphate	2.80E+01	mM
+Potassium phosphate monobasic	1.20E+01	mM
+Ammonium Sulfate	7.57E+00	mM
+Nitrilotriacetic acid	2.00E-01	g/L
+Magnesium Sulfate Heptahydrate	5.93E-01	g/L
+Calcium Chloride Dihydrate	6.70E-02	g/L
+Ammonium heptamolybdate tetrahydrate	1.85E-04	g/L
+Iron (II) sulfate heptahydrate	1.98E-03	g/L
+EDTA	2.50E-03	g/L
+Zinc sulfate heptahydrate	1.10E-02	g/L
+Manganese (II) sulfate monohydrate	1.54E-03	g/L
+Copper (II) sulfate pentahydrate	3.92E-04	g/L
+Cobalt(II) nitrate hexahydrate	2.50E-04	g/L
+sodium tetraborate decahydrate	1.77E-04	g/L
