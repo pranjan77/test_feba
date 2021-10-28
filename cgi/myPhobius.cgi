@@ -39,7 +39,6 @@ close($fhFaa) || die "Error writing to $tmpPre.faa";
 my $nameSafe = HTML::Entities::encode($name);
 print $cgi->header;
 print start_html( -title => "Phobius results for $nameSafe"),
-  h2("Phobius analysis of $nameSafe"),
   "\n";
 
 system("../bin/myPhobius.pl", "-in", "$tmpPre.faa", "-out", $tmpPre) == 0
@@ -54,8 +53,8 @@ print "\n<PRE>\nInput:\n";
 system("cat $tmpPre.faa");
 print "\n</PRE>\n";
 
-#foreach my $suffix qw({faa plp R tsv svg}) {
-#  unlink("$tmpPre.$suffix");
-#}
+foreach my $suffix qw{faa plp R tsv svg} {
+  unlink("$tmpPre.$suffix");
+}
 
 print $cgi->end_html;
