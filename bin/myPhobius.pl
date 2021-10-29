@@ -94,30 +94,37 @@ colors = c("red", "magenta", "blue", "green");
 labels = c("transmembrane", "signal peptide", "cytoplasmic", "non-cytoplasmic");
 columns = c("M", "S", "i", "o");
 
-svg(paste0(out,".svg"), width=5, height=5);
-par(mar=c(5,3,2.5,1), mgp=c(2.5,0.8,0), bty="l", xaxs="i", yaxs="i");
-plot(c(1,max(data$pos)), c(0,1), col=NA,
-  xlab="",
-  ylab="Posterior probability", main=paste("Phobius analysis of\n", id));
-for(i in 1:length(labels))
-  lines(data$pos, data[[ columns[i] ]], col=colors[i], lwd=2, xpd=T);
-legend(0, -4 * strheight("A"), labels, lty=1, col=colors, lwd=2, xpd=T, ncol=2, bty="n");
-
-# arrows for sequential regions
+# compute sequential regions
 class = apply(data[,columns], 1, which.max);
 rle = rle(class);
 d = data.frame(constEnd = cumsum(rle$lengths),
                class = rle$values);
 d$constBegin = d$constEnd - rle$lengths + 1;
-y = -3.5 * strheight("A");
-arrows(d$constBegin, y, d$constEnd, y,
-  length=0.05, code=3, col=colors[d$class], xpd=T, lwd=2);
 
 write.table(data.frame(begin=d$constBegin, end=d$constEnd, state=labels[d$class]),
             paste0(out,".tsv"),
             sep="\t", row.names=F, quote=F);
 
+svg(paste0(out,".svg"), width=7, height=5);
+par(mar=c(5,3,2.5,1), mgp=c(2,0.8,0), bty="l", xaxs="i", yaxs="i");
+plot(c(1,max(data$pos)), c(0,1), col=NA,
+  xlab="",
+  ylab="Posterior probability", main=paste("Phobius analysis of\n", id));
+
+tm = subset(d, class==1); # transmembrane regions
+if (nrow(tm) > 0) rect(tm$constBegin, 0, tm$constEnd, 1, col="pink", border=NA);
+
+for(i in 1:length(labels))
+  lines(data$pos, data[[ columns[i] ]], col=colors[i], lwd=2, xpd=T);
+legend(0, -4 * strheight("A"), labels, lty=1, col=colors, lwd=2, xpd=T, ncol=2, bty="n",
+  fill=c("pink","white","white","white"), border=NA);
+
+# arrows for sequential regions
+y = -3.5 * strheight("A");
+arrows(d$constBegin, y, d$constEnd, y,
+  length=0.05, code=3, col=colors[d$class], xpd=T, lwd=2);
 invisible( dev.off() );
+
 };
 
 print $fhR $Rcmd;
