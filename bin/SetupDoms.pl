@@ -94,5 +94,12 @@ use FEBA_Utils; # for NewerThan()
           print STDERR "Running seed on $org\n";
           system("$Bin/run_seed.pl", $org);
         }
+        unless(NewerThan("g/$org/phobius.tsv", "g/$org/aaseq2")) {
+          print STDERR "Running phobius on $org\n";
+          system("$Bin/fastamatch.pl -v [*] < g/$org/aaseq2 > g/$org/aaseq2.cleaned") == 0
+            || die "Error making aaseq2.cleaned";
+          system("$Bin/myPhobius.pl -batch -in g/$org/aaseq2.cleaned -out g/$org/phobius") == 0
+            || die "Error for myPhobius.pl on $org";
+        }
     }
 }

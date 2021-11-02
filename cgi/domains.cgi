@@ -35,6 +35,7 @@ my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId=? AND locusId
 				   {}, $orgId, $locusId);
 
 die "Unknown gene" unless defined $gene->{locusId};
+my $sys = $gene->{sysName} || $gene->{locusId};
 
 if ($gene->{type} != 1) {
     # this can be reached by some links from gene descriptions
@@ -44,18 +45,24 @@ if ($gene->{type} != 1) {
 }
 
 # write the title
-my $title = "Protein Info for $orginfo->{$orgId}{genome} at Locus $locusId";
+my $title = "Protein Info for $sys in $orginfo->{$orgId}{genome}";
 my $start = Utils::start_page("$title");
 
 my $tabs = Utils::tabsGene($dbh,$cgi,$orgId,$locusId,0,1,"protein");
 
-# domains table
-# gather data and slice it into an array of hashes
-my $cond = $dbh->selectall_arrayref(qq{SELECT domainDb, orgId, locusId, domainId, domainName, begin, end, score, evalue, definition, ec FROM GeneDomain WHERE orgId=? AND locusId=? ORDER BY begin;},
+# domains and families (PFam and TIGRFam)
+my $cond = $dbh->selectall_arrayref(qq{SELECT * FROM GeneDomain WHERE orgId=? AND locusId=? ORDER BY begin;},
     { Slice => {} },
     $orgId, $locusId);
 
-#find length of sequence
+# protein features
+my $features = $dbh->selectall_arrayref(qq{SELECT * FROM GeneFeature WHERE orgId=? AND locusId=? ORDER BY begin},
+                                        { Slice => {} },
+                                        $orgId, $locusId);
+# only show transmambrane and signal peptide
+my @featuresShow = grep $_->{featureType} eq "signal peptide" || $_->{featureType} eq "transmembrane", @$features;
+
+# Fetch amino acid sequence
 my $tmpDir = Utils::tmp_dir();
 my $seqFile = "$tmpDir/$orgId+$locusId.fasta";
 my $myDB = Utils::blast_db();
@@ -67,8 +74,6 @@ my $seq = $in->next_seq()->seq;
 my $seqLen = length($seq);
 unlink($seqFile) || die "Error deleting $seqFile: $!";
 
-
-my $sys = $gene->{sysName} || $gene->{locusId};
 
 # Reannotation information, if any
 my $reanno = $dbh->selectrow_hashref("SELECT * from Reannotation WHERE orgId = ? AND locusId = ?",
@@ -98,56 +103,151 @@ print
              TIGRFam has low error rates.
              Finally, many experimentally-characterized proteins are not in any of these databases.
              To find relevant papers, use PaperBLAST.})),
-  h3("Domains and Families");
+  h3("Protein Families and Features");
 
 my %ecall = (); # ec number => source => 1
 # (source is one of TIGRFam, KEGG, SEED, reanno, MetaCyc)
 
-if (@$cond == 0) {
-    print "No PFam or TIGRFam domains were found in this protein."
+if (@$cond == 0 && @featuresShow == 0) {
+    print p("No protein families (PFam or TIGRFam), signal peptides, or transmembrane helices were found in this protein.");
 } else {
-    #create domains table
-    my @headings = qw{Family ID Coverage EValue}; # Begin End};
-    my @trows = ( Tr({ -valign => 'top', -align => 'center' }, map { th($_) } \@headings) );
-    foreach my $row (@$cond) {
-        # display result row by row
-        my $len = $row->{end}-$row->{begin}; 
-        my $begin = $row->{begin};
-        my $newBegin = $begin;
-        my $newLen = $len;
-        my $newSeqLen = $seqLen;
-        if ($seqLen > 600) {
-            $newBegin = 600*$begin/$seqLen;
-            $newLen = 600*$len/$seqLen;
-            $newSeqLen = 600;
-        }
-        my $domainDesc = $row->{definition} || $row->{domainName};
-        my ($domainURL, $imageName);
-        if ($row->{domainDb} eq 'PFam') {
-          $domainURL = "http://pfam.xfam.org/family/$row->{domainId}";
-          $imageName = "darkcyan.png";
-        } elsif ($row->{domainDb} eq 'TIGRFam') {
-          $domainURL = "https://www.ncbi.nlm.nih.gov/Structure/cdd/" . $row->{domainId};
-          $imageName = "chocolate.png";
-          $ecall{ $row->{ec} }{"TIGRFam"} = 1 if $row->{ec} ne "";
-        }
-        push @trows, Tr({ -valign => 'top', -align => 'left' },
-                        td([ $domainDesc,
-                             a({ -href => $domainURL}, $row->{domainId}),
-                             a({ -title=> "Amino acids $begin:$row->{end}/$seqLen ($len residues)"},
-                               div( { class => "line" },
-                                    img({ src => "../images/grayHorizLine.png",
-                                          width => "$newSeqLen", height=>'7'}),
-                                    div( { class => "line2",
-                                           style => "left:${newBegin}px"},
-                                         a({ -title => "Amino acids $begin:$row->{end}/$seqLen ($len residues), see alignment",
-                                             -href => "showHmmAlign.cgi?orgId=${orgId}&locusId=${locusId}&domainDb=$row->{domainDb}&domainName=$row->{domainName}" },
-                                             img({ src => "../images/${imageName}",
-                                                   height=>'7', width=>"$newLen"}))))),
-                             a({title=>"$row->{score} bits"},$row->{evalue})
-                           ]));
+  # Build a combined data structure, with one row per type of feature or domain
+  # First signal peptide, then transmembrane, then domains sorted by 1st begin
+  # Since signal peptide should be before transmembrane, just sort featuresShow that way too
+  my %nameToRows = ();
+  foreach my $row (@$cond) {
+    push @{ $nameToRows{ $row->{domainId} } }, $row;
+  }
+  foreach my $row (@featuresShow) {
+    $row->{domainDb} = 'phobius';
+    push @{ $nameToRows{ $row->{featureType} } }, $row;
+  }
+  my @rows = sort { ($a->[0]{domainDb} ne 'phobius') <=> ($b->[0]{domainDb} ne 'phobius')
+                      || $a->[0]{begin} <=> $b->[0]{begin} } (values %nameToRows);
+
+  # Build an svg
+  # Layout: 1 row per domain or type of feature
+  # x axis: $padleft to $padLeft + seqWidth has the boxes
+  #    there's also extra right space for labels
+  # y axis: each row is of height $rowHeight (0 at top); and extra space at bottom for a labeled axis
+  my $rowHeight = 45;
+  my $totHeight = (@rows+0.65) * $rowHeight;
+  my $seqWidthLow = 300;
+  my $seqWidthHigh = 900;
+  my $lenLow = 200;
+  my $lenHigh = 800;
+  my $seqWidth;
+  if ($seqLen <= $lenLow) {
+    $seqWidth = $seqWidthLow;
+  } elsif ($seqLen > $lenHigh) {
+    $seqWidth = $seqWidthHigh;
+  } else {
+    $seqWidth = $seqWidthLow + ($seqLen - $lenLow) * ($seqWidthHigh-$seqWidthLow) / ($lenHigh - $lenLow);
+  }
+  my $padLeft = 10;
+  my $aaWidth = $seqWidth / $seqLen;
+  my $totWidth = $padLeft + $seqWidthHigh + 100;
+  my @svg = (); # the components within the svg
+
+  # Add axis at bottom
+  my $axisY = (scalar(@rows) + 0.15) * $rowHeight;
+  my $tickBottom = (scalar(@rows) + 0.25) * $rowHeight;
+  my $axisLabelTop = (scalar(@rows) + 0.45) * $rowHeight;
+  my $left1 = $padLeft + $aaWidth;
+  my $right = $padLeft + $seqWidth;
+  push @svg, qq{<line x1="$left1" y1="$axisY" x2="$right" y2="$axisY" style="stroke:black; stroke-width:1"/>};
+  my @tickAt = ();
+  my $tickSpacing = 50;
+  if ($seqLen < 50) {
+    @tickAt = (1, $seqLen);
+    $tickSpacing = $seqLen - 1;
+  } else {
+    $tickSpacing = 100 if $seqLen > 1000;
+    $tickSpacing = 200 if $seqLen > 2000;
+    $tickSpacing = 500 if $seqLen > 3000;
+    $tickSpacing = 25 if $seqLen < 100;
+    @tickAt = (1);
+    for (my $i = $tickSpacing; $i < $seqLen; $i+= $tickSpacing) {
+      push @tickAt, $i;
     }
-    print table({cellspacing => 0, cellpadding => 3}, @trows);
+    push @tickAt, $seqLen if $seqLen != $tickAt[-1];
+  }
+  foreach my $aa (@tickAt) {
+    my $x = $padLeft + $aa * $aaWidth;
+    push @svg, qq{<line x1="$x" y1="$axisY" x2="$x" y2="$tickBottom" style="stroke:black; stroke-width:1"/>};
+    push @svg, qq{<text x="$x" y="$axisLabelTop" text-anchor="middle" alignment-baseline="central" style="font-size: 90%">$aa</text>}
+      unless $aa > $seqLen - $tickSpacing/2 && $aa < $seqLen;
+  }
+
+  foreach my $i (0..(scalar(@rows)-1)) {
+    my $list = $rows[$i];
+    my $first = $list->[0];
+    my $rowTop = $i * $rowHeight;
+    #my $rowBottom = ($i+1) * $rowHeight;
+    my $textBottom = ($i + 0.3) * $rowHeight;
+    my $objTop = ($i + 0.4) * $rowHeight;
+    my $objBottom = ($i + 0.75) * $rowHeight;
+    my $objHeight = $objBottom - $objTop;
+    my ($title, $titleURL, $color);
+
+    if ($first->{domainDb} eq "phobius") {
+      $color = $first->{featureType} eq "transmembrane" ? "red" : "magenta";
+      $title = $first->{featureType};
+    } elsif ($first->{domainDb} eq "TIGRFam") {
+      $title = "$first->{domainId}: $first->{definition}";
+      $titleURL = "https://www.ncbi.nlm.nih.gov/Structure/cdd/" . $first->{domainId};
+      $color = "chocolate";
+    } elsif ($first->{domainDb} eq "PFam") {
+      $title = "$first->{domainId}: $first->{domainName}";
+      $titleURL = "http://pfam.xfam.org/family/$first->{domainId}";
+      $color = "lightblue";
+    }
+    if ($titleURL) {
+      push @svg, qq{<a xlink:href="$titleURL">};
+    }
+    push @svg, qq{<text x="0.5" y="$textBottom">$title</text>"};
+    if ($titleURL) {
+      push @svg, qq{</a>};
+    }
+
+    # add rounded rectangles for each object and a small label with e-values below
+    foreach my $obj (@$list) {
+      my $beginScaled = $padLeft + $obj->{begin} * $aaWidth;
+      my $widthScaled = ($obj->{end} - $obj->{begin}) * $aaWidth;
+      my ($tooltip, $alignURL);
+      my $nAA = $obj->{end} - $obj->{begin} + 1;
+      if ($obj->{domainDb} eq "phobius") {
+        $tooltip = "amino acids $obj->{begin} to $obj->{end} ($nAA residues), see Phobius details";
+        $alignURL = "myPhobius.cgi?name=${sys}&seq=${seq}";
+      } else {
+        $tooltip = "amino acids $obj->{begin} to $obj->{end} ($nAA residues), $obj->{score} bits, see alignment";
+        $alignURL = "showHmmAlign.cgi?orgId=$orgId&locusId=$locusId&domainDb=$obj->{domainDb}&domainName=$obj->{domainName}";
+      }
+      my $tooSmallForE = $widthScaled <= 40;
+      $tooltip .= " (E = $obj->{evalue})" if exists $obj->{evalue} && $tooSmallForE;
+      push @svg, qq{<a xlink:href="$alignURL">};
+      push @svg, qq{<title>$tooltip</title>};
+      push @svg, qq{<rect x="$beginScaled" y="$objTop" width="$widthScaled" height="$objHeight"
+                      rx="5" ry="5"
+                      style="fill:$color; stroke-width: 1; stroke: black;" /> };
+      my $midScaled = $beginScaled + $widthScaled/2;
+      my $objMiddle = ($objTop + $objBottom)/2;
+      if (exists $obj->{evalue} && ! $tooSmallForE) {
+        my $showE = $widthScaled > 70 ? "E=$obj->{evalue}" : $obj->{evalue};
+        push @svg, qq{<text dominant-baseline="middle" text-anchor="middle"
+                          x="$midScaled" y="$objMiddle"
+                          style="font-size: 75%;">$showE</text>};
+      }
+      push @svg, qq{</a>};
+    }
+  }
+  my $svg = join("\n",
+                 qq{<svg width="${totWidth}" height="${totHeight}" style="position: relative; left: 1em;">},
+                 qq{<g transform="scale(1)">},
+                 @svg,
+                 "</g>",
+                 "</svg>");
+  print "\n", div($svg);
 }
 autoflush STDOUT 1; # so preliminary results appear
 print "\n";

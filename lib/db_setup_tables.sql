@@ -164,6 +164,21 @@ CREATE INDEX 'domainDbId' on GeneDomain ('domainDb' ASC, 'domainId' ASC);
 CREATE INDEX 'domainDbName' on GeneDomain ('domainDb' ASC, 'domainName' ASC);
 CREATE INDEX 'domain_ec' on GeneDomain ('ec' ASC, 'orgId' ASC);
 
+/* As of November 2021, GeneFeature is used to store results from phobius, including featureTypes
+   cytoplasmic
+   non-cytoplasmic
+   transmembrane
+   signal peptide
+*/
+CREATE TABLE GeneFeature (
+  orgId TEXT NOT NULL,
+  locusId TEXT NOT NULL,
+  featureType TEXT NOT NULL,
+  begin INT NOT NULL,
+  end INT NOT NULL,
+  PRIMARY KEY (orgId,locusId,begin,end,featureType)
+); 
+
 /* For each kilobase on each scaffold, shows the seek position into db.StrainFitness.orgId
    This arrangement is used because the StrainFitness tables are so large.
    If there are no insertions within 1000*kb to 1000*kb+999, then the entry might be omitted.

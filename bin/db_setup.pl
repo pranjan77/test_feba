@@ -141,6 +141,8 @@ sub ExpToPubId($$$);
         die "No genome.fna file for $org in $gdir/$org/aaseq2" unless -e "$gdir/$org/genome.fna";
         die "No swissprot hits for $org in $gdir/blast_results/sprot_$org.m8"
             unless -e "$gdir/blast_results/sprot_$org.m8";
+        die "No phobius results for $org in $gdir/$org/phobius.tsv"
+          unless -e "$gdir/$org/phobius.tsv";
         print STDERR "Warning, no seedanno.tab file in $gdir/$org\n"
             unless -e "$gdir/$org/seedanno.tab";
         if (! -e "$gdir/$org/besthit.kegg") {
@@ -618,6 +620,28 @@ sub ExpToPubId($$$);
             WorkPutHash($row, qw{domainDb orgId locusId domainId domainName begin end score evalue type geneSymbol ec definition});
         }
         EndWork();
+    }
+
+    # Create db.GeneFeature.*
+    foreach my $org (@orgs) {
+      StartWork("GeneFeature",$org);
+      my $phobiusFile = "$gdir/$org/phobius.tsv";
+      open(my $fhP, "<", $phobiusFile) || die "Cannot read $phobiusFile\n";
+      while (my $line = <$fhP>) {
+        chomp $line;
+        my ($locusSpec, $begin, $end, $featureType) = split /\t/, $line;
+        die "Invalid line $line in $phobiusFile"
+          unless $featureType
+            && $locusSpec =~ m/:/
+            && $begin =~ m/^\d+$/
+            && $end =~ m/^\d+$/;
+        my ($org2, $locusId) = split /:/, $locusSpec;
+        die "Invalid locus spec $locusSpec in $phobiusFile"
+          unless defined $locusId && $locusId ne "" & $org2 eq $org;
+        WorkPutRow($org, $locusId, $featureType, $begin, $end);
+      }
+      close($fhP) || die "Error reading $phobiusFile\n";
+      EndWork();
     }
 
     # Strain fitness tables are expected to be sorted by scaffoldId and position (but this is not checked).
