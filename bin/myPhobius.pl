@@ -8,9 +8,13 @@ use FEBA_Utils qw{ReadFasta};
 my $phobiusDir = "$RealBin/phobius";
 my $usage = <<END
 Usage: myPhobius.pl -in in.faa -out prefix
+       myPhobius.pl -batch -in in.faa
 
-Writes to prefix.plp, prefix.R, prefix.tsv, and prefix.svg
-The input fasta should contain just one sequence.
+The input fasta should contain just one sequence
+unles run with -batch.
+
+In batch mode, writes to prefix.raw and prefix.tsv
+Otherwise, writes to prefix.plp, prefix.R, prefix.tsv, and prefix.svg
 
 Options:
   -dir $phobiusDir -- the phobius directory
@@ -19,9 +23,10 @@ Options:
 END
 ;
 
-my ($inFaa, $out);
+my ($inFaa, $out, $batch);
 die $usage unless GetOptions('in=s' => \$inFaa,
                              'out=s' => \$out,
+                             'batch' => \$batch,
                              'dir=s' => \$phobiusDir)
   && @ARGV == 0
   && defined $inFaa && defined $out;
@@ -36,16 +41,72 @@ foreach my $file ($optFile, $modelFile) {
 }
 
 my $seqs = ReadFasta($inFaa);
-die "$inFaa should have exactly one sequence\n" unless keys(%$seqs) == 1;
+die "$inFaa should have exactly one sequence\n" unless keys(%$seqs) == 1 || defined $batch;
+
+my $rawFile = defined $batch ? "$out.raw" : "$out.plp.$$.tmp";
+
+system("($decode -f $optFile $modelFile -plp < $inFaa > $rawFile) >& /dev/null") == 0
+  || die "phobius decodeanhmm failed: $!";
+
+if (defined $batch) {
+  my @stateNames = ("cytoplasmic", "non-cytoplasmic", "transmembrane", "signal peptide");
+  my %state = (); # sequence => list of indexes of preferred states by position
+  open (my $fhRaw, "<", $rawFile) || die "Cannot read $rawFile";
+  my $name; # which protein we are reading results for
+  while(my $line = <$fhRaw>) {
+    chomp $line;
+    if ($line =~ m/^# (\S+)$/) {
+      $name = $1;
+    } elsif ($line =~ m/^# +i +o +O/) {
+      # skip
+    } elsif ($line =~ m/^[A-Z] +/) {
+      die "No sequence specifier before line" unless defined $name;
+      my @F = split / +/, $line;
+      my @p = ($F[1], $F[2]+$F[3], $F[4], $F[5]+$F[6]+$F[7]+$F[8]); # i, o, M, S
+      my $i = 0;
+      my $maxP = $p[0];
+      my $maxI = 0;
+      foreach my $i (1..3) {
+        if ($p[$i] > $maxP) {
+          $maxP = $p[$i];
+          $maxI = $i;
+        }
+      }
+      push @{ $state{$name} }, $maxI;
+    }
+  }
+  close($fhRaw) || die "Error reading $rawFile\n";
+  open(my $fhT, ">", "$out.tsv") || die "Cannot write to $out.tsv";
+  foreach my $name (sort keys %state) {
+    my $states = $state{$name};
+    my $len = scalar(@$states);
+    my @regions = (); # stored 0-based
+    foreach my $i (0..($len-1)) {
+      if ($i > 0 && $states->[$i] == $states->[$i-1]) {
+        die unless $states->[$i] == $states->[ $regions[-1][0] ];
+        $regions[-1][1] = $i;
+      } else {
+        push @regions, [$i, $i];
+      }
+    }
+    foreach my $region (@regions) {
+      my ($beg,$end) = @$region;
+      print $fhT join("\t", $name, $beg+1, $end+1, $stateNames[ $states->[$beg] ])."\n";
+    }
+  }
+  close($fhT) || die "Error writing $out.tsv\n";
+  print STDERR "Wrote $out.raw\n";
+  print STDERR "Wrote $out.tsv\n";
+  exit(0);
+}
+
+# else
 my ($seq) = values(%$seqs);
 my $seqLen = length($seq);
 my ($id) = keys(%$seqs);
 $id =~ s/ .*//;
 $id =~ s/["']//g;
 
-my $tmpFile = "$out.plp.$$.tmp";
-system("($decode -f $optFile $modelFile -plp < $inFaa > $tmpFile) >& /dev/null") == 0
-  || die "phobius decodeanhmm failed: $!";
 
 # Convert the decodeanhmm output, which will look like
 # # BT2157
@@ -60,16 +121,16 @@ system("($decode -f $optFile $modelFile -plp < $inFaa > $tmpFile) >& /dev/null")
 # 2	K	0.00002	0.0001	0.00000	0.99988
 # 3	K	0.00002	0.0001	0.00000	0.99988
 
-open(my $fhTmp, "<", $tmpFile) || die "Cannot read $tmpFile";
+open(my $fhRaw, "<", $rawFile) || die "Cannot read $rawFile";
 open(my $fhP, ">", "$out.plp") || die "Cannot write to $out.plp";
 
-my $header1 = <$fhTmp>;
+my $header1 = <$fhRaw>;
 print $fhP $header1;
-my $header2 = <$fhTmp>;
+my $header2 = <$fhRaw>;
 die "Invalid line 2 from decodeanhmm: $header2" unless $header2 =~ m/# +i +/;
 print $fhP join("\t", qw{pos aa i o M S})."\n";
 my $iLine = 0;
-while(my $line = <$fhTmp>) {
+while(my $line = <$fhRaw>) {
   $iLine++;
   chomp $line;
   my @F = split / +/, $line;
@@ -77,8 +138,8 @@ while(my $line = <$fhTmp>) {
   my $S = 
   print $fhP join("\t", $iLine, $F[0], $F[1], $F[2]+$F[3], $F[4], $F[5]+$F[6]+$F[7]+$F[8])."\n";
 }
-close($fhTmp) || die "Error reading $tmpFile";
-unlink($tmpFile);
+close($fhRaw) || die "Error reading $rawFile";
+unlink($rawFile);
 close($fhP) || die "Error writing $out.plp";
 
 open(my $fhR, ">", "$out.R")
