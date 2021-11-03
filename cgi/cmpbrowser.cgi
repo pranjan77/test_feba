@@ -342,9 +342,19 @@ my $padding = 30; # at left only
   my $anchorShow = $anchorGenes[0]{sysName} || $anchorGenes[0]{locusId};
   print header,
     Utils::start_page("Comparative Fitness Browser for $anchorShow ($nTracks tracks)"),
-    q{<div id="ntcontent">};
+    q{<div id="ntcontent">},
+    h2("Comparative Fitness Browser");
   print p({-style => "color: red;" }, join(br(), map encode_entities($_), @warnings))
     if @warnings > 0;
+  if (@tracks == 1 && $tracks[0]{orgId} eq $anchorOrg
+      && $tracks[0]{geneBeg}{locusId} == $anchorLoci[0]
+      && $tracks[0]{geneEnd}{locusId} == $anchorLoci[0]) {
+    print p(qq{Click on the arrows to add neighboring genes,
+               or add a gene by its identifier,
+               or choose a genome to add orthologs from.
+               (Only genomes in the Fitness Browser are included.)
+               Then, select which fitness experiments to show.});
+  }
 
   # Compute colors -- first, compute groups
   my $colorBy = param('colorBy') || 'ortholog';
