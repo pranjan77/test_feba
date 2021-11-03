@@ -227,9 +227,11 @@ if (@$hits == 0) {
             a({-href => "genomeBrowse.cgi?orgId=$orgId&scaffoldId=$scaffold&begin=$browsebegin&end=$browseend&zoom=out"},
               "browse"),
             "nearby genes");
+    print p("Or see the",
+            a({-href => "cmpbrowser.cgi?anchorOrg=$orgId&anchorLoci=$locusId" },
+              "comparative fitness browser"))
+      if $gene->{type} == 1;
 }
-
-print "<br><br>";
 
 $dbh->disconnect();
 Utils::endHtml($cgi);

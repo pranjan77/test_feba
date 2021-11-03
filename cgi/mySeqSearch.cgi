@@ -164,6 +164,28 @@ if (defined $numHit && $numHit > 0 && @hits > $numHit) {
 
 if (@hits > 0) {
   print $cgi->p(($trunc ? "Top " : "") . scalar(@hits) . " hits from BLASTp (E < 0.01)");
+} else {
+  print $cgi->p("No hits found using BLASTp (E < 0.01)");
+}
+
+unless ($qtype eq "nucleotide") {
+  my @links = (a({ -href => "http://papers.genomics.lbl.gov/cgi-bin/litSearch.cgi?query=>$def%0A$seq",
+                   -title => "Find papers about this protein or its homologs" },
+                 "PaperBLAST"),
+               "the " .
+               a( { -href => "https://iseq.lbl.gov/genomes/seqsearch?sequence=>$def%0A$seq" },
+                  "ENIGMA genome browser"),
+               a( { -href => "http://www.microbesonline.org/cgi-bin/seqsearch.cgi?qtype=protein&query=$seq" },
+                  "MicrobesOnline"));
+  push @links, "the " . a({ -href => "cmpbrowser.cgi?anchorOrg=$orgId&anchorLoci=$gene->{locusId}" },
+                 "comparative fitness browser")
+    if $orgId && $gene;
+  $links[-1] = " or " . $links[-1];
+  print p("Or try", join(", ", @links));
+}
+
+
+if (@hits > 0) {
   my @header = (a({-title => "Potential ortholog from bidirectional best hit?", -style => "color: black;"}, 'Orth'),
                 'Species', 'Gene', 'Name', 'Description', 'Fitness',
                 a({-title => "Percent identity", -style=>"color: black;"}, '%Id'),
@@ -229,18 +251,8 @@ if (@hits > 0) {
     print "\n";
   }
   print "</TABLE>";
-} else {
-  print $cgi->p("No hits found using BLASTp (E < 0.01)");
 }
 
-print qq[<br>Or search for homologs using
-	<A HREF="http://papers.genomics.lbl.gov/cgi-bin/litSearch.cgi?query=>$def%0A$seq"
-           TITLE="Find papers about this protein or its homologs">PaperBLAST</A>,
-       <A HREF="https://iseq.lbl.gov/genomes/seqsearch?sequence=>$def%0A$seq">ENIGMA genome browser</A>,
-       or
-       <A HREF="http://www.microbesonline.org/cgi-bin/seqsearch.cgi?qtype=protein&query=$seq">MicrobesOnline</A>
-       <BR>
-       <BR>] unless $qtype eq "nucleotide";
 $dbh->disconnect();
 unlink($seqFile) || die "Error deleting $seqFile: $!";
 unlink($blastOut) || die "Error deleting $blastOut: $!";
