@@ -18,7 +18,8 @@ use Utils qw{formatFASTA};
 my $cgi=CGI->new;
 my $seq = $cgi->param('seq') || "";
 $seq =~ s/[ *\r\n]//g;
-die "No sequence specified" unless $seq =~ m/^[A-Za-z]+$/;
+$seq = uc($seq);
+die "No sequence specified" unless $seq =~ m/^[A-Z]+$/;
 die "Maximum sequence length is 100K" if length($seq) > 100*1000;
 
 my $name = $cgi->param('name');
