@@ -58,4 +58,12 @@ foreach my $suffix qw{faa plp R tsv svg} {
   unlink("$tmpPre.$suffix");
 }
 
+print p("Or try the official",
+        a({ -href => "https://phobius.sbc.su.se/" }, "Phobius web server,"),
+        "which has a different display");
+
+print p("Reference:",
+        a( { -href => "http://www.ncbi.nlm.nih.gov/pmc/articles/pmc1933244/" },
+           "Advantages of combined transmembrane topology and signal peptide prediction - the Phobius web server"));
+
 print $cgi->end_html;
