@@ -2863,6 +2863,17 @@ Glycerol	2.2	mM
 Wolfe's mineral mix	1	X
 Wolfe's vitamin mix	1	X
 		
+Media	RCH2_defined_NO_ammonium_with_Glycerol	
+Description	Defined minimal media for soil and groundwater bacteria with glycerol and no salts - used by Peter Kim for chemotaxis assays	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+PIPES sesquisodium salt	30	mM
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+Glycerol	2.2	mM
+		
 Media	Hans_Basal_Media_bicarb	
 Description	A bicarbonate buffered defined medium from Hans	
 Minimal	TRUE	
@@ -2912,3 +2923,133 @@ Manganese (II) sulfate monohydrate	1.54E-03	g/L
 Copper (II) sulfate pentahydrate	3.92E-04	g/L
 Cobalt(II) nitrate hexahydrate	2.50E-04	g/L
 sodium tetraborate decahydrate	1.77E-04	g/L
+		
+		
+		
+		
+Media	M9_plus_defined_noCarbon	
+Description	E. coli defined media	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Magnesium sulfate	2	mM
+Calcium chloride	0.1	mM
+Sodium phosphate dibasic heptahydrate	12.8	g/L
+Potassium phosphate monobasic	3	g/L
+Sodium Chloride	0.5	g/L
+Ammonium chloride	1	g/L
+ATCC Wolfe's mineral mix	1	X
+ATCC Wolfe's vitamin mix	1	X
+		
+		
+Media	NLDM_defined	
+Description	Northen lab metabolite media	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Ammonium Chloride	1	mM
+Potassium Chloride	3.3	mM
+Magnesium sulfate heptahydrate	0.812	mM
+Calcium chloride dihydrate	0.68	mM
+ATCC Wolfe's mineral mix	1	X
+ATCC Wolfe's vitamin mix	1	X
+Sodium phosphate dibasic	4.05	mM
+Sodium phosphate monobasic	0.95	mM
+NLDM_metabolites	1	X
+		
+		
+Media	NLDM_defined_pH4	
+Description	Northen lab metabolite media	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium Chloride	1	mM
+Potassium Chloride	3.3	mM
+Magnesium sulfate heptahydrate	0.812	mM
+Calcium chloride dihydrate	0.68	mM
+ATCC Wolfe's mineral mix	1	X
+ATCC Wolfe's vitamin mix	1	X
+Citric acid	3.0725	mM
+Sodium phosphate monobasic	3.855	mM
+NLDM_metabolites	1	X
+		
+Media	NLDM_defined_pH4.5	
+Description	Northen lab metabolite media	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium Chloride	1	mM
+Potassium Chloride	3.3	mM
+Magnesium sulfate heptahydrate	0.812	mM
+Calcium chloride dihydrate	0.68	mM
+ATCC Wolfe's mineral mix	1	X
+ATCC Wolfe's vitamin mix	1	X
+Citric acid	2.795	mM
+Sodium phosphate monobasic	4.41	mM
+NLDM_metabolites	1	X
+		
+Media	NLDM_defined_pH5	
+Description	Northen lab metabolite media	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium Chloride	1	mM
+Potassium Chloride	3.3	mM
+Magnesium sulfate heptahydrate	0.812	mM
+Calcium chloride dihydrate	0.68	mM
+ATCC Wolfe's mineral mix	1	X
+ATCC Wolfe's vitamin mix	1	X
+Citric acid	2.43	mM
+Sodium phosphate monobasic	5.15	mM
+NLDM_metabolites	1	X
+		
+Media	NLDM_defined_pH6	
+Description	Northen lab metabolite media	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium Chloride	1	mM
+Potassium Chloride	3.3	mM
+Magnesium sulfate heptahydrate	0.812	mM
+Calcium chloride dihydrate	0.68	mM
+ATCC Wolfe's mineral mix	1	X
+ATCC Wolfe's vitamin mix	1	X
+Sodium phosphate dibasic	0.615	mM
+Sodium phosphate monobasic	4.385	mM
+NLDM_metabolites	1	X
+		
+Media	NLDM_defined_pH7	
+Description	Northen lab metabolite media	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium Chloride	1	mM
+Potassium Chloride	3.3	mM
+Magnesium sulfate heptahydrate	0.812	mM
+Calcium chloride dihydrate	0.68	mM
+ATCC Wolfe's mineral mix	1	X
+ATCC Wolfe's vitamin mix	1	X
+Sodium phosphate dibasic	3.05	mM
+Sodium phosphate monobasic	1.95	mM
+NLDM_metabolites	1	X
+		
+Media	NLDM_defined_pH8	
+Description	Northen lab metabolite media	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium Chloride	1	mM
+Potassium Chloride	3.3	mM
+Magnesium sulfate heptahydrate	0.812	mM
+Calcium chloride dihydrate	0.68	mM
+ATCC Wolfe's mineral mix	1	X
+ATCC Wolfe's vitamin mix	1	X
+Sodium phosphate dibasic	4.735	mM
+Sodium phosphate monobasic	0.265	mM
+NLDM_metabolites	1	X
+		
+		
+Media	NLDM_defined_novitamin	
+Description	Northen lab metabolite media	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium Chloride	1	mM
+Potassium Chloride	3.3	mM
+Magnesium sulfate heptahydrate	0.812	mM
+Calcium chloride dihydrate	0.68	mM
+ATCC Wolfe's mineral mix	1	X
+Sodium phosphate dibasic	3.05	mM
+Sodium phosphate monobasic	1.95	mM
+NLDM_metabolites	1	X
