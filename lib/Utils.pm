@@ -983,6 +983,8 @@ sub gene_link {
   $desc_long =~ s/&nbsp;//g;
   return $desc_long if $showParam eq "text";
   my $show = $showParam eq "name" ? $gene->{sysName} || $gene->{locusId} : $main_desc || "no description";
+  # allow linebreaks before _ in locus tags
+  $show =~ s/_/<wbr>_/g if $showParam eq "name";
   return CGI::a({ -href => "$cgiParam?orgId=$gene->{orgId}&gene=$gene->{locusId}",
                   -title => $desc_long },
                 $show);
