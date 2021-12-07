@@ -521,9 +521,9 @@ my $padding = 30; # at left only
                           map MyHiddenField(@$_), @hidden);
 
   # Choose a scale for the svgs
-  # If the largest region is above 10 kb, then shrink by up to 2x
+  # If the largest region is large, then shrink by up to 2x
   my $svgScale = 0.9; # by default, downscale a little bit
-  my $maxUnscaledNt = 8*1000;
+  my $maxUnscaledNt = 6.5*1000;
   foreach my $track (@tracks) {
     my $nt = $track->{geneEnd}{end} - $track->{geneBeg}{begin} + 1;
     if ($nt > $maxUnscaledNt) {
