@@ -347,18 +347,12 @@ foreach my $iRow (0..$maxRow) {
     foreach my $expName (@c) {
       my $showId = $gene->{sysName} || $gene->{locusId};
       $showId .= " (" . $gene->{gene} . ")" if $gene->{gene};
-      my $fit = $gene->{fit}{$expName}{fit};
-      my $strainUrl = "strainTable.cgi?orgId=$orgId&locusId=$gene->{locusId}&expName=$expName";
-      my $t = $gene->{fit}{$expName}{t};
-      my $show = "&nbsp;";
-      if (defined $fit) {
-        $show = a({ -href => $strainUrl,
-                    -title => sprintf("fit = %.1f, t = %.1f for %s in %s (%s)",
-                                      $fit, $t, $showId, $expInfo->{$expName}{expDesc}, $expName),
-                    -style => "color:rgb(0,0,0)" },
-                  sprintf("%.1f", $fit));
-      }
-      push @td, td({ -bgcolor => Utils::fitcolor($fit) }, $show);
+      my $fitObj = $gene->{fit}{$expName};
+      push @td, Utils::fittd(fit => $fitObj->{fit},
+                             t => $fitObj->{t},
+                             gene => $gene,
+                             expName => $expName,
+                             expDesc => $expInfo->{$expName}{expDesc});
     }
   }
   push @trows, Tr(@td);

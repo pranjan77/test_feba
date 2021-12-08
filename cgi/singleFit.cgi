@@ -185,15 +185,12 @@ if (@$hits == 0) {
         $strainUrl .= "&help=1" if $help;
         push @out, join(" ",
                         td($group eq $lastGroup ? "" : $group),
-                        td(a({ 
-                              title => "$expName: $exp->{expDescLong}",
-                              href => "exp.cgi?orgId=$orgId&expName=$expName" },
+                        td(a({ title => "$expName: $exp->{expDescLong}",
+                               href => "exp.cgi?orgId=$orgId&expName=$expName" },
                              $exp->{expDesc})),
-                        td( { -bgcolor => Utils::fitcolor($fitrow->{fit}) },
-                            a({ -href => $strainUrl,
-                                -title => "per-strain data",
-                                -style => "color:rgb(0,0,0)" },
-                              sprintf("%.1f", $fitrow->{fit}) ) ),
+                        Utils::fittd(fit => $fitrow->{fit},
+                                     gene => $gene,
+                                     expName => $expName),
                         td( sprintf("%.1f", $fitrow->{t}) ),
                         td(a({ title => "Compare to data from similar experiments or orthologs",
                                href => "orthFit.cgi?orgId=$orgId&locusId=$locusId"

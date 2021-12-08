@@ -327,26 +327,22 @@ if ($outlier) { # table of outlying genes
 	foreach my $gene (@genesShow) {
 	    my $colorX = Utils::fitcolor($gene->{x});
 	    my $colorY = Utils::fitcolor($gene->{y});
-	    my $x = sprintf("%.1f",$gene->{x});
-	    my $y = sprintf("%.1f",$gene->{y});
-	    my $tx = sprintf("%.1f",$gene->{tx});
-	    my $ty = sprintf("%.1f",$gene->{ty});
+	    my $tx = sprintf("%+.1f",$gene->{tx});
+	    my $ty = sprintf("%+.1f",$gene->{ty});
             my $orthFitBase = "orthFit.cgi?orgId=$orgId&locusId=$gene->{locusId}";
 
 	    push @trows, $cgi->Tr({-align=>'left',-valign=>'top'},
 		                  $cgi->td(Utils::gene_link($dbh, $gene, "name", "myFitShow.cgi")),
 				  $cgi->td($gene->{gene}),
                                   $cgi->td(Utils::gene_link($dbh, $gene, "desc", "domains.cgi")),
-				  $cgi->td({ -bgcolor => Utils::fitcolor($gene->{x}) },
-					   $cgi->a({-title => "Click for conservation",
-                                                    -style => "color: black;",
-                                                    -href => "$orthFitBase&$GroupCond1" },
-						   sprintf("%.1f", $gene->{x}))),
-				  $cgi->td({ -bgcolor => Utils::fitcolor($gene->{y}) },
-					   $cgi->a({-title => "Click for conservation",
-                                                    -style => "color: black;",
-                                                    -href => "$orthFitBase&$GroupCond2" },
-						   sprintf("%.1f", $gene->{y}))),
+                                  Utils::fittd(fit => $gene->{x},
+                                               gene => $gene,
+                                               title => "Click for conservation",
+                                               URL => "$orthFitBase&$GroupCond1"),
+                                  Utils::fittd(fit => $gene->{y},
+                                               gene => $gene,
+                                               title => "Click for conservation",
+                                               URL => "$orthFitBase&$GroupCond2"),
                                   $cgi->td({-align => "right"}, abs($gene->{tx}) > 4 ? $tx : small($tx)),
                                   $cgi->td({-align => "right"}, abs($gene->{ty}) > 4 ? $ty : small($ty)));
 	}

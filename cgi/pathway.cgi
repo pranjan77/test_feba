@@ -263,13 +263,8 @@ foreach my $rxnId (@rxnIds) {
     my %fit = map { $_->[0] => $_ } @$fitrows;
     foreach my $expName (@expNames) {
       my $fitrow = $fit{$expName};
-      my ($fit,$t);
-      (undef,$fit,$t) = @$fitrow if defined $fitrow;
-      push @generow, td({ -bgcolor => Utils::fitcolor($fit) },
-                        a({ -href => "strainTable.cgi?orgId=$orgId&locusId=$locusId&expName=$expName",
-                            -title => defined $fitrow ? sprintf("t = %.1f", $t) : "No data",
-                            -style => "color:rgb(0,0,0)" },
-                          defined $fitrow ? sprintf("%.1f", $fit) : ""));
+      push @generow, Utils::fittd(fit => $fitrow->[1], t => $fitrow->[2],
+                                  gene => $gene, expName => $expName);
     }
     push @locirows, Tr(@generow);
   }

@@ -29,6 +29,7 @@ sub fail($$);
 sub formatFASTA($$);
 sub crc64($);
 sub fitcolor($);
+sub fittd(@);
 sub get_dbh(); # open the sqlite db and return the resulting database handle
 sub blast_db();
 sub tmp_dir();
@@ -171,6 +172,83 @@ sub fitcolor($) {
     $perc = $perc > 1 ? 1 : $perc;
     $perc = $perc < 0 ? 0 : $perc;
     return fractioncolor($perc);
+}
+
+# fittd() produces a td element to show a fitness value
+# The input arguments include:
+# fit -- the fitness value (required, but may be undef if no data)
+# Optional:
+# t -- the t value to show
+# gene -- gene object for constructing the URL and the popup title
+#  (must include orgId, locusId, and sysName, although sysName may be empty)
+# expName -- if set, used to build a URL for the per-strain data
+#	(if absent, it builds a link to the per-gene fitness data)
+# expDesc -- if set along with expName, added to the title
+# title, URL (these override the default; use URL="" for no link)
+
+sub fittd(@) {
+  my (%args) = @_;
+  die unless exists $args{fit};
+
+  my $showId = undef;
+  if (exists $args{gene}) {
+    foreach my $name (qw{orgId locusId sysName orgId}) {
+      die unless defined $args{gene}{$name};
+    }
+    $showId = $args{gene}{sysName} || $args{gene}{locusId};
+  }
+
+  if (!exists $args{title}) {
+    if (exists $args{gene} && !defined $args{fit}) {
+      $args{title} = "No fitness data for $showId";
+    } elsif (exists $args{gene} && defined $args{expName} && exists $args{t} && defined $args{t}) {
+      $args{title} = sprintf("%s in $args{expName}: t = %+.1f", $showId, $args{t});
+    } elsif (exists $args{gene} && exists $args{t} && defined $args{t}) {
+      $args{title} = sprintf("%s: t = %+.1f", $showId, $args{t});
+    } else {
+      $args{title} = undef;
+    }
+    if (defined $args{fit} && defined $args{expName} && defined $args{expDesc}) {
+      # add the experiment description
+      # (if shown, do not explain what the link is -- popup text gets too long and complicated)
+      $args{title} .= " ($args{expDesc})";
+    } else {
+      $args{title} .= ", see per-strain fitness"
+        if exists $args{gene} && defined $args{expName} && !exists $args{URL};
+      $args{title} .= ", see $showId"
+        if exists $args{gene} && !defined $args{expName} && !exists $args{URL};
+      # in case there was no title
+      $args{title} =~ s/^, // if defined $args{title};
+    }
+  }
+  if (!exists $args{URL}) {
+    if (exists $args{gene} && defined $args{expName}) {
+      # Ok to use this URL even if no fitness data, I think
+      $args{URL} = "strainTable.cgi?"
+        . join("&", "orgId=$args{gene}{orgId}",
+               "locusId=$args{gene}{locusId}",
+               "expName=$args{expName}");
+    } elsif (exists $args{gene}) {
+      $args{URL} = "singleFit.cgi?orgId=$args{gene}{orgId}&locusId=$args{gene}{locusId}";
+    } else {
+      $args{URL} = "";
+    }
+  }
+
+  my $fitShow = !defined $args{fit} || $args{fit} eq "" ? "N.D." : sprintf("%+.1f", $args{fit});
+  if ($args{URL} ne "" || $args{title} ne "") {
+    my %linkattr = ();
+    $linkattr{href} = $args{URL} if $args{URL} ne "";
+    $linkattr{title} = $args{title} if $args{title} ne "";
+    # display block and width/height 100% so that the entire cell is taken up by the link
+    # (i.e., you can click anywhere in the cell)
+    $linkattr{style} = "color:rgb(0,0,0); display:block; width:100%; height:100%;";
+    $linkattr{style} .= " font-size: 60%;" if !defined $args{fit} || $args{fit} eq "";
+    $fitShow = CGI::a(\%linkattr, $fitShow);
+  }
+  my %tdattr = ( -bgcolor => fitcolor($args{fit}), -align => "center" );
+  $tdattr{title} = $args{title} if $args{title} ne "";
+  return CGI::td(\%tdattr, $fitShow);
 }
 
 # from a fraction 0:1 to a color
@@ -556,7 +634,7 @@ sub gene_fit_string($$$) {
                                                                  FROM GeneFitness WHERE orgId = ? AND locusId = ? ; },
 							     {}, $orgId, $locusId);
     return ("no data", "No fitness data for this gene ") if !defined $minFit;
-    my $tip = sprintf("fit = %.1f to +%.1f (t = %.1f to +%.1f)", $minFit, $maxFit, $minT, $maxT);
+    my $tip = sprintf("fit = %+.1f to +%.1f (t = %+.1f to +%.1f)", $minFit, $maxFit, $minT, $maxT);
     my ($maxCofit) = $dbh->selectrow_array(qq{ SELECT cofit FROM Cofit WHERE orgId = ? AND locusId = ? AND rank = 1 LIMIT 1; },
 					   {}, $orgId, $locusId);
     $tip .= sprintf(", max(cofit) = %.2f", $maxCofit) if defined $maxCofit;

@@ -276,22 +276,10 @@ foreach my $exp (@exps) {
 				     href => "exp.cgi?orgId=$orgId&expName=$expName" },
 				   $exp->{expDesc}));
     foreach my $gene (@genes) {
-	my $showId = $gene->{sysName} || $gene->{locusId};
-	my $fit = $gene->{fit}{$expName}{fit};
-	my $t = $gene->{fit}{$expName}{t};
-    my $strainUrl = "strainTable.cgi?orgId=$orgId&locusId=$gene->{locusId}&expName=$expName";
-        $strainUrl .= "&help=1" if $help;
-	if (defined $fit) {
-	    my $fitShow = sprintf("%.1f",$fit);
-	    $t = sprintf("%.1f", $t);
-	    push @values, $cgi->td({ -bgcolor => Utils::fitcolor($fit) },
-                                   a({ -href => $strainUrl,
-                                       -title => "$showId: t = $t",
-                                       -style => "color:rgb(0,0,0)" },
-                                     $fitShow) );
-	} else {
-	    push @values, $cgi->td({ -bgcolor => Utils::fitcolor($fit) }, "&nbsp;");
-	}
+      push @values, Utils::fittd(fit => $gene->{fit}{$expName}{fit},
+                                 t => $gene->{fit}{$expName}{t},
+                                 gene => $gene,
+                                 expName => $expName);
     }
     push @trows, $cgi->Tr({-align=>'left',-valign=>'top', -style => "font-size: 70%" }, @values);
 }

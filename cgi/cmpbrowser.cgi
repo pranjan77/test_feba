@@ -78,7 +78,6 @@ my $padding = 30; # at left only
   # Parse anchor parameters
   my $anchorOrg = param('anchorOrg') || die "Must specify anchorOrg";
   die "Invalid organism $anchorOrg" unless exists $orginfo->{$anchorOrg};
-  $CGI::LIST_CONTEXT_WARN = 0; # no warnings for lixt context use
   my @anchorLoci = param('anchorLoci');
   die "Must specify anchorLoci" unless @anchorLoci > 0;
   my @anchorGenes = map GetGene($dbh, $anchorOrg, $_), @anchorLoci;
@@ -732,13 +731,8 @@ my $padding = 30; # at left only
           my $strainUrl = "strainTable.cgi?orgId=$orgId&locusId=$gene->{locusId}&expName=$expName";
           my $t = $gene->{fit}{$expName}{t};
           my $show = "&nbsp;";
-          if (defined $fit) {
-            $show = a({ -href => $strainUrl,
-                        -title => "$showId: t = " . sprintf("%.1f",$t),
-                        -style => "color:rgb(0,0,0)" },
-                      sprintf("%.1f", $fit));
-          }
-          push @td, td({ -bgcolor => Utils::fitcolor($fit) }, $show);
+          push @td, Utils::fittd(fit => $fit, t => $t,
+                                 gene => $gene, expName => $exp->{expName});
         }
         my @hidden2 = grep { $_->[0] ne "e.$orgId" || $_->[1] ne $expName } @hidden;
         push @td, td(a({-href => "cmpbrowser.cgi?" . join("&", map $_->[0] . "=" . $_->[1], @hidden2),

@@ -128,17 +128,12 @@ if (@$roles == 0) {
                                  Utils::gene_link($dbh, $gene, "name", "myFitShow.cgi"),
                                  $gene->{gene} || "");
         foreach my $exp (@exps) {
-          my $showfit = "&nbsp;";
           my ($fit,$t) = $dbh->selectrow_array("SELECT fit,t FROM GeneFitness WHERE orgId = ? AND locusId = ? AND expName = ?",
                                                {}, $orgId, $gene->{locusId}, $exp->{expName});
-          if (defined $fit) {
-            my $strainUrl = "strainTable.cgi?orgId=$orgId&locusId=$gene->{locusId}&expName=$exp->{expName}";
-            $showfit = a({ -href => $strainUrl,
-                           -title => "t = " . sprintf("%.1f", $t),
-                           -style => "color:rgb(0,0,0)" },
-                         sprintf("%.1f", $fit));
-          }
-          push @trow, td({ -bgcolor => Utils::fitcolor($fit) }, $showfit);
+          push @trow, Utils::fittd(fit => $fit, t => $t,
+                                   expName => $exp->{expName},
+                                   expDesc => $exp->{expDesc},
+                                   gene => $gene);
         }
         push @trow, td(checkbox('locusId', 1, $gene->{locusId}, ''));
         push @trows, \@trow;

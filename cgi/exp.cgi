@@ -197,8 +197,6 @@ print $cgi->h3($header) if defined $header;
 if (@fit > 0) { # show the table
   my @trows = ();
   foreach my $row (@fit) {
-    my $strainUrl = "strainTable.cgi?orgId=$orgId&locusId=$row->{locusId}&expName=$expName";
-    $strainUrl .= "&help=1" if $help;
     my $orthUrl = "orthFit.cgi?orgId=$orgId&locusId=$row->{locusId}"
       . "&expGroup=" . uri_escape($exp->{expGroup})
         . "&condition1=" . uri_escape($exp->{condition_1});
@@ -208,11 +206,7 @@ if (@fit > 0) { # show the table
                 td(checkbox('locusId',0,$row->{locusId},'')),
                 td(Utils::gene_link($dbh, $row, "name", "myFitShow.cgi")),
                 td($row->{gene}),
-                td({ -bgcolor => Utils::fitcolor($row->{fit}) },
-                   a({ -href => $strainUrl,
-                       -title => "per-strain data",
-                       -style => "color:rgb(0,0,0)" },
-                     sprintf("%.1f", $row->{fit})) ),
+                Utils::fittd(fit => $row->{fit}, gene => $row, expName => $expName),
                 td( sprintf("%.1f", $row->{t}) ),
                 td(Utils::gene_link($dbh, $row, "desc", "domains.cgi")),
                 td(a({ title => "Compare to data from similar experiments or orthologs",

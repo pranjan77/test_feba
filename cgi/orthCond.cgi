@@ -191,6 +191,8 @@ sub RowForGene($$$$$) {
         . "&condition1=" . uri_escape($condition1);
     $orthFitURI .= "&help=1" if $help;
 
+    my $fitTitle = sprintf("Click to compare (t = %+.1f to %+.1f)",
+                           $gene->{minT}, $gene->{maxT}),;
     return $cgi->Tr( { -class=> $collapse, -valign => 'middle', -align => 'left',
                        -bgcolor => $shade % 2 ? "#DDDDDD" : "#FFFFFF" },
                      td($rowLabel),
@@ -200,21 +202,12 @@ sub RowForGene($$$$$) {
                      td( Utils::gene_link($dbh, $gene, "name", "myFitShow.cgi") ),
                      td( $gene->{gene} ),
                      td( Utils::gene_link($dbh, $gene, "desc", "domains.cgi") ),
-                     td( { -bgcolor => Utils::fitcolor($gene->{minFit}), -style=>'text-align: center;' },
-                         a( { -title => sprintf("Click to compare (t = %.1f to %.1f)",$gene->{minT},$gene->{maxT}),
-                              -style => "color: rgb(0,0,0)",
-                              -onMouseOver=>"this.style.color='#CC0024'",
-                              -onMouseOut=>"this.style.color='#000000'",
-                              -href => $orthFitURI },
-                            sprintf("%.1f",$gene->{minFit}) ) ),
-                     td( { -bgcolor => Utils::fitcolor($gene->{maxFit}), -style=>'text-align: center;' },
-                         a( { -title => sprintf("Click to compare (t = %.1f to %.1f)",$gene->{minT},$gene->{maxT}),
-                              -style => "color: rgb(0,0,0)",
-                              -onMouseOver=>"this.style.color='#CC0024'",
-                              -onMouseOut=>"this.style.color='#000000'",
-                              -href => $orthFitURI },
-                            sprintf("%.1f",$gene->{maxFit}) ) )
-                   );
+                     Utils::fittd(fit => $gene->{minFit},
+                                  title => $fitTitle,
+                                  URL => $orthFitURI),
+                     Utils::fittd(fit => $gene->{maxFit},
+                                  title => $fitTitle,
+                                  URL => $orthFitURI) );
 }
 
 # sort them so the ones with gene names come up first;

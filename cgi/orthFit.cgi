@@ -123,12 +123,8 @@ foreach my $o (@genes) {
                 td(a({ -href => "exp.cgi?orgId=$o->{orgId}&expName=$row->{expName}",
                        -title => $row->{expName} },
                      $row->{expDesc})),
-                td({ -bgcolor => Utils::fitcolor($row->{fit}) },
-                   a({ -href => $strainUrl,
-                       -title => "per-strain data",
-                       -style => "color:rgb(0,0,0)" },
-                     sprintf("%.1f", $row->{fit}) ) ),
-                td(sprintf("%.1f", $row->{t})) );
+                Utils::fittd(fit => $row->{fit}, gene => $o, expName => $row->{expName}),
+                td({ -align => 'center' }, sprintf("%+.1f", $row->{t})) );
     $first = 0;
   }
 }
