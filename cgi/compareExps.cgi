@@ -59,7 +59,13 @@ die "Must specify orgId" unless defined $orgId && $orgId ne "";
 my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
 
-print $tsv ? $cgi->header('text/tab-separated-values') : $cgi->header();
+if ($tsv) {
+  my $outfile = "compareExps_${orgId}.tsv";
+  print ("Content-Type:application/x-download\n");
+  print "Content-Disposition: attachment; filename=$outfile\n\n";
+} else {
+  print $cgi->header();
+}
 
 Utils::fail($cgi, "Unknown organism: $orgId") unless exists $orginfo->{$orgId};
 
