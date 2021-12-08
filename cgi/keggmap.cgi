@@ -88,7 +88,7 @@ if ($orgId && defined $expquery) {
             push @trows, $cgi->Tr(
                 {-valign => 'top', -align => 'left'},
                 $cgi->td([ qq{<input type="checkbox" name="expName" value="$exp->{expName}"  >},
-                           $cgi->a({href => "exp.cgi?orgId=$orgId&$exp->{expName}"}, $exp->{expName}),
+                           $cgi->a({href => "exp.cgi?orgId=$orgId&expName=$exp->{expName}"}, $exp->{expName}),
                            $exp->{expGroup}, $exp->{condition_1}, $exp->{expDesc} ]));
         }
         print
@@ -151,10 +151,10 @@ if ($orgId) {
                 $row->{ecdesc} =~ s/[.]$//; # removing trailing period
                 my @sorted = sort { $a <=> $b} values %fit;
                 if (scalar(keys %fit) == 1) {
-                    $row->{ecdesc} = sprintf("%s, fitness %.1f",
+                    $row->{ecdesc} = sprintf("%s, fitness %+.1f",
                                              $row->{ecdesc}, $sorted[0]);
                 } elsif (scalar(keys %fit) > 1) {
-                    $row->{ecdesc} = sprintf("%s, fitness %.1f to %.1f",
+                    $row->{ecdesc} = sprintf("%s, fitness %+.1f to %+.1f",
                                              $row->{ecdesc}, $sorted[0], $sorted[@sorted-1]);
                 } else { # genes but no values
                     $row->{ecdesc} .= ", no fitness data";
