@@ -195,7 +195,7 @@ if ($html) {
             my $sigstring = $hasstrong ? "strong phenotype" :
                 ($hassig ? "has phenotype" : ($minFit ne "" ? "has data" : "no data"));
             if ($minFit ne "") {
-                $sigstring = sprintf(qq{<A TITLE="fitness %.1f to %.1f" HREF="$base_url/singleFit.cgi?orgId=%s&locusId=%s">%s</A>},
+                $sigstring = sprintf(qq{<A TITLE="fitness %+.1f to %+.1f" HREF="$base_url/singleFit.cgi?orgId=%s&locusId=%s">%s</A>},
                                      $minFit, $maxFit, $orgId, $locusId, $sigstring);
             }
             if ($hascofit) {

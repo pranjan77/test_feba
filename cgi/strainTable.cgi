@@ -318,7 +318,7 @@ foreach my $row (@$rows) {
         my $fit = $row->{ $expName };
         $totalFit += $fit;
         $ind += 1;
-        push @row, td( { -bgcolor => Utils::fitcolor($fit) }, sprintf("%.1f",$fit));
+        push @row, td( { -bgcolor => Utils::fitcolor($fit) }, sprintf("%+.1f",$fit));
     }
     # above we give up if no experiments are specified, so this no longer causes divide by 0
     push @avgFits, $totalFit/$ind;

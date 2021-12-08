@@ -105,8 +105,8 @@ foreach my $row (@$spec) {
         . "&expGroup=" . uri_escape($expGroup)
         . "&condition1=" . uri_escape($cond);
     my $fitAttr = { -href => $cmpURL,
-                    -style => "color:rgb(0,0,0)",
-                    -title => $row->{minFit} != $row->{maxFit} ? sprintf("%.1f to %.1f", $row->{minFit}, $row->{maxFit}) : "no replicates" };
+                    -style => "color:rgb(0,0,0); display: block; width: 100%; height: 100%;",
+                    -title => $row->{minFit} != $row->{maxFit} ? sprintf("fitness %+.1f to %+.1f", $row->{minFit}, $row->{maxFit}) : "no replicates" };
     my $allURL = "orthCond.cgi?expGroup=".uri_escape($expGroup)."&condition1=".uri_escape($cond);
     my $condParams = {href => $allURL, title=>"Compare specific phenotypes across organisms"};
     $condParams->{name} = $cond if $first;
@@ -115,10 +115,10 @@ foreach my $row (@$spec) {
                     td(a($condParams, $cond)),
                     td(Utils::gene_link($dbh, $row, "name", "myFitShow.cgi")),
                     td(Utils::gene_link($dbh, $row, "desc", "domains.cgi")),
-                    td({ -bgcolor => Utils::fitcolor($showFit) },
+                    td({ -bgcolor => Utils::fitcolor($showFit), -align => "center" },
                        a($fitAttr,
                          ( ($row->{minFit} < 0 && $row->{maxFit} < 0) || ($row->{minFit} > 0 && $row->{maxFit} > 0) ?
-                           sprintf("%.1f", $showFit) : "variable" ))),
+                           sprintf("%+.1f", $showFit) : small("variable") ))),
                     td($row->{nInOG} > 1 ? "Yes" : "&nbsp;"));
 }
 print table({cellspacing => 0, cellpadding => 3}, @trows); # style=>"margin-left: 0px",
