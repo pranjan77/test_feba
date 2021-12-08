@@ -191,7 +191,7 @@ if (@$hits == 0) {
                         Utils::fittd(fit => $fitrow->{fit},
                                      gene => $gene,
                                      expName => $expName),
-                        td( sprintf("%.1f", $fitrow->{t}) ),
+                        td({ align => 'center' }, sprintf("%+.1f", $fitrow->{t}) ),
                         td(a({ title => "Compare to data from similar experiments or orthologs",
                                href => "orthFit.cgi?orgId=$orgId&locusId=$locusId"
                                . "&expGroup=" . uri_escape($exp->{expGroup})
