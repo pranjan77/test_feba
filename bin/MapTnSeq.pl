@@ -251,6 +251,7 @@ sub BLAT8($$$$$$$$); # BLAT to a blast8 format file
           }
           # else
           $seq = substr($seq, $prefixLen);
+          $quality = substr($quality, $prefixLen);
         }
 
         my ($barcode,$obsStart) = FindBarcode($seq,$quality,$model,$barcodeStart,$barcodeEnd);
