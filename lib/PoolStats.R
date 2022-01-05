@@ -37,7 +37,7 @@ RunPoolStats = function(args = commandArgs(trailingOnly=TRUE)) {
 	nSeenTwice = sum(pool$scaffold != "pastEnd" & pool$n == 2);
 	if (nSeenTwice > 0) diversity_cmp(nreadstot, nSeen, nSeenTwice, sum(pool$n[pool$scaffold != "pastEnd" & pool$n >= 2])/nreadstot);
 	poolg = findWithinGrouped(split(pool, pool$scaffold),
-				split(without(genes, genes$scaffoldId), genes$scaffoldId),
+				split(without(genes, "scaffoldId"), genes$scaffoldId),
 				"pos", "begin", "end");
 	if (is.null(poolg) || nrow(poolg) == 0) {
 	    err_printf("No insertions within genes\n");
