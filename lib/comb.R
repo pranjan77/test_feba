@@ -655,10 +655,10 @@ PlotSpecList = function(org, loci, labels=rep("",length(loci)), condspec,
                         label.cex=1, jitterBy=0.25,
 			xlim=c(-4,4),
 			xlab="Gene Fitness", main="", lines=TRUE, stripes=FALSE, stripeColor="lightyellow",
-                        shortlabels=FALSE, blanklabels=F) {
+                        shortlabels=FALSE, blanklabels=F, ...) {
 	# The y layout is to jitter by +/- jitterBy, centered at nrow(locispec):1
         # And the separator lines are at +/- 0.5
-	plot(xlim, c(0.5,length(loci)+0.4), bty="n", xlab=xlab, ylab="", yaxt="n", pch=NA, yaxs="i", main=main);
+	plot(xlim, c(0.5,length(loci)+0.4), bty="n", xlab=xlab, ylab="", yaxt="n", pch=NA, yaxs="i", main=main, ...);
         if(lines) segments(xlim[1], (2:length(loci))-0.5, xlim[2], (2:length(loci))-0.5);
         stopifnot(c("Group","Condition_1","col") %in% names(condspec));
 
@@ -704,4 +704,14 @@ PlotSpecList = function(org, loci, labels=rep("",length(loci)), condspec,
 	mtext(ifelse(as.character(loci)=="", "", labels), at=length(loci):1, side=4, line=0, las=2, cex=label.cex, xpd=T);
         # Bold font does not show up unless convert labels to character
 	text(xlim[1], length(loci):1, ifelse(as.character(loci)=="", as.character(labels), ""), font=2, cex=label.cex, adj=c(0,0.5), xpd=T);
+}
+
+# Identify "simple" conditions that have a Group, have Condition_1 set, and do not have Condition_2 set
+# (or are stresses with Condition_2 as "Ethanol" or "Dimethyl Sulfoxide" as carriers)
+# returns a vector of TRUE or FALSE
+IsSimpleCond = function(Group, Condition_1, Condition_2) {
+	return(!is.na(Group) & Group != ""
+	        & !is.na(Condition_1) & Condition_1 != ""
+		& (is.na(Condition_2) | Condition_2 == ""
+		   | (tolower(Group) == "stress" & Condition_2 %in% c("Ethanol","Dimethyl Sulfoxide"))));
 }
