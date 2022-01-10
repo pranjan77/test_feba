@@ -75,6 +75,7 @@ Other options:
   -offset -- If IT001 is named S97, use -offset 96
   -preseq, -postseq, -nPreExpected -- see MultiCodes.pl
   -bywell -- fastq.gz file names begin with A01_ for IT001, etc.
+  -cmdsFile -- store the commands in this file
 END
     ;
 
@@ -90,6 +91,7 @@ my $test = undef;
     my $fastq = undef;
     my ($preseq, $postseq, $nPreExpected, $nopool);
     my $bywell = undef;
+    my $cmdsFile;
 
     die $usage unless GetOptions('test' => \$test,
                                  'n25' => \$n25,
@@ -106,7 +108,8 @@ my $test = undef;
                                  'sets=s' => \$setspec,
                                  'offset=i' => \$offset,
                                  'nopool' => \$nopool,
-                                 'bywell' => \$bywell);
+                                 'bywell' => \$bywell,
+                                 'cmdsFile=s' => \$cmdsFile);
     my @gdirs = ();
     my @setnames = ();
     die "Cannot use both -sets and -nopool\n" if defined $setspec && defined $nopool;
@@ -187,15 +190,16 @@ my $test = undef;
     my $codeGlob;
     my $setname1 = $setnames[0] || "noset"; # for naming the parts
     if (-d $fastq) {
-	@parts = glob("$fastq/*fastq.gz");
+	@parts = glob("$fastq/*{fq,fastq}.gz");
 	@parts = grep { !m/^[.]/ }  @parts;
         # Ignored Undetermined_* files before deciding if subdirectories need to be searched
         @parts = grep { !m/Undetermined_/ } @parts;
 	if (scalar(@parts) == 0) {
 	    die "No *.gz files in $fastq" if defined $barcodes;
 	    # Indexed runs sometimes have one directory per sample, with fastq.gz file(s) within each directory
-	    @parts = glob("$fastq/*/*.fastq.gz");
+	    @parts = glob("$fastq/*/*.{fq,fastq}.gz");
 	    @parts = grep !m"[.]/", @parts; # remove hidden files
+            @parts = grep ! m/_2[.]fq[.]gz$/, @parts; # remove 2nd reads
 	    die "Cannot find *.gz files in $fastq or its subdirectories" unless scalar(@parts) > 0;
 	    $codeGlob = "$fastq/*/*.codes";
 	} else {
@@ -240,10 +244,11 @@ my $test = undef;
 
     # build the list of commands, and update @codes to be what we'll make
     @codes = (); # will update with expected results
-    my $cmdsfile = "$prefix/${setname1}_BarSeq.codecmds";
-    maybeRun("rm $cmdsfile*") if -e $cmdsfile;
+    $cmdsFile = "$prefix/${setname1}_BarSeq.codecmds"
+      unless defined $cmdsFile;
+    maybeRun("rm $cmdsFile*") if -e $cmdsFile;
     maybeRun("rm -f $codeGlob");
-    open(CMDS, ">", $cmdsfile) || die "Cannot write to $cmdsfile";
+    open(CMDS, ">", $cmdsFile) || die "Cannot write to $cmdsFile";
     foreach my $i (@parts) {
 	print STDERR "Considering part $i\n" if $test;
 
@@ -328,10 +333,10 @@ my $test = undef;
             print CMDS "$corecmd -out $i < $i >& $i.log"."\n";
         }
     }
-    close(CMDS) || die "Error writing to $cmdsfile";
+    close(CMDS) || die "Error writing to $cmdsFile";
 
     # run them all
-    maybeRun("$Bin/submitter.pl $cmdsfile");
+    maybeRun("$Bin/submitter.pl $cmdsFile");
 
     # combine the results
     if (defined $nopool) {
