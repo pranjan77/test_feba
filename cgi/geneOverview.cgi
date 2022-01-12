@@ -145,8 +145,25 @@ if (@$hits == 0) {
     my $tabs = Utils::tabsGene($dbh,$cgi,$orgSpec,$geneSpec,$showAll,$gene->{type},"gene");
     my $beginC = Utils::commify($begin);
     my $endC = Utils::commify($end);
+
+    # Reannotation information, if any
+    my $reanno = $dbh->selectrow_hashref("SELECT * from Reannotation WHERE orgId = ? AND locusId = ?",
+                                         {}, $orgId, $locusId);
+
     my @lines = ();
-    push @lines, Utils::gene_link($dbh, $gene, "lines");
+    push @lines, "Name: $gene->{gene}" if $gene->{gene} ne "";
+    my $desc_title = "Annotation";
+    if ($reanno->{new_annotation}) {
+      push @lines,
+        "Updated annotation (from data): <B>$reanno->{new_annotation}</B>",
+          "Rationale:  $reanno->{comment}";
+      $desc_title = "Original annotation";
+    }
+    my $desc = $gene->{desc};
+    $desc = b($desc) if $desc ne "" && ! $reanno->{new_annotation};
+    $desc = "no description" if $desc eq "";
+    push @lines, "${desc_title}: $desc";
+
     push @lines, "Type $type: $typeName";
     push @lines, "Located on scaffold $scaffold, $strand strand, nucleotides $beginC to $endC";
     push @lines, join(" ",
