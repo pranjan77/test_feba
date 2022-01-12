@@ -965,14 +965,14 @@ sub seed_desc($$$) {
     return ($seed_desc,$seed_classes);
 }
 
+# Caching to speed up alt_descriptions() on pages that list a gene more than once
 my %altdesccache = (); # org => locusId => type => description
 # dbh,orgId,locusId => hash of alternate descriptions for the gene
 # with keys reanno, seed, or kegg (all optional)
-#
+
 # Uses its own queries instead of kegg_info() and seed_desc() for performance.
 # (To really speed it up I could have the option of providing locusId as a list to
 # pre-cache all those genes with just 1 query)
-# Caching to speed up alt_descriptions() on pages that list a gene more than once
 sub alt_descriptions($$$) {
   my ($dbh, $orgId, $locusId) = @_;
   die "Invalid arguments to alt_descriptions"
