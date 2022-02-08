@@ -27,7 +27,6 @@ sub tabsGene($$$$$$$);
 sub tabsExp($$$$$$$);
 sub fail($$);
 sub formatFASTA($$);
-sub crc64($);
 sub fitcolor($);
 sub fittd(@);
 sub get_dbh(); # open the sqlite db and return the resulting database handle
