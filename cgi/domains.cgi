@@ -82,11 +82,13 @@ my $reanno = $dbh->selectrow_hashref("SELECT * from Reannotation WHERE orgId = ?
 my @toplines = ();
 push @toplines, "Name: $gene->{gene}" if $gene->{gene} ne "";
 my $desc_title = "Annotation";
+my $descUpdated = $gene->{desc} || "no description";
 if ($reanno->{new_annotation}) {
     push @toplines,
       "Updated annotation (from data): $reanno->{new_annotation}",
       "Rationale:  $reanno->{comment}";
     $desc_title = "Original annotation";
+    $descUpdated = $reanno->{new_annotation};
 }
 push @toplines, "${desc_title}: " . ($gene->{desc} || "no description");
 
@@ -513,8 +515,6 @@ print "\n";
 
 # print sequence
 $seq =~ s/(.{60})/$1\n/gs;
-my $desc = $gene->{desc};
-$desc =~ s/"//g;
 my $orgtype = "bacteria";
 my %positiveDivisions = map { $_ => 1 } qw{Actinobacteria Firmicutes};
 my $gram = exists $positiveDivisions{ $orginfo->{$orgId}{division} } ? "positive" : "negative";
@@ -565,7 +565,7 @@ print
       "ENIGMA genome browser")),
 
   h3("Protein Sequence ($seqLen amino acids)"),
-  pre(">$sys $gene->{desc} ($orginfo->{$orgId}{genome})\n$seq"),
+  pre(">$sys $descUpdated ($orginfo->{$orgId}{genome})\n$seq"),
   '</div>';
 
 
