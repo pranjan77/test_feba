@@ -243,7 +243,7 @@ print " or try the ",
 print "<br><br>";
 
 
-print Utils::geneArrows(\@genes, $centralId, undef, undef) if $around;
+print Utils::geneArrows($dbh, \@genes, $centralId, undef, undef) if $around;
 
 my @trows = ();
 my @headings = qw{Group Condition};

@@ -147,7 +147,7 @@ push @show, @objects;
 @show = sort { $a->{begin} <=> $b->{begin} } @show;
 
 # specify no locus to highlight
-print Utils::geneArrows(\@show, undef, $begin, $end);
+print Utils::geneArrows($dbh, \@show, undef, $begin, $end);
 
 my @objhidden = ();
 foreach my $objspec ($cgi->param('object')) {

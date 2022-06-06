@@ -237,7 +237,7 @@ if ($help) {
       my @show = @$genes;
       push @show, \%object if keys(%object) > 0;
       @show = sort { $a->{begin} <=> $b->{begin} } @show;
-      print Utils::geneArrows(\@show, $locusSpec, $begin, $end);
+      print Utils::geneArrows($dbh, \@show, $locusSpec, $begin, $end);
   }
 }
 

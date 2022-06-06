@@ -771,8 +771,8 @@ sub tabsExp($$$$$$$) {
 # it can also include arbitrary objects that must include the field object,
 # as well as begin, end, name, and optionally strand and desc and URL.
 # The list of genes should be sorted by position.
-sub geneArrows($$$$) {
-    my ($genes, $geneSpec, $begin, $end) = @_;
+sub geneArrows($$$$$) {
+    my ($dbh, $genes, $geneSpec, $begin, $end) = @_;
     $geneSpec = "" if !defined $geneSpec;
 
     # need extra space for the arrow heads because the are shown slightly past the actual boundaries of the gene
@@ -863,12 +863,12 @@ sub geneArrows($$$$) {
             $textcolor = "red";
             $head = $row->{strand} eq "+" ? "marker-end='url(#rightarrow2)'" : "marker-start='url(#leftarrow2)'";
           }
-          my $label = $row->{gene} || $row->{sysName}; #|| $row->{locusId};
+          my $label = $row->{gene} || $row->{sysName};
           my $label2 =  $row->{gene} || $row->{sysName} || $row->{locusId};
           my $label3 = $label2;
           $label3 =~ s/^.*_/_/ if $row->{sysName} || $row->{locusId};
           $label2 = $row->{sysName}. ": " . $label2 if $row->{sysName};
-          $popup = "$label2 - $row->{desc}";
+          $popup = "$label2 - " . Utils::gene_link($dbh, $row, "desc", undef);
           $name = $label3;
           $URL = "singleFit.cgi?orgId=$row->{orgId}&locusId=$row->{locusId}";
           $mouseover = qq{onmouseover="this.style.fill='#CC0024'" onmouseout="this.style.fill='#00A8C6'"};
@@ -1005,15 +1005,14 @@ sub alt_descriptions($$$) {
 #   or multiple "lines" with gene name and description (both in bold)
 #   and additional lines (not in bold), separated by <BR>
 #
-# In name or desc mode, it returns a link, and the final argument is
+# In name or desc mode, it usually returns a link, and the
+# final (optional) argument is
 # which cgi to link to (usually myFitShow.cgi if "name" or domains.cgi
 # if "desc").  Hover text shows (additional) annotations.
 #
 # In other modes, do not use the $cgiParam argument (or use undef)
 sub gene_link {
   my ($dbh, $gene, $showParam, $cgiParam) = @_;
-  die "Must specify cgi"
-    if ($showParam eq "desc" || $showParam eq "name") && ! $cgiParam;
   die "Must not specify cgi with text"
     if ($showParam eq "text" || $showParam eq "lines") && defined $cgiParam;
   my $alt_descs = Utils::alt_descriptions($dbh,$gene->{orgId},$gene->{locusId});
@@ -1062,6 +1061,7 @@ sub gene_link {
   my $show = $showParam eq "name" ? $gene->{sysName} || $gene->{locusId} : $main_desc || "no description";
   # allow linebreaks before _ in locus tags
   $show =~ s/_/<wbr>_/g if $showParam eq "name";
+  return $show if !defined $cgiParam;
   return CGI::a({ -href => "$cgiParam?orgId=$gene->{orgId}&gene=$gene->{locusId}",
                   -title => $desc_long },
                 $show);

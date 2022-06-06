@@ -203,7 +203,7 @@ if (@$hits == 0) {
     print $cgi->p("Links: " . join(", ", @links)) if (@links > 0);
 
     print $cgi->h3({style=>'text-align:center'},"Nearby Genes");
-    print Utils::geneArrows(\@genes, $locusId, undef, undef);
+    print Utils::geneArrows($dbh, \@genes, $locusId, undef, undef);
 
     my @trows = ( Tr({-valign => "top", -align => 'center'},
                      th([ 'Locus', 'Name', 'Description', 'Strand',
