@@ -192,6 +192,13 @@ Tryptone	10	g/L
 Yeast Extract	5	g/L
 Sodium Chloride	5	g/L
 		
+Media	LB_noSalt	
+Description	Luria-Bertani broth without salt	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Tryptone	10	g/L
+Yeast Extract	5	g/L
+		
 Media	LB_Miller	
 Description	Luria-Bertani broth Miller modification	
 Minimal	FALSE	
@@ -205,6 +212,18 @@ Description	E. coli defined media
 Minimal	TRUE	
 Controlled vocabulary	Concentration	Units
 D-Glucose	4	g/L
+Magnesium sulfate	2	mM
+Calcium chloride	0.1	mM
+Sodium phosphate dibasic heptahydrate	12.8	g/L
+Potassium phosphate monobasic	3	g/L
+Sodium Chloride	0.5	g/L
+Ammonium chloride	1	g/L
+		
+Media	M9_5mM_Glucose	
+Description	E. coli defined media with 5mM D-Glucose	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+D-Glucose	5	mM
 Magnesium sulfate	2	mM
 Calcium chloride	0.1	mM
 Sodium phosphate dibasic heptahydrate	12.8	g/L
@@ -511,6 +530,18 @@ PIPES sesquisodium salt	30	mM
 Wolfe's mineral mix	1	X
 Wolfe's vitamin mix	1	X
 		
+Media	RCH2_defined_glucose_5mM	
+Description	Defined minimal media for soil and groundwater bacteria with glucose 5mM	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+D-Glucose	5	mM
+PIPES sesquisodium salt	30	mM
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+		
 Media	RCH2_defined_1percent_glucose	
 Description	Defined minimal media for soil and groundwater bacteria with glucose	
 Minimal	TRUE	
@@ -591,6 +622,18 @@ Sodium phosphate monobasic monohydrate	0.6	g/L
 PIPES sesquisodium salt	30	mM
 Wolfe's mineral mix	1	X
 Wolfe's vitamin mix	1	X
+		
+Media	RCH2_defined_noCarbon_YE	
+Description	Defined minimal media for soil and groundwater bacteria with no carbon	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+PIPES sesquisodium salt	30	mM
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+Yeast Extract	0.01	g/L
 		
 Media	RCH2_defined_noNitrogen	
 Description	Defined minimal media for soil and groundwater bacteria with lactate and no nitrogen	
@@ -1170,6 +1213,27 @@ Boric Acid	1.623	uM
 Sodium Molybdate Dihydrate	0.207	uM
 biotin	0.06	uM
 		
+Media	MELiSSA_defined_noCarbon	
+Description	Defined medium for R. rubrum with no carbonate	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Manganese (II) chloride tetrahydrate	0.051	mM
+Magnesium Sulfate Heptahydrate	0.0811	mM
+Sodium sulfate	3.801	mM
+Ammonium chloride	35.33	mM
+Calcium chloride dihydrate	0.34	mM
+EDTA	0.068	mM
+Potassium phosphate monobasic	3.601	mM
+Iron (II) sulfate heptahydrate	0.072	mM
+MOPS	100.4	mM
+Potassium phosphate dibasic	2.985	mM
+Nickel (II) sulfate hexahydrate	1.902	uM
+Zinc sulfate heptahydrate	0.348	uM
+Copper (II) sulfate pentahydrate	0.02	uM
+Boric Acid	1.623	uM
+Sodium Molybdate Dihydrate	0.207	uM
+biotin	0.06	uM
+		
 Media	MELiSSA_defined_noCarbon_noNitrogen_phosphatebuffered	
 Description	Defined medium for R. rubrum with no ammonium, pH should be 6.9	
 Minimal	TRUE	
@@ -1263,6 +1327,28 @@ Controlled vocabulary	Concentration	Units
 Potassium phosphate dibasic	60	mM
 Potassium phosphate monobasic	33	mM
 Ammonium Sulfate	7.5	mM
+Magnesium Sulfate Heptahydrate	1	mM
+D-Glucose	20	mM
+Takara_DO_Supp_MinusHisLeuTrp	1.5	g/L
+		
+Media	Xantho_MME_glucose_casamino	
+Description	Defined media for Xanthomonas with casamino acids	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Potassium phosphate dibasic	10.5	g/L
+Potassium phosphate monobasic	4.5	g/L
+Ammonium Sulfate	1	g/L
+Magnesium Sulfate Heptahydrate	1	mM
+D-Glucose	20	mM
+casamino acids	1.5	g/L
+		
+Media	Xantho_MME_glucose_dropout_LTH	
+Description	Defined media for Xanthomonas without leucine, tryp, and his	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Potassium phosphate dibasic	10.5	g/L
+Potassium phosphate monobasic	4.5	g/L
+Ammonium Sulfate	1	g/L
 Magnesium Sulfate Heptahydrate	1	mM
 D-Glucose	20	mM
 Takara_DO_Supp_MinusHisLeuTrp	1.5	g/L
@@ -2746,7 +2832,7 @@ Tween 80	0.01	vol%
 Cycloheximide	0.2	mg/ml
 		
 Media	MME_noNitrogen_noCarbon	
-Description	Defined media without C and N from PNNL	
+Description	Defined media without C and N from PNNL with MOPS	
 Minimal	TRUE	
 Controlled vocabulary	Concentration	Units
 Potassium phosphate dibasic trihydrate	9.10	mM
@@ -2757,6 +2843,17 @@ Magnesium Sulfate Heptahydrate	0.41	mM
 Calcium chloride dihydrate	0.07	mM
 MME Trace Minerals	1	X
 		
+Media	MTM_noNitrogen_noCarbon	
+Description	Defined media without C and N from PNNL with TAPS	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Potassium phosphate dibasic trihydrate	9.10	mM
+TAPS sodium salt	20	mM
+Sodium Chloride	4.30	mM
+Ammonium chloride	9.30	mM
+Magnesium Sulfate Heptahydrate	0.41	mM
+Calcium chloride dihydrate	0.07	mM
+MME Trace Minerals	1	X
 		
 Media	Hans_Basal_Media	
 Description	A defined medium from Hans	
@@ -3053,3 +3150,52 @@ ATCC Wolfe's mineral mix	1	X
 Sodium phosphate dibasic	3.05	mM
 Sodium phosphate monobasic	1.95	mM
 NLDM_metabolites	1	X
+		
+Media	JBEI_Ralstonia_defined	
+Description	JBEI media for growing Ralstonia	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Magnesium sulfate	3.24	mM
+Calcium chloride	0.42	mM
+Sodium phosphate monobasic	33.50	mM
+Disodium phosphate	32.25	mM
+Potassium sulfate	2.60	mM
+Sodium Hydroxide	1.00	mM
+Ammonium chloride	1.87	mM
+Copper (II) sulfate pentahydrate	0.00048	g/L
+Zinc sulfate heptahydrate	0.0024	g/L
+Manganese (II) sulfate monohydrate	0.0024	g/L
+Iron (II) sulfate heptahydrate	0.015	g/L
+		
+Media	YM	
+Description	Yeast mannitol media 	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Yeast Extract	1	g/L
+D-Mannitol	10	g/L
+Potassium phosphate dibasic	0.50	g/L
+Magnesium sulfate	0.20	g/L
+Sodium Chloride	0.10	g/L
+Calcium carbonate	1.00	g/L
+		
+Media	Modified_YM	
+Description	Yeast mannitol media with some modifications	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Yeast Extract	1	g/L
+D-Mannitol	10	g/L
+Potassium phosphate dibasic	0.50	g/L
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+		
+		
+Media	Soil Defined Media (SDM)	
+Description	Northen lab media based on carbon sources found in soil extracts,  precurser to NLDM	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Ammonium chloride	1.50	g/L
+Potassium phosphate monobasic	2.30	g/L
+Potassium phosphate dibasic	4.00	g/L
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+Soil Defined Carbon Mix	10	X

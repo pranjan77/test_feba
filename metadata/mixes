@@ -974,3 +974,63 @@ Pantothenic Acid	0.05	mg/L
 Vitamin B12	0.001	mg/L
 p-Amino Benzoic Acid	0.05	mg/L
 D,L-6,8-Thioctic Acid	0.05	mg/L
+		
+Media	Calprotectin buffer	
+Description	Calprotectin buffer used by Zhu lab for Btheta experiments	
+X	1	
+Controlled vocabulary	Concentration	Units
+Tris hydrochloride	20	mM
+Sodium Chloride	100	mM
+Calcium Chloride Dihydrate	3	mM
+2-Mercaptoethanol	5	mM
+		
+Media	Soil Defined Carbon Mix	
+Description	Northen lab Soil defined carbon mix	
+X	100	
+Controlled vocabulary	Concentration	Units
+D-Mannitol	1604	mg/L
+D-Glucose	1486	mg/L
+D-Fructose	1453	mg/L
+D-Trehalose dihydrate	1923	mg/L
+D-Arabinose	312	mg/L
+D-Maltose monohydrate	566	mg/L
+Arabitol	160	mg/L
+L-Leucine	79	mg/L
+L-Isoleucine	79	mg/L
+Glycine	30	mg/L
+L-Arginine	70	mg/L
+L-Proline	46	mg/L
+L-Threonine	48	mg/L
+L-Lysine	59	mg/L
+L-Phenylalanine	66	mg/L
+D-Mannose	71	mg/L
+Uridine	52	mg/L
+Carnitine Hydrochloride	32	mg/L
+L-Asparagine	26	mg/L
+L-Serine	21	mg/L
+L-Valine	23	mg/L
+L-tyrosine	36	mg/L
+L-Tryptophan	41	mg/L
+L-Methionine	30	mg/L
+L-Glutamic acid	29	mg/L
+L-Citrulline	35	mg/L
+L-Aspartic acid	27	mg/L
+L-Alanine	18	mg/L
+L-Histidine	31	mg/L
+L-Glutamine	29	mg/L
+4-Guanidinobutyric acid	9	mg/L
+Hypoxanthine	6	mg/L
+Uracil	4	mg/L
+Thymine	4	mg/L
+Guanine	5	mg/L
+Cytosine	4	mg/L
+Adenine hydrochloride hydrate	4	mg/L
+Thymidine	6	mg/L
+spermidine	4	mg/L
+Orotic acid	4	mg/L
+Inosine	7	mg/L
+2'-Deoxyinosine	7	mg/L
+Cytidine	6	mg/L
+Choline chloride	3	mg/L
+Adenosine	7	mg/L
+2'-Deoxyuridine	6	mg/L
