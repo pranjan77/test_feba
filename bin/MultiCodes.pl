@@ -21,7 +21,7 @@ Optional arguments:
 	2:5 Ns, GTCGACCTGCAGCGTACG, N20, AGAGACC
     -bs3 means 1:4 + 6 + 11 = 18:21 nt before the pre-sequence, corresponding to
 	1:4 Ns, index2, GTCGACCTGCAGCGTACG, N20, AGAGACC
-	where nN and index2 is specified in ../primers/bs2.index2
+	where nN and index2 is specified in ../primers/barseq3.index2
 
     nPreExpected can also be a range, i.e. 11:14
 
