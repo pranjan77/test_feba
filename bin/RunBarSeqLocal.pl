@@ -10,13 +10,14 @@ use lib "$Bin/../lib";
 my $linesPerPiece = 20*1000*1000;
 my $minQuality = 0;
 my $offset = 0;
+my ($n25, $bs3, $bs4);
 
 my $usage = <<END
 Usage:
-RunBarSeqLocal.pl [ -indexes BarSeqPrimersH48 | -n25 | -bs3 ]
+RunBarSeqLocal.pl [ -indexes BarSeqPrimersH48 | -n25 | -bs3 | -bs4 ]
     organism_directory setname fastq.gz_file_or_directory_with_fastq.gz_files
 or
-RunBarSeqLocal.pl [ -indexes BarSeqPrimersH48 | -n25 | -bs3 ]
+RunBarSeqLocal.pl [ -indexes BarSeqPrimersH48 | -n25 | -bs3 | -bs4 ]
     -in fastq.gz_file_or_directory_with_fastq.gz_files
     [ -sets organism1_libraryname1_setname1,...,organismN_libraryN_setnameN | -nopool ]
 
@@ -25,7 +26,7 @@ feba/bin/RunBarSeqLocal.pl g/Keio Keio_ML9_set1 fastq/Keio_ML9_set1
 feba/bin/RunBarSeqLocal.pl -indexes feba/primers/BarSeqPrimersH48 g/MR1 MR1_ML3_set1 fastq/MR1_ML3_set1
 feba/bin/RunBarSeqLocal.pl -indexes feba/primers/BarSeqPrimersH48 g/psRCH2 psRCH2_ML7_set1 fastq/7341.4.68147.fastq.gz 
 feba/bin/RunBarSeqLocal.pl -n25 -in HiSeq_barcodes/FEBA_BS_186 -sets MR1_ML3_set12,Koxy_ML2_set9
-feba/bin/RunBarSeqLocal.pl --bs3 -in HiSeq_barcodes/FEBA_BS_265 -nopool
+feba/bin/RunBarSeqLocal.pl -bs3 -in HiSeq_barcodes/FEBA_BS_265 -nopool
 
 RunBarSeq.pl has two phases -- the first phase counts the barcodes in
 the fastq file(s).  If the BarSeq was run with the newer style of
@@ -80,13 +81,13 @@ END
     ;
 
 sub maybeRun($); # run command unless $test is defined
+sub sampleNumToIndex($);
  
 my $test = undef;
 {
     my $nosplit = undef;
     my $limitReads = undef;
     my $barcodes = undef;
-    my ($n25, $bs3);
     my $setspec = undef;
     my $fastq = undef;
     my ($preseq, $postseq, $nPreExpected, $nopool);
@@ -96,6 +97,7 @@ my $test = undef;
     die $usage unless GetOptions('test' => \$test,
                                  'n25' => \$n25,
                                  'bs3' => \$bs3,
+                                 'bs4' => \$bs4,
                                  'nosplit' => \$nosplit,
                                  'minQuality=i' => \$minQuality,
                                  'pieceLines=i' => \$linesPerPiece,
@@ -255,6 +257,7 @@ my $test = undef;
         my $corecmd = "$Bin/MultiCodes.pl -minQuality $minQuality";
         $corecmd .= " -n25" if defined $n25;
         $corecmd .= " -bs3" if defined $bs3;
+        $corecmd .= " -bs4" if defined $bs4;
 	$corecmd .= " -limit $limitReads" if defined $limitReads;
         $corecmd .= " -preseq $preseq" if defined $preseq;
         $corecmd .= " -postseq $postseq" if defined $postseq;
@@ -274,7 +277,7 @@ my $test = undef;
               $sampleNum = $row * 12 + $column;
               die "Invalid sample number $sampleNum from file name $name for well $pieces[0] in bywell mode\n"
                 if $sampleNum < 1 || $sampleNum > 96;
-              $index = sprintf("IT%03d", $sampleNum);
+              $index = sampleNumToIndex($sampleNum);
             } else {
               my @indexes = grep m/^IT\d+$/, @pieces;
               # sometimes ITO (capital O) not IT0 (numeral zero)
@@ -318,7 +321,7 @@ my $test = undef;
             if (defined $sampleNum && !defined $index) {
               die "Invalid sample number $sampleNum with offset $offset from file $name\n"
                 unless $sampleNum - $offset >= 1;
-              $index = sprintf("IT%03d", $sampleNum - $offset);
+              $index = sampleNumToIndex($sampleNum);
             }
             die unless defined $index;
 	    $corecmd .= " -index $index";
@@ -393,4 +396,13 @@ sub maybeRun($) {
     } else {
         system($cmd) == 0 || die "script failed: $cmd";
     }
+}
+
+sub sampleNumToIndex($) {
+  my ($sampleNum) = @_;
+  die "Invalid sampleNum $sampleNum -- must be greater than offset $offset"
+    unless $sampleNum > $offset;
+  $sampleNum -= $offset;
+  return "S".$sampleNum if (defined $bs4);
+  return sprintf("IT%03d", $sampleNum);
 }

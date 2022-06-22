@@ -3,7 +3,7 @@ use strict;
 use Getopt::Long;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
-use FEBA_Utils; # for ReadTable()
+use FEBA_Utils qw{ReadTable};
 
 my $minQuality = 10;
 
@@ -13,7 +13,7 @@ Or, if not yet multiplexed,
        MultiCodes.pl -out out_prefix -primers PrimerIndexTable < fastq
 Optional arguments:
     [ -debug ] [ -dntag ] [ -limit maxReads ] [ -minQuality $minQuality ]
-    [ -n25 | -bs3 ]
+    [ -n25 | -bs3 | -bs4 ]
     [ -preseq CAGCGTACG -postseq AGAGACCTC -nPreExpected 9 ]
 
     -n25 or -bs3 indicate newer multiplexing designs:
@@ -22,7 +22,9 @@ Optional arguments:
     -bs3 means 1:4 + 6 + 11 = 18:21 nt before the pre-sequence, corresponding to
 	1:4 Ns, index2, GTCGACCTGCAGCGTACG, N20, AGAGACC
 	where nN and index2 is specified in ../primers/barseq3.index2
-
+    -bs4 means 1:4 + 8 + 11 = 20:23 before the pre-sequence, corresponding to
+	1:4 Ns, index2, GTCGACCTGCAGCGTACG, N20, AGAGACC
+	where nN and index2 is specified in ../primers/barseq4.index2
     nPreExpected can also be a range, i.e. 11:14
 
     PrimerIndexTable should be tab-delimited with multiplex name and a primer like nACGACG
@@ -75,7 +77,7 @@ my $iname = undef;
 my $doOff1 = undef;
 
 {
-    my ($indexfile,$out,$nLimit,$n25,$bs3);
+    my ($indexfile,$out,$nLimit,$n25,$bs3,$bs4);
     my ($index2,$index2At); # for bs3 mode -- check that sequence has $index2 starting at (1-based) $index2At
     (GetOptions('primers=s' => \$indexfile,
 		'out=s' => \$out,
@@ -89,6 +91,7 @@ my $doOff1 = undef;
                 'debug' => \$debug,
                 'n25' => \$n25,
                 'bs3' => \$bs3,
+                'bs4' => \$bs4,
                 'off1=i' => \$doOff1)
      && defined $out)
         || die $usage;
@@ -119,9 +122,10 @@ my $doOff1 = undef;
       $nPreExpected = '11:14';
     }
 
-    if (defined $bs3) {
+    if (defined $bs3 || defined $bs4) {
       die "Cannot specify -bs3 unless -index is set\n" unless defined $iname;
-      my $ifile = "$Bin/../primers/barseq3.index2";
+      my $ifile = defined $bs3 ? "$Bin/../primers/barseq3.index2"
+        : "$Bin/../primers/barseq4.index2";
       die "No such file: $ifile\n" unless -e $ifile;
       my @tab = FEBA_Utils::ReadTable($ifile, ["index_name","index2","nN"]);
       my @tabMatch = grep { $_->{index_name} eq $iname } @tab;
@@ -133,7 +137,7 @@ my $doOff1 = undef;
         my $row = $tabMatch[0];
         $index2 = $row->{index2};
         $index2At = $row->{nN}+1;
-        $nPreExpected = $index2At + 6 + 9;
+        $nPreExpected = $index2At + length($index2) + 9;
       }
     }
 
@@ -216,7 +220,7 @@ my $doOff1 = undef;
       if (defined $okSpacing && ! $okSpacing) {
         $nWrongPrePos++;
         die "Over 10% of reads have the wrong spacing (not $nPreExpectedMin:$nPreExpectedMax) to the pre-sequence ($nWrongPrePos of $nReads so far).\n".
-          "Perhaps you forget to specify the protocol (i.e., -n25 or -bs3)?\n"
+          "Perhaps you forget to specify the protocol (i.e., -n25 or -bs3 or -bs4)?\n"
             if $nWrongPrePos >= 200 && $nWrongPrePos >= 0.1 * $nReads
               && ! $ENV{FEBA_NO_FAIL};
       }
