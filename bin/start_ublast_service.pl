@@ -38,12 +38,15 @@ unless($debug) {
     print STDERR "Redirecting to silence usearch6 (use -debug to turn this off)\n";
     print STDERR "usearch will watch $basedir for *.q files\n";
     open(STDIN, "<", "/dev/null");
-    open(STDOUT, ">", "/dev/null");
-    open(STDERR, ">", "/dev/null");
+    open(STDOUT, ">", "$basedir/usearch.$$.stdout");
+    open(STDERR, ">", "$basedir/usearch.$$.stderr");
 }
 
 exec($usearch, "-ublast", $basedir, "-server",
      "-db", "$basedir/aaseqs",
-     "-query_seqtype","amino",
-     "-maxhits",50,"-maxaccepts",50,
-     "-blast6out","ublast.out","-evalue",0.001);
+     "-query_seqtype", "amino",
+     "-maxhits", 50,
+     "-maxaccepts", 50,
+     "-blast6out", "ublast.out",
+     "-quiet",
+     "-evalue", 0.001);
