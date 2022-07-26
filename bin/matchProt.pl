@@ -103,7 +103,7 @@ while (my $line = <$fh>) {
   my $identityFraction = $identity / 100;
   my $cov = min(($qend-$qbeg+1) / $lenH1->{$query},
                 ($send-$sbeg+1) / $lenH2->{$subject});
-  my $scoreUse = $alen - $mm - $gap; # ad hoc score
+  my $scoreUse = $identityFraction * (($qend-$qbeg+1) / $lenH1->{$query});
   push @{ $hits{$query} }, [ $scoreUse, $subject, $identityFraction, $cov ];
   push @{ $revHits{$subject} }, [ $scoreUse, $query, $identityFraction, $cov ];
 }
