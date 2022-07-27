@@ -265,20 +265,49 @@ sub ExpToPubId($$$);
     }
     EndWork();
 
-    # Create db.Gene.*
+    # Create db.Gene.* and db.LocusXref.*
     foreach my $org (@orgs) {
-        my @genes = &ReadTable("$indir/$org/genes",
-                               qw{locusId sysName scaffoldId begin end desc name GC});
-        die "No genes for $org" unless @genes > 0;
-        StartWork("Gene", $org);
-        foreach my $row (@genes) {
-            $row->{orgId} = $org;
-            $row->{gene} = $row->{name};
-            $row->{type} = 1 if !exists $row->{type};
-            WorkPutHash($row, qw{orgId locusId sysName scaffoldId begin end type strand gene desc GC});
+      my @genes = &ReadTable("$indir/$org/genes",
+                             qw{locusId sysName scaffoldId begin end desc name GC});
+      die "No genes for $org" unless @genes > 0;
+      StartWork("Gene", $org);
+      foreach my $row (@genes) {
+        $row->{orgId} = $org;
+        $row->{gene} = $row->{name};
+        $row->{type} = 1 if !exists $row->{type};
+        WorkPutHash($row, qw{orgId locusId sysName scaffoldId begin end type strand gene desc GC});
+      }
+      EndWork();
+
+      StartWork("LocusXref", $org);
+      my %locusIds = map { $_->{locusId} => 1 } @genes;
+      # xref files should be in g/org/xref.xrefDb.tsv
+      # where xrefDb might be uniprot, refseq, or other.
+      # Each xref file is tab-delimited, with the 1st two columns
+      # being the locusId and the xref.
+      # The header line is optional.
+      foreach my $xrefDb (qw{uniprot refseq other}) {
+        my $xrefFile = "$gdir/$org/xref.$xrefDb.tsv";
+        if (-e $xrefFile) {
+          open(my $fh, "<", $xrefFile) || die "Cannot read $xrefFile";
+          my $iLine = 0;
+          while(my $line = <$fh>) {
+            chomp $line;
+            my ($locusId, $xrefId) = split /\t/, $line;
+            # Convert tr|L0FQS4|L0FQS4_ECHVK or sp|G8JZS4|SUSB_BACTN to just the long name
+            $xrefId = $1 if $xrefDb eq "uniprot" && $xrefId =~ m/[|]([^|]+)$/;
+            die "Invalid xref line in $xrefFile\n$line\n"
+              unless defined $xrefId && $xrefId ne "";
+            die "Unknown locus $locusId in $xrefFile\n$line\n"
+              unless exists $locusIds{$locusId} || $iLine == 0;
+              WorkPutRow($org, $locusId, $xrefDb, $xrefId)
+                if exists $locusIds{$locusId};
+            $iLine++;
+          }
         }
-        EndWork();
-    }
+      }
+      EndWork();
+    } # end loop over $org
 
     # Create db.ScaffoldSeq
     StartWorkFile("ScaffoldSeq", "db.ScaffoldSeq");
@@ -743,7 +772,14 @@ sub ExpToPubId($$$);
       print STDERR "Moved db.StrainFitness.* into $outdir\n";
     }
 
-    push @workCommands, ".import $xrefs LocusXref" if $xrefs ne "";
+    if ($xrefs ne "") {
+      push @workCommands, ".import $xrefs LocusXref";
+      open (my $fh, "<", $xrefs) || die "Cannot read $xrefs\n";
+      my $n = 0;
+      while (<$fh>) { $n++; }
+      close($fh) || die "Error reading $xrefs\n";
+      $workRows{"LocusXref"}+= $n;
+    }
 
     # Build the ConservedCofit table
     if (scalar(keys %orgCofit) >= 2) {
