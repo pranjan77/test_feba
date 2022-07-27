@@ -76,9 +76,9 @@ foreach my $add (@addrow) {
     if ($add !~ m/^[A-Za-z90-9_.-]*$/) {
       push @errors, "Invalid gene to add";
     } else {
-      my ($locusId) = $dbh->selectrow_array(qq{ SELECT locusId FROM Gene WHERE orgId = ?
-                                                  AND (locusId = ? OR sysName = ? COLLATE NOCASE OR gene = ? COLLATE NOCASE) LIMIT 1 },
-                                            {}, $orgId, $add, $add, $add);
+      my $list = Utils::matching_genes($dbh, $orgId, $add);
+      my $locusId = undef;
+      $locusId = $list->[0]{locusId} if @$list == 1;
       if (!defined $locusId) {
         push @errors, qq{Cannot find gene "$add"};
       } elsif (sum(map { $_ eq $locusId } @r) > 0) {
@@ -174,23 +174,6 @@ if (@ca) {
   }
 }
 
-my @locusIds = grep !m/^_/, @r;
-
-my %genes = (); # locusId => gene
-foreach my $locusId (@locusIds) {
-  my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId = ? AND locusId = ?",
-                                     {}, $orgId, $locusId);
-  die "No such locus $locusId in org $orgId" if !defined $gene->{locusId};
-  # expName => "fit" => fitness value
-  $gene->{fit} = $dbh->selectall_hashref(qq{SELECT expName,fit,t FROM GeneFitness
-                                               WHERE orgId = ? AND locusId = ?},
-                                         "expName", {}, $orgId, $locusId);
-  foreach my $expName (keys %{ $gene->{fit} }) {
-    die "No such experiment: $expName" unless exists $expInfo->{$expName};
-  }
-  $genes{$locusId} = $gene;
-}
-
 my $maxC = 50;
 my $maxR = 200;
 if (@c > $maxC) {
@@ -200,6 +183,36 @@ if (@c > $maxC) {
 if (@r > $maxR) {
   $#r = $maxR-1;
   push @errors, "This page limits the number of rows to $maxR";
+}
+
+my %genes = (); # locusId => gene
+my @locusIds = ();
+foreach my $i (0..(scalar(@r)-1)) {
+  my $locusId = $r[$i];
+  next if $locusId =~ m/^_/; # comment lines
+  my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId = ? AND locusId = ?",
+                                     {}, $orgId, $locusId);
+  if (!defined $gene->{locusId}) {
+    # Try again using xrefs
+    # This allows these heatmaps to work (usually) if the assembly
+    # changes but xrefs are added for the old isd
+    my $list = $dbh->selectall_arrayref(qq{ SELECT * FROM LocusXref JOIN Gene USING (orgId,locusId)
+                                            WHERE orgId = ? AND xrefId = ? },
+                                        { Slice => {} }, $orgId, $locusId);
+    die "No such locus $locusId in org $orgId" unless @$list == 1;
+    $gene = $list->[0];
+    $locusId = $gene->{locusId};
+    $r[$i] = $gene->{locusId};
+  }
+  # expName => "fit" => fitness value
+  $gene->{fit} = $dbh->selectall_hashref(qq{SELECT expName,fit,t FROM GeneFitness
+                                               WHERE orgId = ? AND locusId = ?},
+                                         "expName", {}, $orgId, $locusId);
+  foreach my $expName (keys %{ $gene->{fit} }) {
+    die "No such experiment: $expName" unless exists $expInfo->{$expName};
+  }
+  $genes{$locusId} = $gene;
+  push @locusIds, $locusId;
 }
 
 my $title1 = @locusIds > 0 ? "Heatmap for " . scalar(@locusIds) . " genes x " . scalar(@c) . " experiments in "
