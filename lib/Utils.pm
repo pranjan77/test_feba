@@ -409,21 +409,22 @@ sub matching_exps($$$) {
 sub matching_genes($$$) {
     my ($dbh,$orgId,$geneSpec) = @_;
     die if !defined $dbh || !defined $orgId || !defined $geneSpec;
+
+    # First look for exact matches on sysName, locusId, gene name, or xref
+    my $rows = matching_exact($dbh, $orgId, $geneSpec);
+    return $rows if @$rows > 0;
+
     # make the query safe to include in SQL
     $geneSpec =~ s/^ +//;
     $geneSpec =~ s/ +$//;
     $geneSpec =~ s/[\"\n\r]//g; # use " not ' as delimitor below
 
+    # search descriptions
     my $orgClause = $orgId eq "" ? "" : qq{ AND orgId = "$orgId"};
     my $sql = qq{SELECT * from Organism JOIN Gene USING (orgId)
-             WHERE (
-                sysName = "$geneSpec" OR sysName LIKE "$geneSpec"
-                OR gene = "$geneSpec" OR gene LIKE "$geneSpec"
-                OR locusId = "$geneSpec"
-                OR desc LIKE "% $geneSpec" OR desc LIKE "$geneSpec %" OR desc LIKE "% $geneSpec %")                
-         $orgClause
-         ORDER BY genus, species, strain, locusId, sysName, gene, begin, end, desc;};
-         # die $sql;
+                 WHERE (desc LIKE "% $geneSpec" OR desc LIKE "$geneSpec %" OR desc LIKE "% $geneSpec %")
+                   $orgClause
+                 ORDER BY genus, species, strain, locusId, sysName, gene, begin, end, desc;};
     return $dbh->selectall_arrayref($sql, { Slice => {} });
 }
 
@@ -441,11 +442,18 @@ sub matching_exact($$$) {
              WHERE (
                 sysName = "$geneSpec" OR sysName LIKE "$geneSpec"
                 OR gene = "$geneSpec" OR gene LIKE "$geneSpec"
-                OR locusId = "$geneSpec")             
+                OR locusId = "$geneSpec")
          $orgClause
          ORDER BY genus, species, strain, locusId, sysName, gene, begin, end, desc
          LIMIT 100;};
-         # die $sql;
+    my $rows = $dbh->selectall_arrayref($sql, { Slice => {} });
+    return $rows if @$rows > 0;
+
+    # And search by xref
+    $sql = qq{SELECT * FROM LocusXref JOIN Gene USING (orgId,locusId) JOIN Organism USING (orgId)
+                 WHERE xrefId = "$geneSpec" $orgClause
+                 ORDER BY genus, species, strain, locusId, sysName, gene, begin, end, desc
+                 LIMIT 100;};
     return $dbh->selectall_arrayref($sql, { Slice => {} });
 }
 
