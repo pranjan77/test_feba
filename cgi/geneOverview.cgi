@@ -193,14 +193,25 @@ if (@$hits == 0) {
     push @links, $cgi->a({href => "http://www.ncbi.nlm.nih.gov/protein/?term=$gene->{sysName}#see-all"}, "NCBI")
         if $gene->{type} == 1 && $gene->{sysName} ne "" && $orginfo->{$orgId}{taxonomyId} ne "";
 
-    # Use LocusXRef to try to link to IMG
-    my $imgBase = "https://img.jgi.doe.gov/cgi-bin/m/main.cgi?section=GeneDetail&page=geneDetail&gene_oid=";
-    my ($imgId) = $dbh->selectrow_array(qq{SELECT xrefId FROM LocusXref
-                                           WHERE orgId=? AND locusId=? AND xrefDb='IMG' LIMIT 1},
-                                        {}, $orgId, $locusId);
-    push @links, $cgi->a({href => $imgBase . $imgId}, "IMG") if defined $imgId;
+    # Add external links
+    my $xrefs = $dbh->selectall_arrayref(qq{SELECT * from LocusXref WHERE orgId = ? AND locusId = ? ORDER by xrefDb,xrefId},
+                                         { Slice => {} }, $orgId, $locusId);
+    foreach my $xref (@$xrefs) {
+      my $xrefDb = $xref->{xrefDb};
+      my $xrefId = $xref->{xrefId};
+      my $URL = undef;
+      if ($xrefDb eq "uniprot") {
+        $URL = "https://www.uniprot.org/uniprotkb/G8JZS4/entry/$xrefId";
+      } elsif ($xrefDb eq "IMG") {
+        $URL = "https://img.jgi.doe.gov/cgi-bin/m/main.cgi?section=GeneDetail&page=geneDetail&gene_oid="
+          . $xrefId;
+      }
+      my $show = "$xrefDb: $xrefId";
+      $show = a({-href => $URL}, $show) if defined $URL;
+      push @links, $show;
+    }
 
-    print $cgi->p("Links: " . join(", ", @links)) if (@links > 0);
+    print $cgi->p("Other databases: " . join(", ", @links)) if (@links > 0);
 
     print $cgi->h3({style=>'text-align:center'},"Nearby Genes");
     print Utils::geneArrows($dbh, \@genes, $locusId, undef, undef);
