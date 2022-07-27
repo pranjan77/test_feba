@@ -215,6 +215,7 @@ CREATE TABLE LocusXref(
        xrefDb TEXT NOT NULL,
        xrefId TEXT NOT NULL);
 CREATE INDEX 'LocusXrefByLocus' on LocusXref ('orgId', 'locusId', 'xrefDb');
+CREATE INDEX 'LocusXrefByXref' on LocusXref ('orgId', 'xrefId', 'xrefDb', 'locusId');
 
 /* For each protein in our genomes, its best hit in KEGG, if a good one exists */
 CREATE TABLE BestHitKEGG(
