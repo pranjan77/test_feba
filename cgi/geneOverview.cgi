@@ -201,7 +201,7 @@ if (@$hits == 0) {
       my $xrefId = $xref->{xrefId};
       my $URL = undef;
       if ($xrefDb eq "uniprot") {
-        $URL = "https://www.uniprot.org/uniprotkb/G8JZS4/entry/$xrefId";
+        $URL = "https://www.uniprot.org/uniprotkb/$xrefId/entry";
       } elsif ($xrefDb eq "IMG") {
         $URL = "https://img.jgi.doe.gov/cgi-bin/m/main.cgi?section=GeneDetail&page=geneDetail&gene_oid="
           . $xrefId;
