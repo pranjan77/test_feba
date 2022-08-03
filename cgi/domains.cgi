@@ -19,6 +19,7 @@ use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
 use IO::Handle; # for autoflush
 use Bio::SeqIO;
+use LWP::Simple qw{get};
 
 use lib "../lib";
 use Utils;
@@ -256,7 +257,7 @@ print "\n";
 
 print h3("Best Hits");
 
-# UniProt information, if any
+# SwissProt hit information, if any
 my $bhSprot = $dbh->selectrow_hashref("SELECT * from BestHitSwissProt
                                          JOIN SwissProtDesc USING (sprotAccession,sprotId)
                                          WHERE orgId = ? AND locusId = ?",
@@ -563,11 +564,37 @@ print
   p("Find homologs in the",
     a({-href => "https://iseq.lbl.gov/genomes/seqsearch?sequence=>${sys}%0A$seq"},
       "ENIGMA genome browser")),
+  qq{<DIV id="InterPro"><p>&nbsp;</p></DIV>},
+  "\n";
 
+print
   h3("Protein Sequence ($seqLen amino acids)"),
   pre(">$sys $descUpdated ($orginfo->{$orgId}{genome})\n$seq"),
-  '</div>';
+  "\n";
 
+# Show link to InterPro, if possible
+# Unfortunately the InterPro web site requires the short id, while our tables have the long id
+my $xrefU = $dbh->selectrow_hashref("SELECT * FROM LocusXref WHERE xrefDb = 'uniprot' AND orgId = ? AND locusId = ?",
+                                    {}, $orgId, $locusId);
+if (defined $xrefU && exists $xrefU->{xrefId}) {
+  my $uniprotId = $xrefU->{xrefId};
+  # Get the short id
+  my $url = "https://rest.uniprot.org/uniprotkb/$uniprotId.fasta";
+  my $fasta = get($url);
+  if ($fasta) {
+    if ($fasta =~ m/^>[a-z]+[|]([A-Z][A-Z0-9]+)[|]/) {
+      my $id = $1;
+      my $html = p("See", a({-href => "https://www.ebi.ac.uk/interpro/protein/$id"}, "InterPro"), "results");
+      $html =~ s/"/'/g;
+      my @lines;
+      push @lines, qq{<script>};
+      push @lines, qq{document.getElementById("InterPro").innerHTML = "$html";};
+      push @lines, qq{</script>};
+      print join("\n", @lines), "\n";
+    }
+  }
+}
 
+print '</div>';
 $dbh->disconnect();
 Utils::endHtml($cgi);
