@@ -187,32 +187,55 @@ if (@r > $maxR) {
 
 my %genes = (); # locusId => gene
 my @locusIds = ();
+my %labels = (); # locusId or _{labelNumber} to label
+# Convert locus specifiers to actual genes, and fetch all the genes and fitness data;
+# also save the labels (which are input by locus specifier, which may change)
 foreach my $i (0..(scalar(@r)-1)) {
   my $locusId = $r[$i];
-  next if $locusId =~ m/^_/; # comment lines
-  my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId = ? AND locusId = ?",
+  my $rt = param("rt.$locusId");
+  unless ($locusId =~ m/^_/) {
+    # not a comment line
+    my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId = ? AND locusId = ?",
                                      {}, $orgId, $locusId);
-  if (!defined $gene->{locusId}) {
-    # Try again using xrefs
-    # This allows these heatmaps to work (usually) if the assembly
-    # changes but xrefs are added for the old isd
-    my $list = $dbh->selectall_arrayref(qq{ SELECT * FROM LocusXref JOIN Gene USING (orgId,locusId)
-                                            WHERE orgId = ? AND xrefId = ? },
-                                        { Slice => {} }, $orgId, $locusId);
-    die "No such locus $locusId in org $orgId" unless @$list == 1;
-    $gene = $list->[0];
-    $locusId = $gene->{locusId};
-    $r[$i] = $gene->{locusId};
+    if (!defined $gene->{locusId}) {
+      # Try again using xrefs
+      # This allows these heatmaps to work if the assembly
+      # changes (if xrefs were added for the old ids)
+      my $list = $dbh->selectall_arrayref(qq{ SELECT * FROM LocusXref JOIN Gene USING (orgId,locusId)
+                                              WHERE orgId = ? AND xrefId = ? },
+                                          { Slice => {} }, $orgId, $locusId);
+      if (@$list == 1) {
+        $gene = $list->[0];
+        $locusId = $gene->{locusId};
+        $r[$i] = $gene->{locusId};
+      } else {
+        push @errors, "Locus $locusId not found";
+        $locusId = "";
+        $r[$i] = ""; # will delete later
+      }
+    }
+    if ($locusId ne "") {
+      # expName => "fit" => fitness value
+      $gene->{fit} = $dbh->selectall_hashref(qq{SELECT expName,fit,t FROM GeneFitness
+                                                  WHERE orgId = ? AND locusId = ?},
+                                             "expName", {}, $orgId, $locusId);
+      foreach my $expName (keys %{ $gene->{fit} }) {
+        die "No such experiment: $expName" unless exists $expInfo->{$expName};
+      }
+      $genes{$locusId} = $gene;
+      push @locusIds, $locusId;
+    }
   }
-  # expName => "fit" => fitness value
-  $gene->{fit} = $dbh->selectall_hashref(qq{SELECT expName,fit,t FROM GeneFitness
-                                               WHERE orgId = ? AND locusId = ?},
-                                         "expName", {}, $orgId, $locusId);
-  foreach my $expName (keys %{ $gene->{fit} }) {
-    die "No such experiment: $expName" unless exists $expInfo->{$expName};
-  }
-  $genes{$locusId} = $gene;
-  push @locusIds, $locusId;
+  # Save label under the new locusId
+  $labels{$locusId} = $rt if defined $rt && $rt ne "";
+}
+# Remove unknown loci
+@r = grep { $_ ne "" } @r;
+
+# Set up @rtargs for saving the labels and comments
+my @rtargs;
+foreach my $r (@r) {
+  push @rtargs, "rt.$r=$labels{$r}" if defined $labels{$r};
 }
 
 my $title1 = @locusIds > 0 ? "Heatmap for " . scalar(@locusIds) . " genes x " . scalar(@c) . " experiments in "
@@ -228,12 +251,6 @@ foreach my $error (@errors) {
 
 SetupHidden();
 
-my @rtargs = ();
-foreach my $r (@r) {
-  my $rt = $cgi->param("rt.$r");
-  push @rtargs, "rt.$r=" . uri_escape($rt) if defined $rt && $rt ne "";
-}
-
 my $rmmark = "&#10799;"; # Unicode Character 'VECTOR OR CROSS PRODUCT' (U+2A2F)
 my $editmark = span({ -style => "display: inline-block; transform: rotateZ(90deg);" }, "&#9998;");
 
@@ -242,7 +259,7 @@ if (defined $edit && $edit ne "") {
   # If in edit mode, just show a box to edit this text
   die "Invalid edit argument" unless $edit =~ m/^\d+$/ && $edit >= 0 && $edit < scalar(@r);
   my $r = $r[$edit];
-  my $orig = $cgi->param("rt.$r");
+  my $orig = $labels{$r};
   my $label;
   my $isGene = $r !~ m/^_l/;
   if ($isGene) {
@@ -277,6 +294,7 @@ foreach my $expName (@c) {
     unless exists $expInfo->{$expName};
 }
 @c = grep { exists $expInfo->{$_} } @c;
+SetupHidden(); # updated @c
 
 foreach my $expName (@c) {
   die "Invalid column: $expName" unless exists $expInfo->{$expName};
@@ -339,7 +357,7 @@ foreach my $iRow (0..$maxRow) {
   }
 
   if ($rowspec =~ m/^_l\d+$/) {
-    push @td, td({-colspan => $ncolLabel}, $cgi->param("rt.$rowspec") );
+    push @td, td({-colspan => $ncolLabel}, encode_entities($labels{$rowspec}));
   } else {
     my $locusId = $rowspec;
     die "Invalid row $rowspec" unless exists $genes{$locusId};
@@ -349,11 +367,11 @@ foreach my $iRow (0..$maxRow) {
     my $name =  Utils::gene_link($dbh, $gene, "name", "myFitShow.cgi");
     $name .= " " . "(" . $gene->{gene} . ")" if $gene->{gene};
     push @td, td($name);
-    my $rt = $cgi->param("rt.$locusId");
+    my $rt = $labels{$locusId};
     if (defined $rt && $rt ne "") {
       push @td, td( a({ -href => "domains.cgi?orgId=$orgId&locusId=$locusId",
                          -title => Utils::gene_link($dbh, $gene, "text") },
-                      $rt));
+                      encode_entities($rt)));
     } else {
       push @td, td(Utils::gene_link($dbh, $gene, "desc", "domains.cgi"));
     }
@@ -480,15 +498,17 @@ $dbh->disconnect();
 Utils::endHtml($cgi);
 
 sub SetupHidden() {
+  # Empty these in case this isn't the first invocation
+  @hidden= ();
+  %hiddenrt = ();
   push @hidden, hidden('orgId', $orgId );
   foreach my $r (@r) {
     push @hidden, hidden(-name => 'r', -default => $r, -override => 1);
   }
   foreach my $r (@r) {
-    my $arg = "rt.$r";
-    my $value = $cgi->param($arg);
-    if (defined $value) {
-      my $h = hidden($arg, $value);
+    if (defined $labels{$r}) {
+      my $arg = "rt.$r";
+      my $h = hidden($arg, $labels{$r});
       push @hidden, $h;
       $hiddenrt{$r} = $h;
     }
