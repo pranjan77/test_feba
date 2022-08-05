@@ -202,7 +202,7 @@ if (@$cond == 0 && @featuresShow == 0) {
       $color = "chocolate";
     } elsif ($first->{domainDb} eq "PFam") {
       $title = "$first->{domainId}: $first->{domainName}";
-      $titleURL = "http://pfam.xfam.org/family/$first->{domainId}";
+      $titleURL = "https://www.ebi.ac.uk/interpro/entry/pfam/$first->{domainId}/";
       $color = "lightblue";
     }
     if ($titleURL) {
@@ -584,7 +584,7 @@ if (defined $xrefU && exists $xrefU->{xrefId}) {
   if ($fasta) {
     if ($fasta =~ m/^>[a-z]+[|]([A-Z][A-Z0-9]+)[|]/) {
       my $id = $1;
-      my $html = p("See", a({-href => "https://www.ebi.ac.uk/interpro/protein/$id"}, "InterPro"), "results");
+      my $html = p("See $id at", a({-href => "https://www.ebi.ac.uk/interpro/protein/$id"}, "InterPro"));
       $html =~ s/"/'/g;
       my @lines;
       push @lines, qq{<script>};

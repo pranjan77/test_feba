@@ -141,7 +141,7 @@ require that the BLAST alignment cover 80% of each protein.</P>
 For each protein, the Fitness Browser includes:
 
 <UL>
-<LI><A HREF="http://pfam.xfam.org/">PFam</A> domains, computed with <A HREF="http://hmmer.org/">HMMer3</A>
+<LI><A HREF="https://en.wikipedia.org/wiki/Pfam">PFam</A> domains, computed with <A HREF="http://hmmer.org/">HMMer3</A>
 <LI><A HREF="http://www.jcvi.org/cgi-bin/tigrfams/index.cgi">TIGRFam</A> domains or families, computed with <A HREF="http://hmmer.org/">HMMer3</A>
 <LI>The best hit to <A HREF="http://www.genome.jp/kegg/">KEGG</A>, computed with <A HREF="https://github.com/zhaoyanswill/RAPSearch2">RAPSearch2</A> and minimum 80% coverage and 30% identity
 <LI>The best hit to <A HREF="http://web.expasy.org/docs/swiss-prot_guideline.html">Swiss-Prot</A> (the curated part of UniProt), computed with <A HREF="https://github.com/zhaoyanswill/RAPSearch2">RAPSearch2</A> and minimum 80% coverage and 30% identity
