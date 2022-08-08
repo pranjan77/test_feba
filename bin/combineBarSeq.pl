@@ -228,33 +228,33 @@ sub median {
 # shortens it by replacing prefix1 prefix2 prefix3 with prefix1:3
 # outputs a pretty string to print
 sub ShortList {
-    my @list = @_;
-    @list = sort(@list);
-    return join(" ", @list) unless $list[0] =~ m/^([a-zA-Z]+)\d+$/;
-    my $prefix = $1;
-    my $prelen = length($prefix);
-    my @numbers = map { substr($_, 0, $prelen) eq $prefix && substr($_, $prelen) =~ m/^\d+$/ ?
-			    substr($_, $prelen) : undef } @list;
-    my $lastno = undef;
-    my $inrun = 0;
-    my $sofar = "";
-    foreach my $i (0..(scalar(@list)-1)) {
-	my $string = $list[$i];
-	my $number = $numbers[$i];
-	if (defined($number) && defined($lastno) && $number == $lastno+1) {
-	    $sofar .= ":$number" if $i == scalar(@list)-1; # terminate if at end of list
-	    $inrun = 1; # start or continue a run
-	    $lastno = $number;
-	} else {
-	    if (defined $lastno) {
-		$sofar .= ":$lastno" if $inrun;
-		$lastno = undef;
-	    }
-	    $inrun = 0;
-	    $sofar .= " " unless $sofar eq "";
-	    $sofar .= $string;
-	    $lastno = $number;
-	}
+  my @list = @_;
+  @list = sort(@list);
+  return join(" ", @list) unless $list[0] =~ m/^([a-zA-Z]+)\d+$/;
+  my $prefix = $1;
+  my $prelen = length($prefix);
+  # Inputs like IT001 get handled correctly because perl both stores the full string,
+  # "001" not "1", and sorts them numerically.
+  my @numbers = map { substr($_, 0, $prelen) eq $prefix && substr($_, $prelen) =~ m/^\d+$/ ?
+                        substr($_, $prelen) : undef } @list;
+  my @noNumber = grep !defined, @numbers;
+  return join(" ", @list) if scalar(@noNumber) > 0;
+  # All have the same prefix, so sort the numbers
+  @numbers = sort { $a <=> $b } @numbers;
+  my $lastno = undef; # last number
+  my $runStart = undef; # if in a run of contigous numbers, the first numberr in the run
+  my @pieces = ();
+  foreach my $number (@numbers) {
+    if (defined($lastno) && $number == $lastno+1) {
+      # in a run
+      $runStart = $lastno if !defined $runStart;
+      $pieces[-1] = "$prefix$runStart:$prefix$number";
+      $lastno = $number;
+    } else {
+      push @pieces, "$prefix$number";
+      $lastno = $number;
+      $runStart = undef;
     }
-    return($sofar);
+  }
+  return(join(" ", @pieces));
 }
