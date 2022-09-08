@@ -516,11 +516,16 @@ print "\n";
 
 # print sequence
 $seq =~ s/(.{60})/$1\n/gs;
-my $orgtype = "bacteria";
 my %positiveDivisions = map { $_ => 1 } qw{Actinobacteria Firmicutes};
-my $gram = exists $positiveDivisions{ $orginfo->{$orgId}{division} } ? "positive" : "negative";
-my $newline = "%0A";
+my %archaeaDivisions = map { $_ => 1 } qw{Euryarchaeota Crenarchaeota};
+my ($psortType, $psortShow) = ("negative", "Gram-negative bacteria");
+if (exists $positiveDivisions{ $orginfo->{$orgId}{division} }) {
+  ($psortType, $psortShow) = ("positive", "Gram-positive bacteria");
+} elsif (exists $archaeaDivisions{ $orginfo->{$orgId}{division} }) {
+  ($psortType, $psortShow) = ("archaea", "archaea");
+}
 
+my $newline = "%0A";
 print
   h3("Sequence Analysis Tools"),
   p(a({-href => "http://papers.genomics.lbl.gov/cgi-bin/litSearch.cgi?query=>${sys}$newline$seq"},
@@ -550,10 +555,10 @@ print
       "Search structures")),
 
   p("Predict protein localization: ",
-    a({-href => "https://papers.genomics.lbl.gov/cgi-bin/psortb.cgi?name=${sys}&type=${gram}&seq=${seq}",
-       -title => "PSORTb v3.0, Gram-${gram}"},
+    a({-href => "https://papers.genomics.lbl.gov/cgi-bin/psortb.cgi?name=${sys}&type=${psortType}&seq=${seq}",
+       -title => "PSORTb v3.0 for $psortShow"},
       "PSORTb"),
-    "(Gram $gram $orgtype)"),
+    "($psortShow)"),
   p("Predict transmembrane helices and signal peptides:",
     a({-href => "myPhobius.cgi?name=${sys}&seq=${seq}"},
       "Phobius")),
