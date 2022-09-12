@@ -28,10 +28,10 @@ Compound	CAS	Company	CatalogNumber	FW	Synonyms	Hans80Anti	Hans80metals	FEBA_carb
 4-Aminobenzoic acid	150-13-0	Sigma	A9878	137.14	p-Aminobenzoic acid, para-aminobenzoic acid						
 4-Hydroxyacetophenone	99-93-4	Sigma	278564	136.15			yes				
 4-Hydroxybenzaldehyde	123-08-0	Sigma	144088	122.12							
-4-Hydroxybenzoic Acid	99-96-7	Sigma	240141	138.12	para-hydroxybenzoic acid			yes			
+4-Hydroxybenzoic Acid	99-96-7	Sigma	240141	138.12	para-hydroxybenzoic acid, 			yes			
 4-Hydroxymandelic acid monohydrate	184901-84-6	Sigma	168327	186.15							
 4-hydroxyphenylacetic acid	156-38-7	Sigma	H50004	152.15							
-4-Hydroxyphenylpropionic acid	501-97-3	Sigma	H52406	166.17							
+4-Hydroxyphenylpropionic acid	501-97-3	Sigma	H52406	166.17	3-(4-Hydroxyphenyl)propionic acid; Phloretic Acid						
 5-Azacytidine	320-67-2	Sigma	A2385-100MG	244.2							
 5-Fluoroorotic acid hydrate	207291-81-4	Sigma	F5013-50MG	174.09							
 5-fluorouracil	51-21-8	ICN	101722	130.1		yes					
@@ -125,7 +125,7 @@ Cobalt(II) nitrate hexahydrate	10026-22-9			291.03	Co(NO3)2 6H2O
 Colistin sulfate salt	1264-72-8	Sigma	C4461								
 coniferyl alcohol	458-35-5	Sigma	223735	180.2							
 coniferyl aldehyde	458-36-6	Sigma	382051	178.18							
-copper (II) chloride dihydrate	10125-13-0	Sigma	307483	170.48	CuCl2		yes			yes	
+copper (II) chloride dihydrate	10125-13-0	Sigma	307483	170.48	CuCl2, copper sulfate pentahydrate		yes			yes	
 Copper (II) sulfate pentahydrate	7758-99-8	Sigma	C8027	249.69	Blue Vitriol, Cupric sulfate pentahydrate, Sulfuric acid, copper(II) salt (1:1) pentahydrate, CuSO4 5H2O, Cupric Sulfate						
 Crystal Violet	548-62-9	Sigma	61135-100g	407.979							
 Cyanocobalamin	68-19-9	Sigma	C3607	1355.37	Vitamin B12, _-(5,6-Dimethylbenzimidazolyl)cyanocobamide, CN-Cbl, Cyanocob(III)alamin						
@@ -154,7 +154,7 @@ D-Salicin	138-52-3	Sigma	S0625	286.28				yes
 D-Serine	312-84-5	Sigma	S4250	105.09				yes	yes		
 D-Sorbitol	50-70-4	Sigma	S1876	182.17				yes			
 D-Tagatose	87-81-0	Sigma	T2751	180.16				yes			
-D-Trehalose dihydrate	6138-23-4	Sigma	T9531	378.33				yes			
+D-Trehalose dihydrate	6138-23-4	Sigma	T9531	378.33	D-Trehalose			yes			
 D-Xylose	58-86-6	Sigma	X3877	150.13				yes			
 D,L-Malic Acid	6915-15-7	Sigma	M0875	134.09				yes			
 DEANONOate	372965-00-9	Cayman	82100	206.3							
@@ -187,7 +187,7 @@ FCCP	370-86-5	Sigma	C2920-10MG	254.17
 Ferric ammonium citrate	1185-57-5	Sigma	F5879	261.98							
 Ferric chloride	10025-77-1	Sigma	236489	270.3	Iron (III) chloride hexahydrate		yes				
 Ferric citrate	3522-50-7	Sigma	F3388	244.94							
-Ferulic Acid	537-98-4	Sigma	128708	194.18							
+Ferulic Acid	537-98-4	Sigma	128708	194.18	trans-4-Hydroxy-3-methoxycinnamic acid						
 Flavone	525-82-6	acros	119160010	222.24		yes					
 Folic Acid	59-30-3	Sigma	F7876	441.4							
 Formamide	75-12-7	Sigma	F9037-100ML	45.04							
@@ -227,7 +227,7 @@ Hypotaurine	300-84-5	Sigma	H1384	109.15
 Hypoxanthine	68-94-0	Sigma	H9377	136.11							
 Inosine	58-63-9	Sigma	I4125	268.23				yes	yes		
 Iodonitrotetrazolium chloride	146-68-9	Sigma	58030-1G-F	505.7							
-Irgasan	3380-34-5	Sigma	72779-5G-F	289.54		yes					
+Irgasan	3380-34-5	Sigma	72779-5G-F	289.54	Triclosan	yes					
 Iron (II) chloride tetrahydrate	13478-10-9	Sigma	44936	198.81	FeCl2, FeCl2 7H2O						
 Iron (II) sulfate heptahydrate	7782-63-0	Sigma	F2387	278.01	Ferrous sulfate heptahydrate, FeSO4 7H2O, Iron sulfate						
 Isobutyl alcohol	78-83-1	Sigma	W217905	74.12	Isobutanol; 2-Methylpropan-1-ol						
@@ -239,7 +239,7 @@ L-(+)-Ergothioneine	497-30-3	Sigma	E7521	229.3
 L-Alanine	56-41-7	Sigma	A7627	89.09				yes	yes		
 L-Arabinose	5328-37-0	Sigma	A3256	150.13				yes			
 L-Arginine	74-79-3	Sigma	A5006	174.2				yes	yes		
-L-Asparagine	70-47-3	Sigma	A4159	132.12				yes	yes		
+L-Asparagine	70-47-3	Sigma	A4159	132.12	L-Asparagine monohydrate			yes	yes		
 L-Aspartic Acid	56-84-8	Sigma	A8949	133.1				yes	yes		
 L-Aspartic acid potassium salt	1115-63-5			171.19							
 L-Citrulline	372-75-8	Sigma	C7629	175.19				yes	yes		
@@ -310,7 +310,7 @@ octane	111-65-9			114.23
 octanol	111-87-5			130.23							
 Oxacillin sodium salt	1173-88-2	Sigma	28221-1G	423.42		yes					
 Oxytetracycline hydrochloride	2058-46-0	Sigma	O5875	496.89		yes					
-p-Coumaric acid	501-98-4	Sigma	C9008	164.16							
+p-Coumaric acid	501-98-4	Sigma	C9008	164.16	trans-p-Coumaric acid; 4-Hydroxycinnamic acid						
 Palladium(II) chloride	7647-10-1	Sigma	205885	177.33	Palladium chloride		yes				
 Parabanic Acid	120-89-8	Sigma	P209	114.06				yes	yes		
 Paraquat dichloride	1910-42-5	Sigma	36541-100MG	257.16						yes	
@@ -381,7 +381,7 @@ Sodium cyanide	143-33-9	Sigma	380970	49.01			yes
 Sodium D-Lactate	920-49-0	Sigma	71716	90.08				yes			
 Sodium D,L-Lactate	50-21-5	Sigma	L1375	90.08	sodium lactate			yes			
 Sodium deoxycholate monohydrate	145224-92-6	Sigma	D5670	432.57	Sodim deoxycholate monohydrate		yes				
-Sodium Dodecyl Sulfate	151-21-3	Sigma	L4390	288.38							
+Sodium Dodecyl Sulfate	151-21-3	Sigma	L4390	288.38	SDS						
 Sodium ethyl sulfate	546-74-7	Sigma	CDS000593_	148.11							
 sodium fluoride	7681-49-4	Sigma	S7920	41.99			yes			yes	
 Sodium Fluorophosphate	7631-97-2	Sigma	344443	143.95	Sodium monofluorophosphate		yes				
@@ -454,7 +454,7 @@ Trimethoprim	738-70-5	Sigma	T7883	290.32		yes
 Trimethylamine-N-oxide	1184-78-7	Sigma	317594	75.11							
 Tris hydrochloride	1185-53-1	Sigma	T5941	157.6	Tris-HCl						
 Tris(hydroxymethyl)aminomethane	77-86-1			121.14	Tris, THAM						
-Trisodium citrate dihydrate	6132-04-3	Sigma	S1804	294.1				yes			
+Trisodium citrate dihydrate	6132-04-3	Sigma	S1804	294.1	Sodium citrate			yes			
 Tryptone	91079-40-2										
 Tunicamycin	11089-65-9	Sigma	T7765-1MG								
 Tween 20	9005-64-5	Sigma	P1379	1227.54				yes			
@@ -712,7 +712,7 @@ Sebacic acid	111-20-6			202.25
 Dodecandioic acid	693-23-2			230.304							
 CHIR-090	728865-23-4			437.49							
 Ferric EDTA	15275-07-7			344.057							
-Arabitol	7643-75-6			152.146							
+Arabitol	7643-75-6			152.146	L-Arabitol						
 4-Guanidinobutyric acid	463-00-3			145.16							
 Orotic acid	65-86-1			156.1							
 2'-Deoxyuridine	951-78-0			228.2							
@@ -880,7 +880,7 @@ Brazilein	600-76-0
 Harmane	486-84-0										
 Guaiazulene	489-84-9										
 Tangeritin	481-53-8										
-Linalool ()	78-70-6										
+Linalool	78-70-6										
 Beta-Lapachone	4707-32-8										
 (+/-)-alpha-bisabolol	515-69-5										
 3Beta-Hydroxydeoxodihydrodeoxygedunin											
@@ -1049,7 +1049,7 @@ Imidazole	288-32-4			68.08
 L-pyroglutamic acid	149-87-1			129.115							
 pipercolic acid	3105-95-1			129.157							
 5-methyluridine	1463-10-1			258.23							
-Xanthosine	146-80-5			284.228							
+Xanthosine	146-80-5			284.228	Xanthosine dihydrate						
 Ectoine	96702-03-03			142.158							
 Trimethylglycine	107-43-7			117.146							
 N-Acetyl-glutamic acid	5817-08-03			189.167							
@@ -1120,3 +1120,71 @@ Abscisic acid	21293-29-8			264.321
 Capecitabine	154361-50-9			359.35							
 Histamine	51-45-6			111.148							
 Pyruvic acid	127-17-3	Sigma	107360	88.06	2-Oxopropionic acid,α-Ketopropionic acid						
+Methyl 3-(4-hydroxyphenyl)propionate	5597-50-2	Sigma		180	MHPP						
+Protoporphyrin	0553-12-8				Protoporphyrin IX						
+Bathophenanthrolinedisulfonic acid disodium salt trihydrate	52746-49-3			590.53							
+2-Mercaptoethanol	60-24-2			78.13							
+Fructose-asparagine	34393-27-6			294.3							
+Enterobactin	28384-96-5			669.55							
+Calprotectin											
+4-hydroxynonenal	29343-52-0			156.225							
+Pectic galactan from potato		Megazyme	P-GAPT								
+Pectin from apple	9000-69-5	Sigma	93854								
+Mucin from porcine stomach type III	84082-64-4	Sigma	M1778								
+beta-Cyclodextrin	7585-39-9	Sigma	C4767								
+Rhamnogalacturonan from soy bean pectic fibre	39280-21-2	Megazyme	P-RHAGN								
+Calcium carbonate	471-34-1			100.0869							
+Lumazine	487-21-8			164.12							
+Nerolidol	7212-44-4			222.37							
+Serotonin	50-67-9			176.215							
+4-Pyridoxic acid	82-82-6			183.16							
+Amylopectin from Potato	9037-22-3										
+D-glutamine	5959-95-5			146.14							
+trans-aconitic acid	4023-65-8			174.11							
+Maltotriose hydrate	312693-63-3			522.5							
+D-(+)-Turanose	547-25-1			342.3							
+2-6-dihydroxybenzoic acid	0303-07-01			154.12							
+sarcosine	107-97-1			89.094							
+Propan-1-ol	71-23-8			60.096							
+DL-glyceraldehyde	56-82-6			90.08							
+D-(+)-melezitose monohydrate	10030-67-8			522.5							
+methyl-beta-L-arabinopyranoside	1825-00-9			164.16							
+Triton X-100	9002-93-1			647							
+anthranilamide	88-68-6			136.15							
+Ethyl benzoate	93-89-0			150.177							
+Dihydroxyacetone	96-26-4			90.078							
+N-alpha-Acetyl-L-glutamate	2490-97-3			188.18							
+L-(+)-Erythrulose	533-50-6			120.1							
+Adipic acid	0124-04-09			146.142							
+methyl-alpha-D-xylopyranoside	91-09-8			164.16							
+Pyrogallol	87-66-1			126.11							
+methyl jasmonate	1211-29-6			224.3							
+Rosmarinic acid	20283-92-5			360.318							
+Mandelic acid	90-64-2			152.149							
+tannic acid	1401-55-4			1701.19							
+Phenoxyacetic acid	122-59-8			152.15							
+Asolectin from soybean					Soy phospholipids						
+3-aminobenzoate	2906-33-4			136.13							
+Menthol	1490-04-06			156.26							
+D(+)-Carvone	2244-16-8			150.22							
+Indole-3-butyric acid	133-32-4			203.24							
+2-Keto-D-gluconic acid hemicalcium salt monohydrate	3470-37-9			428.356							
+D-Glucuronic acid sodium salt monohydrate	207300-70-7			234.14							
+Citraconic acid	498-23-7			130.099							
+4-Acetoxy-3-methoxycinnamic acid	2596-47-6			236.22							
+L-Carnitine hydrochloride	6645-46-1			197.66							
+Betaine hydrochloride	590-46-5			153.61							
+Sorgoleone	105018-76-6			358.5							
+methyl-cis-p-coumarate	3943-97-3			314.4							
+methyl-trans-p-coumarate	19367-38-5			178.19							
+cholesterol	57-88-5			386.65							
+1,3-Propanediol	504-63-2			76.095							
+5'-Deoxy-5-fluorocytidine	66335-38-4			245.21							
+5-Fluorodihydropyrimidine-2,4-dione	696-06-0			132.09							
+Sulfasalazine	599-79-1			398.39							
+Allura Red AC	25956-17-6			496.42							
+dithiothreitol	3483-12-3			154.25							
+manganese(II) sulfate dihydrate				187.03							
+resazurin sodium salt	62758-13-8			251.17							
+Sodium acetate trihydrate	6131-90-4			136.08							
+Sodium citrate dihydrate	6132-04-3			294.1							

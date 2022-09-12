@@ -623,6 +623,18 @@ PIPES sesquisodium salt	30	mM
 Wolfe's mineral mix	1	X
 Wolfe's vitamin mix	1	X
 		
+Media	RCH2_defined_noCarbon_SeaSalts	
+Description	Defined minimal media with no carbon and added sea salts	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+PIPES sesquisodium salt	30	mM
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+Sea salts	20	g/L
+		
 Media	RCH2_defined_noCarbon_YE	
 Description	Defined minimal media for soil and groundwater bacteria with no carbon	
 Minimal	TRUE	
@@ -1075,7 +1087,7 @@ EDTA (disodium salt)	37.26	mg/L
 Iron (II) sulfate heptahydrate	27.8	mg/L
 Glycine	2	mg/L
 Magnesium sulfate	180.7	mg/L
-Magnesium sulfate	16.9	mg/L
+Manganese sulfate	16.9	mg/L
 m-Inositol	100	mg/L
 Nicotinic Acid	0.5	mg/L
 Potassium iodide	0.83	mg/L
@@ -1100,7 +1112,7 @@ EDTA (disodium salt)	37.26	mg/L
 Iron (II) sulfate heptahydrate	27.8	mg/L
 Glycine	2	mg/L
 Magnesium sulfate	180.7	mg/L
-Magnesium sulfate	16.9	mg/L
+Manganese sulfate	16.9	mg/L
 m-Inositol	100	mg/L
 Nicotinic Acid	0.5	mg/L
 Potassium iodide	0.83	mg/L
@@ -2898,7 +2910,7 @@ Copper (II) sulfate pentahydrate	0.025	mg/L
 EDTA (disodium salt)	37.26	mg/L
 Iron (II) sulfate heptahydrate	27.8	mg/L
 Magnesium sulfate	180.7	mg/L
-Magnesium sulfate	16.9	mg/L
+Manganese sulfate	16.9	mg/L
 Potassium iodide	0.83	mg/L
 Potassium nitrate	1900	mg/L
 Potassium phosphate monobasic	1250	uM
@@ -2916,7 +2928,7 @@ Copper (II) sulfate pentahydrate	0.0125	mg/L
 EDTA (disodium salt)	18.63	mg/L
 Iron (II) sulfate heptahydrate	13.9	mg/L
 Magnesium sulfate	90.35	mg/L
-Magnesium sulfate	8.45	mg/L
+Manganese sulfate	8.45	mg/L
 Potassium iodide	0.415	mg/L
 Potassium nitrate	950	mg/L
 Potassium phosphate monobasic	625	uM
@@ -2934,7 +2946,7 @@ Copper (II) sulfate pentahydrate	0.0125	mg/L
 EDTA (disodium salt)	18.63	mg/L
 Iron (II) sulfate heptahydrate	13.9	mg/L
 Magnesium sulfate	90.35	mg/L
-Magnesium sulfate	8.45	mg/L
+Manganese sulfate	8.45	mg/L
 Potassium iodide	0.415	mg/L
 Potassium nitrate	950	mg/L
 Potassium phosphate monobasic	30	uM
@@ -3199,3 +3211,52 @@ Potassium phosphate dibasic	4.00	g/L
 Wolfe's mineral mix	1	X
 Wolfe's vitamin mix	1	X
 Soil Defined Carbon Mix	10	X
+		
+Media	Nematode growth medium agar	
+Description	Used for growing C. elegans	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Sodium Chloride	3	g/L
+Bacto Peptone	2.5	g/L
+Agar	20	g/L
+cholesterol	5	g/L
+Calcium chloride	1	mM
+Magnesium sulfate	1	mM
+Potassium phosphate dibasic	25	mM
+		
+Media	McCas	
+Description	Used for growing Methanococcus maripaludis with hydrogen as the electron donor	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Mc_general_salts	1.00	X
+NaCl	22.00	g/L
+NaHCO3	5.00	g/L
+NH4Cl	0.50	g/L
+K2HPO4	0.14	g/L
+FeSO4 7H2O	0.0095	g/L
+Mc_trace_minerals	1.00	X
+Mc_vitamins	1.00	X
+resazurin sodium salt	0.001	g/L
+sodium acetate trihydrate	1.40	g/L
+CASamino acids	2.00	g/L
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+		
+Media	McCas_formate	
+Description	Used for growing Methanococcus maripaludis with formate as the electron donor	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+NaCl	10.50	g/L
+Mc_general_salts	1.00	X
+NaHCO3	5.00	g/L
+NH4Cl	0.50	g/L
+K2HPO4	0.14	g/L
+FeSO4 7H2O	0.0095	g/L
+Mc_trace_minerals	1.00	X
+Mc_vitamins	1.00	X
+resazurin sodium salt	0.001	g/L
+sodium formate	13.60	g/L
+MOPS_2M_pH7	0.10	X
+CASamino acids	2.00	g/L
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L

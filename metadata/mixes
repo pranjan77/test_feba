@@ -1034,3 +1034,52 @@ Cytidine	6	mg/L
 Choline chloride	3	mg/L
 Adenosine	7	mg/L
 2'-Deoxyuridine	6	mg/L
+		
+Media	Mc_general_salts	
+Description	general salts for Mc media	
+X	2	
+Controlled vocabulary	Concentration	Units
+KCl	0.67	g/L
+magnesium chloride hexahydrate	5.5	g/L
+magnesium sulfate heptahydrate	6.9	g/L
+calcium chloride dihydrate	0.28	g/L
+ammonium chloride	1	g/L
+		
+Media	Mc_trace_minerals	
+Description	trace minerals for Mc media	
+X	1000	
+Controlled vocabulary	Concentration	Units
+sodium citrate dihydrate	21	g/L
+manganese(II) sulfate dihydrate	5	g/L
+cobalt chloride	1	g/L
+zinc sulfate heptahydrate	1	g/L
+copper sulfate pentahydrate	0.1	g/L
+AlK(SO4)2 12H2O	0.1	g/L
+H3BO3	0.1	g/L
+sodium molybdate dihydrate	1	g/L
+nickel (II) chloride hexahydrate	0.25	g/L
+sodium selenate	2	g/L
+vanadium chloride	0.1	g/L
+sodium tungstate dihydrate	0.033	g/L
+		
+Media	Mc_vitamins	
+Description	vitamins for Mc media	
+X	100	
+Controlled vocabulary	Concentration	Units
+biotin	0.002	g/L
+folic acid	0.002	g/L
+pyridoxine hydrochloride	0.01	g/L
+thiamine HCl	0.005	g/L
+riboflavin	0.005	g/L
+nicotinic acid	0.005	g/L
+calcium D,L-pantothenate	0.005	g/L
+vitamin B12	0.0001	g/L
+p-aminobenzoic acid	0.005	g/L
+lipoic acid	0.005	g/L
+		
+Media	MOPS_2M_pH7	
+Description	2M MOPS buffer at pH 7	
+X	100	
+Controlled vocabulary	Concentration	Units
+3-(N-morpholino)propanesulfonic acid	2	M
+NaOH	0.5	M
