@@ -2,6 +2,9 @@
 # Identify pairs of barcodes from a fastq file
 use strict;
 use Getopt::Long;
+use FindBin qw{$RealBin};
+use lib "$RealBin/../lib";
+use FEBA_Utils qw{reverseComplement};
 sub findPreSeq($$$);
 
 my $nPreExpected = 9;
@@ -30,11 +33,12 @@ Optional arguments:
 -wobble $wobble -- amount of wobble to allow in position of either
                    barcode
 -bcLen $bcLen -- length of each barcode
+-rc -- reverse complement the reads before processing
 -limit N -- process just the first N reads
 END
 ;
 
-my ($inFile, $nLimit, $debug);
+my ($inFile, $nLimit, $rc, $debug);
 die $usage
   unless GetOptions('inFile=s' => \$inFile,
                     'nPre=s' => \$nPreExpected,
@@ -46,6 +50,7 @@ die $usage
                     'wobble=i' => \$wobble,
                     'bcLen=i' => \$bcLen,
                     'limit=i' => \$nLimit,
+                    'rc' => \$rc,
                     'debug' => \$debug)
   && @ARGV == 0
   && defined $inFile;
@@ -85,6 +90,7 @@ while (my $read = <$fh>) {
   die "quality string is wrong length\n" unless length($quality) == length($seq);
   $nRead++;
 
+  $seq = reverseComplement($seq) if defined $rc;
   my $pos1 = findPreSeq($seq, $preSeq1, $nPreExpected);
   if (defined $pos1) {
     my $start1 = $pos1 + length($preSeq1);
