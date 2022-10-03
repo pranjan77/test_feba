@@ -3260,3 +3260,21 @@ MOPS_2M_pH7	0.10	X
 CASamino acids	2.00	g/L
 dithiothreitol	0.50	g/L
 Sodium sulfide nonahydrate	1.00E-03	g/L
+		
+Media	CaMM_noCarbon	
+Description	Used for growing Xanthomonas	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+K2HPO4	1.05E+01	g/L
+KH2PO4	4.50E+00	g/L
+Ammonium Sulfate	1.00E+00	g/L
+CaCl2	1.00E-01	mM
+MgSO4	1.00E+00	mM
+Iron (II) sulfate heptahydrate	6.25E-03	g/L
+EDTA disodium dihydrate	6.25E-02	g/L
+Zinc sulfate heptahydrate	2.25E-02	g/L
+Boric Acid	1.43E-02	g/L
+Manganese (II) chloride tetrahydrate	6.30E-03	g/L
+Cobalt chloride hexahydrate	2.00E-03	g/L
+Copper (II) sulfate pentahydrate	1.90E-03	g/L
+Ammonium heptamolybdate tetrahydrate	1.40E-03	g/L
