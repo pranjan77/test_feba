@@ -1042,8 +1042,7 @@ Controlled vocabulary	Concentration	Units
 KCl	0.67	g/L
 magnesium chloride hexahydrate	5.5	g/L
 magnesium sulfate heptahydrate	6.9	g/L
-calcium chloride dihydrate	0.28	g/L
-ammonium chloride	1	g/L
+calcium chloride	0.21	g/L
 		
 Media	Mc_trace_minerals	
 Description	trace minerals for Mc media	
@@ -1083,3 +1082,28 @@ X	100
 Controlled vocabulary	Concentration	Units
 3-(N-morpholino)propanesulfonic acid	2	M
 NaOH	0.5	M
+		
+Media	Mc_general_salts_SO4free	
+Description	general salts for Mc media	
+X	2	
+Controlled vocabulary	Concentration	Units
+KCl	0.67	g/L
+magnesium chloride hexahydrate	11.2	g/L
+calcium chloride	0.21	g/L
+		
+Media	Mc_trace_minerals_SO4free	
+Description	trace minerals for Mc media	
+X	1000	
+Controlled vocabulary	Concentration	Units
+sodium citrate dihydrate	21	g/L
+manganese(II) chloride tetrahydrate	5	g/L
+cobalt chloride	1	g/L
+zinc chloride	1	g/L
+copper (II) chloride dihydrate	0.1	g/L
+aluminum chloride hydrate	0.1	g/L
+H3BO3	0.1	g/L
+sodium molybdate dihydrate	1	g/L
+nickel (II) chloride hexahydrate	0.25	g/L
+sodium selenate	2	g/L
+vanadium chloride	0.1	g/L
+sodium tungstate dihydrate	0.033	g/L
