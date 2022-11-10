@@ -294,8 +294,8 @@ sub ExpToPubId($$$);
           while(my $line = <$fh>) {
             chomp $line;
             my ($locusId, $xrefId) = split /\t/, $line;
-            # Convert tr|L0FQS4|L0FQS4_ECHVK or sp|G8JZS4|SUSB_BACTN to just the long name
-            $xrefId = $1 if $xrefDb eq "uniprot" && $xrefId =~ m/[|]([^|]+)$/;
+            # Convert tr|L0FQS4|L0FQS4_ECHVK or sp|G8JZS4|SUSB_BACTN to just the short name
+            $xrefId = $1 if $xrefDb eq "uniprot" && $xrefId =~ m/^[a-zA-Z]+[|]([^|]+)/;
             die "Invalid xref line in $xrefFile\n$line\n"
               unless defined $xrefId && $xrefId ne "";
             die "Unknown locus $locusId in $xrefFile\n$line\n"

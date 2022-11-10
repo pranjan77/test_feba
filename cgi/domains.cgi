@@ -579,25 +579,32 @@ print
   "\n";
 
 # Show link to InterPro, if possible
-# Unfortunately the InterPro web site requires the short id, while our tables have the long id
 my $xrefU = $dbh->selectrow_hashref("SELECT * FROM LocusXref WHERE xrefDb = 'uniprot' AND orgId = ? AND locusId = ?",
                                     {}, $orgId, $locusId);
 if (defined $xrefU && exists $xrefU->{xrefId}) {
   my $uniprotId = $xrefU->{xrefId};
-  # Get the short id
-  my $url = "https://rest.uniprot.org/uniprotkb/$uniprotId.fasta";
-  my $fasta = get($url);
-  if ($fasta) {
-    if ($fasta =~ m/^>[a-z]+[|]([A-Z][A-Z0-9]+)[|]/) {
-      my $id = $1;
-      my $html = p("See $id at", a({-href => "https://www.ebi.ac.uk/interpro/protein/$id"}, "InterPro"));
-      $html =~ s/"/'/g;
-      my @lines;
-      push @lines, qq{<script>};
-      push @lines, qq{document.getElementById("InterPro").innerHTML = "$html";};
-      push @lines, qq{</script>};
-      print join("\n", @lines), "\n";
-    }
+  my $shortId;
+  if ($uniprotId =~ m/_/) {
+    # Fetch the short id
+    # (Earlier version of the tables had the long id; db_setup.pl no longer does this)
+    my $url = "https://rest.uniprot.org/uniprotkb/$uniprotId.fasta";
+    my $fasta = get($url); # a bit slow
+    $shortId = $1
+      if $fasta && $fasta =~ m/^>[a-z]+[|]([A-Z][A-Z0-9]+)[|]/;
+  } else {
+    $shortId = $uniprotId;
+  }
+  if ($shortId) {
+    my $html = p("See $shortId at",
+                 a({-href => "https://www.uniprot.org/uniprotkb/$shortId/entry"}, "UniProt"),
+                 "or",
+                 a({-href => "https://www.ebi.ac.uk/interpro/protein/$shortId"}, "InterPro"));
+    $html =~ s/"/'/g;
+    my @lines;
+    push @lines, qq{<script>};
+    push @lines, qq{document.getElementById("InterPro").innerHTML = "$html";};
+    push @lines, qq{</script>};
+    print join("\n", @lines), "\n";
   }
 }
 
