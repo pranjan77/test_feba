@@ -570,12 +570,10 @@ print
   p("Find homologs in the",
     a({-href => "https://iseq.lbl.gov/genomes/seqsearch?sequence=>${sys}%0A$seq"},
       "ENIGMA genome browser")),
-  qq{<DIV id="InterPro"><p>&nbsp;</p></DIV>},
-  "\n";
-
-print
-  h3("Protein Sequence ($seqLen amino acids)"),
-  pre(">$sys $descUpdated ($orginfo->{$orgId}{genome})\n$seq"),
+  # Formerly used
+  # <SCRIPT>document.getElementById("InterPro").innerHTML = "$html"</SCRIPT>
+  # to set this with a delay
+  #qq{<DIV id="InterPro"><p>&nbsp;</p></DIV>},
   "\n";
 
 # Show link to InterPro, if possible
@@ -583,30 +581,20 @@ my $xrefU = $dbh->selectrow_hashref("SELECT * FROM LocusXref WHERE xrefDb = 'uni
                                     {}, $orgId, $locusId);
 if (defined $xrefU && exists $xrefU->{xrefId}) {
   my $uniprotId = $xrefU->{xrefId};
-  my $shortId;
-  if ($uniprotId =~ m/_/) {
-    # Fetch the short id
-    # (Earlier version of the tables had the long id; db_setup.pl no longer does this)
-    my $url = "https://rest.uniprot.org/uniprotkb/$uniprotId.fasta";
-    my $fasta = get($url); # a bit slow
-    $shortId = $1
-      if $fasta && $fasta =~ m/^>[a-z]+[|]([A-Z][A-Z0-9]+)[|]/;
-  } else {
-    $shortId = $uniprotId;
-  }
-  if ($shortId) {
-    my $html = p("See $shortId at",
-                 a({-href => "https://www.uniprot.org/uniprotkb/$shortId/entry"}, "UniProt"),
-                 "or",
-                 a({-href => "https://www.ebi.ac.uk/interpro/protein/$shortId"}, "InterPro"));
-    $html =~ s/"/'/g;
-    my @lines;
-    push @lines, qq{<script>};
-    push @lines, qq{document.getElementById("InterPro").innerHTML = "$html";};
-    push @lines, qq{</script>};
-    print join("\n", @lines), "\n";
-  }
+  # (Earlier version of the tables had the long id; db_setup.pl no longer does this)
+  # my $url = "https://rest.uniprot.org/uniprotkb/$uniprotId.fasta";
+  # my $fasta = get($url); # a bit slow
+  # $shortId = $1 if $fasta && $fasta =~ m/^>[a-z]+[|]([A-Z][A-Z0-9]+)[|]/;
+  print p("See $uniprotId at",
+          a({-href => "https://www.uniprot.org/uniprotkb/$uniprotId/entry"}, "UniProt"),
+          "or",
+          a({-href => "https://www.ebi.ac.uk/interpro/protein/$uniprotId"}, "InterPro"));
 }
+
+print
+  h3("Protein Sequence ($seqLen amino acids)"),
+  pre(">$sys $descUpdated ($orginfo->{$orgId}{genome})\n$seq"),
+  "\n";
 
 print '</div>';
 $dbh->disconnect();
