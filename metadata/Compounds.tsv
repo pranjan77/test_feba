@@ -228,7 +228,7 @@ Hypoxanthine	68-94-0	Sigma	H9377	136.11
 Inosine	58-63-9	Sigma	I4125	268.23				yes	yes		
 Iodonitrotetrazolium chloride	146-68-9	Sigma	58030-1G-F	505.7							
 Irgasan	3380-34-5	Sigma	72779-5G-F	289.54	Triclosan	yes					
-Iron (II) chloride tetrahydrate	13478-10-9	Sigma	44936	198.81	FeCl2, FeCl2 7H2O						
+Iron (II) chloride tetrahydrate	13478-10-9	Sigma	44936	198.81	FeCl2, FeCl2 4H2O						
 Iron (II) sulfate heptahydrate	7782-63-0	Sigma	F2387	278.01	Ferrous sulfate heptahydrate, FeSO4 7H2O, Iron sulfate						
 Isobutyl alcohol	78-83-1	Sigma	W217905	74.12	Isobutanol; 2-Methylpropan-1-ol						
 Isoniazid	54-85-3	Sigma	I3377-5G	137.14		yes					
@@ -1189,3 +1189,6 @@ resazurin sodium salt	62758-13-8			251.17
 Sodium acetate trihydrate	6131-90-4			136.08							
 Sodium citrate dihydrate	6132-04-3			294.1							
 EDTA disodium dihydrate	139-33-3			336.21							
+methyl 3-keto-a-D-glucopyranoside		Nittert Marinus	Nit119	192.167							
+isopropyl 3-keto-N-acetyl-a-D-glucosamine		Nittert Marinus	PES4	261.274							
+Methyl beta-D-glucopyranoside	709-50-2			194.18							

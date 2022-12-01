@@ -3237,17 +3237,17 @@ FeSO4 7H2O	0.0095	g/L
 Mc_trace_minerals	1.00	X
 Mc_vitamins	1.00	X
 resazurin sodium salt	0.001	g/L
-sodium acetate trihydrate	1.40	g/L
+sodium acetate 	0.84	g/L
 CASamino acids	2.00	g/L
 dithiothreitol	0.50	g/L
 Sodium sulfide nonahydrate	1.00E-03	g/L
 		
-Media	McCas_formate	
-Description	Used for growing Methanococcus maripaludis with formate as the electron donor	
+Media	McCas_MOPS	
+Description	Used for growing Methanococcus maripaludis with hydrogen as the electron donor, reduced (2.5 g/L bicarb + 200mM MOPS)	
 Minimal	FALSE	
 Controlled vocabulary	Concentration	Units
-NaCl	10.50	g/L
 Mc_general_salts	1.00	X
+NaCl	22.00	g/L
 NaHCO3	2.50	g/L
 NH4Cl	1.00	g/L
 K2HPO4	0.14	g/L
@@ -3255,6 +3255,26 @@ FeSO4 7H2O	0.0095	g/L
 Mc_trace_minerals	1.00	X
 Mc_vitamins	1.00	X
 resazurin sodium salt	0.001	g/L
+sodium acetate 	0.84	g/L
+CASamino acids	2.00	g/L
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+MOPS_2M_pH7	0.10	X
+		
+Media	McCas_formate_SO4	
+Description	McCas_formate	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+NaHCO3	2.50	g/L
+NaCl	10.50	g/L
+Mc_general_salts	1.00	X
+NH4Cl	1.00	g/L
+K2HPO4	0.14	g/L
+FeCl2 4H2O	0.0095	g/L
+Mc_trace_minerals	1.00	X
+Mc_vitamins	1.00	X
+resazurin sodium salt	0.001	g/L
+sodium acetate 	0.84	g/L
 sodium formate	13.60	g/L
 MOPS_2M_pH7	0.10	X
 CASamino acids	2.00	g/L
@@ -3285,15 +3305,85 @@ Minimal	FALSE
 Controlled vocabulary	Concentration	Units
 NaCl	10.50	g/L
 Mc_general_salts_SO4free	1.00	X
-NaHCO3	2.50	g/L
 NH4Cl	1.00	g/L
 K2HPO4	0.14	g/L
 FeCl2 4H2O	0.0095	g/L
 Mc_trace_minerals_SO4free	1.00	X
 Mc_vitamins	1.00	X
 resazurin sodium salt	0.001	g/L
+sodium acetate 	0.84	g/L
 sodium formate	13.60	g/L
 MOPS_2M_pH7	0.10	X
 CASamino acids	2.00	g/L
 dithiothreitol	0.50	g/L
 Sodium sulfide nonahydrate	1.00E-03	g/L
+		
+Media	Mc_defined_formate	
+Description	Mc_formate sulfate free with no casaminos, vitamins, or acetate 	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+NaCl	10.50	g/L
+Mc_general_salts_SO4free	1.00	X
+NaHCO3	2.50	g/L
+NH4Cl	1.00	g/L
+K2HPO4	0.14	g/L
+FeCl2 4H2O	0.0095	g/L
+Mc_trace_minerals_SO4free	1.00	X
+resazurin sodium salt	0.001	g/L
+sodium formate	13.60	g/L
+MOPS_2M_pH7	0.10	X
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+		
+Media	Mc_defined_H2	
+Description	Used for growing Methanococcus maripaludis with hydrogen as the electron donor, SO4 vitamin casamino and acetate free	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Mc_general_salts_SO4free	1.00	X
+NaCl	22.00	g/L
+NaHCO3	2.50	g/L
+NH4Cl	1.00	g/L
+K2HPO4	0.14	g/L
+FeCl2 4H2O	0.0095	g/L
+Mc_trace_minerals_SO4free	1.00	X
+resazurin sodium salt	0.001	g/L
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+		
+Media	McCas_formate_complete	
+Description	McCas_formate with sulfate removed 	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+NaHCO3	2.50	g/L
+NaCl	10.50	g/L
+Mc_general_salts_SO4free	1.00	X
+NH4Cl	1.00	g/L
+K2HPO4	0.14	g/L
+FeCl2 4H2O	0.0095	g/L
+Mc_trace_minerals_SO4free	1.00	X
+Mc_vitamins	1.00	X
+resazurin sodium salt	0.001	g/L
+sodium acetate 	0.84	g/L
+sodium formate	13.60	g/L
+MOPS_2M_pH7	0.10	X
+CASamino acids	2.00	g/L
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+		
+Media	McCas_H2_complete	
+Description	Used for growing Methanococcus maripaludis with hydrogen as the electron donor, SO4 free	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Mc_general_salts_SO4free	1.00	X
+NaCl	22.00	g/L
+NaHCO3	2.50	g/L
+NH4Cl	1.00	g/L
+K2HPO4	0.14	g/L
+FeCl2 4H2O	0.0095	g/L
+Mc_trace_minerals_SO4free	1.00	X
+resazurin sodium salt	0.001	g/L
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+CASamino acids	2.00	g/L
+Mc_vitamins	1.00	X
+sodium acetate 	0.84	g/L
