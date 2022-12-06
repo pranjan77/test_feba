@@ -15,6 +15,7 @@ Optional arguments:
     [ -debug ] [ -dntag ] [ -limit maxReads ] [ -minQuality $minQuality ]
     [ -n25 | -bs3 | -bs4 ]
     [ -preseq CAGCGTACG -postseq AGAGACCTC -nPreExpected 9 ]
+    [ -index2 GCACTA -at2 2 ]
 
     -n25 or -bs3 indicate newer multiplexing designs:
     -n25 means 11:14 nt before the pre-sequence, corresponding to a read with
@@ -25,7 +26,8 @@ Optional arguments:
     -bs4 means 1:4 + 8 + 11 = 20:23 before the pre-sequence, corresponding to
 	1:4 Ns, index2, GTCGACCTGCAGCGTACG, N20, AGAGACC
 	where nN and index2 is specified in ../primers/barseq4.index2
-    nPreExpected can also be a range, i.e. 11:14
+    -nPreExpected can also be a range, i.e. 11:14
+    -index2 and -at2 can check for a specific sequence somewhere in the read
 
     PrimerIndexTable should be tab-delimited with multiplex name and a primer like nACGACG
     The fastq file should be fastq with phred+33 ("sanger") encoding of quality scores
@@ -78,7 +80,7 @@ my $doOff1 = undef;
 
 {
     my ($indexfile,$out,$nLimit,$n25,$bs3,$bs4);
-    my ($index2,$index2At); # for bs3 mode -- check that sequence has $index2 starting at (1-based) $index2At
+    my ($index2,$index2At); # check that sequence has $index2 starting at (1-based) $index2At
     (GetOptions('primers=s' => \$indexfile,
 		'out=s' => \$out,
 		'index=s' => \$iname,
@@ -92,6 +94,8 @@ my $doOff1 = undef;
                 'n25' => \$n25,
                 'bs3' => \$bs3,
                 'bs4' => \$bs4,
+                'index2=s' => \$index2,
+                'at2=i' => \$index2At,
                 'off1=i' => \$doOff1)
      && defined $out)
         || die $usage;
@@ -152,6 +156,7 @@ my $doOff1 = undef;
 
     my $index2len;
     if (defined $index2) {
+      die "Must specify -at2 with -index2\n" unless defined $index2At;
       die "Invalid index2 sequence $index2" unless $index2 =~ m/^[ACGT]+$/;
       die "Invalid $index2At" unless $index2At =~ m/^\d+$/ && $index2At >= 1;
       $index2len = length($index2);
