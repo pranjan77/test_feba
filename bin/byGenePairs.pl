@@ -1,7 +1,33 @@
 #!/usr/bin/perl -w
 use strict;
+use Getopt::Long;
 use List::Util qw(sum);
 sub commify($);
+
+my $minN = 2;
+
+my $usage = <<END
+byGenePairs.pl < strains.filtered > genepairs.tsv
+
+  The input must be tab-delimited with the fields
+  barcode1, scaffold1, strand1, pos1, locusId1, f1,
+  barcode2, scaffold2, strand2, pos2, locusId2, f2,
+  n (for #reads)
+
+  The output has counts per pairs of genes (including those with no strains), with fields
+  locusId1 locusId2 nStrains nReads revStrains revReads totStrains1 totReads1 totStrains2 totReads2
+
+  Strains are only included in the analysis if both loci are set and
+  both f (fractional position within the gene) are between 0.1 and 0.9.
+
+Optional arguments:
+  -minN $minN -- minimum number of reads for a strain to be included in the analysis
+END
+;
+
+die $usage
+  unless GetOptions('minN=i' => \$minN)
+  && @ARGV ==0;
 
 die "Run as a filter on the filtered table\n"
   if @ARGV > 0;
@@ -22,12 +48,12 @@ while(my $line = <STDIN>) {
   die "Invalid f1 $f1" unless $f1 >= 0 || $f1 <= 1;
   die "Invalid f2 $f2" unless $f2 >= 0 || $f2 <= 1;
   $nGenicPairs++;
-  if ($f1 >= 0.1 && $f1 <= 0.9 && $f2 >= 0.1 && $f2 <= 0.9) {
+  if ($f1 >= 0.1 && $f1 <= 0.9 && $f2 >= 0.1 && $f2 <= 0.9 && $n >= $minN) {
     push @{ $gp{$locus1}{$locus2} }, $n;
     $nCentralPairs++;
   }
 }
-print STDERR sprintf("Read %s genic pairs and %s central pairs\n",
+print STDERR sprintf("Read %s genic pairs. Found %s central pairs with n >= $minN\n",
                      commify($nGenicPairs), commify($nCentralPairs));
 
 
@@ -37,7 +63,7 @@ my %reads2 = ();
 my %strains2 = ();
 while (my ($locus1, $hash) = each %gp) {
   while (my ($locus2, $list) = each %$hash) {
-    # Should self hits be ignored? Decide not to
+    # Should self hits be ignored? Decide to leave them
     $strains1{$locus1} += scalar(@$list);
     $reads1{$locus1} += sum(@$list);
     $strains2{$locus2} += scalar(@$list);
