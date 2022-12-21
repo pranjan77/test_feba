@@ -1107,3 +1107,161 @@ nickel (II) chloride hexahydrate	0.25	g/L
 sodium selenate	2	g/L
 vanadium chloride	0.1	g/L
 sodium tungstate dihydrate	0.033	g/L
+		
+Media	Ying_sugar7	
+Description	Mix of 7 sugars; from Ying Wang	
+X	1	
+Controlled vocabulary	Concentration	Units
+Sucrose	366	uM
+D-Glucose	366	uM
+D-Trehalose dihydrate	366	uM
+m-Inositol	366	uM
+D-Xylose	366	uM
+D-Mannitol	366	uM
+N-Acetyl-D-Glucosamine	366	uM
+		
+Media	Ying_OrganicAcid7	
+Description	Mix of 7 organic acids; from Ying Wang	
+X	1	
+Controlled vocabulary	Concentration	Units
+Sodium L-Lactate	366	uM
+D,L-Malic Acid	366	uM
+Citric Acid	366	uM
+Succinic Acid	366	uM
+Sodium pyruvate	366	uM
+a-Ketoglutaric acid	366	uM
+L-Citrulline	366	uM
+		
+Media	Ying_Nucleobase14	
+Description	Mix of 14 nucleobases; from Ying Wang	
+X	1	
+Controlled vocabulary	Concentration	Units
+5-methyluridine	183	uM
+Adenine	183	uM
+Adenosine	183	uM
+Cytidine	183	uM
+Cytosine	183	uM
+Guanine	183	uM
+Guanosine	183	uM
+Hypoxanthine	183	uM
+Inosine	183	uM
+Thymine	183	uM
+Uracil	183	uM
+Uridine	183	uM
+Xanthine	183	uM
+Xanthosine	183	uM
+		
+Media	Ying_AminoAcid20	
+Description	Mix of 20 amino acids; from Ying Wang	
+X	1	
+Controlled vocabulary	Concentration	Units
+L-Alanine	128	uM
+L-Arginine	128	uM
+L-Asparagine	128	uM
+L-Aspartic Acid	128	uM
+L-Cysteine	128	uM
+Glutamic acid	128	uM
+L-Glutamine	128	uM
+Glycine	128	uM
+L-Histidine	128	uM
+L-Isoleucine	128	uM
+L-Leucine	128	uM
+L-Lysine	128	uM
+L-Methionine	128	uM
+L-Phenylalanine	128	uM
+L-Proline	128	uM
+L-Serine	128	uM
+L-Threonine	128	uM
+L-Tryptophan	128	uM
+L-tyrosine	128	uM
+L-Valine	128	uM
+		
+Media	Ying_Others16	
+Description	Mix of 16 compounds; from Ying Wang	
+X	1	
+Controlled vocabulary	Concentration	Units
+Gamma-Aminobutyric Acid Hydrochloride	160	uM
+Ectoine	160	uM
+Betaine	160	uM
+N-Acetyl-L-glutamic acid	160	uM
+Nicotinamide	160	uM
+L-Ornithine	160	uM
+Shikimic Acid	160	uM
+spermidine	160	uM
+Taurine	160	uM
+Trigonelline	160	uM
+L-Carnitine	160	uM
+Choline	160	uM
+N-alpha-Acetyl-L-glutamate	160	uM
+n-Acetyl-lysine	160	uM
+n-Acetyl-muramic acid	160	uM
+sn-glycero-3-phosphocholine	160	uM
+		
+Media	Ying_all64	
+Description	Mix of 64 compounds; from Ying Wang	
+X	1	
+Controlled vocabulary	Concentration	Units
+Sucrose	40	uM
+D-Glucose	40	uM
+D-Trehalose dihydrate	40	uM
+m-Inositol	40	uM
+D-Xylose	40	uM
+D-Mannitol	40	uM
+N-Acetyl-D-Glucosamine	40	uM
+Sodium L-Lactate	40	uM
+D,L-Malic Acid	40	uM
+Citric Acid	40	uM
+Succinic Acid	40	uM
+Sodium pyruvate	40	uM
+a-Ketoglutaric acid	40	uM
+L-Citrulline	40	uM
+5-methyluridine	40	uM
+Adenine	40	uM
+Adenosine	40	uM
+Cytidine	40	uM
+Cytosine	40	uM
+Guanine	40	uM
+Guanosine	40	uM
+Hypoxanthine	40	uM
+Inosine	40	uM
+Thymine	40	uM
+Uracil	40	uM
+Uridine	40	uM
+Xanthine	40	uM
+Xanthosine	40	uM
+L-Alanine	40	uM
+L-Arginine	40	uM
+L-Asparagine	40	uM
+L-Aspartic Acid	40	uM
+L-Cysteine	40	uM
+Glutamic acid	40	uM
+L-Glutamine	40	uM
+Glycine	40	uM
+L-Histidine	40	uM
+L-Isoleucine	40	uM
+L-Leucine	40	uM
+L-Lysine	40	uM
+L-Methionine	40	uM
+L-Phenylalanine	40	uM
+L-Proline	40	uM
+L-Serine	40	uM
+L-Threonine	40	uM
+L-Tryptophan	40	uM
+L-tyrosine	40	uM
+L-Valine	40	uM
+Gamma-Aminobutyric Acid Hydrochloride	40	uM
+Ectoine	40	uM
+Betaine	40	uM
+N-Acetyl-L-glutamic acid	40	uM
+Nicotinamide	40	uM
+L-Ornithine	40	uM
+Shikimic Acid	40	uM
+spermidine	40	uM
+Taurine	40	uM
+Trigonelline	40	uM
+L-Carnitine	40	uM
+Choline	40	uM
+N-alpha-Acetyl-L-glutamate	40	uM
+n-Acetyl-lysine	40	uM
+n-Acetyl-muramic acid	40	uM
+sn-glycero-3-phosphocholine	40	uM

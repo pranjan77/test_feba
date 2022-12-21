@@ -2688,6 +2688,27 @@ Copper (II) sulfate pentahydrate	1.00E-08	M
 Manganese (II) chloride tetrahydrate	8.00E-08	M
 Zinc sulfate heptahydrate	1.00E-08	M
 		
+Media	MOPS minimal media_Glucose20mM	
+Description	MOPS minimal media with Glucose 20mM	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+D-Glucose	20	mM
+Ammonium chloride	9.5	mM
+3-(N-morpholino)propanesulfonic acid	40	mM
+Tricine	4	mM
+Potassium phosphate dibasic	1.32	mM
+Iron (II) sulfate heptahydrate	0.01	mM
+Aluminum potassium sulfate dodecahydrate	0.276	mM
+Calcium chloride	0.0005	mM
+Magnesium chloride hexahydrate	0.525	mM
+Sodium Chloride	50	mM
+Ammonium heptamolybdate tetrahydrate	3.00E-09	M
+Boric Acid	4.00E-07	M
+Cobalt chloride hexahydrate	3.00E-08	M
+Copper (II) sulfate pentahydrate	1.00E-08	M
+Manganese (II) chloride tetrahydrate	8.00E-08	M
+Zinc sulfate heptahydrate	1.00E-08	M
+		
 Media	MOPS minimal media_Succinate_noNitrogen	
 Description	MOPS minimal media with Glucose and no nitrogen source	
 Minimal	TRUE	

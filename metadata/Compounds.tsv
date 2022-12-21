@@ -40,7 +40,7 @@ Compound	CAS	Company	CatalogNumber	FW	Synonyms	Hans80Anti	Hans80metals	FEBA_carb
 5'-Deoxy-5'-(methylthio)adenosine	2457-80-9	Sigma	D5011	297.33							
 8-hydroxy-nitroquinoline	4008-48-4	Sigma	140325-5g	190.16		yes					
 a-Cyclodextrin	10016-20-3	Sigma	C4642	160.1026				yes			
-a-Ketoglutaric acid disodium salt hydrate	305-72-6	Sigma	K3752	190.06				yes			
+a-Ketoglutaric acid disodium salt hydrate	305-72-6	Sigma	K3752	190.06	a-Ketoglutaric acid			yes			
 acetaldehyde	75-07-0	Sigma	402788	44.05							
 Acetic Acid	64-19-7	Sigma	242853	60.05							
 acetone	67-64-1	Sigma	179124	58.08							
@@ -1052,11 +1052,11 @@ pipercolic acid	3105-95-1			129.157
 Xanthosine	146-80-5			284.228	Xanthosine dihydrate						
 Ectoine	96702-03-03			142.158							
 Trimethylglycine	107-43-7			117.146							
-N-Acetyl-glutamic acid	5817-08-03			189.167							
+N-Acetyl-glutamic acid	5817-08-03			189.167	N-Acetyl-DL-glutamicAcid						
 Taurine	107-35-7			125.14							
-Trigonelline HCl	6138-41-6			173.6							
+Trigonelline HCl	6138-41-6			173.6	Trigonelline						
 n-Acetyl-glutamine	5817-09-04			188.183							
-n-Acetyl-lysine	0692-04-06			188.227							
+n-Acetyl-lysine	1946-82-3			188.227							
 n-Acetyl-muramic acid	10597-89-4			293.272							
 sn-glycero-3-phosphocholine	28319-77-9			257.2							
 alpha-Lactose	5989-81-1			360.31							
@@ -1172,7 +1172,7 @@ Indole-3-butyric acid	133-32-4			203.24
 D-Glucuronic acid sodium salt monohydrate	207300-70-7			234.14							
 Citraconic acid	498-23-7			130.099							
 4-Acetoxy-3-methoxycinnamic acid	2596-47-6			236.22							
-L-Carnitine hydrochloride	6645-46-1			197.66							
+L-Carnitine hydrochloride	6645-46-1			197.66	L-Carnitine						
 Betaine hydrochloride	590-46-5			153.61							
 Sorgoleone	105018-76-6			358.5							
 methyl-cis-p-coumarate	3943-97-3			314.4							
@@ -1192,3 +1192,15 @@ EDTA disodium dihydrate	139-33-3			336.21
 methyl 3-keto-a-D-glucopyranoside		Nittert Marinus	Nit119	192.167							
 isopropyl 3-keto-N-acetyl-a-D-glucosamine		Nittert Marinus	PES4	261.274							
 Methyl beta-D-glucopyranoside	709-50-2			194.18							
+N-Acetyl-L-glutamic acid	1188-37-0			189.17							
+Choline	62-49-7			121.18							
+D-2-Aminobutyric acid	2623-91-8			103.12							
+L-2-Aminobutyric acid	1492-24-6			103.12							
+2-Azetidinone	930-21-2			71.08	Propiolactam						
+Hippuric acid	495-69-2			179.17							
+Sodium Fluoroacetate	62-74-8			100.02							
+DL-3-Hydroxyisobutyric acid sodium salt	1219589-99-7			126.09							
+DL-3-Hydroxybutyric acid sodium salt	150-83-4			126.09							
+1,3-Hexanediol	21531-91-9			118.176							
+2-Methylbutanoic acid	116-53-0			102.13							
+Poly(3-hydroxybutyric acid)	29435-48-1			104.1							
