@@ -12,7 +12,7 @@
 #
 # Common CGI parameters:
 # r -- list of more row specifiers, in order from top to bottom. Each is either a locusId
-#	or a comment/label specifier like _l1 but varying the number
+#	or xref or a comment/label specifier like _l1 but varying the number
 # rt.X for various row specifiers (i.e., rt._l1) -- text to show instead of
 #	the usual gene annotation. (The original annotation will be in the popup text.)
 #	This is also how the text for labels is set.
@@ -48,12 +48,26 @@ my $dbh = Utils::get_dbh();
 my $orginfo = Utils::orginfo($dbh);
 my $genome = $orginfo->{$orgId}{genome} || die "Invalid orgId $orgId";
 my $expInfo = Utils::expinfo($dbh,$orgId); # expName => attribute => value
-
-my @r = $cgi->param('r');
-my @c = $cgi->param('c');
 my $view = $cgi->param('view') || 0;
 
-my @errors = ();
+# To be set by SetupHidden()
+# Do not save $view as it never needs to be set by a hidden field (a form can only turn it off)
+my @hidden = (); # all of the common (static) arguments as hidden fields
+my %hiddenrt = (); # row specifier => the hidden field for its text (if any)
+
+# Process the parameters that define the veiw
+# First, r and c specify the genes (rows) and experiments (columns)
+# addrow / addrowAt adds a gene
+# rt.locusId sets the labels for the genes
+#   this must be processed before addcol or else the labels might be lost
+#   in the experiment selection form
+# addcol / addcolAt adds experiment(s)
+#	and may need to show a form to select which ones to include
+#	ca (short for column add) is set used by that form
+
+my @loadErrors = ();
+my @r = $cgi->param('r');
+my @c = $cgi->param('c');
 
 my $addrow = $cgi->param('addrow') || "";
 $addrow =~ s/[ ,\t\r\n]+$//;
@@ -61,28 +75,23 @@ $addrow =~ s/^[ ,\t\r\n]+//;
 my @addrow = split /[ ,\t\r\n]+/, $addrow;
 my $addrowAt = $cgi->param('addrowAt') || 0;
 
-# To be set by SetupHidden()
-# Do not save view as it never needs to be set by a hidden field (a form can only turn it off)
-my @hidden = (); # all of the common (static) arguments as hidden fields
-my %hiddenrt = (); # row specifier => the hidden field for its text (if any)
-
 foreach my $add (@addrow) {
   my $r = undef; # the row to add, if set
   if (grep { $_ eq $addrow} @r) {
-    push @errors, "Gene $addrow is already included";
+    push @loadErrors, "Gene $addrow is already included";
   } elsif ($add =~ m/^_l([0-9]+)$/) {
     $r = $add;
   } elsif ($add ne "") {
     if ($add !~ m/^[A-Za-z90-9_.-]*$/) {
-      push @errors, "Invalid gene to add";
+      push @loadErrors, "Invalid gene to add";
     } else {
       my $list = Utils::matching_genes($dbh, $orgId, $add);
       my $locusId = undef;
       $locusId = $list->[0]{locusId} if @$list == 1;
       if (!defined $locusId) {
-        push @errors, qq{Cannot find gene "$add"};
+        push @loadErrors, qq{Cannot find gene "$add"};
       } elsif (sum(map { $_ eq $locusId } @r) > 0) {
-        push @errors, qq{Gene "$add" (locus $locusId) is already included};
+        push @loadErrors, qq{Gene "$add" (locus $locusId) is already included};
       } else {
         $r = $locusId;
       }
@@ -101,6 +110,52 @@ foreach my $add (@addrow) {
   }
 }
 
+my %genes = (); # locusId => gene
+my @locusIds = ();
+my %labels = (); # locusId or _{labelNumber} to label
+# Convert locus specifiers to actual genes, and fetch all the genes and fitness data;
+# also save the labels (which are input by locus specifier, which may change)
+foreach my $i (0..(scalar(@r)-1)) {
+  my $locusId = $r[$i];
+  my $rt = param("rt.$locusId");
+  unless ($locusId =~ m/^_/) {
+    # not a comment line
+    my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId = ? AND locusId = ?",
+                                     {}, $orgId, $locusId);
+    if (!defined $gene->{locusId}) {
+      # Try again using xrefs
+      # This allows these heatmaps to work if the assembly
+      # changes (if xrefs were added for the old ids)
+      my $list = $dbh->selectall_arrayref(qq{ SELECT * FROM LocusXref JOIN Gene USING (orgId,locusId)
+                                              WHERE orgId = ? AND xrefId = ? },
+                                          { Slice => {} }, $orgId, $locusId);
+      if (@$list == 1) {
+        $gene = $list->[0];
+        $locusId = $gene->{locusId};
+        $r[$i] = $gene->{locusId};
+      } else {
+        push @loadErrors, "Locus $locusId not found";
+        $locusId = "";
+        $r[$i] = ""; # will delete later
+      }
+    }
+    if ($locusId ne "") {
+      $genes{$locusId} = $gene;
+      push @locusIds, $locusId;
+    }
+  }
+  # Save label under the new locusId
+  $labels{$locusId} = $rt if defined $rt && $rt ne "";
+}
+# Remove unknown loci
+@r = grep { $_ ne "" } @r;
+
+# Set up @rtargs for saving the labels and comments
+my @rtargs;
+foreach my $r (@r) {
+  push @rtargs, "rt.$r=$labels{$r}" if defined $labels{$r};
+}
+
 my $addcol = $cgi->param('addcol') || "";
 $addcol =~ s/[ \t]+$//;
 $addcol =~ s/^[ \t]+//;
@@ -109,13 +164,13 @@ my $addcolAt = $cgi->param('addcolAt') || "";
 if ($addcol) {
   my $exps = Utils::matching_exps($dbh,$orgId,$addcol);
   if (@$exps == 0) {
-    push @errors, qq{No experiments matching "$addcol"};
+    push @loadErrors, qq{No experiments matching "$addcol"};
   } else {
     my %c = map { $_ => 1 } @c;
     my @keep = grep !exists $c{$_->{expName}}, @$exps;
     my @ignore = grep exists $c{$_->{expName}}, @$exps;
     if (@keep == 0) {
-      push @errors, scalar(@ignore) . " matching experiments are already shown";
+      push @loadErrors, scalar(@ignore) . " matching experiments are already shown";
     } elsif (@keep >= 5) {
       # Show checkbox form to choose which of these to include
       # I can just reuse the c parameter for each checkbox -- it only gets
@@ -178,65 +233,13 @@ my $maxC = 50;
 my $maxR = 200;
 if (@c > $maxC) {
   $#c = $maxC-1;
-  push @errors, "This page limits the number of columns to $maxC";
+  push @loadErrors, "This page limits the number of columns to $maxC";
 }
 if (@r > $maxR) {
   $#r = $maxR-1;
-  push @errors, "This page limits the number of rows to $maxR";
+  push @loadErrors, "This page limits the number of rows to $maxR";
 }
 
-my %genes = (); # locusId => gene
-my @locusIds = ();
-my %labels = (); # locusId or _{labelNumber} to label
-# Convert locus specifiers to actual genes, and fetch all the genes and fitness data;
-# also save the labels (which are input by locus specifier, which may change)
-foreach my $i (0..(scalar(@r)-1)) {
-  my $locusId = $r[$i];
-  my $rt = param("rt.$locusId");
-  unless ($locusId =~ m/^_/) {
-    # not a comment line
-    my $gene = $dbh->selectrow_hashref("SELECT * FROM Gene WHERE orgId = ? AND locusId = ?",
-                                     {}, $orgId, $locusId);
-    if (!defined $gene->{locusId}) {
-      # Try again using xrefs
-      # This allows these heatmaps to work if the assembly
-      # changes (if xrefs were added for the old ids)
-      my $list = $dbh->selectall_arrayref(qq{ SELECT * FROM LocusXref JOIN Gene USING (orgId,locusId)
-                                              WHERE orgId = ? AND xrefId = ? },
-                                          { Slice => {} }, $orgId, $locusId);
-      if (@$list == 1) {
-        $gene = $list->[0];
-        $locusId = $gene->{locusId};
-        $r[$i] = $gene->{locusId};
-      } else {
-        push @errors, "Locus $locusId not found";
-        $locusId = "";
-        $r[$i] = ""; # will delete later
-      }
-    }
-    if ($locusId ne "") {
-      # expName => "fit" => fitness value
-      $gene->{fit} = $dbh->selectall_hashref(qq{SELECT expName,fit,t FROM GeneFitness
-                                                  WHERE orgId = ? AND locusId = ?},
-                                             "expName", {}, $orgId, $locusId);
-      foreach my $expName (keys %{ $gene->{fit} }) {
-        die "No such experiment: $expName" unless exists $expInfo->{$expName};
-      }
-      $genes{$locusId} = $gene;
-      push @locusIds, $locusId;
-    }
-  }
-  # Save label under the new locusId
-  $labels{$locusId} = $rt if defined $rt && $rt ne "";
-}
-# Remove unknown loci
-@r = grep { $_ ne "" } @r;
-
-# Set up @rtargs for saving the labels and comments
-my @rtargs;
-foreach my $r (@r) {
-  push @rtargs, "rt.$r=$labels{$r}" if defined $labels{$r};
-}
 
 my $title1 = @locusIds > 0 ? "Heatmap for " . scalar(@locusIds) . " genes x " . scalar(@c) . " experiments in "
   : "Build Heatmap in";
@@ -245,11 +248,22 @@ print $cgi->header,
   Utils::start_page($title1 . " " . $genome),
   h2($title1, a({-href => "org.cgi?orgId=$orgId"}, $genome));
 
-foreach my $error (@errors) {
+foreach my $error (@loadErrors) {
   print $cgi->h3($error);
 }
 
 SetupHidden();
+
+# Load the fitness data (if any) for each gene
+while (my ($locusId, $gene) = each %genes) {
+  # expName => "fit" => fitness value
+  $gene->{fit} = $dbh->selectall_hashref(qq{SELECT expName,fit,t FROM GeneFitness
+                                            WHERE orgId = ? AND locusId = ?},
+                                         "expName", {}, $orgId, $locusId);
+  foreach my $expName (keys %{ $gene->{fit} }) {
+    die "No such experiment: $expName" unless exists $expInfo->{$expName};
+  }
+}
 
 my $rmmark = "&#10799;"; # Unicode Character 'VECTOR OR CROSS PRODUCT' (U+2A2F)
 my $editmark = span({ -style => "display: inline-block; transform: rotateZ(90deg);" }, "&#9998;");
