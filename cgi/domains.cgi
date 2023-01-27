@@ -569,7 +569,7 @@ print
       "FIGfam search")),
   p("Find homologs in the",
     a({-href => "https://iseq.lbl.gov/genomes/seqsearch?sequence=>${sys}%0A$seq"},
-      "ENIGMA genome browser")),
+      "ENIGMA genome browser"));
   # Formerly used
   # <SCRIPT>document.getElementById("InterPro").innerHTML = "$html"</SCRIPT>
   # to set this with a delay
