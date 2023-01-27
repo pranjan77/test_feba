@@ -3408,3 +3408,23 @@ Sodium sulfide nonahydrate	1.00E-03	g/L
 CASamino acids	2.00	g/L
 Mc_vitamins	1.00	X
 sodium acetate 	0.84	g/L
+		
+Media	FilteredGW_noC	
+Description	Incubation medium for isolation using ground water as base  	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Spring sampling GW821 filtered with 0.2uM filter	1.00	X
+		
+Media	FilteredGW_Cell lysate_1/250	
+Description	Incubation medium for isolation using ground water as base and Cell lysate as additional carbon source	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Spring sampling GW821 filtered with 0.2uM filter	1.00	X
+Cell lysate 	0.004	X
+		
+Media	FilteredGW_Cell lysate_1/2500	
+Description	Incubation medium for isolation using ground water as base and Cell lysate as additional carbon source	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Spring sampling GW821 filtered with 0.2uM filter	1.00	X
+Cell lysate 	0.0004	X
