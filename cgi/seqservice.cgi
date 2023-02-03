@@ -54,6 +54,11 @@ unless ($seq =~ m/^[A-Z*]+$/) {
     exit(0);
 }
 
+if (length($seq) > 5000) {
+  print "Error\nSorry, the sequence is too long\n";
+  exit(0);
+}
+
 my $maxhits = $cgi->param('maxhits');
 if (defined $maxhits && $maxhits > 0) {
     $maxhits = $maxhits + 0; # convert to integer
