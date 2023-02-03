@@ -3226,12 +3226,17 @@ Media	Soil Defined Media (SDM)
 Description	Northen lab media based on carbon sources found in soil extracts,  precurser to NLDM	
 Minimal	FALSE	
 Controlled vocabulary	Concentration	Units
+SDM_noCarbon	1.00	X
+Soil Defined Carbon Mix	10	X
+		
+Media	SDM_noCarbon	
+Description	Northen lab media for experiments with mixtures of carbon sources	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
 Ammonium chloride	1.50	g/L
-Potassium phosphate monobasic	2.30	g/L
-Potassium phosphate dibasic	4.00	g/L
+Potassium phosphate monobasic	0.60	g/L
 Wolfe's mineral mix	1	X
 Wolfe's vitamin mix	1	X
-Soil Defined Carbon Mix	10	X
 		
 Media	Nematode growth medium agar	
 Description	Used for growing C. elegans	
