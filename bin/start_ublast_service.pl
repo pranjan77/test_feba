@@ -24,6 +24,10 @@ die "No aaseqs file in $datadir" unless -e "$datadir/aaseqs";
 my $usearch = "$datadir/../bin/usearch6";
 die "No such exectable: $usearch" unless -x $usearch;
 my $basedir = "$datadir/ublast_service";
+# Save the log files from ublast before deleting the ublast_service directory
+system("cp $basedir/usearch.*.stdout $datadir/logs/");
+system("cp $basedir/usearch.*.stderr $datadir/logs/");
+
 system("rm","-Rf",$basedir);
 mkdir($basedir);
 die "Could not make $datadir/ublast_service" unless -d $basedir;
