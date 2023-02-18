@@ -1265,3 +1265,28 @@ N-alpha-Acetyl-L-glutamate	40	uM
 n-Acetyl-lysine	40	uM
 n-Acetyl-muramic acid	40	uM
 sn-glycero-3-phosphocholine	40	uM
+		
+Media	Day_AminoAcid20	
+Description	Mix of 20 amino acids	
+X	1	
+Controlled vocabulary	Concentration	Units
+L-Alanine	0.5	mM
+L-Arginine	0.5	mM
+L-Asparagine	0.5	mM
+L-Aspartic Acid	0.5	mM
+L-Cysteine	0.5	mM
+Glutamic acid	0.5	mM
+L-Glutamine	0.5	mM
+Glycine	0.5	mM
+L-Histidine	0.5	mM
+L-Isoleucine	0.5	mM
+L-Leucine	0.5	mM
+L-Lysine	0.5	mM
+L-Methionine	0.5	mM
+L-Phenylalanine	0.5	mM
+L-Proline	0.5	mM
+L-Serine	0.5	mM
+L-Threonine	0.5	mM
+L-Tryptophan	0.5	mM
+L-tyrosine	0.5	mM
+L-Valine	0.5	mM

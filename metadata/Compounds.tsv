@@ -201,7 +201,7 @@ Gelatin	9000-70-8	Sigma	G1890					yes	yes
 Geneticin G418	49863-47-0			496.55		yes					
 Gentamicin sulfate salt	1405-41-0	Sigma	G1264							yes	
 Gjerstad humics							yes				
-Glucuronamide	3789-97-7	MP	157202	193.2				yes	yes		
+Glucuronamide	3789-97-7	MP	157202	193.2	D-Glucuronamide			yes	yes		
 Gly-DL-Asp	79731-35-4	Sigma	G2754	190.2				yes	yes		
 Gly-Glu	7412-78-4	Sigma	G0877	204.18				yes	yes		
 Glycerol	56-81-5	Fisher	BP229-1	92.09				yes			
@@ -679,7 +679,7 @@ Butyl stearate	123-95-5			340.58
 3-Methyl-2-Oxobutanoic Acid	759-05-7			116.116							
 4-Methyl-2-oxopentanoic acid	816-66-0			130.143							
 Beef extract											
-Tween 80	9005-65-6			1310							
+Tween 80	9005-65-6			1310	tween-80						
 Triammonium citrate	3458-72-8			243.216							
 Pyridoxamine dihydrochloride	524-36-7			241.112							
 Xanthine	69-89-6			152.11							
@@ -1205,3 +1205,5 @@ DL-3-Hydroxybutyric acid sodium salt	150-83-4			126.09
 2-Methylbutanoic acid	116-53-0			102.13							
 Poly(3-hydroxybutyric acid)	29435-48-1			104.1							
 Lanthanum (III) chloride	20211-76-1	Sigma	211605-100G	245.26							
+potassium (poly)sulfide	37199-66-9										
+ammonium sulfide solution	12135-76-1										

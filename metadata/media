@@ -3375,6 +3375,7 @@ Mc_trace_minerals_SO4free	1.00	X
 resazurin sodium salt	0.001	g/L
 dithiothreitol	0.50	g/L
 Sodium sulfide nonahydrate	1.00E-03	g/L
+MOPS_2M_pH7	0.10	X
 		
 Media	McCas_formate_complete	
 Description	McCas_formate with sulfate removed 	
@@ -3413,6 +3414,7 @@ Sodium sulfide nonahydrate	1.00E-03	g/L
 CASamino acids	2.00	g/L
 Mc_vitamins	1.00	X
 sodium acetate 	0.84	g/L
+MOPS_2M_pH7	0.10	X
 		
 Media	FilteredGW_noC	
 Description	Incubation medium for isolation using ground water as base  	
@@ -3433,3 +3435,362 @@ Minimal	FALSE
 Controlled vocabulary	Concentration	Units
 Spring sampling GW821 filtered with 0.2uM filter	1.00	X
 Cell lysate 	0.0004	X
+		
+Media	Mc_H2_N_Free	
+Description	with no casamino acids or NH4	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Mc_general_salts_SO4free	1.00	X
+NaCl	22.00	g/L
+NaHCO3	2.50	g/L
+K2HPO4	0.14	g/L
+FeCl2 4H2O	0.0095	g/L
+Mc_trace_minerals_SO4free	1.00	X
+resazurin sodium salt	0.001	g/L
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+sodium acetate 	0.84	g/L
+MOPS_2M_pH7	0.10	X
+		
+Media	Mc_formate_N_Free	
+Description	McCas_formate with no casamino acids or NH4	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+NaHCO3	2.50	g/L
+NaCl	10.50	g/L
+Mc_general_salts_SO4free	1.00	X
+K2HPO4	0.14	g/L
+FeCl2 4H2O	0.0095	g/L
+Mc_trace_minerals_SO4free	1.00	X
+Mc_vitamins	1.00	X
+resazurin sodium salt	0.001	g/L
+sodium acetate 	0.84	g/L
+sodium formate	13.60	g/L
+MOPS_2M_pH7	0.10	X
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+		
+Media	McAA_formate_No_biotin	
+Description	Mc_formate with defined amino acid mix and no biotin in vit mix	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+NaHCO3	2.50	g/L
+NaCl	10.50	g/L
+NH4Cl	1.00	g/L
+Mc_general_salts_SO4free	1.00	X
+K2HPO4	0.14	g/L
+FeCl2 4H2O	0.0095	g/L
+Mc_trace_minerals_SO4free	1.00	X
+Mc_vitamins	1.00	X
+biotin	-	-
+resazurin sodium salt	0.001	g/L
+sodium acetate 	0.84	g/L
+sodium formate	13.60	g/L
+MOPS_2M_pH7	0.10	X
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+Day_AminoAcid20	1.00E+00	X
+		
+Media	McAA_formate_No_FolicAcid	
+Description	Mc_formate with defined amino acid mix and no folic acid in vit mix	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+NaHCO3	2.50	g/L
+NaCl	10.50	g/L
+NH4Cl	1.00	g/L
+Mc_general_salts_SO4free	1.00	X
+K2HPO4	0.14	g/L
+FeCl2 4H2O	0.0095	g/L
+Mc_trace_minerals_SO4free	1.00	X
+Mc_vitamins	1.00	X
+folic acid	-	-
+resazurin sodium salt	0.001	g/L
+sodium acetate 	0.84	g/L
+sodium formate	13.60	g/L
+MOPS_2M_pH7	0.10	X
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+Day_AminoAcid20	1.00E+00	X
+		
+Media	McAA_formate_No_Pyroxidine	
+Description	Mc_formate with defined amino acid mix and no pyroxidine in vit mix	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+NaHCO3	2.50	g/L
+NaCl	10.50	g/L
+NH4Cl	1.00	g/L
+Mc_general_salts_SO4free	1.00	X
+K2HPO4	0.14	g/L
+FeCl2 4H2O	0.0095	g/L
+Mc_trace_minerals_SO4free	1.00	X
+Mc_vitamins	1.00	X
+pyridoxine hydrochloride	-	-
+resazurin sodium salt	0.001	g/L
+sodium acetate 	0.84	g/L
+sodium formate	13.60	g/L
+MOPS_2M_pH7	0.10	X
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+Day_AminoAcid20	1.00E+00	X
+		
+Media	McAA_formate_No_Thiamine	
+Description	Mc_formate with defined amino acid mix and no thiamine in vit mix	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+NaHCO3	2.50	g/L
+NaCl	10.50	g/L
+NH4Cl	1.00	g/L
+Mc_general_salts_SO4free	1.00	X
+K2HPO4	0.14	g/L
+FeCl2 4H2O	0.0095	g/L
+Mc_trace_minerals_SO4free	1.00	X
+Mc_vitamins	1.00	X
+thiamine HCl	-	-
+resazurin sodium salt	0.001	g/L
+sodium acetate 	0.84	g/L
+sodium formate	13.60	g/L
+MOPS_2M_pH7	0.10	X
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+Day_AminoAcid20	1.00E+00	X
+		
+Media	McAA_formate_No_Riboflavin	
+Description	Mc_formate with defined amino acid mix and no riboflavin in vit mix	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+NaHCO3	2.50	g/L
+NaCl	10.50	g/L
+NH4Cl	1.00	g/L
+Mc_general_salts_SO4free	1.00	X
+K2HPO4	0.14	g/L
+FeCl2 4H2O	0.0095	g/L
+Mc_trace_minerals_SO4free	1.00	X
+Mc_vitamins	1.00	X
+riboflavin	-	-
+resazurin sodium salt	0.001	g/L
+sodium acetate 	0.84	g/L
+sodium formate	13.60	g/L
+MOPS_2M_pH7	0.10	X
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+Day_AminoAcid20	1.00E+00	X
+		
+Media	McAA_formate_No_NicotinicAcid	
+Description	Mc_formate with defined amino acid mix and no nicotinic acid in vit mix	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+NaHCO3	2.50	g/L
+NaCl	10.50	g/L
+NH4Cl	1.00	g/L
+Mc_general_salts_SO4free	1.00	X
+K2HPO4	0.14	g/L
+FeCl2 4H2O	0.0095	g/L
+Mc_trace_minerals_SO4free	1.00	X
+Mc_vitamins	1.00	X
+nicotinic acid	-	-
+resazurin sodium salt	0.001	g/L
+sodium acetate 	0.84	g/L
+sodium formate	13.60	g/L
+MOPS_2M_pH7	0.10	X
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+Day_AminoAcid20	1.00E+00	X
+		
+Media	McAA_formate_No_CaPantothenate	
+Description	Mc_formate with defined amino acid mix and no pantothenate in vit mix	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+NaHCO3	2.50	g/L
+NaCl	10.50	g/L
+NH4Cl	1.00	g/L
+Mc_general_salts_SO4free	1.00	X
+K2HPO4	0.14	g/L
+FeCl2 4H2O	0.0095	g/L
+Mc_trace_minerals_SO4free	1.00	X
+Mc_vitamins	1.00	X
+calcium D,L-pantothenate	-	-
+resazurin sodium salt	0.001	g/L
+sodium acetate 	0.84	g/L
+sodium formate	13.60	g/L
+MOPS_2M_pH7	0.10	X
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+Day_AminoAcid20	1.00E+00	X
+		
+Media	McAA_formate_No_B12	
+Description	Mc_formate with defined amino acid mix and no B12 in vit mix	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+NaHCO3	2.50	g/L
+NaCl	10.50	g/L
+NH4Cl	1.00	g/L
+Mc_general_salts_SO4free	1.00	X
+K2HPO4	0.14	g/L
+FeCl2 4H2O	0.0095	g/L
+Mc_trace_minerals_SO4free	1.00	X
+Mc_vitamins	1.00	X
+vitamin B12	-	-
+resazurin sodium salt	0.001	g/L
+sodium acetate 	0.84	g/L
+sodium formate	13.60	g/L
+MOPS_2M_pH7	0.10	X
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+Day_AminoAcid20	1.00E+00	X
+		
+Media	McAA_formate_No_pABA	
+Description	Mc_formate with defined amino acid mix and no p-aminobenzoic acid in vit mix	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+NaHCO3	2.50	g/L
+NaCl	10.50	g/L
+NH4Cl	1.00	g/L
+Mc_general_salts_SO4free	1.00	X
+K2HPO4	0.14	g/L
+FeCl2 4H2O	0.0095	g/L
+Mc_trace_minerals_SO4free	1.00	X
+Mc_vitamins	1.00	X
+p-aminobenzoic acid	-	-
+resazurin sodium salt	0.001	g/L
+sodium acetate 	0.84	g/L
+sodium formate	13.60	g/L
+MOPS_2M_pH7	0.10	X
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+Day_AminoAcid20	1.00E+00	X
+		
+Media	McAA_formate_No_lipolicAcid	
+Description	Mc_formate with defined amino acid mix and no lipolic acid in vit mix	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+NaHCO3	2.50	g/L
+NaCl	10.50	g/L
+NH4Cl	1.00	g/L
+Mc_general_salts_SO4free	1.00	X
+K2HPO4	0.14	g/L
+FeCl2 4H2O	0.0095	g/L
+Mc_trace_minerals_SO4free	1.00	X
+Mc_vitamins	1.00	X
+lipoic acid	-	-
+resazurin sodium salt	0.001	g/L
+sodium acetate 	0.84	g/L
+sodium formate	13.60	g/L
+MOPS_2M_pH7	0.10	X
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+Day_AminoAcid20	1.00E+00	X
+		
+Media	McCas_H2_Fe_Free	
+Description	Used for growing Methanococcus maripaludis with hydrogen as the electron donor, SO4 free, no FeCl2	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Mc_general_salts_SO4free	1.00	X
+NaCl	22.00	g/L
+NaHCO3	2.50	g/L
+NH4Cl	1.00	g/L
+K2HPO4	0.14	g/L
+Mc_trace_minerals_SO4free	1.00	X
+resazurin sodium salt	0.001	g/L
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+CASamino acids	2.00	g/L
+Mc_vitamins	1.00	X
+sodium acetate 	0.84	g/L
+MOPS_2M_pH7	0.10	X
+		
+Media	McCas_formate_Fe_Free	
+Description	McCas_formate with sulfate removed, no FeCl2	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+NaHCO3	2.50	g/L
+NaCl	10.50	g/L
+Mc_general_salts_SO4free	1.00	X
+NH4Cl	1.00	g/L
+K2HPO4	0.14	g/L
+Mc_trace_minerals_SO4free	1.00	X
+Mc_vitamins	1.00	X
+resazurin sodium salt	0.001	g/L
+sodium acetate 	0.84	g/L
+sodium formate	13.60	g/L
+MOPS_2M_pH7	0.10	X
+CASamino acids	2.00	g/L
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+		
+Media	Mc_formate	
+Description	McCas_formate without sulfate or casamino acids 	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+NaHCO3	2.50	g/L
+NaCl	10.50	g/L
+Mc_general_salts_SO4free	1.00	X
+NH4Cl	1.00	g/L
+K2HPO4	0.14	g/L
+FeCl2 4H2O	0.0095	g/L
+Mc_trace_minerals_SO4free	1.00	X
+Mc_vitamins	1.00	X
+resazurin sodium salt	0.001	g/L
+sodium acetate 	0.84	g/L
+sodium formate	13.60	g/L
+MOPS_2M_pH7	0.10	X
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+		
+Media	McCas_H2_No_Na2S	
+Description	Used for growing Methanococcus maripaludis with hydrogen as the electron donor, SO4 free, no sulfide	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+Mc_general_salts_SO4free	1.00	X
+NaCl	22.00	g/L
+NaHCO3	2.50	g/L
+NH4Cl	1.00	g/L
+K2HPO4	0.14	g/L
+FeCl2 4H2O	0.0095	g/L
+Mc_trace_minerals_SO4free	1.00	X
+resazurin sodium salt	0.001	g/L
+dithiothreitol	0.50	g/L
+CASamino acids	2.00	g/L
+Mc_vitamins	1.00	X
+sodium acetate 	0.84	g/L
+MOPS_2M_pH7	0.10	X
+		
+Media	7H9	
+Description	Complete media for Mycobacterium tuberculosis (H37Rv)	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+ammonium sulfate	5.00E-01	g/L
+L-glutamic acid	5.00E-01	g/L
+sodium citrate	1.00E-01	g/L
+pyridoxine	1.00E-03	g/L
+biotin	5.00E-04	g/L
+disodium phosphate	2.50E+00	g/L
+monopotassium phosphate	1.00E+00	g/L
+ferric ammonium citrate	4.00E-02	g/L
+magnesium sulfate	5.00E-02	g/L
+calcium chloride	5.00E-04	g/L
+zinc sulfate	1.00E-03	g/L
+copper sulfate	1.00E-03	g/L
+bovine serum albumin	5.00E+00	g/L
+dextrose	2.00E+00	g/L
+sodium chloride	4.25E+00	g/L
+tween-80	5.00E-01	vol%
+		
+Media	McAA_formate	
+Description	formate McCas with amino acid mix instead of casamino acids 	
+Minimal	FALSE	
+Controlled vocabulary	Concentration	Units
+NaHCO3	2.50	g/L
+NaCl	10.50	g/L
+NH4Cl	1.00	g/L
+Mc_general_salts_SO4free	1.00	X
+K2HPO4	0.14	g/L
+FeCl2 4H2O	0.0095	g/L
+Mc_trace_minerals_SO4free	1.00	X
+Mc_vitamins	1.00	X
+resazurin sodium salt	0.001	g/L
+sodium acetate 	0.84	g/L
+sodium formate	13.60	g/L
+MOPS_2M_pH7	0.10	X
+dithiothreitol	0.50	g/L
+Sodium sulfide nonahydrate	1.00E-03	g/L
+Day_AminoAcid20	1.00E+00	X
