@@ -172,11 +172,13 @@ unless ($qtype eq "nucleotide") {
   my @links = (a({ -href => "http://papers.genomics.lbl.gov/cgi-bin/litSearch.cgi?query=>$def%0A$seq",
                    -title => "Find papers about this protein or its homologs" },
                  "PaperBLAST"),
+               a( { -href => "https://fast.genomics.lbl.gov/cgi/findHomologs.cgi?seqDesc=$def&seq=$seq",
+                  -title => "Quickly find homologs in representative genomes" },
+                    i("fast.genomics")),
                "the " .
                a( { -href => "https://iseq.lbl.gov/genomes/seqsearch?sequence=>$def%0A$seq" },
                   "ENIGMA genome browser"),
-               a( { -href => "http://www.microbesonline.org/cgi-bin/seqsearch.cgi?qtype=protein&query=$seq" },
-                  "MicrobesOnline"));
+              );
   push @links, "the " . a({ -href => "cmpbrowser.cgi?anchorOrg=$orgId&anchorLoci=$gene->{locusId}" },
                  "comparative fitness browser")
     if $orgId && $gene;
