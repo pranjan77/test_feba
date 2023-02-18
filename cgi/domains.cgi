@@ -567,7 +567,11 @@ print
     # %0A encodes "\n" so that it looks like fasta input.
     a({-href => "http://pubseed.theseed.org/FIG/seedviewer.cgi?page=FigFamViewer&fasta_seq=>${sys}%0A$seq"},
       "FIGfam search")),
-  p("Find homologs in the",
+  p("Find homologs in",
+    a({-href => "https://fast.genomics.lbl.gov/cgi/findHomologs.cgi?seqDesc=$sys&seq=$seq",
+       -title => "Quickly find homologs in representative genomes"},
+      i("fast.genomics")),
+    "or the",
     a({-href => "https://iseq.lbl.gov/genomes/seqsearch?sequence=>${sys}%0A$seq"},
       "ENIGMA genome browser"));
   # Formerly used
@@ -589,6 +593,12 @@ if (defined $xrefU && exists $xrefU->{xrefId}) {
           a({-href => "https://www.uniprot.org/uniprotkb/$uniprotId/entry"}, "UniProt"),
           "or",
           a({-href => "https://www.ebi.ac.uk/interpro/protein/$uniprotId"}, "InterPro"));
+} else {
+  print p("Find the",
+          a({-href => "https://fast.genomics.lbl.gov/cgi/bestHitUniprot.cgi?query=>${sys}%0A$seq",
+             -title => "See UniProt's annotation, the predicted structure, and protein families from InterPro"},
+            "best match"),
+          "in UniProt");
 }
 
 print
