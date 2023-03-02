@@ -218,17 +218,9 @@ if (@$hits == 0) {
 
     my @trows = ( Tr({-valign => "top", -align => 'center'},
                      th([ 'Locus', 'Name', 'Description', 'Strand',
-                          a({title=>'Distance between the end of previous gene and beginning of current gene', color=>"#011B47"},'Distance (nt)'),
                           'Phenotype', ])));
 
-    my $prevrow;
     foreach my $row (@genes) {
-      my $diff = "";
-      my $difftitle = "";
-      if (defined $prevrow) {
-        $diff = $row->{begin} - $prevrow->{end};
-        $difftitle = "From $prevrow->{end} to $row->{begin}";
-      }
       my $label = $row->{gene} || $row->{sysName} || ""; #|| $row->{locusId};
       my $label2 =  $row->{gene} || $row->{sysName} || $row->{locusId};
       my $label3 = $label2;
@@ -242,10 +234,8 @@ if (@$hits == 0) {
                            a({href => "geneOverview.cgi?orgId=$orgId&gene=$row->{locusId}"},$row->{gene} || $row->{sysName}), 
                            Utils::gene_link($dbh, $row, "desc", "domains.cgi"),
                            $row->{strand},
-                           a({title=>$difftitle},$diff), # $row->{begin},
                            a({href => "myFitShow.cgi?orgId=$orgId&gene=$row->{locusId}", title=>$tip},$phen),
                          ]));
-      $prevrow = $row;
     }
     print table({cellspacing => 0, cellpadding => 3}, @trows);
 
