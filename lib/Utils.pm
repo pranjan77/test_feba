@@ -17,7 +17,7 @@ use warnings;
 use DBI;
 use Time::HiRes;
 use Carp;
-use List::Util qw(sum);
+use List::Util qw(sum min max);
 use HTML::Entities qw{encode_entities};
 use Scalar::Util qw{looks_like_number};
 
@@ -836,6 +836,30 @@ sub geneArrows($$$$$) {
         x1="$xScale" y1="55" x2="$scale" y2="55" style="stroke:black;stroke-width:2" />
     <text x="$xScaleMid" y="50" font-family="Verdana" font-size="10" fill="black" text-anchor="middle">500 nt</text>
     ];
+
+    # Hover text between each pair of genes with their separation.
+    # Render this first (before arrows & gene ids) so it doesn't show up if you hover
+    # on a gene ids.
+    for (my $i = 1; $i < scalar(@$genes); $i++) {
+      my $prev = $genes->[$i - 1];
+      my $gene = $genes->[$i];
+      my $x1 = ($prev->{end} - $begin) * $factor;
+      my $x2 = ($gene->{begin} - $begin) * $factor;
+      ($x1, $x2) = ($x2, $x1) unless $x1 < $x2;
+      next unless $x1 >= 0 && $x2 <= $width;
+      $x1 = max(0, $x1 - 4);
+      $x2 = min($width, $x2 + 4);
+      my $dx = $x2 - $x1;
+      my $label1 = $prev->{gene} || $prev->{sysName} || $prev->{locusId};
+      my $label2 = $gene->{gene} || $gene->{sysName} || $gene->{locusId};
+      my $distText = "$label1 and $label2";
+      if ($prev->{end} >= $gene->{begin}) {
+        $distText .= " overlap by " . ($prev->{end} - $gene->{begin} + 1) . " nucleotides";
+      } else {
+        $distText .= " are separated by " . ($gene->{begin} - $prev->{end} - 1 ) . " nucleotides";
+      }
+      $svg .= qq{<rect x="$x1" y="0" width=$dx height=100 stroke="none" fill-opacity=0><title>$distText</title></rect>};
+    }
 
     my $pos = 0; # which of 3 rows to put it in
     foreach my $row (@$genes) {
