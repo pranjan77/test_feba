@@ -2871,7 +2871,18 @@ Controlled vocabulary	Concentration	Units
 Potassium phosphate dibasic trihydrate	9.10	mM
 MOPS	20.00	mM
 Sodium Chloride	4.30	mM
-Ammonium chloride	9.30	mM
+Magnesium Sulfate Heptahydrate	0.41	mM
+Calcium chloride dihydrate	0.07	mM
+MME Trace Minerals	1	X
+		
+Media	MME_noCarbon	
+Description	Defined media without C from PNNL with MOPS	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Potassium phosphate dibasic trihydrate	9.10	mM
+MOPS	20.00	mM
+Sodium Chloride	4.30	mM
+Ammonium chloride	10.00	mM
 Magnesium Sulfate Heptahydrate	0.41	mM
 Calcium chloride dihydrate	0.07	mM
 MME Trace Minerals	1	X
@@ -2883,7 +2894,6 @@ Controlled vocabulary	Concentration	Units
 Potassium phosphate dibasic trihydrate	9.10	mM
 TAPS sodium salt	20	mM
 Sodium Chloride	4.30	mM
-Ammonium chloride	9.30	mM
 Magnesium Sulfate Heptahydrate	0.41	mM
 Calcium chloride dihydrate	0.07	mM
 MME Trace Minerals	1	X
@@ -3794,3 +3804,27 @@ MOPS_2M_pH7	0.10	X
 dithiothreitol	0.50	g/L
 Sodium sulfide nonahydrate	1.00E-03	g/L
 Day_AminoAcid20	1.00E+00	X
+		
+Media	RCH2_defined_NAG	
+Description	Defined minimal media for soil and groundwater bacteria with NAG	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+N-Acetyl-D-Glucosamine	20	mM
+PIPES sesquisodium salt	30	mM
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
+		
+Media	RCH2_defined_Tween	
+Description	Defined minimal media for soil and groundwater bacteria with Tween	
+Minimal	TRUE	
+Controlled vocabulary	Concentration	Units
+Ammonium chloride	0.25	g/L
+Potassium Chloride	0.1	g/L
+Sodium phosphate monobasic monohydrate	0.6	g/L
+Tween 20	0.5	vol%
+PIPES sesquisodium salt	30	mM
+Wolfe's mineral mix	1	X
+Wolfe's vitamin mix	1	X
