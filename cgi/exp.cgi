@@ -21,6 +21,7 @@ use CGI qw(:standard Vars -nosticky);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use DBI;
 use IO::Handle; # for autoflush
+use HTML::Entities;
 sub CompoundToHTML($$$$);
 sub MediaComponentHTML($$);
 
@@ -106,7 +107,9 @@ if ($show eq "") {
                                 \%mediaOrMix );
     }
     @cond = grep { $_ ne "" } @cond;
-    my $media = $exp->{media};
+    my $media = a({-href => "exps.cgi?orgId=$orgId&media=" . uri_escape($exp->{media}),
+                   -style => "text-decoration:none;"},
+                  encode_entities($exp->{media}));
     $media .= " ($exp->{mediaStrength}x)" if $exp->{mediaStrength} != 1;
     $media .= " + " . join(" + ", @cond) if @cond > 0;
     $media .= ", pH=$exp->{pH}" if $exp->{pH} ne "";
@@ -117,11 +120,20 @@ if ($show eq "") {
     push @culture, "shaken=$exp->{shaking}" if $exp->{shaking} ne "";
     push @culture, "($exp->{liquid})" if $exp->{liquid} ne "" && lc($exp->{liquid}) ne "liquid";
 
-    my @pieces = ("Media: $media", join(", ",@culture));
+    my $group = $exp->{expGroup};
+    my @pieces = ("Group: "
+                  . a({-href => "exps.cgi?orgId=$orgId&expGroup=" . uri_escape($group),
+                       -style => "text-decoration: none;"},
+                      encode_entities($group)),
+                  "Media: $media",
+                  join(", ",@culture));
     push @pieces, sprintf("Growth: about %.1f ", $exp->{nGenerations})
       . a({-href => "help.cgi#growth"}, "generations")
         if $exp->{nGenerations};
-    push @pieces, "By: $exp->{person} on $exp->{dateStarted}";
+    push @pieces, "By: $exp->{person} on "
+      . a({-href => "exps.cgi?orgId=$orgId&date=" . uri_escape($exp->{dateStarted}),
+           -style => "text-decoration: none;"},
+          encode_entities($exp->{dateStarted}));
     if ($exp->{pubId}) {
       my $pub = $dbh->selectrow_hashref("SELECT * from Publication WHERE pubId = ?",
                                         {}, $exp->{pubId});

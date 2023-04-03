@@ -10,9 +10,11 @@
 #
 # Key parameters: orgId and query, for which organism and to look up experiments
 #	At least one must be meaningful (present and not empty)
-# OR, specify expGroup AND condition1. In this set up, condition1 may be empty,
-#	but it must still be specified (and is used to restrict the results).
-# OR, specify orgId AND expGroup without condition1.
+# OR, orgId and expGroup
+# OR, orgId and expGroup AND condition1 (condition1 may be empty, but is still used to restrict the results)
+# OR, orgId and date
+# OR, orgId and media
+# If orgId only is specified, forwards to the organism page
 
 use strict;
 use CGI qw(:standard Vars);
@@ -37,12 +39,15 @@ $expSpec =~s/[\"\n\r\;\\]//g; # ' is allowed, handled in matching_exps
 
 my $expGroup = $cgi->param('expGroup');
 my $condition1 = $cgi->param('condition1');
+my $dateSpec = $cgi->param('date');
+my $mediaSpec = $cgi->param('media');
 
 my $dbh = Utils::get_dbh();
 
 # Redirect to org.cgi if displaying all experiments from one organism,
 # or to orgAll.cgi if displaying all experiments
-if ($orgId ne "" && !defined $expGroup && ($cgi->param("All experiments") || $expSpec eq "")) {
+if ($orgId ne "" && !defined $expGroup && !defined $dateSpec && !defined $mediaSpec
+    && ($cgi->param("All experiments") || $expSpec eq "")) {
     print redirect(-url=>"org.cgi?orgId=$orgId");
     exit(0);
 } elsif ($orgId eq "" && !$expSpec && !$expGroup && !$condition1) {
@@ -55,6 +60,8 @@ if ($specShow eq "") {
     $specShow = defined $condition1 ? join(" ", encode_entities($expGroup), encode_entities($condition1))
       : encode_entities($expGroup);
     $specShow = "" if !defined $specShow;
+    $specShow = "date " . encode_entities($dateSpec) if defined $dateSpec && $dateSpec ne "";
+    $specShow = "media " . encode_entities($mediaSpec) if defined $mediaSpec && $mediaSpec ne "";
 }
 my $start = Utils::start_page("Experiments for $specShow");
 $expSpec = "" if $cgi->param("All experiments");
@@ -73,7 +80,15 @@ if (defined $expGroup && !defined $condition1){
 				    $expGroup, $condition1);
     Utils::fail($cgi, "No experiments for specified group and condition") if scalar(@$exps) == 0;
 } elsif ($orgId eq "" && defined $expSpec) {
-    $exps = Utils::matching_exps($dbh, "", $expSpec);
+  $exps = Utils::matching_exps($dbh, "", $expSpec);
+} elsif ($orgId ne "" && defined $dateSpec && $dateSpec ne "") {
+  $exps = $dbh->selectall_arrayref("SELECT * from Experiment WHERE orgId = ? AND dateStarted = ?"
+                                   . " ORDER BY expGroup,condition_1,expDesc",
+                                   { Slice => {} }, $orgId, $dateSpec);
+} elsif ($orgId ne "" && defined $mediaSpec && $mediaSpec ne "") {
+  $exps = $dbh->selectall_arrayref("SELECT * from Experiment WHERE orgId = ? AND media = ?"
+                                   . " ORDER BY expGroup,condition_1,expDesc",
+                                   { Slice => {} }, $orgId, $mediaSpec);
 } else {
     $exps = Utils::matching_exps($dbh, $orgId, $expSpec);
 }
