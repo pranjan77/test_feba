@@ -108,7 +108,7 @@ my $test = undef; # check for files, but do no work
         &maybeRun("zcat $pathSpec | $Bin/MultiCodes.pl $extraopt -minQuality 0 -index $index -out $outdir/$index");
       }
     }
-    &maybeRun("$Bin/combineBarSeq.pl $outdir/test $pool " . join(" ", @codesFiles));
+    &maybeRun("$Bin/combineBarSeq.pl -all $outdir/test $pool " . join(" ", @codesFiles));
     unless (defined $test) {
 	# Write the metadata file
 	open(EXPS, ">", "$outdir/exps_table") || die "Cannot write to $outdir/exps_table";
