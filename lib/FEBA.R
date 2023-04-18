@@ -472,7 +472,8 @@ FEBA_Fit = function(expsUsed, all, genes,
         # Version 1.2: added fit$polar
         # Version 1.2.2: per-day clustering plots
         # Version 1.3.1: improvements to the table of genes with high fitness
-	fit$version = "1.3.1";
+        # Version 1.3.2: new quality metrics (in fit$q) and report strain coverage
+	fit$version = "1.3.2";
 
 	q_col = words("name short t0set");
 	if(!is.null(expsUsed$num)) q_col = c(q_col, "num");
@@ -480,8 +481,9 @@ FEBA_Fit = function(expsUsed, all, genes,
         qnames = as.character(fit$q$name);
 	if(!all(qnames == names(fit$lrn))) stop("Mismatched names in fit");
         if(debug) cat("Running FitReadMetrics() and FitQuality()\n");
+        enoughT0 = rowMeans(t0tot) >= minT0Strain;
         fit$q = cbind(fit$q,
-			FitReadMetrics(all, qnames, has_gene2),
+			FitReadMetrics(all, qnames, strainsUsed, enoughT0),
                         FitQuality(fit, genes, pred));
 	if(debug) cat("Running FEBA_Exp_status\n")
 	status = FEBA_Exp_Status(fit$q, ...);
@@ -493,6 +495,24 @@ FEBA_Fit = function(expsUsed, all, genes,
 	    if(sum(status==s) > 0) cat(s, ":", fit$q$name[status==s],"\n");
 	}
 
+        # Report strain coverage
+        if (sum(fit$q$short == "Time0") > 0) {
+          cat("Presence of used genic strains in individual Time0 samples:\n");
+          print(quantile(fit$q$fUsedStrainsSeen[fit$q$short == "Time0"]), digits=3);
+        }
+        if (sum(fit$q$u) > 0) {
+          cat("Presence of used genic strains in successful experimental samples:\n");
+          print(quantile(fit$q$fUsedStrainsSeen[fit$q$u]), digits=3);
+        }
+        if (sum(fit$q$short == "Time0") > 0) {
+          cat("Presence of non-genic strains with enough t0 reads in individual Time0 samples:\n");
+          print(quantile(fit$q$fNGSeen[fit$q$short == "Time0"]), digits=3);
+        }
+        if (sum(fit$q$u) > 0) {
+          cat("Presence of non-genic strains with enough t0 reads in successful experimental samples:\n");
+          print(quantile(fit$q$fNGSeen[fit$q$u]), digits=3);
+        }
+
 	fit$genesUsed = genesUsed;
 	fit$strainsUsed = strainsUsed;
 	fit$genesUsed12 = genesUsed12;
@@ -501,7 +521,7 @@ FEBA_Fit = function(expsUsed, all, genes,
 	fit$t0_gN = t0_gN;
 
 	# These include all strains, not just those in genes
-	fit$strains = cbind(all[,metacol], used=fit$strainsUsed, enoughT0=rowMeans(t0tot) >= minT0Strain);
+	fit$strains = cbind(all[,metacol], used=fit$strainsUsed, enoughT0=enoughT0);
 	fit$strain_lr = data.frame(lapply(results, with, strain_fit));
 	fit$strain_se = data.frame(lapply(results, with, strain_se));
 
@@ -933,10 +953,14 @@ cor12 = function(pairs, genes, data, use="p", method="pearson", names=c("Gene1",
 
 # Compute read metrics -- nMapped, nPastEnd, nGenic, for the given data columns
 # The final argument is used to define genic
-FitReadMetrics = function(all, cols, in_gene) {
-	data.frame(nMapped  = colSums(all[, cols, drop=F]),
-                   nPastEnd = colSums(all[all$scaffold=="pastEnd", cols, drop=F]),
-                   nGenic = colSums(all[in_gene, cols, drop=F]));
+FitReadMetrics = function(all, cols, strainsUsed, enoughT0) {
+  inGene = !is.na(all$f);
+  has_gene2 = inGene & all$f >= 0.1 & all$f <= 0.9;
+  data.frame(nMapped  = colSums(all[, cols, drop=F]),
+             nPastEnd = colSums(all[all$scaffold=="pastEnd", cols, drop=F]),
+             nGenic = colSums(all[has_gene2, cols, drop=F]),
+             fUsedStrainsSeen = colMeans(all[strainsUsed, cols, drop=F] > 0),
+             fNGSeen = colMeans(all[enoughT0 & !inGene & all$scaffold != "pastEnd", cols, drop=F] > 0));
 }
 
 # Compute the quality metrics from fitness values, fitness values of halves of genes, or
