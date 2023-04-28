@@ -7,7 +7,7 @@ sub commify($);
 die <<END
 Usage: bpFilter.pl pool1.withgenes pool2.withgenes bcpairs > subset
    Assumes that bcpairs is tab-delimited with the fields
-   rcbarcode2 barcode1 n
+   rcbarcode2 barcode1 n. If name ends with .gz it is gunzipped.
 END
   unless @ARGV==3;
 
@@ -22,11 +22,19 @@ my $nReadsTot = 0;
 my $nPairsMatch = 0;
 my $nReadsMatch = 0;
 
-open(my $fh, "<", $pairFile) || die "Cannot read $pairFile\n";
+my $gz = $pairFile =~ m/[.]gz$/;
+my $fh;
+if ($gz) {
+  open($fh, "zcat $pairFile |") || die "Cannot zcat $pairFile\n";
+  $gz = 1;
+} else {
+  open($fh, "<", $pairFile) || die "Cannot read $pairFile\n";
+}
 print join("\t", qw{barcode1 scaffold1 strand1 pos1 locusId1 f1 barcode2 scaffold2 strand2 pos2 locusId2 f2 n})."\n";
 while (my $line = <$fh>) {
   chomp $line;
   my ($rbc2, $bc1, $nReads) = split /\t/, $line;
+  die "Invalid input: $line\n" unless defined $nReads && $nReads ne "";
   next if $nReads eq "n";
   die "Invalid reads $nReads" unless $nReads =~ m/^\d+$/;
   $nPairsTot++;
