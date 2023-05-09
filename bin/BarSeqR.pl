@@ -334,12 +334,21 @@ END
         # first file for this set
         my @index = @fields[($nmeta..(scalar(@fields)-1))];
         $setIndex{$set} = \@index;
-        # Warn about any Indexes in @exps for this set that are not present
+        # In the experiment metadata, replace S0001 with S1 if necessary.
+        # Warn about any Indexes in @exps for this set that are not present.
         my %index = map { $_ => 1 } @index;
         foreach my $exp (@{ $setExps{$set} }) {
           die unless $exp->{SetName} eq $set;
-          print STDERR "Warning! No field for set $set index $exp->{Index} in $indir/$file.poolcount\n"
-            unless exists $index{ $exp->{Index} };
+          my $index = $exp->{Index};
+          if (!exists $index{$index}) {
+            my $index2 = $index;
+            $index2 =~ s/([a-zA-Z])0+([0-9]+)$/$1$2/;
+            if (exists $index{$index2}) {
+              $exp->{Index} = $index2;
+            } else {
+              print STDERR "Warning! No field for set $set index $exp->{Index} in $indir/$file.poolcount\n";
+            }
+          }
         }
       } else {
         # additional file for this set
