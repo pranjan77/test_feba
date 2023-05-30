@@ -283,7 +283,7 @@ getenv_numeric_or_default = function(envname, default) {
 
 FEBA_Fit = function(expsUsed, all, genes,
 	   		       genesUsed=NULL, strainsUsed=NULL, genesUsed12=NULL,
-	   		       minT0Strain=3, minT0Gene=30,
+	   		       minT0Strain=3, minT0Gene=getenv_numeric_or_default("FEBA_MIN_GENE_READS", 30),
 			       minT0GeneSide=minT0Gene/2,
 			       minGenesPerScaffold=10,
 			       pred=CrudeOp(genes),
