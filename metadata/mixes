@@ -747,7 +747,7 @@ Adenosine	2.6	uM
 2'-Deoxyuridine	2.6	uM
 		
 Media	Hans Metal Mix	
-Description	Mixture of FRC relevant metals	
+Description	Mixture of FRC relevant metals; NOT recommended for further use as it does not match Hans' experiments	
 X	100	
 Controlled vocabulary	Concentration	Units
 Cobalt chloride hexahydrate	0.79	g/L
@@ -1290,3 +1290,91 @@ L-Threonine	0.5	mM
 L-Tryptophan	0.5	mM
 L-tyrosine	0.5	mM
 L-Valine	0.5	mM
+		
+Media	CitrateBuffer_1	
+Description	pH buffer 2.7	
+X	1	
+Controlled vocabulary	Concentration	Units
+Citric Acid	18	mM
+Trisodium citrate dihydrate	2	mM
+		
+Media	CitrateBuffer_2	
+Description	pH buffer 2.9	
+X	1	
+Controlled vocabulary	Concentration	Units
+Citric Acid	17	mM
+Trisodium citrate dihydrate	3	mM
+		
+Media	CitrateBuffer_3	
+Description	pH buffer 3.4	
+X	1	
+Controlled vocabulary	Concentration	Units
+Citric Acid	15	mM
+Trisodium citrate dihydrate	5	mM
+		
+Media	CitrateBuffer_4	
+Description	pH buffer 3.7	
+X	1	
+Controlled vocabulary	Concentration	Units
+Citric Acid	13	mM
+Trisodium citrate dihydrate	7	mM
+		
+Media	CitrateBuffer_5	
+Description	pH buffer 4.1	
+X	1	
+Controlled vocabulary	Concentration	Units
+Citric Acid	12	mM
+Trisodium citrate dihydrate	8	mM
+		
+Media	CitrateBuffer_6	
+Description	pH buffer 4.3	
+X	1	
+Controlled vocabulary	Concentration	Units
+Citric Acid	10	mM
+Trisodium citrate dihydrate	10	mM
+		
+Media	CitrateBuffer_7	
+Description	pH buffer 4.6	
+Controlled vocabulary	Concentration	Units
+X	1	
+Citric Acid	8	mM
+Trisodium citrate dihydrate	12	mM
+		
+Media	CitrateBuffer_8	
+Description	pH buffer 4.9	
+Controlled vocabulary	Concentration	Units
+X	1	
+Citric Acid	7	mM
+Trisodium citrate dihydrate	13	mM
+		
+Media	CitrateBuffer_9	
+Description	pH buffer 5.3	
+X	1	
+Controlled vocabulary	Concentration	Units
+Citric Acid	5	mM
+Trisodium citrate dihydrate	15	mM
+		
+Media	CitrateBuffer_10	
+Description	pH buffer 5.7	
+X	1	
+Controlled vocabulary	Concentration	Units
+Citric Acid	3	mM
+Trisodium citrate dihydrate	17	mM
+		
+Media	CitrateBuffer_11	
+Description	pH buffer 6.4	
+X	1	
+Controlled vocabulary	Concentration	Units
+Citric Acid	2	mM
+Trisodium citrate dihydrate	18	mM
+		
+Media	Metal_ion_mix_sitestressplate	
+Description	Mixture of FRC relevant metals	
+X	1	
+Controlled vocabulary	Concentration	Units
+Cobalt chloride hexahydrate	0.008	mM
+Cadmium chloride hemipentahydrate	0.002	mM
+Nickel (II) chloride hexahydrate	0.053	mM
+Aluminum chloride hydrate	1.25	mM
+Manganese (II) chloride tetrahydrate	1	mM
+Zinc chloride	0.01	mM
