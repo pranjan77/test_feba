@@ -42,6 +42,7 @@ my $orginfo = Utils::orginfo($dbh);
 die "Illegal orgId parameter $orgSpec" if $orgSpec ne "" & !exists $orginfo->{$orgSpec};
 
 my $orgTitle = $cgi->param('orgId') ? "in $orginfo->{$orgSpec}{genome}" : "";
+$geneSpec = "" if !defined $geneSpec;
 $geneSpec =~ s/[ \t]*$//;
 $geneSpec =~ s/^[ \t]*//;
 my $start = Utils::start_page("Genes matching " . encode_entities($geneSpec) . " " . $orgTitle);
@@ -481,7 +482,7 @@ sub end($) {
     }
     my $URL = "http://papers.genomics.lbl.gov/cgi-bin/genomeSearch.cgi?gdb=FitnessBrowser&gid=$orgSpec&orgId=$orgSpec&word=$word"
       . "&query=" . uri_escape($query);
-    print p(qq{Or search for '$query' in $orginfo->{$orgSpec}{genome} using},
+    print p(qq{Or search for '} . encode_entities($query) . qq{' in $orginfo->{$orgSpec}{genome} using},
             a({-href => $URL}, "Curated BLAST"));
   }
   $dbh->disconnect();
