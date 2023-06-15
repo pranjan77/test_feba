@@ -54,7 +54,7 @@ print "\n<PRE>\nInput:\n";
 system("cat $tmpPre.faa");
 print "\n</PRE>\n";
 
-foreach my $suffix qw{faa plp R tsv svg} {
+foreach my $suffix (qw{faa plp R tsv svg}) {
   unlink("$tmpPre.$suffix");
 }
 
