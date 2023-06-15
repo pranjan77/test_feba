@@ -17,6 +17,7 @@ use strict;
     my $last = undef; # the preceding gene line, to get locus_tag from
     while(<STDIN>) {
 	chomp;
+        last if m/^##FASTA/;
 	next if m/^#[#!]/;
 	my ($scaffold, $source, $type, $begin, $end, $score, $phase, undef, $attributes) = split /\t/, $_;
 	if ($type eq "gene") {
