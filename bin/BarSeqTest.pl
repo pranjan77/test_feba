@@ -73,7 +73,11 @@ my $test = undef; # check for files, but do no work
       chomp $file;
       foreach my $index (@indexes) {
         my $index2 = $index;
-        $index2 =~ s/IT0+/Index/;
+        if ($index =~ m/^IT0+/) {
+          $index2 =~ s/IT0+/Index/;
+        } elsif ($index =~ m/^S/) {
+          $index2 =~ s/^S//;
+        }
         # Allow index to be at the end of the subdirectory name
         if ($file =~ m/^${index}[_.]/ || $file =~ m!_${index}[_./]!
             || $file =~ m![/-]${index}[_.]!
