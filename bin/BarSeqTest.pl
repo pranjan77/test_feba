@@ -65,28 +65,54 @@ my $test = undef; # check for files, but do no work
     my @time0s = grep { $_ eq "Time0" } @desc;
     die "Must have both Time0 and non Time0 samples" if scalar(@time0s) < 1 || scalar(@time0s) == scalar(@desc);
 
+    my %index;
+    my %numToIndex;
+    foreach my $index (@indexes) {
+      $index{$index} = 1;
+      if ($index =~ m/^[A-Z]+0*(\d+)$/) {
+        $numToIndex{$1} = $index;
+      }
+    }
+    die "Non-unique indexes\n" unless scalar(keys %index) == scalar(@indexes);
+    if (scalar(@indexes) != scalar(keys %numToIndex)) {
+      print STDERR "Warning: cannot identify unique sample numbers for each index; not matching by number\n";
+      %numToIndex = ();
+    }
+
     # find the fastq files
     my %fastqFiles = (); # index => list of matching files within $fastqdir
     # -H means follow symbolic link if it is the argument
     my @files = `find -H $fastqdir -name '*.fastq.gz'`;
     foreach my $file (@files) {
       chomp $file;
-      foreach my $index (@indexes) {
-        my $index2 = $index;
-        if ($index =~ m/^IT0+/) {
-          $index2 =~ s/IT0+/Index/;
-        } elsif ($index =~ m/^S/) {
-          $index2 =~ s/^S//;
-        }
-        # Allow index to be at the end of the subdirectory name
-        if ($file =~ m/^${index}[_.]/ || $file =~ m!_${index}[_./]!
-            || $file =~ m![/-]${index}[_.]!
-            || $file =~ m/^${index2}_/ || $file =~ m/_${index2}_/
-            || $file =~ m!/${index2}_!) {
-          push @{ $fastqFiles{$index} }, $file;
-          print STDERR "fastq for index $index: $file\n";
-          last;
-        }
+      my $name = $file;
+      $name =~ s/[.]fastq[.]gz$//;
+      my ($sampleNum, $index);
+      if ($name =~ m/_(\d+)_S\d+_L\d+_/
+          || $name =~ m/_Index(\d+)_S\d+/
+          || $name =~ m/_Index(\d+)_[ACGT][ACGT][ACGT][ACGT][ACGT][ACGT]_/i) {
+        # e.g. FEBA_BS_117_24_S120_L002_R1_001.fastq.gz is #24
+        # e.g. FEBA_BS_125_Index10_S10_L001_R1_001.fastq.gz is #10
+        # e.g. FEBA_BS_60_10_TAGCTT_L001_R1_001.fastq.gz is #10
+        $sampleNum = $1;
+      } elsif ($name =~ m/(IT\d+)_/ || $name =~ m/_(IT\d+)_/
+              || $name =~ m!_(IT\d+)/!) {
+        # e.g. FEBA_BS_195_IT001/FEBA_BS_195_S97_L002_R1_001.fastq.gz is IT001
+        $index = $1;
+      } elsif ($name =~ m/^[A-Z]*\d*_S(\d+)_*L*\d*_R\d+/) {
+        # e.g. A10_S106_L003_R1_001.fastq.gz is #106
+        # e.g. A10_S10_R1_001.fastq.gz is #10
+        $sampleNum = $1;
+      } else {
+        die "Cannot identify sample number of index for file $file\n";
+      }
+      if (defined $sampleNum) {
+        $sampleNum =~ s/^0*// if defined $sampleNum;
+        $index = $numToIndex{$sampleNum} if exists $numToIndex{$sampleNum};
+      }
+      if (defined $index && exists $index{$index}) {
+        push @{ $fastqFiles{$index} }, $file;
+        print STDERR "fastq for index $index: $file\n";
       }
     }
 
