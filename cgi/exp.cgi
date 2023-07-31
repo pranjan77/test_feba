@@ -159,10 +159,11 @@ if ($show eq "") {
         my $comp = $dbh->selectall_arrayref(qq{SELECT * FROM MediaComponents LEFT JOIN Compounds USING (compound)
                                               WHERE media = ? },
                                             { Slice => {} },
-                                            $exp->{condition_1});
-        my $html = MediaComponentHTML($comp, $exp->{concentration_1});
+                                            $exp->{"condition_".$i});
+        my $html = MediaComponentHTML($comp, $exp->{"concentration_".$i});
         $html .= " " . small("(final concentrations)") if $exp->{"concentration_".$i} != 1;
-        push @pieces, $exp->{"condition_".$i} . " " . $exp->{"concentration_".$i} . "x includes: $html";
+        push @pieces, qq{<BR><SPAN style="font-size:90%;">}
+          . $exp->{"condition_".$i} . " " . $exp->{"concentration_".$i} . "x includes: $html</SPAN>";
       }
     }
     if ($exp->{growthPlate} ne "" && $exp->{growthWells} ne "") {
